@@ -245,7 +245,30 @@
   <section id="rosterSheet" class="sheet hidden" aria-modal="true">
     <div class="sheet-handle"></div>
     <div class="sheet-head"><div><div class="eyebrow">TEAM</div><h2>Roster</h2></div><button class="icon-close" data-close-sheet>×</button></div>
-    <div id="rosterList" class="card-list"><div class="empty-card">No athletes yet.</div></div>
+    <button id="addAthleteBtn" class="wide">+ Add Athlete</button>
+    <div id="rosterList" class="card-list roster-top-gap"><div class="empty-card">No athletes yet.</div></div>
+  </section>
+
+  <section id="addAthleteSheet" class="sheet hidden" aria-modal="true">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><div><div class="eyebrow">ROSTER</div><h2>Add Athlete</h2><p class="muted">Add an athlete directly now. Parent/guardian accounts can be connected afterward or through Team Join.</p></div><button class="icon-close" data-close-sheet>×</button></div>
+    <label for="athleteFirstName">First name</label>
+    <input id="athleteFirstName" autocomplete="given-name" placeholder="First name">
+    <label for="athleteLastName">Last name</label>
+    <input id="athleteLastName" autocomplete="family-name" placeholder="Last name">
+    <label for="athleteEmail">Athlete email <span class="optional-label">optional</span></label>
+    <input id="athleteEmail" type="email" autocomplete="email" placeholder="athlete@example.com">
+    <label for="athletePhone">Athlete phone <span class="optional-label">optional</span></label>
+    <input id="athletePhone" type="tel" autocomplete="tel" placeholder="Phone number">
+    <label for="athleteRosterStatus">Roster status</label>
+    <select id="athleteRosterStatus">
+      <option value="unassigned">Unassigned</option>
+      <option value="varsity">Varsity</option>
+      <option value="jv">JV</option>
+      <option value="both">Varsity & JV</option>
+      <option value="inactive">Inactive</option>
+    </select>
+    <button id="saveAthleteBtn" class="wide sticky-save">Add Athlete</button>
   </section>
 
   <section id="joinSheet" class="sheet hidden" aria-modal="true">

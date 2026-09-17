@@ -48,7 +48,7 @@ function openSheet(id){
   show('sheetBackdrop', true); show(id, true); document.body.style.overflow='hidden';
 }
 function closeSheets(){
-  ['eventSheet','eventDetailSheet','attendanceSheet','rosterSheet','joinSheet','accountSheet'].forEach(id=>show(id,false));
+  ['eventSheet','eventDetailSheet','attendanceSheet','rosterSheet','addAthleteSheet','joinSheet','accountSheet'].forEach(id=>show(id,false));
   show('sheetBackdrop', false); document.body.style.overflow='';
 }
 
@@ -104,6 +104,42 @@ async function loadRoster(){
       <div class="weight-value">${esc(r.latest_weight ?? '—')}<small> lb</small></div>
     </div>`).join('') : '<div class="empty-card">No athletes yet. Team Join will feed approved athletes into this roster.</div>';
   $('rosterList').innerHTML=html;
+}
+
+
+function openAddAthlete(){
+  $('athleteFirstName').value='';
+  $('athleteLastName').value='';
+  $('athleteEmail').value='';
+  $('athletePhone').value='';
+  $('athleteRosterStatus').value='unassigned';
+  closeSheets();
+  openSheet('addAthleteSheet');
+}
+
+async function saveAthlete(){
+  if(!activeSeason) return;
+  const first=$('athleteFirstName').value.trim();
+  const last=$('athleteLastName').value.trim();
+  if(!first||!last){ message('Add the athlete\'s first and last name.',true); return; }
+  $('saveAthleteBtn').disabled=true;
+  $('saveAthleteBtn').textContent='Adding…';
+  const { error }=await client.rpc('coach_add_athlete_to_roster',{
+    p_season_id:activeSeason.id,
+    p_first_name:first,
+    p_last_name:last,
+    p_email:$('athleteEmail').value.trim()||null,
+    p_phone:$('athletePhone').value.trim()||null,
+    p_roster_status:$('athleteRosterStatus').value
+  });
+  $('saveAthleteBtn').disabled=false;
+  $('saveAthleteBtn').textContent='Add Athlete';
+  if(error){ message(error.message,true); return; }
+  await loadRoster();
+  await loadDashboard();
+  closeSheets();
+  message(`${first} ${last} added to the roster.`);
+  openSheet('rosterSheet');
 }
 
 async function loadSchedule(){
@@ -266,7 +302,7 @@ $('createTeamBtn').onclick=async()=>{
 };
 
 $('newEventBtn').onclick=prepareEventForm; $('saveEventBtn').onclick=saveEvent; $('attendanceBtn').onclick=openAttendance; $('deleteEventBtn').onclick=deleteEvent;
-$('rosterBtn').onclick=()=>openSheet('rosterSheet'); $('joinBtn').onclick=()=>openSheet('joinSheet'); $('accountBtn').onclick=()=>openSheet('accountSheet'); $('profileBtn').onclick=()=>openSheet('accountSheet');
+$('rosterBtn').onclick=()=>openSheet('rosterSheet'); $('addAthleteBtn').onclick=openAddAthlete; $('saveAthleteBtn').onclick=saveAthlete; $('joinBtn').onclick=()=>openSheet('joinSheet'); $('accountBtn').onclick=()=>openSheet('accountSheet'); $('profileBtn').onclick=()=>openSheet('accountSheet');
 $('sheetBackdrop').onclick=closeSheets; document.querySelectorAll('[data-close-sheet]').forEach(x=>x.onclick=closeSheets);
 document.querySelectorAll('.type-btn').forEach(btn=>btn.onclick=()=>applyEventTypeDefaults(btn.dataset.type));
 document.querySelectorAll('.nav-btn').forEach(btn=>btn.onclick=()=>setTab(btn.dataset.tab));
