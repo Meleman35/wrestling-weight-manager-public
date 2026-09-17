@@ -3,40 +3,48 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#173b68">
-  <title>Wrestling Weight Manager</title>
+  <meta name="theme-color" content="#163a67">
+  <title>Wrestling Manager</title>
   <link rel="stylesheet" href="./styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <div class="shell">
-    <header class="topbar">
+  <div id="message"></div>
+
+  <section id="authView" class="center-shell">
+    <div class="brand-lockup">
+      <div class="brand-mark">WM</div>
       <div>
-        <h1>Wrestling Weight Manager</h1>
-        <p id="statusText">Connected to Supabase</p>
+        <h1>Wrestling Manager</h1>
+        <p>Built for wrestling teams, families and coaches.</p>
       </div>
-      <button id="installHint" class="ghost hidden">Add to Home Screen</button>
-    </header>
-
-    <div id="message"></div>
-
-    <section id="authView" class="card">
+    </div>
+    <div class="card auth-card">
       <h2>Coach Sign In</h2>
       <label>Email</label>
       <input id="email" type="email" autocomplete="email" placeholder="coach@example.com">
       <label>Password</label>
       <input id="password" type="password" autocomplete="current-password" placeholder="Password">
-      <div class="actions">
+      <div class="stack-actions">
         <button id="signInBtn">Sign In</button>
         <button id="signUpBtn" class="secondary">Create Account</button>
       </div>
-      <p class="fine">This is your Wrestling Weight Manager account. It is separate from your Supabase dashboard login.</p>
-    </section>
+      <p class="fine">This account is for Wrestling Manager and is separate from your Supabase dashboard login.</p>
+    </div>
+  </section>
 
-    <section id="setupView" class="card hidden">
+  <section id="setupView" class="center-shell hidden">
+    <div class="brand-lockup compact">
+      <div class="brand-mark">WM</div>
+      <div>
+        <h1>Wrestling Manager</h1>
+        <p>Set up your first wrestling team.</p>
+      </div>
+    </div>
+    <div class="card">
       <h2>Create Your First Team</h2>
       <label>Organization</label>
-      <input id="orgName" value="Lyman Wrestling">
+      <input id="orgName" value="Lyman High School">
       <label>Team</label>
       <input id="teamName" value="Lyman Girls Wrestling">
       <label>Team type</label>
@@ -55,54 +63,205 @@
       </select>
       <label>Season</label>
       <input id="seasonName" value="2026-27">
-      <button id="createTeamBtn">Create Organization + Team</button>
-    </section>
+      <button id="createTeamBtn" class="wide">Create Organization + Team</button>
+    </div>
+  </section>
 
-    <section id="appView" class="hidden">
-      <nav class="tabs">
-        <button class="tab active" data-tab="home">Coach Home</button>
-        <button class="tab" data-tab="roster">Roster</button>
-        <button class="tab" data-tab="join">Team Join</button>
-        <button class="tab" data-tab="account">Account</button>
-      </nav>
+  <section id="appView" class="app hidden">
+    <header class="app-header">
+      <button id="teamSwitcherBtn" class="team-switcher" type="button">
+        <span>
+          <small>Current team</small>
+          <strong id="headerTeamName">Team</strong>
+        </span>
+        <span class="chev">⌄</span>
+      </button>
+      <button id="profileBtn" class="round-btn" aria-label="Account">👤</button>
+    </header>
 
-      <section id="homeTab" class="card tabview">
-        <div class="teamline">
+    <main class="content">
+      <section id="homeTab" class="tabview">
+        <div class="hero-card">
           <div>
-            <h2 id="teamTitle">Team</h2>
-            <p id="seasonTitle" class="muted"></p>
+            <div class="eyebrow">WRESTLING MANAGER</div>
+            <h2 id="homeTeamName">Team</h2>
+            <p id="homeSeasonName">Season</p>
           </div>
-          <span class="pill success">Live</span>
+          <span class="live-pill">LIVE</span>
         </div>
-        <div class="metrics">
+
+        <div class="quick-grid">
+          <button class="quick-card" data-go="schedule" data-action="create-event"><span>＋</span><b>Create event</b><small>Practice, dual, open mat…</small></button>
+          <button class="quick-card" data-go="schedule"><span>✓</span><b>Attendance</b><small>RSVPs and check-in</small></button>
+          <button class="quick-card" data-go="weight"><span>⚖️</span><b>Weight Room</b><small>Weigh-ins and eligibility</small></button>
+          <button class="quick-card" data-go="more"><span>☰</span><b>Team tools</b><small>Roster, join, equipment</small></button>
+        </div>
+
+        <div class="section-head"><h3>Needs attention</h3><span id="attentionCount" class="count-pill">0</span></div>
+        <div id="attentionList" class="card-list">
+          <div class="empty-card">Nothing needs attention right now.</div>
+        </div>
+
+        <div class="section-head"><h3>Upcoming</h3><button class="link-btn" data-go="schedule">See schedule</button></div>
+        <div id="upcomingHome" class="card-list"><div class="empty-card">No upcoming events yet.</div></div>
+
+        <div class="section-head"><h3>Weight room snapshot</h3></div>
+        <div class="metric-grid">
           <div class="metric"><span>Weighed today</span><strong id="weighed">0</strong></div>
           <div class="metric"><span>Not weighed</span><strong id="notWeighed">0</strong></div>
           <div class="metric"><span>Newly eligible</span><strong id="eligible">0</strong></div>
-          <div class="metric"><span>Challenge queue</span><strong id="challenges">0</strong></div>
+          <div class="metric"><span>Challenges</span><strong id="challenges">0</strong></div>
         </div>
-        <h3>Live roster summary</h3>
-        <div id="liveRoster" class="muted">No athletes yet.</div>
       </section>
 
-      <section id="rosterTab" class="card tabview hidden">
-        <h2>Roster</h2>
-        <div id="rosterList" class="muted">No athletes yet.</div>
+      <section id="scheduleTab" class="tabview hidden">
+        <div class="section-head top-space">
+          <div><div class="eyebrow">TEAM CALENDAR</div><h2>Schedule</h2></div>
+          <button id="newEventBtn" class="primary-small">＋ New</button>
+        </div>
+        <div class="filter-row" id="scheduleFilters">
+          <button class="filter-chip active" data-filter="all">All</button>
+          <button class="filter-chip" data-filter="practice">Practice</button>
+          <button class="filter-chip" data-filter="dual">Dual</button>
+          <button class="filter-chip" data-filter="tournament">Tournament</button>
+          <button class="filter-chip" data-filter="open_mat">Open Mat</button>
+          <button class="filter-chip" data-filter="camp">Camp</button>
+        </div>
+        <div id="scheduleList" class="event-list"><div class="empty-card">No events yet.</div></div>
       </section>
 
-      <section id="joinTab" class="card tabview hidden">
-        <h2>Team Join</h2>
-        <p class="muted">Generate a team code for athletes or parents to request to join. Coach approval is still required.</p>
-        <button id="joinCodeBtn">Create Team Join Code</button>
-        <div id="joinCodeBox"></div>
+      <section id="messagesTab" class="tabview hidden">
+        <div class="section-head top-space"><div><div class="eyebrow">SAFEGUARDED COMMUNICATION</div><h2>Messages</h2></div></div>
+        <div class="feature-card">
+          <h3>Messaging foundation</h3>
+          <p>Team chat, athlete-to-athlete messages, guardian mirror access for adult-to-minor conversations, push notifications and SMS delivery are the next communication build.</p>
+          <div class="mini-row"><span>🛡️ Guardian mirror access</span><b>Planned</b></div>
+          <div class="mini-row"><span>📱 SMS notifications</span><b>Planned</b></div>
+          <div class="mini-row"><span>⚠️ Safety phrase review</span><b>Planned</b></div>
+        </div>
       </section>
 
-      <section id="accountTab" class="card tabview hidden">
-        <h2>Account</h2>
-        <div id="accountInfo" class="muted"></div>
-        <button id="signOutBtn" class="secondary">Sign Out</button>
+      <section id="weightTab" class="tabview hidden">
+        <div class="section-head top-space"><div><div class="eyebrow">WRESTLING-SPECIFIC</div><h2>Weight Room</h2></div></div>
+        <div class="metric-grid">
+          <div class="metric"><span>Weighed today</span><strong id="weighed2">0</strong></div>
+          <div class="metric"><span>Not weighed</span><strong id="notWeighed2">0</strong></div>
+          <div class="metric"><span>Newly eligible</span><strong id="eligible2">0</strong></div>
+          <div class="metric"><span>Challenges</span><strong id="challenges2">0</strong></div>
+        </div>
+        <div class="feature-card">
+          <h3>Coming into this tab</h3>
+          <p>Scale kiosk, QR/NFC identification, certification plans, eligibility, lineup classes, challenge requests and wrestle-offs.</p>
+        </div>
       </section>
-    </section>
-  </div>
+
+      <section id="moreTab" class="tabview hidden">
+        <div class="section-head top-space"><div><div class="eyebrow">TEAM MANAGEMENT</div><h2>More</h2></div></div>
+        <div class="menu-card">
+          <button id="rosterBtn" class="menu-row"><span>👥</span><div><b>Roster</b><small>Athletes and lineup overview</small></div><i>›</i></button>
+          <button id="joinBtn" class="menu-row"><span>🔗</span><div><b>Team Join</b><small>Generate a join code</small></div><i>›</i></button>
+          <button class="menu-row disabled"><span>🎽</span><div><b>Equipment</b><small>Singlets, shoes, headgear and more</small></div><i>›</i></button>
+          <button class="menu-row disabled"><span>📁</span><div><b>Files & Photos</b><small>Team documents and albums</small></div><i>›</i></button>
+          <button id="accountBtn" class="menu-row"><span>⚙️</span><div><b>Account & Team</b><small>Profile, team and sign out</small></div><i>›</i></button>
+        </div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav">
+      <button class="nav-btn active" data-tab="home"><span>⌂</span><small>Home</small></button>
+      <button class="nav-btn" data-tab="schedule"><span>▣</span><small>Schedule</small></button>
+      <button class="nav-btn" data-tab="messages"><span>◯</span><small>Messages</small></button>
+      <button class="nav-btn" data-tab="weight"><span>⚖</span><small>Weight Room</small></button>
+      <button class="nav-btn" data-tab="more"><span>☰</span><small>More</small></button>
+    </nav>
+  </section>
+
+  <div id="sheetBackdrop" class="backdrop hidden"></div>
+
+  <section id="eventSheet" class="sheet hidden" aria-modal="true">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><div><div class="eyebrow">NEW ACTIVITY</div><h2>Create Event</h2></div><button class="icon-close" data-close-sheet>×</button></div>
+
+    <label>Event type</label>
+    <div class="type-grid" id="eventTypeGrid">
+      <button class="type-btn active" data-type="practice">Practice</button>
+      <button class="type-btn" data-type="open_mat">Open Mat</button>
+      <button class="type-btn" data-type="dual">Dual</button>
+      <button class="type-btn" data-type="tournament">Tournament</button>
+      <button class="type-btn" data-type="camp">Camp</button>
+      <button class="type-btn" data-type="travel">Travel</button>
+      <button class="type-btn" data-type="weigh_in">Weigh-In</button>
+      <button class="type-btn" data-type="wrestle_off">Wrestle-Off</button>
+      <button class="type-btn" data-type="other">Other</button>
+    </div>
+
+    <label>Title</label>
+    <input id="eventTitle" placeholder="e.g. Girls Practice">
+
+    <label>Location</label>
+    <input id="eventLocation" placeholder="School, wrestling room or venue">
+    <input id="eventAddress" class="sub-input" placeholder="Address (optional)">
+
+    <div class="two-col">
+      <div><label>Start</label><input id="eventStart" type="datetime-local"></div>
+      <div><label>End</label><input id="eventEnd" type="datetime-local"></div>
+    </div>
+
+    <div class="two-col">
+      <div><label>Meet / Arrival</label><input id="eventArrival" type="datetime-local"></div>
+      <div><label>Weigh-in</label><input id="eventWeighIn" type="datetime-local"></div>
+    </div>
+
+    <label class="toggle-row"><span><b>RSVP enabled</b><small>Athletes and parents can choose Going / Maybe / Not Going</small></span><input id="rsvpEnabled" type="checkbox" checked></label>
+    <label class="toggle-row"><span><b>Track attendance</b><small>Coaches can mark Present, Late, Absent or Modified</small></span><input id="attendanceRequired" type="checkbox" checked></label>
+    <label class="toggle-row"><span><b>Count toward season attendance</b><small>Open Mat and Camp default to off</small></span><input id="countsSeason" type="checkbox" checked></label>
+    <label class="toggle-row"><span><b>Ride-home checkout</b><small>Allow parent pickup request and coach checkout</small></span><input id="checkoutEnabled" type="checkbox"></label>
+
+    <label>Additional information</label>
+    <textarea id="eventDescription" placeholder="What should athletes or parents know?"></textarea>
+
+    <button id="saveEventBtn" class="wide sticky-save">Create Event</button>
+  </section>
+
+  <section id="eventDetailSheet" class="sheet hidden" aria-modal="true">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><div><div id="detailType" class="eyebrow">EVENT</div><h2 id="detailTitle">Event</h2></div><button class="icon-close" data-close-sheet>×</button></div>
+    <div id="detailMeta" class="detail-meta"></div>
+    <div class="detail-actions">
+      <button id="attendanceBtn">Take Attendance</button>
+      <button id="deleteEventBtn" class="danger-outline">Delete</button>
+    </div>
+    <div class="section-head"><h3>RSVPs</h3><span id="rsvpSummary" class="muted">No responses</span></div>
+    <div id="rsvpList" class="card-list"><div class="empty-card">No athletes on the active roster yet.</div></div>
+  </section>
+
+  <section id="attendanceSheet" class="sheet hidden" aria-modal="true">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><div><div class="eyebrow">COACH CHECK-IN</div><h2>Attendance</h2><p id="attendanceEventName" class="muted"></p></div><button class="icon-close" data-close-sheet>×</button></div>
+    <div id="attendanceInfo" class="info-banner"></div>
+    <div id="attendanceList" class="attendance-list"><div class="empty-card">No athletes on the active roster yet.</div></div>
+  </section>
+
+  <section id="rosterSheet" class="sheet hidden" aria-modal="true">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><div><div class="eyebrow">TEAM</div><h2>Roster</h2></div><button class="icon-close" data-close-sheet>×</button></div>
+    <div id="rosterList" class="card-list"><div class="empty-card">No athletes yet.</div></div>
+  </section>
+
+  <section id="joinSheet" class="sheet hidden" aria-modal="true">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><div><div class="eyebrow">TEAM ACCESS</div><h2>Team Join</h2></div><button class="icon-close" data-close-sheet>×</button></div>
+    <p class="muted">Create a join code for athletes or parents. Every athlete still requires coach approval.</p>
+    <button id="joinCodeBtn" class="wide">Create Team Join Code</button>
+    <div id="joinCodeBox"></div>
+  </section>
+
+  <section id="accountSheet" class="sheet hidden" aria-modal="true">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><div><div class="eyebrow">YOU</div><h2>Account & Team</h2></div><button class="icon-close" data-close-sheet>×</button></div>
+    <div class="feature-card"><b id="accountEmail">—</b><p id="accountTeamInfo" class="muted"></p></div>
+    <button id="signOutBtn" class="wide secondary">Sign Out</button>
+  </section>
 
   <script src="./app.js"></script>
 </body>
