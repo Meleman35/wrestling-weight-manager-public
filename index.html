@@ -340,7 +340,7 @@ button.wide{width:100%;margin-top:16px}.stack-actions{display:grid;gap:9px;margi
     <div class="sheet-head"><div><div class="eyebrow">YOU</div><h2>Account & Team</h2></div><button class="icon-close" data-close-sheet>×</button></div>
     <div class="feature-card"><b id="accountEmail">—</b><p id="accountTeamInfo" class="muted"></p></div>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.6.2</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.6.3</p>
   </section>
 
   <script>
@@ -616,7 +616,7 @@ async function renderAttendanceList(){
       ${x?.excuse_reason?`<div class="excuse-line">Excuse: ${esc(x.excuse_reason.replace('_',' '))}</div>`:''}
     </div>`;
   }).join('');
-  $('attendanceList').querySelectorAll('.att-btn').forEach(btn=>btn.onclick=()=>markAttendance(btn.dataset.athleteId,btn.dataset.status));
+  $('attendanceList').querySelectorAll('.att-btn').forEach(btn=>btn.onclick=()=>markAttendance(btn.dataset.athleteId,btn.classList.contains('active')?'expected':btn.dataset.status));
 }
 
 async function markAttendance(athleteId,status){
