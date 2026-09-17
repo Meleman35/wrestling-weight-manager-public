@@ -61,6 +61,25 @@ button.wide{width:100%;margin-top:16px}.stack-actions{display:grid;gap:9px;margi
 
 .roster-top-gap{margin-top:12px}.optional-label{font-weight:600;color:var(--muted);font-size:12px}
 
+
+.center-shell>.card+.card{margin-top:14px}
+.member-rsvp-card{background:#f7f9fb;border:1px solid var(--line);border-radius:18px;padding:14px;margin:12px 0}
+.member-rsvp-card b,.member-rsvp-card small{display:block}.member-rsvp-card small{color:var(--muted);margin-top:3px;line-height:1.35}
+.rsvp-buttons{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:12px}
+.rsvp-btn{background:#e9eef4;color:#34404d;padding:10px 6px;font-size:13px}
+.rsvp-btn.active.going{background:#e3f5ea;color:#176b43}
+.rsvp-btn.active.maybe{background:#fff0cf;color:#865d0c}
+.rsvp-btn.active.not_going{background:#fde5e5;color:#9a2929}
+.member-note{margin-top:10px;padding:10px 12px;border-radius:13px;background:#eef5fc;color:#355d87;font-size:13px;line-height:1.35}
+.member-note.warn{background:#fff4d8;color:#7a5711}
+.member-note.good{background:#e8f6ee;color:#1b6d47}
+.inline-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.inline-actions button{padding:9px 11px;font-size:13px}
+.token-box{margin-top:12px;padding:14px;border-radius:14px;background:#f1f4f7;border:1px dashed #bcc8d4;word-break:break-all;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:800}
+.roster-actions{display:flex;align-items:center;gap:7px}
+.roster-access-btn{background:#edf1f5;color:#26394d;padding:8px 10px;font-size:12px}
+.role-pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#e8eef5;color:#35506d;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}
+
 </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -76,16 +95,16 @@ button.wide{width:100%;margin-top:16px}.stack-actions{display:grid;gap:9px;margi
       </div>
     </div>
     <div class="card auth-card">
-      <h2>Coach Sign In</h2>
+      <h2>Sign In</h2>
       <label>Email</label>
-      <input id="email" type="email" autocomplete="email" placeholder="coach@example.com">
+      <input id="email" type="email" autocomplete="email" placeholder="you@example.com">
       <label>Password</label>
       <input id="password" type="password" autocomplete="current-password" placeholder="Password">
       <div class="stack-actions">
         <button id="signInBtn">Sign In</button>
         <button id="signUpBtn" class="secondary">Create Account</button>
       </div>
-      <p class="fine">This account is for Wrestling Manager and is separate from your Supabase dashboard login.</p>
+      <p class="fine">Coaches, athletes and parents use the same Wrestling Manager sign-in.</p>
     </div>
   </section>
 
@@ -94,8 +113,15 @@ button.wide{width:100%;margin-top:16px}.stack-actions{display:grid;gap:9px;margi
       <div class="brand-mark">WM</div>
       <div>
         <h1>Wrestling Manager</h1>
-        <p>Set up your first wrestling team.</p>
+        <p>Create a team or connect to one you were invited to.</p>
       </div>
+    </div>
+    <div class="card">
+      <h2>Join an Existing Team</h2>
+      <p class="muted">If a coach gave you an athlete or parent invitation token, paste it here after creating your account.</p>
+      <label>Invitation token</label>
+      <input id="inviteToken" placeholder="WMWA-… or WMWG-…">
+      <button id="acceptInviteBtn" class="wide">Accept Invitation</button>
     </div>
     <div class="card">
       <h2>Create Your First Team</h2>
@@ -283,12 +309,15 @@ button.wide{width:100%;margin-top:16px}.stack-actions{display:grid;gap:9px;margi
     <div class="sheet-handle"></div>
     <div class="sheet-head"><div><div id="detailType" class="eyebrow">EVENT</div><h2 id="detailTitle">Event</h2></div><button class="icon-close" data-close-sheet>×</button></div>
     <div id="detailMeta" class="detail-meta"></div>
-    <div class="detail-actions">
+    <div id="memberRsvpBox" class="hidden"></div>
+    <div id="coachEventActions" class="detail-actions">
       <button id="attendanceBtn">Take Attendance</button>
       <button id="deleteEventBtn" class="danger-outline">Delete</button>
     </div>
-    <div class="section-head"><h3>RSVPs</h3><span id="rsvpSummary" class="muted">No responses</span></div>
-    <div id="rsvpList" class="card-list"><div class="empty-card">No athletes on the active roster yet.</div></div>
+    <div id="coachRsvpSection">
+      <div class="section-head"><h3>RSVPs</h3><span id="rsvpSummary" class="muted">No responses</span></div>
+      <div id="rsvpList" class="card-list"><div class="empty-card">No athletes on the active roster yet.</div></div>
+    </div>
   </section>
 
   <section id="attendanceSheet" class="sheet hidden" aria-modal="true">
@@ -335,12 +364,54 @@ button.wide{width:100%;margin-top:16px}.stack-actions{display:grid;gap:9px;margi
     <div id="joinCodeBox"></div>
   </section>
 
+
+  <section id="excuseSheet" class="sheet hidden" aria-modal="true">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><div><div class="eyebrow">PARENT / GUARDIAN</div><h2>Excuse Absence</h2><p id="excuseAthleteName" class="muted"></p></div><button class="icon-close" data-close-sheet>×</button></div>
+    <label>Reason</label>
+    <select id="excuseReason">
+      <option value="sick">Sick</option>
+      <option value="school_event">School event</option>
+      <option value="appointment">Appointment</option>
+      <option value="family">Family</option>
+      <option value="injury">Injury</option>
+      <option value="other">Other</option>
+    </select>
+    <label>Note <span class="optional-label">optional</span></label>
+    <textarea id="excuseNote" placeholder="Optional note for the coach"></textarea>
+    <button id="saveExcuseBtn" class="wide sticky-save">Excuse Absence</button>
+  </section>
+
+  <section id="athleteAccessSheet" class="sheet hidden" aria-modal="true">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><div><div class="eyebrow">ACCOUNT ACCESS</div><h2 id="accessAthleteName">Athlete Access</h2><p class="muted">Create account invitations for this athlete or a parent/guardian.</p></div><button class="icon-close" data-close-sheet>×</button></div>
+
+    <div class="feature-card">
+      <h3>Athlete account</h3>
+      <p id="accessAthleteEmail" class="muted"></p>
+      <button id="createAthleteInviteBtn" class="wide">Create Athlete Invite</button>
+      <div id="athleteInviteTokenBox"></div>
+    </div>
+
+    <div class="feature-card">
+      <h3>Parent / guardian account</h3>
+      <label>Name</label>
+      <input id="guardianInviteName" placeholder="Parent or guardian name">
+      <label>Email <span class="optional-label">optional if phone is entered</span></label>
+      <input id="guardianInviteEmail" type="email" placeholder="parent@example.com">
+      <label>Phone <span class="optional-label">optional if email is entered</span></label>
+      <input id="guardianInvitePhone" type="tel" placeholder="Phone number">
+      <button id="createGuardianInviteBtn" class="wide">Create Parent/Guardian Invite</button>
+      <div id="guardianInviteTokenBox"></div>
+    </div>
+  </section>
+
   <section id="accountSheet" class="sheet hidden" aria-modal="true">
     <div class="sheet-handle"></div>
     <div class="sheet-head"><div><div class="eyebrow">YOU</div><h2>Account & Team</h2></div><button class="icon-close" data-close-sheet>×</button></div>
-    <div class="feature-card"><b id="accountEmail">—</b><p id="accountTeamInfo" class="muted"></p></div>
+    <div class="feature-card"><b id="accountEmail">—</b><p id="accountTeamInfo" class="muted"></p><span id="accountRole" class="role-pill">—</span></div>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.6.3</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.6.4</p>
   </section>
 
   <script>
@@ -356,6 +427,14 @@ let rosterRows = [];
 let scheduleRows = [];
 let scheduleFilter = 'all';
 let selectedEventType = 'practice';
+let teamMemberships = [];
+let currentTeamMemberships = [];
+let memberAthletes = [];
+let isStaff = false;
+let viewerRole = 'member';
+let excuseAthleteId = null;
+let accessAthleteId = null;
+let accessAthleteRecord = null;
 
 const $ = id => document.getElementById(id);
 const show = (id, visible=true) => $(id)?.classList.toggle('hidden', !visible);
@@ -394,7 +473,7 @@ function openSheet(id){
   show('sheetBackdrop', true); show(id, true); document.body.style.overflow='hidden';
 }
 function closeSheets(){
-  ['eventSheet','eventDetailSheet','attendanceSheet','rosterSheet','addAthleteSheet','joinSheet','accountSheet'].forEach(id=>show(id,false));
+  ['eventSheet','eventDetailSheet','attendanceSheet','rosterSheet','addAthleteSheet','joinSheet','excuseSheet','athleteAccessSheet','accountSheet'].forEach(id=>show(id,false));
   show('sheetBackdrop', false); document.body.style.overflow='';
 }
 
@@ -406,16 +485,42 @@ async function refresh(){
 
   $('accountEmail').textContent = session.user.email || session.user.id;
 
-  const { data: memberships, error: memErr } = await client.from('organization_memberships').select('organization_id,role').limit(20);
-  if (memErr){ message(memErr.message,true); return; }
-  if (!memberships?.length){ show('setupView', true); show('appView', false); return; }
+  const [{ data: orgMemberships, error: orgErr }, { data: tm, error: tmErr }] = await Promise.all([
+    client.from('organization_memberships').select('organization_id,role').limit(50),
+    client.from('team_memberships').select('team_id,user_id,role,athlete_id,permissions').eq('user_id',session.user.id).limit(100)
+  ]);
+  if (orgErr || tmErr){ message(orgErr?.message || tmErr?.message,true); return; }
+
+  teamMemberships = tm || [];
+  const orgIds = (orgMemberships || []).map(x=>x.organization_id);
+  const teamIds = [...new Set(teamMemberships.map(x=>x.team_id))];
+
+  if (!orgIds.length && !teamIds.length){
+    show('setupView', true); show('appView', false); return;
+  }
+
+  let teams = [];
+  if (orgIds.length){
+    const { data, error } = await client.from('teams').select('*').in('organization_id',orgIds).order('created_at');
+    if (error){ message(error.message,true); return; }
+    teams = data || [];
+  }
+  if (!teams.length && teamIds.length){
+    const { data, error } = await client.from('teams').select('*').in('id',teamIds).order('created_at');
+    if (error){ message(error.message,true); return; }
+    teams = data || [];
+  }
+  if (!teams.length){ show('setupView', true); show('appView', false); return; }
 
   show('setupView', false); show('appView', true);
-  const orgIds = memberships.map(x=>x.organization_id);
-  const { data: teams, error: teamErr } = await client.from('teams').select('*').in('organization_id',orgIds).order('created_at');
-  if (teamErr || !teams?.length){ message(teamErr?.message || 'No team found.',true); return; }
-
   activeTeam = teams[0];
+  currentTeamMemberships = teamMemberships.filter(x=>x.team_id===activeTeam.id);
+  isStaff = currentTeamMemberships.some(x=>['head_coach','assistant_coach'].includes(x.role)) ||
+    (orgMemberships||[]).some(x=>x.role==='organization_admin' && x.organization_id===activeTeam.organization_id);
+  viewerRole = isStaff ? 'coach' :
+    (currentTeamMemberships.find(x=>x.role==='parent_guardian')?.role ||
+     currentTeamMemberships.find(x=>x.role==='athlete')?.role || 'member');
+
   $('headerTeamName').textContent = activeTeam.name;
   $('homeTeamName').textContent = activeTeam.name;
 
@@ -424,8 +529,44 @@ async function refresh(){
   activeSeason = seasons[0];
   $('homeSeasonName').textContent = `${activeSeason.name} Season`;
   $('accountTeamInfo').textContent = `${activeTeam.name} · ${activeSeason.name}`;
+  $('accountRole').textContent = viewerRole==='coach' ? 'Coach / Staff' : viewerRole.replace('_',' ');
 
-  await Promise.all([loadDashboard(),loadRoster(),loadSchedule()]);
+  applyRoleUI();
+
+  if (isStaff){
+    await Promise.all([loadDashboard(),loadRoster(),loadSchedule()]);
+  } else {
+    rosterRows = [];
+    await Promise.all([loadMemberAthletes(),loadSchedule()]);
+    renderAttention();
+  }
+}
+
+function applyRoleUI(){
+  show('newEventBtn', isStaff);
+  show('rosterBtn', isStaff);
+  show('joinBtn', isStaff);
+  const createQuick=document.querySelector('.quick-card[data-action="create-event"]');
+  if(createQuick) createQuick.classList.toggle('hidden',!isStaff);
+  const teamTools=document.querySelector('.quick-card[data-go="more"]');
+  if(teamTools) teamTools.classList.toggle('hidden',!isStaff);
+  const weightQuick=document.querySelector('.quick-card[data-go="weight"]');
+  if(weightQuick) weightQuick.classList.toggle('hidden',!isStaff);
+  document.querySelectorAll('#homeTab .metric-grid').forEach(x=>x.classList.toggle('hidden',!isStaff));
+  const weightHead=[...document.querySelectorAll('#homeTab .section-head h3')].find(x=>x.textContent.includes('Weight room'));
+  if(weightHead) weightHead.parentElement.classList.toggle('hidden',!isStaff);
+}
+
+async function loadMemberAthletes(){
+  const ids=[...new Set(currentTeamMemberships.filter(x=>x.athlete_id).map(x=>x.athlete_id))];
+  if(!ids.length){ memberAthletes=[]; return; }
+  const {data,error}=await client.from('athletes').select('id,first_name,last_name,email,phone').in('id',ids).order('last_name');
+  if(error){ message(error.message,true); memberAthletes=[]; return; }
+  memberAthletes=data||[];
+}
+
+function membershipRoleForAthlete(athleteId){
+  return currentTeamMemberships.find(x=>x.athlete_id===athleteId)?.role || viewerRole;
 }
 
 async function loadDashboard(){
@@ -440,18 +581,21 @@ async function loadDashboard(){
 }
 
 async function loadRoster(){
-  if (!activeSeason) return;
+  if (!activeSeason || !isStaff) return;
   const { data, error } = await client.from('roster_dashboard').select('*').eq('season_id',activeSeason.id).order('last_name');
   if (error){ message(error.message,true); return; }
   rosterRows = data || [];
   const html = rosterRows.length ? rosterRows.map(r=>`
     <div class="roster-card">
       <div><b>${esc(r.first_name)} ${esc(r.last_name)}</b><small>${esc(r.roster_status||'unassigned')} · lineup ${esc(r.current_lineup_class ?? '—')} · eligible ${esc(r.eligible_weight_class ?? '—')}</small></div>
-      <div class="weight-value">${esc(r.latest_weight ?? '—')}<small> lb</small></div>
+      <div class="roster-actions">
+        <div class="weight-value">${esc(r.latest_weight ?? '—')}<small> lb</small></div>
+        <button class="roster-access-btn" data-access-athlete="${r.athlete_id}">Access</button>
+      </div>
     </div>`).join('') : '<div class="empty-card">No athletes yet. Team Join will feed approved athletes into this roster.</div>';
   $('rosterList').innerHTML=html;
+  $('rosterList').querySelectorAll('[data-access-athlete]').forEach(btn=>btn.onclick=()=>openAthleteAccess(btn.dataset.accessAthlete));
 }
-
 
 function openAddAthlete(){
   $('athleteFirstName').value='';
@@ -488,6 +632,59 @@ async function saveAthlete(){
   openSheet('rosterSheet');
 }
 
+async function openAthleteAccess(athleteId){
+  if(!isStaff) return;
+  const roster=rosterRows.find(x=>x.athlete_id===athleteId); if(!roster) return;
+  const {data:a,error}=await client.from('athletes').select('id,first_name,last_name,email,phone').eq('id',athleteId).single();
+  if(error){message(error.message,true);return;}
+  accessAthleteId=athleteId;
+  accessAthleteRecord=a;
+  $('accessAthleteName').textContent=`${a.first_name} ${a.last_name}`;
+  $('accessAthleteEmail').textContent=a.email ? `Athlete email: ${a.email}` : 'No athlete email is saved yet. Add one before creating an athlete account invite.';
+  $('createAthleteInviteBtn').disabled=!a.email;
+  $('guardianInviteName').value=''; $('guardianInviteEmail').value=''; $('guardianInvitePhone').value='';
+  $('athleteInviteTokenBox').innerHTML=''; $('guardianInviteTokenBox').innerHTML='';
+  closeSheets(); openSheet('athleteAccessSheet');
+}
+
+async function createAthleteInvite(){
+  const a=accessAthleteRecord; if(!a?.email||!activeTeam||a.id!==accessAthleteId) return;
+  const {data,error}=await client.rpc('create_athlete_claim_invitation',{
+    p_athlete_id:accessAthleteId,p_team_id:activeTeam.id,p_email:a.email,p_expires_in_days:14
+  });
+  if(error){message(error.message,true);return;}
+  const token=data?.[0]?.invitation_token||data?.invitation_token;
+  $('athleteInviteTokenBox').innerHTML=`<div class="token-box">${esc(token||'Invite created')}</div><p class="fine">Give this token only to the athlete whose email is ${esc(a.email)}. They create/sign in to their account, then paste it into Join an Existing Team.</p>`;
+}
+
+async function createGuardianInvite(){
+  if(!accessAthleteId||!activeTeam) return;
+  const name=$('guardianInviteName').value.trim(), email=$('guardianInviteEmail').value.trim(), phone=$('guardianInvitePhone').value.trim();
+  if(!name||(!email&&!phone)){message('Add the guardian name and either an email or phone number.',true);return;}
+  const {data,error}=await client.rpc('create_guardian_invitation',{
+    p_athlete_id:accessAthleteId,p_team_id:activeTeam.id,p_name:name,p_email:email||null,p_phone:phone||null,p_expires_in_days:14
+  });
+  if(error){message(error.message,true);return;}
+  const token=data?.[0]?.invitation_token||data?.invitation_token;
+  $('guardianInviteTokenBox').innerHTML=`<div class="token-box">${esc(token||'Invite created')}</div><p class="fine">Give this token to the parent/guardian. After they create/sign in to Wrestling Manager, they paste it into Join an Existing Team.</p>`;
+}
+
+async function acceptInvite(){
+  const token=$('inviteToken').value.trim();
+  if(!token){message('Paste the invitation token first.',true);return;}
+  $('acceptInviteBtn').disabled=true; $('acceptInviteBtn').textContent='Connecting…';
+  let result;
+  if(token.toUpperCase().startsWith('WMWA-')) result=await client.rpc('accept_athlete_claim_invitation',{p_invitation_token:token});
+  else if(token.toUpperCase().startsWith('WMWG-')) result=await client.rpc('accept_guardian_invitation',{p_invitation_token:token});
+  else result={error:{message:'That does not look like an athlete or guardian invitation token.'}};
+  $('acceptInviteBtn').disabled=false; $('acceptInviteBtn').textContent='Accept Invitation';
+  if(result.error){message(result.error.message,true);return;}
+  message('Invitation accepted. Welcome to the team.');
+  $('inviteToken').value='';
+  await refresh();
+}
+
+
 async function loadSchedule(){
   if (!activeTeam) return;
   const { data, error } = await client.from('team_events').select('*').eq('team_id',activeTeam.id).order('starts_at',{ascending:true});
@@ -521,10 +718,15 @@ function eventCard(e){
 function renderAttention(){
   const items=[];
   const upcoming=scheduleRows.filter(e=>new Date(e.starts_at)>new Date()).slice(0,7);
-  if(upcoming.length) items.push({title:`${upcoming.length} upcoming event${upcoming.length===1?'':'s'}`,sub:'Review schedule and RSVP settings.'});
-  if(!rosterRows.length) items.push({title:'Roster is empty',sub:'Generate a Team Join code when you are ready to add athletes.'});
+  if(!isStaff){
+    if(upcoming.length) items.push({title:`${upcoming.length} upcoming event${upcoming.length===1?'':'s'}`,sub:'Open the schedule to RSVP.'});
+    if(!memberAthletes.length) items.push({title:'No athlete profile connected',sub:'Ask your coach for an athlete or parent invitation.'});
+  } else {
+    if(upcoming.length) items.push({title:`${upcoming.length} upcoming event${upcoming.length===1?'':'s'}`,sub:'Review schedule and RSVP settings.'});
+    if(!rosterRows.length) items.push({title:'Roster is empty',sub:'Generate a Team Join code or add an athlete.'});
+  }
   $('attentionCount').textContent=items.length;
-  $('attentionList').innerHTML=items.length?items.map(x=>`<div class="roster-card"><div><b>${esc(x.title)}</b><small>${esc(x.sub)}</small></div><div>›</div></div>`).join(''):'<div class="empty-card">Nothing needs attention right now.</div>';
+  $('attentionList').innerHTML=items.length?items.map(i=>`<div class="roster-card"><div><b>${esc(i.title)}</b><small>${esc(i.sub)}</small></div><div>›</div></div>`).join(''):'<div class="empty-card">Nothing needs attention right now.</div>';
 }
 
 function prepareEventForm(){
@@ -576,8 +778,12 @@ async function openEventDetail(id){
     ${(activeEvent.location_name||activeEvent.location_address)?`<div class="meta-row"><span>📍</span><div><b>${esc(activeEvent.location_name||'Location')}</b><small>${esc(activeEvent.location_address||'')}</small></div></div>`:''}
     <div class="meta-row"><span>${activeEvent.counts_toward_season_attendance?'✓':'○'}</span><div><b>${activeEvent.counts_toward_season_attendance?'Counts toward season attendance':'Optional / does not affect season attendance'}</b><small>${activeEvent.rsvp_enabled?'RSVP enabled':'RSVP disabled'} · ${activeEvent.attendance_required?'Attendance tracked':'Attendance not required'}</small></div></div>
     ${activeEvent.description?`<div class="meta-row"><span>📝</span><div><b>Notes</b><small>${esc(activeEvent.description)}</small></div></div>`:''}`;
-  $('attendanceBtn').classList.toggle('hidden',!activeEvent.attendance_required);
-  await loadEventParticipants(activeEvent.id);
+  $('attendanceBtn').classList.toggle('hidden',!activeEvent.attendance_required || !isStaff);
+  show('coachEventActions',isStaff);
+  show('coachRsvpSection',isStaff);
+  show('memberRsvpBox',!isStaff);
+  if(isStaff) await loadEventParticipants(activeEvent.id);
+  else await renderMemberRsvpControls();
   openSheet('eventDetailSheet');
 }
 
@@ -589,6 +795,86 @@ async function loadEventParticipants(eventId){
   $('rsvpSummary').textContent=`${counts.going} going · ${counts.maybe} maybe · ${counts.not_going} not going`;
   $('rsvpList').innerHTML=rosterRows.map(a=>{const r=map.get(a.athlete_id);return `<div class="roster-card"><div><b>${esc(a.first_name)} ${esc(a.last_name)}</b><small>${r?esc(r.response.replace('_',' ')):'No response'}</small></div><div>${r?.response==='going'?'✓':r?.response==='not_going'?'×':'—'}</div></div>`}).join('');
 }
+
+async function renderMemberRsvpControls(){
+  if(!activeEvent) return;
+  if(!activeEvent.rsvp_enabled){
+    $('memberRsvpBox').innerHTML='<div class="empty-card">RSVP is not enabled for this event.</div>'; return;
+  }
+  if(!memberAthletes.length){
+    $('memberRsvpBox').innerHTML='<div class="empty-card">No athlete profile is connected to this account.</div>'; return;
+  }
+
+  const athleteIds=memberAthletes.map(a=>a.id);
+  const [{data:rsvps,error:rErr},{data:att,error:aErr}]=await Promise.all([
+    client.from('event_rsvps').select('*').eq('event_id',activeEvent.id).in('athlete_id',athleteIds),
+    client.from('event_attendance').select('*').eq('event_id',activeEvent.id).in('athlete_id',athleteIds)
+  ]);
+  if(rErr||aErr){ message(rErr?.message||aErr?.message,true); return; }
+  const rmap=new Map((rsvps||[]).map(x=>[x.athlete_id,x]));
+  const amap=new Map((att||[]).map(x=>[x.athlete_id,x]));
+
+  $('memberRsvpBox').innerHTML=memberAthletes.map(a=>{
+    const r=rmap.get(a.id); const at=amap.get(a.id); const role=membershipRoleForAthlete(a.id);
+    let note='';
+    if(!activeEvent.counts_toward_season_attendance){
+      note='<div class="member-note">Optional event: your RSVP helps the coach plan, but Not Going will not affect season attendance.</div>';
+    } else if(r?.response==='not_going' && role==='athlete' && at?.excuse_status==='pending_parent'){
+      note='<div class="member-note warn">Waiting for a parent/guardian to excuse this absence.</div>';
+    } else if(at?.excuse_status==='excused'){
+      note='<div class="member-note good">This absence is excused.</div>';
+    } else if(role==='parent_guardian' && at?.excuse_status==='pending_parent'){
+      note=`<div class="member-note warn">This athlete marked Not Going. You can excuse the absence below.</div>
+      <div class="inline-actions"><button data-excuse-athlete="${a.id}">Excuse Absence</button></div>`;
+    }
+    return `<div class="member-rsvp-card">
+      <b>${esc(a.first_name)} ${esc(a.last_name)}</b>
+      <small>${role==='parent_guardian'?'Parent/guardian response':'Athlete response'}${r?' · '+esc(r.response.replace('_',' ')):' · No response yet'}</small>
+      <div class="rsvp-buttons">
+        ${['going','maybe','not_going'].map(s=>`<button class="rsvp-btn ${r?.response===s?'active '+s:''}" data-rsvp-athlete="${a.id}" data-rsvp="${s}">${s==='not_going'?'Not Going':s[0].toUpperCase()+s.slice(1)}</button>`).join('')}
+      </div>
+      ${note}
+    </div>`;
+  }).join('');
+
+  $('memberRsvpBox').querySelectorAll('[data-rsvp-athlete]').forEach(btn=>btn.onclick=()=>setMemberRsvp(btn.dataset.rsvpAthlete,btn.dataset.rsvp,btn.classList.contains('active')));
+  $('memberRsvpBox').querySelectorAll('[data-excuse-athlete]').forEach(btn=>btn.onclick=()=>openExcuseSheet(btn.dataset.excuseAthlete));
+}
+
+async function setMemberRsvp(athleteId,response,isActive){
+  if(!activeEvent) return;
+  let error=null;
+  if(isActive){
+    ({error}=await client.rpc('clear_event_rsvp',{p_event_id:activeEvent.id,p_athlete_id:athleteId}));
+  } else {
+    ({error}=await client.rpc('set_event_rsvp',{p_event_id:activeEvent.id,p_athlete_id:athleteId,p_response:response,p_note:null}));
+  }
+  if(error){ message(error.message,true); return; }
+  await renderMemberRsvpControls();
+}
+
+function openExcuseSheet(athleteId){
+  const a=memberAthletes.find(x=>x.id===athleteId); if(!a||!activeEvent) return;
+  excuseAthleteId=athleteId;
+  $('excuseAthleteName').textContent=`${a.first_name} ${a.last_name} · ${activeEvent.title}`;
+  $('excuseReason').value='sick'; $('excuseNote').value='';
+  closeSheets(); openSheet('excuseSheet');
+}
+
+async function saveExcuse(){
+  if(!activeEvent||!excuseAthleteId) return;
+  $('saveExcuseBtn').disabled=true; $('saveExcuseBtn').textContent='Saving…';
+  const {error}=await client.rpc('guardian_excuse_absence',{
+    p_event_id:activeEvent.id,
+    p_athlete_id:excuseAthleteId,
+    p_reason:$('excuseReason').value,
+    p_note:$('excuseNote').value.trim()||null
+  });
+  $('saveExcuseBtn').disabled=false; $('saveExcuseBtn').textContent='Excuse Absence';
+  if(error){message(error.message,true);return;}
+  closeSheets(); openSheet('eventDetailSheet'); await renderMemberRsvpControls(); message('Absence excused.');
+}
+
 
 async function openAttendance(){
   if(!activeEvent) return;
@@ -642,12 +928,14 @@ $('signUpBtn').onclick=async()=>{
 };
 $('signInBtn').onclick=async()=>{message('');const {error}=await client.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){message(error.message,true);return;}await refresh();};
 $('signOutBtn').onclick=async()=>{await client.auth.signOut();location.reload();};
+$('acceptInviteBtn').onclick=acceptInvite;
 $('createTeamBtn').onclick=async()=>{
   const {error}=await client.rpc('bootstrap_wrestling_organization',{p_organization_name:$('orgName').value.trim(),p_team_name:$('teamName').value.trim(),p_team_type:$('teamType').value,p_gender_scope:$('genderScope').value,p_season_name:$('seasonName').value.trim()});
   if(error){message(error.message,true);return;} message('Organization and team created.'); await refresh();
 };
 
 $('newEventBtn').onclick=prepareEventForm; $('saveEventBtn').onclick=saveEvent; $('attendanceBtn').onclick=openAttendance; $('deleteEventBtn').onclick=deleteEvent;
+$('saveExcuseBtn').onclick=saveExcuse; $('createAthleteInviteBtn').onclick=createAthleteInvite; $('createGuardianInviteBtn').onclick=createGuardianInvite;
 $('rosterBtn').onclick=()=>openSheet('rosterSheet'); $('addAthleteBtn').onclick=openAddAthlete; $('saveAthleteBtn').onclick=saveAthlete; $('joinBtn').onclick=()=>openSheet('joinSheet'); $('accountBtn').onclick=()=>openSheet('accountSheet'); $('profileBtn').onclick=()=>openSheet('accountSheet');
 $('sheetBackdrop').onclick=closeSheets; document.querySelectorAll('[data-close-sheet]').forEach(x=>x.onclick=closeSheets);
 document.querySelectorAll('.type-btn').forEach(btn=>btn.onclick=()=>applyEventTypeDefaults(btn.dataset.type));
