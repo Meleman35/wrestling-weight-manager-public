@@ -1,24 +1,27 @@
-# Wrestling Weight Manager Web v0.5
+# Wrestling Manager Web v0.6
 
-This is the browser frontend for the Supabase backend already created for Wrestling Weight Manager.
+This version moves the project from the early Weight Manager shell into the broader Wrestling Manager app structure.
 
-## Why this exists
-Supabase Edge Functions intentionally rewrite HTML responses to plain text on the default `*.supabase.co` function domain. So the frontend must be hosted on a normal web host (GitHub Pages, Netlify, Vercel, Cloudflare Pages, etc.) while Supabase remains the backend.
+## Included
+- Supabase Auth sign in/create account
+- Existing organization/team/season bootstrap
+- Mobile bottom navigation: Home, Schedule, Messages, Weight Room, More
+- Live team and weight-room dashboard counts
+- Real Supabase-backed Schedule
+- Event types: Practice, Open Mat, Dual, Tournament, Camp, Travel, Weigh-In, Wrestle-Off, Other
+- RSVP/attendance flags per event
+- `counts_toward_season_attendance` support; Open Mat and Camp default OFF
+- Event detail view
+- Coach attendance marking: Present, Late, Absent, Modified
+- Team Join code
+- Roster display
+- Mobile-first bottom-sheet UI
 
-## GitHub Pages quick path
-1. Create a GitHub repository, for example `wrestling-weight-manager`.
-2. Upload `index.html`, `styles.css`, and `app.js` to the repository root.
-3. In GitHub: Settings → Pages.
-4. Under Build and deployment choose "Deploy from a branch".
-5. Select `main` and `/ (root)`.
-6. Save.
-7. GitHub will provide the live site URL.
-
-The Supabase project URL and publishable key in `app.js` are intentionally client-side. Do not add a Supabase secret/service-role key to this project.
-
-## First live test
-- Create a coach account.
-- Confirm email if required.
-- Sign in.
-- Create the first organization/team/season.
-- Generate a team join code.
+## Next modules
+- Athlete/parent RSVP screens
+- Parent excuse workflow UI
+- Event checkout / ride-home UI
+- Equipment
+- Feed/photos/files
+- Safeguarded Messaging + SMS
+- Full Weight Room kiosk and certification flows
