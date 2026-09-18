@@ -183,6 +183,8 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
 .staff-profile-photo-placeholder{width:96px;height:96px;border-radius:50%;display:grid;place-items:center;background:#e9eef3;font-size:38px;border:3px solid #fff;box-shadow:0 3px 14px rgba(0,0,0,.08)}
 .staff-profile-head{display:flex;align-items:center;gap:16px;margin:10px 0 16px}
 .staff-profile-head .staff-profile-copy{min-width:0;flex:1}
+.view-mode-card{background:#f5f8fb;border:1px solid var(--line);border-radius:16px;padding:12px;margin:12px 0}.view-mode-card b,.view-mode-card small{display:block}.view-mode-card small{color:var(--muted);margin-top:4px;line-height:1.35}.view-mode-switch{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.view-mode-switch button{background:#e9eef4;color:var(--ink)}.view-mode-switch button.active{background:var(--secondary);color:var(--secondary-text)}.family-athlete-list{display:grid;gap:8px;margin-top:10px}.family-athlete-card{width:100%;display:grid;grid-template-columns:54px 1fr auto;align-items:center;gap:11px;background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:10px;text-align:left}.family-athlete-photo,.family-athlete-placeholder{width:54px;height:54px;border-radius:50%;object-fit:cover;background:#e9eef3}.family-athlete-placeholder{display:grid;place-items:center;font-size:24px}.family-athlete-card b,.family-athlete-card small{display:block}.family-athlete-card small{color:var(--muted);margin-top:3px}.family-athlete-home{margin:10px 0 16px}.family-athlete-home .section-head{margin-top:0}
+
 .staff-share-grid{display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px}
 .staff-directory-card{display:grid;grid-template-columns:auto 1fr;gap:13px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:10px}
 .staff-directory-card .staff-profile-photo,.staff-directory-card .staff-profile-photo-placeholder{width:70px;height:70px;font-size:28px}
@@ -340,6 +342,11 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
         <section id="importantAnnouncementsSection" class="important-announcements">
           <div class="section-head"><h3>📣 Important Announcements</h3><button id="newAnnouncementBtn" class="link-btn coach-only">＋ Post</button></div>
           <div id="importantAnnouncementsList"><div class="announcement-empty">No important announcements right now.</div></div>
+        </section>
+
+        <section id="myAthletesHomeSection" class="family-athlete-home hidden">
+          <div class="section-head"><div><h3>My Athletes</h3><span class="section-sub">Your children stay visible even if you also coach or administer the team.</span></div></div>
+          <div id="myAthletesHomeList" class="family-athlete-list"></div>
         </section>
 
         <div class="quick-grid">
@@ -968,11 +975,18 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     <div class="sheet-handle"></div>
     <div class="sheet-head"><div><div class="eyebrow">YOU</div><h2>Account & Team</h2></div><button class="icon-close" data-close-sheet>×</button></div>
     <div class="feature-card"><b id="accountEmail">—</b><p id="accountTeamInfo" class="muted"></p><span id="accountRole" class="role-pill">—</span><div id="accountTeamLevels" class="team-level-summary"></div></div>
+
+    <div id="viewModeCard" class="view-mode-card hidden">
+      <b>View Wrestling Manager as</b>
+      <small>Switch views without changing your real permissions. Parent View shows the same family-facing navigation and athlete profile experience your linked parent account receives.</small>
+      <div class="view-mode-switch"><button id="staffViewModeBtn" type="button">Coach / Admin</button><button id="parentViewModeBtn" type="button">Parent</button></div>
+    </div>
+    <div id="accountMyAthletes" class="feature-card hidden"><b>My Athletes</b><p class="muted">Your children are always available here, even when you also serve as a coach, administrator or team leader.</p><div id="accountMyAthletesList" class="family-athlete-list"></div></div>
     <button id="editStaffProfileBtn" class="wide hidden" type="button">Edit My Coach / Staff Profile</button>
     <button id="editTeamBtn" class="wide admin-only" type="button">Edit Team</button>
     <button id="communicationBtn" class="wide admin-only" type="button">Communication Settings</button>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.9.7</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.9.8</p>
   </section>
 
 
@@ -1148,6 +1162,13 @@ let currentTeamMemberships = [];
 let organizationMemberships = [];
 let availableTeams = [];
 let memberAthletes = [];
+let familyAthletes = [];
+let viewMode = 'staff';
+let actualIsStaff = false;
+let actualIsTeamAdmin = false;
+let actualIsManager = false;
+let actualCanAttendance = false;
+let actualCanWeighIn = false;
 let rosterManagementRows = [];
 let dashboardCounts = null;
 let certificationPlansByAthlete = new Map();
@@ -1364,6 +1385,10 @@ async function refresh(){
 
   $('accountEmail').textContent = session.user.email || session.user.id;
 
+  // If a signed-in adult has a pending guardian invite sent to this same verified email,
+  // link it automatically so dual-role adults can immediately see their child.
+  await client.rpc('accept_matching_guardian_invitations');
+
   const [{ data: orgMemberships, error: orgErr }, { data: tm, error: tmErr }] = await Promise.all([
     client.from('organization_memberships').select('organization_id,role').limit(50),
     client.from('team_memberships').select('team_id,user_id,role,athlete_id,permissions,active,notifications_paused').eq('user_id',session.user.id).limit(200)
@@ -1404,7 +1429,7 @@ async function refresh(){
   await activateTeam(initialTeam.id,{persist:false});
 
   if(pendingJoinCode){ const code=pendingJoinCode; pendingJoinCode=''; setTimeout(()=>startJoinFlow(code),120); }
-  if(pendingInviteToken){ $('inviteToken').value=pendingInviteToken; }
+  if(pendingInviteToken){ const token=pendingInviteToken; pendingInviteToken=''; $('inviteToken').value=token; setTimeout(()=>acceptInvite(),120); }
 }
 
 
@@ -1918,16 +1943,18 @@ async function activateTeam(teamId,{persist=true}={}){
 
   currentTeamMemberships=teamMemberships.filter(x=>x.team_id===team.id && x.active!==false);
   const orgAdmin=organizationMemberships.some(x=>x.role==='organization_admin' && x.organization_id===team.organization_id);
-  isStaff=currentTeamMemberships.some(x=>['head_coach','assistant_coach'].includes(x.role)) || orgAdmin;
-  isTeamAdmin=currentTeamMemberships.some(x=>x.role==='head_coach' || (x.role==='assistant_coach' && x.permissions?.team_admin===true)) || orgAdmin;
+  actualIsStaff=currentTeamMemberships.some(x=>['head_coach','assistant_coach'].includes(x.role)) || orgAdmin;
+  actualIsTeamAdmin=currentTeamMemberships.some(x=>x.role==='head_coach' || (x.role==='assistant_coach' && x.permissions?.team_admin===true)) || orgAdmin;
   const managerMembership=currentTeamMemberships.find(x=>x.role==='manager');
-  isManager=!!managerMembership;
-  canAttendance=isStaff || !!managerMembership?.permissions?.attendance;
-  canWeighIn=isStaff || !!managerMembership?.permissions?.weigh_in;
-  viewerRole=isStaff?'coach':isManager?'manager':(
-    currentTeamMemberships.find(x=>x.role==='parent_guardian')?.role ||
-    currentTeamMemberships.find(x=>x.role==='athlete')?.role || 'member'
-  );
+  actualIsManager=!!managerMembership;
+  actualCanAttendance=actualIsStaff || !!managerMembership?.permissions?.attendance;
+  actualCanWeighIn=actualIsStaff || !!managerMembership?.permissions?.weigh_in;
+
+  const familyResult=await client.rpc('get_my_family_athletes',{p_team_id:team.id});
+  familyAthletes=familyResult.error?[]:(familyResult.data||[]);
+  const savedView=localStorage.getItem(`wm_view_mode_${team.id}`);
+  viewMode=(familyAthletes.length && savedView==='parent')?'parent':'staff';
+  applyEffectiveViewMode();
 
   $('headerTeamName').textContent=team.name;
   $('homeTeamName').textContent=team.name;
@@ -1954,7 +1981,7 @@ async function activateTeam(teamId,{persist=true}={}){
   $('accountTeamInfo').textContent=`${team.name} · ${activeSeason.name}`;
   $('accountTeamLevels').innerHTML=renderTeamLevelPills(team.service_levels||[]);
   show('editTeamBtn',isTeamAdmin);
-  $('accountRole').textContent=viewerRole==='coach'?'Coach / Staff':viewerRole==='manager'?'Manager / Limited Staff':viewerRole.replace('_',' ');
+  $('accountRole').textContent=viewMode==='parent'?'Parent View':viewerRole==='coach'?'Coach / Staff':viewerRole==='manager'?'Manager / Limited Staff':viewerRole.replace('_',' ');
 
   applyRoleUI();
   renderTeamSwitcher();
@@ -1967,9 +1994,51 @@ async function activateTeam(teamId,{persist=true}={}){
   } else {
     await Promise.all([loadMemberAthletes(),loadSchedule(),loadImportantAnnouncements()]);
   }
+  await renderFamilyAthletes();
   renderAttention();
   await refreshHeaderAvatar();
   if(persist) message(`Switched to ${team.name}.`);
+}
+
+function applyEffectiveViewMode(){
+  const parentMode=viewMode==='parent' && familyAthletes.length>0;
+  isStaff=parentMode?false:actualIsStaff;
+  isTeamAdmin=parentMode?false:actualIsTeamAdmin;
+  isManager=parentMode?false:actualIsManager;
+  canAttendance=parentMode?false:actualCanAttendance;
+  canWeighIn=parentMode?false:actualCanWeighIn;
+  viewerRole=parentMode?'parent_guardian':(actualIsStaff?'coach':actualIsManager?'manager':(
+    currentTeamMemberships.find(x=>x.role==='parent_guardian')?.role ||
+    currentTeamMemberships.find(x=>x.role==='athlete')?.role || 'member'
+  ));
+}
+
+async function setViewMode(mode){
+  if(!activeTeam)return;
+  if(mode==='parent'&&!familyAthletes.length){message('No child is linked to this account on this team yet.',true);return;}
+  viewMode=mode==='parent'?'parent':'staff';
+  localStorage.setItem(`wm_view_mode_${activeTeam.id}`,viewMode);
+  await activateTeam(activeTeam.id,{persist:false});
+  closeSheets();
+  setTab('home');
+  message(viewMode==='parent'?'Parent View is on.':'Coach / Admin View is on.');
+}
+
+async function renderFamilyAthletes(){
+  const containers=[$('myAthletesHomeList'),$('accountMyAthletesList')].filter(Boolean);
+  show('myAthletesHomeSection',familyAthletes.length>0);
+  show('accountMyAthletes',familyAthletes.length>0);
+  show('viewModeCard',familyAthletes.length>0 && (actualIsStaff||actualIsManager));
+  $('staffViewModeBtn')?.classList.toggle('active',viewMode!=='parent');
+  $('parentViewModeBtn')?.classList.toggle('active',viewMode==='parent');
+  if(!familyAthletes.length){containers.forEach(c=>c.innerHTML='');return;}
+  const rows=[];
+  for(const a of familyAthletes){
+    let photo='';
+    if(a.photo_path){const {data}=await client.storage.from('athlete-photos').createSignedUrl(a.photo_path,3600);photo=data?.signedUrl||'';}
+    rows.push(`<button class="family-athlete-card" type="button" data-family-athlete="${a.athlete_id}">${photo?`<img class="family-athlete-photo" src="${esc(photo)}" alt="${esc(a.first_name)}">`:`<div class="family-athlete-placeholder">👤</div>`}<div><b>${esc(a.first_name)} ${esc(a.last_name)}</b><small>${esc(a.relationship||'Child')}${a.roster_status?' · '+esc(String(a.roster_status).replace('_',' ')):''}</small></div><span>›</span></button>`);
+  }
+  containers.forEach(c=>{c.innerHTML=rows.join('');c.querySelectorAll('[data-family-athlete]').forEach(b=>b.onclick=()=>openAthleteView(b.dataset.familyAthlete));});
 }
 
 function applyRoleUI(){
@@ -1978,6 +2047,9 @@ function applyRoleUI(){
   show('joinBtn', isStaff);
   show('joinRequestsBtn', isStaff);
   show('staffAccessBtn', isTeamAdmin);
+  show('editStaffProfileBtn', actualIsStaff && viewMode!=='parent');
+  show('communicationBtn', actualIsTeamAdmin && viewMode!=='parent');
+  show('editTeamBtn', actualIsTeamAdmin && viewMode!=='parent');
   document.querySelectorAll('.coach-only').forEach(x=>x.classList.toggle('hidden-role',!isStaff));
   document.querySelectorAll('.admin-only').forEach(x=>x.classList.toggle('hidden-role',!isTeamAdmin));
   document.querySelectorAll('.operator-only').forEach(x=>x.classList.toggle('hidden-role',!canWeighIn));
@@ -1996,11 +2068,15 @@ function applyRoleUI(){
 }
 
 async function loadMemberAthletes(){
-  const ids=[...new Set(currentTeamMemberships.filter(x=>x.athlete_id).map(x=>x.athlete_id))];
-  if(!ids.length){ memberAthletes=[]; return; }
+  const ids=[...new Set([
+    ...currentTeamMemberships.filter(x=>x.athlete_id).map(x=>x.athlete_id),
+    ...familyAthletes.map(x=>x.athlete_id)
+  ])];
+  if(!ids.length){ memberAthletes=[]; await renderFamilyAthletes(); return; }
   const {data,error}=await client.from('athletes').select('id,first_name,last_name').in('id',ids).order('last_name');
   if(error){ message(error.message,true); memberAthletes=[]; return; }
   memberAthletes=data||[];
+  await renderFamilyAthletes();
 }
 
 function membershipRoleForAthlete(athleteId){
@@ -2819,7 +2895,7 @@ function profileField(label,value){
 
 async function openAthleteOverview(athleteId){
   if(!activeTeam||!athleteId)return;
-  const {data,error}=await client.rpc('get_athlete_profile_for_team',{p_athlete_id:athleteId,p_team_id:activeTeam.id});
+  const {data,error}=await client.rpc('get_athlete_profile_for_team_v2',{p_athlete_id:athleteId,p_team_id:activeTeam.id,p_view_as_parent:viewMode==='parent'});
   if(error){message(error.message,true);return;}
   viewAthleteId=athleteId;
   const row=rosterRows.find(x=>x.athlete_id===athleteId)||rosterManagementRows.find(x=>x.athlete_id===athleteId)||null;
@@ -2871,7 +2947,7 @@ async function openAthleteOverview(athleteId){
 
 async function openAthleteProfile(athleteId){
   if(!activeTeam)return;
-  const {data,error}=await client.rpc('get_athlete_profile_for_team',{p_athlete_id:athleteId,p_team_id:activeTeam.id});
+  const {data,error}=await client.rpc('get_athlete_profile_for_team_v2',{p_athlete_id:athleteId,p_team_id:activeTeam.id,p_view_as_parent:viewMode==='parent'});
   if(error){message(error.message,true);return;}
   profileAthleteId=athleteId; profileData=data;
   $('profileAthleteName').textContent=`${data.first_name} ${data.last_name}`;
@@ -3939,6 +4015,7 @@ $('signUpBtn').onclick=async()=>{
 };
 $('signInBtn').onclick=async()=>{message('');const {error}=await client.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){message(error.message,true);return;}await refresh();};
 $('signOutBtn').onclick=async()=>{await client.auth.signOut();location.reload();};
+$('staffViewModeBtn').onclick=()=>setViewMode('staff'); $('parentViewModeBtn').onclick=()=>setViewMode('parent');
 $('acceptInviteBtn').onclick=acceptInvite;
 $('setupJoinBtn').onclick=()=>startJoinFlow($('setupJoinCode').value.trim());
 $('bootstrapTeamBtn').onclick=async()=>{
