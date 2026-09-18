@@ -40,7 +40,10 @@ button.wide{width:100%;margin-top:16px}.stack-actions{display:grid;gap:9px;margi
 .app-header{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;background:var(--team-primary);color:var(--team-primary-text);border-bottom:2px solid var(--team-secondary);box-shadow:0 4px 18px rgba(0,0,0,.08)}
 .team-switcher{padding:7px 2px;background:transparent;color:var(--team-primary-text);display:flex;align-items:center;gap:8px;text-align:left}
 .team-switcher small{display:block;font-size:11px;color:var(--team-header-muted);font-weight:850;text-transform:uppercase;letter-spacing:.06em}.team-switcher strong{display:block;max-width:270px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:18px}.chev{font-size:22px}
-.round-btn{width:44px;height:44px;border-radius:50%;padding:0;background:var(--team-secondary);color:var(--team-secondary-text);border:1px solid var(--team-nav-line)}
+.round-btn{width:44px;height:44px;border-radius:50%;padding:0;background:var(--team-secondary);color:var(--team-secondary-text);border:1px solid var(--team-nav-line)}.round-btn.header-avatar-loaded{overflow:hidden;background:#eef2f6}.round-btn .header-avatar-img{width:100%;height:100%;display:block;object-fit:cover;border-radius:50%}
+.athlete-name-link,.roster-name-link{appearance:none;border:0;background:transparent;color:var(--ink);padding:0;margin:0;font:inherit;font-weight:950;text-align:left;cursor:pointer;text-decoration:none}.athlete-name-link:hover,.roster-name-link:hover{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}.athlete-name-link:focus-visible,.roster-name-link:focus-visible{outline:3px solid color-mix(in srgb,var(--team-secondary) 55%,transparent);outline-offset:3px;border-radius:6px}
+.profile-view-hero{display:grid;grid-template-columns:92px 1fr;gap:16px;align-items:center;margin:6px 0 14px}.profile-view-photo,.profile-view-photo-placeholder{width:92px;height:92px;border-radius:50%;object-fit:cover;background:#e8edf3;border:3px solid color-mix(in srgb,var(--team-secondary) 35%,#fff)}.profile-view-photo-placeholder{display:grid;place-items:center;font-size:40px}.profile-view-hero h3{margin:0;font-size:26px}.profile-view-hero p{margin:5px 0 0;color:var(--muted);line-height:1.35}.profile-view-card{background:#f8fafc;border:1px solid var(--line);border-radius:18px;padding:14px;margin:12px 0}.profile-view-card h3{margin:0 0 9px}.profile-view-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px}.profile-view-field{min-width:0}.profile-view-field span{display:block;color:var(--muted);font-size:12px;font-weight:850;text-transform:uppercase;letter-spacing:.04em}.profile-view-field b{display:block;margin-top:3px;word-break:break-word}.profile-view-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}.profile-view-actions .wide-span{grid-column:1/-1}
+@media(max-width:420px){.profile-view-grid{grid-template-columns:1fr}.profile-view-actions{grid-template-columns:1fr}}
 .team-banner{position:relative;width:100%;aspect-ratio:4/1;overflow:hidden;border-radius:0 0 22px 22px;background:linear-gradient(135deg,var(--team-primary),var(--team-secondary));box-shadow:var(--shadow);margin:-14px 0 14px}.team-banner img{display:block;width:100%;height:100%;object-fit:cover;object-position:center var(--team-banner-y)}
 .team-banner::after{content:"";position:absolute;inset:0;box-shadow:inset 0 -28px 45px rgba(0,0,0,.08);pointer-events:none}
 .content{max-width:760px;margin:auto;padding:14px 15px 30px}.top-space{margin-top:4px}
@@ -636,13 +639,6 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     <label class="toggle-row"><span><b>Allow coaches to see exact birthday</b><small>Age division is calculated even when exact birthday is hidden</small></span><input id="joinShareBirth" type="checkbox"></label>
     <label class="toggle-row"><span><b>Allow team SMS notifications</b><small>Phone number can be stored without enabling team texts</small></span><input id="joinSms" type="checkbox"></label>
 
-    <div id="profileFamilyCard" class="feature-card">
-      <h3 style="margin-top:0">Parents / Guardians</h3>
-      <p class="muted">Family contacts stay with the athlete profile when the athlete moves between teams.</p>
-      <div id="profileGuardianList"></div>
-      <button id="profileManageGuardiansBtn" class="wide secondary hidden" type="button">Manage Parent / Guardian Contacts</button>
-    </div>
-
     <h3 class="subhead">Gear sizes</h3>
     <div class="profile-grid"><div><label>Shirt</label><input id="joinShirt" placeholder="YS, AM, AL…"></div><div><label>Shorts</label><input id="joinShorts"></div><div><label>Shoe</label><input id="joinShoe"></div><div><label>Singlet</label><input id="joinSinglet"></div><div><label>Warm-up top</label><input id="joinWarmTop"></div><div><label>Warm-up bottom</label><input id="joinWarmBottom"></div></div>
 
@@ -670,9 +666,43 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     <div id="coachJoinRequestsList"><div class="empty-card">No pending requests.</div></div>
   </section>
 
+  <section id="athleteViewSheet" class="sheet hidden" aria-modal="true">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><div><div class="eyebrow">ATHLETE</div><h2 id="viewAthleteName">Athlete Profile</h2><p class="muted">Team profile and family information</p></div><button class="icon-close" data-close-sheet>×</button></div>
+    <div class="profile-view-hero">
+      <div id="viewAthletePhoto" class="profile-view-photo-placeholder">👤</div>
+      <div><h3 id="viewAthleteHeroName">Athlete</h3><p id="viewAthleteHeroMeta">Team athlete</p></div>
+    </div>
+    <div id="viewAthleteTeamSnapshot" class="profile-view-card"></div>
+    <div id="viewAthleteAgeDivisions" class="join-summary"></div>
+    <div class="profile-view-card">
+      <h3>Contact</h3>
+      <div id="viewAthleteContact" class="profile-view-grid"></div>
+    </div>
+    <div class="profile-view-card">
+      <h3>Parents / Guardians</h3>
+      <p class="muted">Family contacts stay with the athlete as they move between teams.</p>
+      <div id="viewAthleteGuardians"></div>
+    </div>
+    <div class="profile-view-card">
+      <h3>Gear Sizes</h3>
+      <div id="viewAthleteGear" class="profile-view-grid"></div>
+    </div>
+    <div id="viewAthleteMedicalCard" class="profile-view-card hidden">
+      <h3>Medical / Emergency</h3>
+      <div id="viewAthleteMedical"></div>
+    </div>
+    <div class="profile-view-actions">
+      <button id="viewAthleteTrendBtn" class="secondary" type="button">📈 Weight Trend</button>
+      <button id="viewAthleteEditBtn" type="button">Edit Profile</button>
+      <button id="viewAthleteGuardiansBtn" class="secondary wide-span hidden" type="button">Manage Parent / Guardian Contacts</button>
+      <button id="viewAthleteTeamsBtn" class="secondary wide-span hidden" type="button">Teams / Transfer</button>
+    </div>
+  </section>
+
   <section id="athleteProfileSheet" class="sheet hidden" aria-modal="true">
     <div class="sheet-handle"></div>
-    <div class="sheet-head"><div><div class="eyebrow">ATHLETE PROFILE</div><h2 id="profileAthleteName">Athlete</h2><p class="muted">Profile, gear sizing, privacy and age divisions</p></div><button class="icon-close" data-close-sheet>×</button></div>
+    <div class="sheet-head"><div><div class="eyebrow">EDIT ATHLETE PROFILE</div><h2 id="profileAthleteName">Athlete</h2><p class="muted">Edit profile, family contacts, gear sizing, privacy and age divisions</p></div><button class="icon-close" data-close-sheet>×</button></div>
     <div class="profile-photo-row"><div id="profilePhotoBox" class="profile-photo-placeholder">👤</div><div><label style="margin-top:0">Profile photo</label><input id="profilePhotoInput" type="file" accept="image/*"><div class="tiny">Athlete, parent or authorized team staff can update the picture.</div></div></div>
     <div id="profileAgeDivisions" class="join-summary"></div>
     <button id="profileWeightTrendBtn" class="wide secondary" type="button">📈 Weight Trend</button>
@@ -687,6 +717,13 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     <label class="toggle-row"><span><b>Allow coaches to see email</b><small>Otherwise limited to team admin and family</small></span><input id="profileShareEmail" type="checkbox"></label>
     <label class="toggle-row"><span><b>Allow coaches to see phone</b><small>Otherwise limited to team admin and family</small></span><input id="profileSharePhone" type="checkbox"></label>
     <label class="toggle-row"><span><b>Receive team SMS</b><small>Separate from whether coaches may see the number</small></span><input id="profileSms" type="checkbox"></label>
+
+    <div id="profileFamilyCard" class="feature-card">
+      <h3 style="margin-top:0">Parents / Guardians</h3>
+      <p class="muted">Family contacts stay with the athlete profile when the athlete moves between teams.</p>
+      <div id="profileGuardianList"></div>
+      <button id="profileManageGuardiansBtn" class="wide secondary hidden" type="button">Manage Parent / Guardian Contacts</button>
+    </div>
 
     <h3 class="subhead">Gear sizes</h3>
     <div class="profile-grid"><div><label>Shirt</label><input id="profileShirt"></div><div><label>Shorts</label><input id="profileShorts"></div><div><label>Shoe</label><input id="profileShoe"></div><div><label>Singlet</label><input id="profileSinglet"></div><div><label>Warm-up top</label><input id="profileWarmTop"></div><div><label>Warm-up bottom</label><input id="profileWarmBottom"></div></div>
@@ -1102,6 +1139,7 @@ let joinPreview = null;
 let joinRequests = [];
 let profileAthleteId = null;
 let profileData = null;
+let viewAthleteId = null;
 let photoCropImage = null;
 let photoCropSourceFile = null;
 let photoCropTarget = 'athlete';
@@ -1282,7 +1320,7 @@ function openSheet(id){
 }
 function closeSheets(){
   if(document.body.classList.contains('kiosk-locked')) return;
-  ['eventSheet','eventDetailSheet','attendanceSheet','announcementSheet','rosterSheet','athleteTeamsSheet','addAthleteSheet','joinSheet','joinRequestSheet','coachJoinRequestsSheet','athleteProfileSheet','weightTrendSheet','photoCropSheet','staffProfileSheet','staffDirectorySheet','familySheet','excuseSheet','athleteAccessSheet','staffAccessSheet','weighedTodaySheet','weighInStartSheet','weighInConsoleSheet','importRosterSheet','teamSwitcherSheet','createTeamSheet','editTeamSheet','lineupClassSheet','accountSheet'].forEach(id=>show(id,false));
+  ['eventSheet','eventDetailSheet','attendanceSheet','announcementSheet','rosterSheet','athleteTeamsSheet','addAthleteSheet','joinSheet','joinRequestSheet','coachJoinRequestsSheet','athleteViewSheet','athleteProfileSheet','weightTrendSheet','photoCropSheet','staffProfileSheet','staffDirectorySheet','familySheet','excuseSheet','athleteAccessSheet','staffAccessSheet','weighedTodaySheet','weighInStartSheet','weighInConsoleSheet','importRosterSheet','teamSwitcherSheet','createTeamSheet','editTeamSheet','lineupClassSheet','accountSheet'].forEach(id=>show(id,false));
   show('sheetBackdrop', false); document.body.style.overflow='';
 }
 
@@ -1879,7 +1917,7 @@ async function activateTeam(teamId,{persist=true}={}){
     $('accountTeamLevels').innerHTML=renderTeamLevelPills(team.service_levels||[]);
     show('editTeamBtn',isTeamAdmin);
     $('accountRole').textContent=roleLabelForTeam(team);
-    applyRoleUI(); renderTeamSwitcher(); renderAttention();
+    applyRoleUI(); renderTeamSwitcher(); renderAttention(); await refreshHeaderAvatar();
     message(`${team.name} does not have an active season yet.`,true);
     return;
   }
@@ -1903,6 +1941,7 @@ async function activateTeam(teamId,{persist=true}={}){
     await Promise.all([loadMemberAthletes(),loadSchedule(),loadImportantAnnouncements()]);
   }
   renderAttention();
+  await refreshHeaderAvatar();
   if(persist) message(`Switched to ${team.name}.`);
 }
 
@@ -2113,7 +2152,7 @@ function renderCoachWeightClassBoard(){
         : `<div class="weight-athlete-number">${esc(latest)}<small>latest weight</small></div>`;
       return `<div class="weight-athlete-row">
         <div class="weight-athlete-top">
-          <div class="weight-athlete-name"><b>${esc(r.first_name)} ${esc(r.last_name)}</b><small>${esc(rosterStatusLabel(r.roster_status))}${eligible?` · ${esc(eligible)}`:''}</small><button class="lineup-class-btn" type="button" data-set-lineup-class="${r.athlete_id}">${r.current_lineup_class?`Change class (${esc(displayTeamWeightClass(r.current_lineup_class))})`:'Set lineup class'}</button></div>
+          <div class="weight-athlete-name"><button class="athlete-name-link" type="button" data-view-athlete="${r.athlete_id}">${esc(r.first_name)} ${esc(r.last_name)}</button><small>${esc(rosterStatusLabel(r.roster_status))}${eligible?` · ${esc(eligible)}`:''}</small><button class="lineup-class-btn" type="button" data-set-lineup-class="${r.athlete_id}">${r.current_lineup_class?`Change class (${esc(displayTeamWeightClass(r.current_lineup_class))})`:'Set lineup class'}</button></div>
           ${latestWeightControl}
         </div>
         ${usesPlans?`<div class="plan-summary"><small>Weight-loss plan options</small><div class="plan-path">${chips.map(c=>`<span class="plan-chip ${esc(c.kind)}">${esc(c.text)}</span>`).join('')}</div>${note?`<span class="plan-note">${esc(note)}</span>`:''}</div>`:''}
@@ -2123,6 +2162,7 @@ function renderCoachWeightClassBoard(){
   }).join('');
   container.querySelectorAll('[data-delete-latest-weigh]').forEach(btn=>btn.onclick=()=>deleteLatestLineupWeighIn(btn.dataset.deleteLatestWeigh,btn.dataset.deleteAthleteName,btn.dataset.deleteWeight));
   container.querySelectorAll('[data-set-lineup-class]').forEach(btn=>btn.onclick=()=>openLineupClassSheet(btn.dataset.setLineupClass));
+  container.querySelectorAll('[data-view-athlete]').forEach(btn=>btn.onclick=()=>openAthleteOverview(btn.dataset.viewAthlete));
 }
 
 function openLineupClassSheet(athleteId){
@@ -2253,10 +2293,10 @@ async function loadRoster(){
   $('rosterList').innerHTML=rosterRows.length?rosterRows.map(r=>{
     const m=manageMap.get(r.athlete_id);
     return `<div class="roster-card">
-      <div><b>${esc(r.first_name)} ${esc(r.last_name)}</b><small>${esc(rosterStatusLabel(r.roster_status))} · lineup ${esc(r.current_lineup_class!==null&&r.current_lineup_class!==undefined?displayTeamWeightClass(r.current_lineup_class):'—')} · eligible ${esc(r.eligible_weight_class ?? '—')}</small>${m?.status_reason?`<small>${esc(m.status_reason)}</small>`:''}${rosterManageButtons(r.athlete_id)}</div>
+      <div><button class="roster-name-link" type="button" data-view-athlete="${r.athlete_id}">${esc(r.first_name)} ${esc(r.last_name)}</button><small>${esc(rosterStatusLabel(r.roster_status))} · lineup ${esc(r.current_lineup_class!==null&&r.current_lineup_class!==undefined?displayTeamWeightClass(r.current_lineup_class):'—')} · eligible ${esc(r.eligible_weight_class ?? '—')}</small>${m?.status_reason?`<small>${esc(m.status_reason)}</small>`:''}${rosterManageButtons(r.athlete_id)}</div>
       <div class="roster-actions">
         <div class="weight-value">${esc(r.latest_weight ?? '—')}<small> lb</small></div>
-        <button class="roster-access-btn" data-profile-athlete="${r.athlete_id}">Profile</button>
+        <button class="roster-access-btn" data-profile-athlete="${r.athlete_id}">Edit Profile</button>
         <button class="roster-access-btn" data-set-lineup-class="${r.athlete_id}">${r.current_lineup_class?'Change Class':'Set Class'}</button>
         ${isTeamAdmin?`<button class="roster-access-btn" data-athlete-teams="${r.athlete_id}">Teams / Transfer</button>`:''}
         <button class="roster-access-btn" data-access-athlete="${r.athlete_id}">Invite</button>
@@ -2265,6 +2305,7 @@ async function loadRoster(){
   }).join(''):'<div class="empty-card">No active athletes. Team Join will feed approved athletes into this roster.</div>';
 
   $('rosterList').querySelectorAll('[data-access-athlete]').forEach(btn=>btn.onclick=()=>openAthleteAccess(btn.dataset.accessAthlete));
+  $('rosterList').querySelectorAll('[data-view-athlete]').forEach(btn=>btn.onclick=()=>openAthleteOverview(btn.dataset.viewAthlete));
   $('rosterList').querySelectorAll('[data-profile-athlete]').forEach(btn=>btn.onclick=()=>openAthleteProfile(btn.dataset.profileAthlete));
   $('rosterList').querySelectorAll('[data-athlete-teams]').forEach(btn=>btn.onclick=()=>openAthleteTeams(btn.dataset.athleteTeams));
   $('rosterList').querySelectorAll('[data-set-lineup-class]').forEach(btn=>btn.onclick=()=>openLineupClassSheet(btn.dataset.setLineupClass));
@@ -2276,13 +2317,14 @@ async function loadRoster(){
     $('inactiveRosterList').innerHTML=inactiveRows.length?inactiveRows.map(r=>`
       <div class="roster-card roster-muted-card">
         <div>
-          <b>${esc(r.first_name)} ${esc(r.last_name)}</b>
+          <button class="roster-name-link" type="button" data-view-athlete="${r.athlete_id}">${esc(r.first_name)} ${esc(r.last_name)}</button>
           <span class="status-badge ${esc(r.roster_status)}">${esc(rosterStatusLabel(r.roster_status))}</span>
           ${r.status_reason?`<small>${esc(r.status_reason)}</small>`:''}
           <div class="roster-manage-buttons"><button class="reactivate-btn" data-team-status="active" data-status-athlete="${r.athlete_id}">Reactivate</button></div>
         </div>
-        <div class="roster-actions"><button class="roster-access-btn" data-profile-athlete="${r.athlete_id}">Profile</button>${isTeamAdmin?`<button class="roster-access-btn" data-athlete-teams="${r.athlete_id}">Teams / Transfer</button>`:''}</div>
+        <div class="roster-actions"><button class="roster-access-btn" data-profile-athlete="${r.athlete_id}">Edit Profile</button>${isTeamAdmin?`<button class="roster-access-btn" data-athlete-teams="${r.athlete_id}">Teams / Transfer</button>`:''}</div>
       </div>`).join(''):'<div class="empty-card">No athletes on standby or removed.</div>';
+    $('inactiveRosterList').querySelectorAll('[data-view-athlete]').forEach(btn=>btn.onclick=()=>openAthleteOverview(btn.dataset.viewAthlete));
     $('inactiveRosterList').querySelectorAll('[data-profile-athlete]').forEach(btn=>btn.onclick=()=>openAthleteProfile(btn.dataset.profileAthlete));
     $('inactiveRosterList').querySelectorAll('[data-athlete-teams]').forEach(btn=>btn.onclick=()=>openAthleteTeams(btn.dataset.athleteTeams));
     bindRosterManagementActions($('inactiveRosterList'));
@@ -2724,6 +2766,82 @@ async function openWeightTrend(athleteId){
   document.querySelectorAll('[data-trend-days]').forEach(b=>b.classList.toggle('active',Number(b.dataset.trendDays)===weightTrendDays)); closeSheets();openSheet('weightTrendSheet');await loadWeightTrend();
 }
 
+
+function guardianCardsHtml(guardians){
+  const rows=Array.isArray(guardians)?guardians:[];
+  return rows.length?rows.map(g=>{
+    const contacts=[];
+    if(g.email)contacts.push(`<a href="mailto:${esc(g.email)}">✉ ${esc(g.email)}</a>`);
+    if(g.phone)contacts.push(`<a href="tel:${esc(String(g.phone).replace(/[^0-9+]/g,''))}">☎ ${esc(formatUsPhone(g.phone))}</a>`);
+    const status=g.guardian_user_id?'Account connected':g.invitation_status==='pending'?'Invite pending':'Saved contact';
+    return `<div class="guardian-contact-row" style="display:block"><b>${esc(g.name||'Parent / Guardian')}</b><small>${esc(g.relationship||'Parent / guardian')} · ${esc(status)}</small>${contacts.length?`<div class="staff-contact-links" style="margin-top:8px">${contacts.join('')}</div>`:''}</div>`;
+  }).join(''):'<p class="fine">No parents or guardians saved yet.</p>';
+}
+
+async function athletePhotoUrl(path){
+  if(!path)return null;
+  if(/^https?:\/\//i.test(path))return path;
+  const {data,error}=await client.storage.from('athlete-photos').createSignedUrl(path,3600);
+  return error?null:data?.signedUrl||null;
+}
+
+function profileField(label,value){
+  const display=value===null||value===undefined||value===''?'—':String(value);
+  return `<div class="profile-view-field"><span>${esc(label)}</span><b>${esc(display)}</b></div>`;
+}
+
+async function openAthleteOverview(athleteId){
+  if(!activeTeam||!athleteId)return;
+  const {data,error}=await client.rpc('get_athlete_profile_for_team',{p_athlete_id:athleteId,p_team_id:activeTeam.id});
+  if(error){message(error.message,true);return;}
+  viewAthleteId=athleteId;
+  const row=rosterRows.find(x=>x.athlete_id===athleteId)||rosterManagementRows.find(x=>x.athlete_id===athleteId)||null;
+  const fullName=`${data.first_name||''} ${data.last_name||''}`.trim()||'Athlete';
+  $('viewAthleteName').textContent=fullName;
+  $('viewAthleteHeroName').textContent=fullName;
+  const meta=[];
+  if(data.school_level)meta.push(schoolLabel(data.school_level));
+  if(data.grade_level)meta.push(data.grade_level==='college'?'College':`Grade ${data.grade_level}`);
+  if(data.graduation_year)meta.push(`Class of ${data.graduation_year}`);
+  $('viewAthleteHeroMeta').textContent=meta.join(' · ')||`${activeTeam.name} athlete`;
+
+  const photoUrl=await athletePhotoUrl(data.photo_path);
+  $('viewAthletePhoto').className=photoUrl?'profile-view-photo':'profile-view-photo-placeholder';
+  $('viewAthletePhoto').innerHTML=photoUrl?`<img class="profile-view-photo" src="${esc(photoUrl)}" alt="${esc(fullName)}">`:'👤';
+
+  const lineup=row?.current_lineup_class!==null&&row?.current_lineup_class!==undefined?displayTeamWeightClass(row.current_lineup_class):'—';
+  const latest=row?.latest_weight!==null&&row?.latest_weight!==undefined?`${Number(row.latest_weight).toFixed(1)} lb`:'—';
+  $('viewAthleteTeamSnapshot').innerHTML=`<h3>Team Snapshot</h3><div class="profile-view-grid">${profileField('Roster',row?rosterStatusLabel(row.roster_status):'Team member')}${profileField('Lineup class',lineup)}${profileField('Latest weight',latest)}${profileField('Eligibility',row?.eligible_weight_class!==null&&row?.eligible_weight_class!==undefined?displayTeamWeightClass(row.eligible_weight_class):'—')}</div>`;
+
+  $('viewAthleteAgeDivisions').innerHTML=formatAgeDivisions(data.age_divisions);
+  const contact=[];
+  contact.push(profileField('Email',data.email||'Private / not shared'));
+  contact.push(profileField('Phone',data.phone?formatUsPhone(data.phone):'Private / not shared'));
+  contact.push(profileField('Birthday',data.birth_date||'Private / not shared'));
+  $('viewAthleteContact').innerHTML=contact.join('');
+  $('viewAthleteGuardians').innerHTML=guardianCardsHtml(data.guardians);
+
+  const gear=[
+    ['Shirt',data.shirt_size],['Shorts',data.shorts_size],['Shoe',data.shoe_size],
+    ['Singlet',data.singlet_size],['Warm-up top',data.warmup_top_size],['Warm-up bottom',data.warmup_bottom_size]
+  ];
+  $('viewAthleteGear').innerHTML=gear.map(([label,value])=>profileField(label,value||'—')).join('');
+
+  const med=[];
+  if((data.medical_conditions||[]).length)med.push(`<div><b>Conditions:</b> ${esc((data.medical_conditions||[]).join(', '))}</div>`);
+  if(data.medical_notes)med.push(`<div style="margin-top:7px"><b>Notes:</b> ${esc(data.medical_notes)}</div>`);
+  if(data.rescue_item_location)med.push(`<div style="margin-top:7px"><b>Rescue item:</b> ${esc(data.rescue_item_location)}</div>`);
+  show('viewAthleteMedicalCard',med.length>0);
+  $('viewAthleteMedical').innerHTML=med.join('');
+
+  const viewer=data.viewer||{};
+  show('viewAthleteEditBtn',!!(viewer.staff||viewer.admin||viewer.self||viewer.guardian));
+  show('viewAthleteGuardiansBtn',!!viewer.staff);
+  show('viewAthleteTeamsBtn',!!isTeamAdmin);
+
+  closeSheets();openSheet('athleteViewSheet');
+}
+
 async function openAthleteProfile(athleteId){
   if(!activeTeam)return;
   const {data,error}=await client.rpc('get_athlete_profile_for_team',{p_athlete_id:athleteId,p_team_id:activeTeam.id});
@@ -2735,14 +2853,7 @@ async function openAthleteProfile(athleteId){
   $('profileShirt').value=data.shirt_size||''; $('profileShorts').value=data.shorts_size||''; $('profileShoe').value=data.shoe_size||''; $('profileSinglet').value=data.singlet_size||''; $('profileWarmTop').value=data.warmup_top_size||''; $('profileWarmBottom').value=data.warmup_bottom_size||'';
   document.querySelectorAll('.profile-med').forEach(x=>x.checked=(data.medical_conditions||[]).includes(x.value)); $('profileMedicalNote').value=data.medical_notes||''; $('profileRescueLocation').value=data.rescue_item_location||''; $('profileMedicalShare').checked=!!data.disclose_medical_to_coaches;
   $('profileAgeDivisions').innerHTML=formatAgeDivisions(data.age_divisions);
-  const guardians=Array.isArray(data.guardians)?data.guardians:[];
-  $('profileGuardianList').innerHTML=guardians.length?guardians.map(g=>{
-    const contacts=[];
-    if(g.email)contacts.push(`<a href="mailto:${esc(g.email)}">✉ ${esc(g.email)}</a>`);
-    if(g.phone)contacts.push(`<a href="tel:${esc(String(g.phone).replace(/[^0-9+]/g,''))}">☎ ${esc(formatUsPhone(g.phone))}</a>`);
-    const status=g.guardian_user_id?'Account connected':g.invitation_status==='pending'?'Invite pending':'Saved contact';
-    return `<div class="guardian-contact-row" style="display:block"><b>${esc(g.name||'Parent / Guardian')}</b><small>${esc(g.relationship||'Parent / guardian')} · ${esc(status)}</small>${contacts.length?`<div class="staff-contact-links" style="margin-top:8px">${contacts.join('')}</div>`:''}</div>`;
-  }).join(''):'<p class="fine">No parents or guardians saved yet.</p>';
+  $('profileGuardianList').innerHTML=guardianCardsHtml(data.guardians);
   const viewer=data.viewer||{}; const adult=data.birth_date?new Date(data.birth_date+'T12:00:00')<=new Date(new Date().setFullYear(new Date().getFullYear()-18)):false; const control=viewer.guardian||viewer.admin||(viewer.self&&adult);
   show('profileManageGuardiansBtn',!!viewer.staff);
   const staffReadOnly=viewer.staff&&!viewer.admin&&!viewer.self&&!viewer.guardian;
@@ -2913,6 +3024,26 @@ function staffRoleLabel(role){
     role==='organization_admin'?'Organization Admin':'Coach / Staff';
 }
 
+
+function setHeaderAvatar(url=null){
+  const btn=$('profileBtn');
+  if(!btn)return;
+  btn.classList.toggle('header-avatar-loaded',!!url);
+  btn.innerHTML=url?`<img class="header-avatar-img" src="${esc(url)}" alt="My profile">`:'👤';
+}
+
+async function refreshHeaderAvatar(){
+  setHeaderAvatar(null);
+  if(!activeTeam||!session?.user)return;
+  if(isStaff||isTeamAdmin){
+    const {data,error}=await client.rpc('get_my_team_staff_profile',{p_team_id:activeTeam.id});
+    if(!error&&data?.photo_path){
+      const url=await staffPhotoUrl(data.photo_path);
+      if(url)setHeaderAvatar(url);
+    }
+  }
+}
+
 async function openStaffProfile(){
   if(!activeTeam||!(isStaff||isTeamAdmin)){message('Coach or team admin access is required.',true);return;}
   const {data,error}=await client.rpc('get_my_team_staff_profile',{p_team_id:activeTeam.id});
@@ -2940,6 +3071,7 @@ async function saveStaffProfile(){
   btn.disabled=false;btn.textContent='Save Staff Profile';
   if(error){message(error.message,true);return;}
   staffProfileData=data||staffProfileData;
+  await refreshHeaderAvatar();
   message('Coach / staff profile saved.');
   await openStaffProfile();
 }
@@ -3726,6 +3858,10 @@ $('bootstrapTeamBtn').onclick=async()=>{
 $('newEventBtn').onclick=prepareEventForm; $('saveEventBtn').onclick=saveEvent; $('attendanceBtn').onclick=openAttendance; $('deleteEventBtn').onclick=deleteEvent;
 $('saveExcuseBtn').onclick=saveExcuse; $('createAthleteInviteBtn').onclick=createAthleteInvite; $('saveGuardianBtn').onclick=saveGuardianContact; $('createGuardianInviteBtn').onclick=createGuardianInvite;
 $('joinAsAthleteBtn').onclick=()=>setJoinRole('athlete'); $('joinAsParentBtn').onclick=async()=>{setJoinRole('parent_guardian');await loadJoinGuardianDefaults();}; $('claimExistingAthleteBtn').onclick=()=>setParentJoinPath('claim'); $('createAthleteProfileBtn').onclick=()=>setParentJoinPath('create'); $('joinBirthDate').onchange=updateJoinSensitiveControls; $('submitJoinRequestBtn').onclick=submitJoinRequest; $('joinRequestsBtn').onclick=openJoinRequests; $('saveAthleteProfileBtn').onclick=saveAthleteProfile; $('profilePhotoInput').onchange=beginProfilePhotoCrop; $('profileManageGuardiansBtn').onclick=()=>{if(profileAthleteId)openAthleteAccess(profileAthleteId);}; $('memberProfilesBtn').onclick=openMemberProfiles; $('familyBtn').onclick=openFamily; $('familyCreateGuardianInviteBtn').onclick=familyCreateGuardianInvite; $('parentAddChildBtn').onclick=()=>startJoinFlow(null,activeTeam.id,true);
+$('viewAthleteTrendBtn').onclick=()=>{if(viewAthleteId)openWeightTrend(viewAthleteId);};
+$('viewAthleteEditBtn').onclick=()=>{if(viewAthleteId)openAthleteProfile(viewAthleteId);};
+$('viewAthleteGuardiansBtn').onclick=()=>{if(viewAthleteId)openAthleteAccess(viewAthleteId);};
+$('viewAthleteTeamsBtn').onclick=()=>{if(viewAthleteId)openAthleteTeams(viewAthleteId);};
 $('rosterBtn').onclick=()=>openSheet('rosterSheet'); $('addAthleteBtn').onclick=openAddAthlete; $('saveAthleteBtn').onclick=saveAthlete; $('joinBtn').onclick=showTeamJoin; $('accountBtn').onclick=openAccountSheet; $('profileBtn').onclick=openAccountSheet; $('staffDirectoryBtn').onclick=openStaffDirectory; $('editStaffProfileBtn').onclick=openStaffProfile; $('saveStaffProfileBtn').onclick=saveStaffProfile; $('staffPhotoInput').onchange=beginStaffPhotoCrop; $('teamSwitcherBtn').onclick=openTeamSwitcher; $('createTeamBtn').onclick=openCreateTeam; $('saveNewTeamBtn').onclick=createTeam; $('editTeamBtn').onclick=openEditTeam; $('saveEditTeamBtn').onclick=saveEditTeam;
 bindColorPair('newTeamPrimaryColor','newTeamPrimaryHex',updateNewTeamBrandPreview);
 bindColorPair('newTeamSecondaryColor','newTeamSecondaryHex',updateNewTeamBrandPreview);
