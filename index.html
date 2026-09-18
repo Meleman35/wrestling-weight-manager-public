@@ -301,6 +301,11 @@ body.kiosk-locked #weighInConsoleSheet:not([data-mode="open_scale"]) #weighRoste
             <button class="mode-card operator-only" data-weigh-mode="tournament"><span>🏟️</span><b>Tournament Weigh-In</b><small>Multiple teams, imported rosters, scans and event export.</small></button>
             <button class="mode-card operator-only" data-weigh-mode="open_scale"><span>⚖️</span><b>Open Scale</b><small>Large private live display. Weight only — no athlete identification required.</small></button>
           </div>
+          <div class="feature-card operator-only" id="kioskSettingsCard">
+            <div class="section-head" style="margin-top:0"><div><div class="eyebrow">DEVICE SECURITY</div><h3>Kiosk Settings</h3></div><span id="kioskPinStatus" class="operator-chip">PIN not set</span></div>
+            <p>The kiosk PIN belongs to this iPhone/iPad or browser. Use it to unlock or exit a locked weigh-in screen.</p>
+            <button id="changeKioskPinBtn" class="wide secondary">Set / Change Kiosk PIN</button>
+          </div>
           <div class="hardware-note">American Scale Bluetooth is not connected in this build yet. v0.7.2 gives us the real workflow and database foundation with manual weight entry so we can test everything before wiring the exact scale protocol.</div>
           <div class="section-head"><div><div class="eyebrow">ACTIVE</div><h3>Weigh-In Sessions</h3></div></div>
           <div id="weighInSessionList"><div class="empty-card">No active weigh-in sessions.</div></div>
@@ -315,7 +320,7 @@ body.kiosk-locked #weighInConsoleSheet:not([data-mode="open_scale"]) #weighRoste
         <button type="button" class="tab-back-btn" data-back-home><span>←</span> Back to Home</button>
         <div class="section-head top-space"><div><div class="eyebrow">TEAM MANAGEMENT</div><h2>More</h2></div></div>
         <div class="menu-card">
-          <button id="rosterBtn" class="menu-row coach-only"><span>👥</span><div><b>Roster</b><small>Athletes and lineup overview</small></div><i>›</i></button>
+          <button id="rosterBtn" class="menu-row coach-only"><span>👥</span><div><b>Roster</b><small>Athletes, profiles, standby and team transfers</small></div><i>›</i></button>
           <button id="joinBtn" class="menu-row coach-only"><span>🔗</span><div><b>Team Join</b><small>QR code, text, email and team code</small></div><i>›</i></button>
           <button id="joinRequestsBtn" class="menu-row coach-only"><span>✅</span><div><b>Join Requests</b><small>Approve or deny athletes and parents</small></div><i id="joinRequestCount">›</i></button>
           <button id="memberProfilesBtn" class="menu-row member-only"><span>👤</span><div><b>My Athlete Profiles</b><small>Photo, sizes, contact permissions and age divisions</small></div><i>›</i></button>
@@ -536,6 +541,10 @@ body.kiosk-locked #weighInConsoleSheet:not([data-mode="open_scale"]) #weighRoste
 
     <div class="medical-box"><h3 style="margin-top:0">Medical / Emergency</h3><div class="medical-checks"><label><input type="checkbox" class="profile-med" value="Diabetes">Diabetes</label><label><input type="checkbox" class="profile-med" value="Asthma">Asthma</label><label><input type="checkbox" class="profile-med" value="Severe allergy / Anaphylaxis">Severe allergy</label><label><input type="checkbox" class="profile-med" value="Seizure disorder">Seizure disorder</label></div><label>Notes</label><textarea id="profileMedicalNote"></textarea><label>Rescue item location</label><input id="profileRescueLocation"><label class="toggle-row"><span><b>Share medical information with coaching staff</b><small>Parent-controlled for minors</small></span><input id="profileMedicalShare" type="checkbox"></label></div>
     <div id="profileSensitiveNote" class="privacy-note hidden"></div>
+    <div id="profileTeamTransferBox" class="profile-portability-note admin-only">
+      <b>Teams & Transfer</b><br>Move this athlete to another team you administer, or add them to another team while keeping this team active. Their permanent Wrestling Manager profile stays with them.
+      <button id="profileTeamsBtn" class="wide" style="margin-top:10px">Teams / Transfer</button>
+    </div>
     <button id="saveAthleteProfileBtn" class="wide sticky-save">Save Profile</button>
   </section>
 
@@ -728,7 +737,7 @@ body.kiosk-locked #weighInConsoleSheet:not([data-mode="open_scale"]) #weighRoste
     <div class="feature-card"><b id="accountEmail">—</b><p id="accountTeamInfo" class="muted"></p><span id="accountRole" class="role-pill">—</span><div id="accountTeamLevels" class="team-level-summary"></div></div>
     <button id="editTeamBtn" class="wide admin-only" type="button">Edit Team</button>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.8.1</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.8.2</p>
   </section>
 
   <section id="editTeamSheet" class="sheet hidden" aria-modal="true">
@@ -1290,7 +1299,7 @@ async function loadRoster(){
       <div class="roster-actions">
         <div class="weight-value">${esc(r.latest_weight ?? '—')}<small> lb</small></div>
         <button class="roster-access-btn" data-profile-athlete="${r.athlete_id}">Profile</button>
-        ${isTeamAdmin?`<button class="roster-access-btn" data-athlete-teams="${r.athlete_id}">Teams</button>`:''}
+        ${isTeamAdmin?`<button class="roster-access-btn" data-athlete-teams="${r.athlete_id}">Teams / Transfer</button>`:''}
         <button class="roster-access-btn" data-access-athlete="${r.athlete_id}">Invite</button>
       </div>
     </div>`;
@@ -1312,7 +1321,7 @@ async function loadRoster(){
           ${r.status_reason?`<small>${esc(r.status_reason)}</small>`:''}
           <div class="roster-manage-buttons"><button class="reactivate-btn" data-team-status="active" data-status-athlete="${r.athlete_id}">Reactivate</button></div>
         </div>
-        <div class="roster-actions"><button class="roster-access-btn" data-profile-athlete="${r.athlete_id}">Profile</button>${isTeamAdmin?`<button class="roster-access-btn" data-athlete-teams="${r.athlete_id}">Teams</button>`:''}</div>
+        <div class="roster-actions"><button class="roster-access-btn" data-profile-athlete="${r.athlete_id}">Profile</button>${isTeamAdmin?`<button class="roster-access-btn" data-athlete-teams="${r.athlete_id}">Teams / Transfer</button>`:''}</div>
       </div>`).join(''):'<div class="empty-card">No athletes on standby or removed.</div>';
     $('inactiveRosterList').querySelectorAll('[data-profile-athlete]').forEach(btn=>btn.onclick=()=>openAthleteProfile(btn.dataset.profileAthlete));
     $('inactiveRosterList').querySelectorAll('[data-athlete-teams]').forEach(btn=>btn.onclick=()=>openAthleteTeams(btn.dataset.athleteTeams));
@@ -1653,6 +1662,7 @@ async function openAthleteProfile(athleteId){
   $('profileAgeDivisions').innerHTML=formatAgeDivisions(data.age_divisions);
   const viewer=data.viewer||{}; const adult=data.birth_date?new Date(data.birth_date+'T12:00:00')<=new Date(new Date().setFullYear(new Date().getFullYear()-18)):false; const control=viewer.guardian||viewer.admin||(viewer.self&&adult);
   const staffReadOnly=viewer.staff&&!viewer.admin&&!viewer.self&&!viewer.guardian;
+  show('profileTeamTransferBox',!!isTeamAdmin);
   ['profileShareEmail','profileSharePhone','profileShareBirth','profileSms','profileMedicalShare'].forEach(id=>$(id).disabled=!control);
   ['profileBirthDate','profileEmail','profilePhone','profileMedicalNote','profileRescueLocation'].forEach(id=>{ if($(id)) $(id).disabled=staffReadOnly; });
   document.querySelectorAll('.profile-med').forEach(x=>x.disabled=staffReadOnly);
@@ -2229,6 +2239,27 @@ async function verifyKioskPin(promptText){
   const pin=prompt(promptText||'Enter the weigh-in kiosk PIN:');if(pin===null)return false;
   const hash=await kioskPinHash(pin);if(hash!==localStorage.getItem('wm_kiosk_pin_hash')){message('Incorrect PIN.',true);return false;}return true;
 }
+function updateKioskPinStatus(){
+  const el=$('kioskPinStatus');if(!el)return;
+  el.textContent=localStorage.getItem('wm_kiosk_pin_hash')?'PIN set on this device':'PIN not set';
+}
+async function changeKioskPin(){
+  const existing=localStorage.getItem('wm_kiosk_pin_hash');
+  if(existing){
+    const current=prompt('Enter the current kiosk PIN:');
+    if(current===null)return;
+    if((await kioskPinHash(current))!==existing){message('Incorrect current PIN.',true);return;}
+  }
+  const next=prompt(existing?'Enter a new 4–6 digit kiosk PIN:':'Create a 4–6 digit kiosk PIN:');
+  if(next===null)return;
+  if(!/^\d{4,6}$/.test(next)){message('Use a 4–6 digit PIN.',true);return;}
+  const confirmPin=prompt('Enter the new PIN again to confirm:');
+  if(confirmPin===null)return;
+  if(confirmPin!==next){message('The new PIN entries did not match.',true);return;}
+  localStorage.setItem('wm_kiosk_pin_hash',await kioskPinHash(next));
+  updateKioskPinStatus();
+  message(existing?'Kiosk PIN changed on this device.':'Kiosk PIN created on this device.');
+}
 async function lockKiosk(){
   let pin=prompt(localStorage.getItem('wm_kiosk_pin_hash')?'Enter the current PIN to lock this device to the weigh-in console:':'Create a 4–6 digit PIN for this weigh-in kiosk:');if(pin===null)return;if(!/^\d{4,6}$/.test(pin)){message('Use a 4–6 digit PIN.',true);return;}
   const hash=await kioskPinHash(pin);const existing=localStorage.getItem('wm_kiosk_pin_hash');if(existing&&existing!==hash){message('Incorrect PIN.',true);return;}if(!existing)localStorage.setItem('wm_kiosk_pin_hash',hash);
@@ -2262,6 +2293,7 @@ $('newEventBtn').onclick=prepareEventForm; $('saveEventBtn').onclick=saveEvent; 
 $('saveExcuseBtn').onclick=saveExcuse; $('createAthleteInviteBtn').onclick=createAthleteInvite; $('saveGuardianBtn').onclick=saveGuardianContact; $('createGuardianInviteBtn').onclick=createGuardianInvite;
 $('joinAsAthleteBtn').onclick=()=>setJoinRole('athlete'); $('joinAsParentBtn').onclick=()=>setJoinRole('parent_guardian'); $('joinBirthDate').onchange=updateJoinSensitiveControls; $('submitJoinRequestBtn').onclick=submitJoinRequest; $('joinRequestsBtn').onclick=openJoinRequests; $('saveAthleteProfileBtn').onclick=saveAthleteProfile; $('profilePhotoInput').onchange=uploadProfilePhoto; $('memberProfilesBtn').onclick=openMemberProfiles; $('familyBtn').onclick=openFamily; $('familyCreateGuardianInviteBtn').onclick=familyCreateGuardianInvite; $('parentAddChildBtn').onclick=()=>startJoinFlow(null,activeTeam.id,true);
 $('rosterBtn').onclick=()=>openSheet('rosterSheet'); $('addAthleteBtn').onclick=openAddAthlete; $('saveAthleteBtn').onclick=saveAthlete; $('joinBtn').onclick=showTeamJoin; $('accountBtn').onclick=()=>openSheet('accountSheet'); $('profileBtn').onclick=()=>openSheet('accountSheet'); $('teamSwitcherBtn').onclick=openTeamSwitcher; $('createTeamBtn').onclick=openCreateTeam; $('saveNewTeamBtn').onclick=createTeam; $('editTeamBtn').onclick=openEditTeam; $('saveEditTeamBtn').onclick=saveEditTeam;
+$('profileTeamsBtn').onclick=()=>{if(profileAthleteId)openAthleteTeams(profileAthleteId);}; $('changeKioskPinBtn').onclick=changeKioskPin; updateKioskPinStatus();
 $('sheetBackdrop').onclick=closeSheets; document.querySelectorAll('[data-close-sheet]').forEach(x=>x.onclick=closeSheets);
 document.querySelectorAll('.type-btn').forEach(btn=>btn.onclick=()=>applyEventTypeDefaults(btn.dataset.type));
 document.querySelectorAll('.nav-btn').forEach(btn=>btn.onclick=()=>setTab(btn.dataset.tab));
