@@ -9,7 +9,7 @@
 :root{
   --bg:#f3f5f8;--card:#fff;--ink:#12161b;--muted:#69717d;--line:#e3e7ec;
   --accent:#163a67;--accent2:#285e9e;--success:#18794e;--warn:#996515;--danger:#b83232;
-  --soft:#eef3f8;--shadow:0 8px 26px rgba(14,28,45,.08);
+  --soft:#eef3f8;--surface:#fff;--surface-2:#f6f8fa;--shadow:0 8px 26px rgba(14,28,45,.08);
   --team-primary:#163a67;--team-secondary:#285e9e;--team-accent:#ffffff;
   --team-primary-text:#ffffff;--team-secondary-text:#ffffff;--team-accent-text:#12161b;
   --team-header-muted:rgba(255,255,255,.74);--team-nav-line:rgba(255,255,255,.24);--team-banner-y:50%;
@@ -246,18 +246,19 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     .schedule-date-nav button{padding:9px 11px;background:var(--surface-2);color:var(--ink);border:1px solid var(--line)}
     .schedule-period-label{text-align:center;font-size:14px;font-weight:900;min-width:0}
     .schedule-calendar-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 11px}
-    .schedule-calendar-actions button{padding:10px 8px;font-size:12px}
+    .schedule-calendar-actions button{padding:11px 9px;font-size:13px}
+    .calendar-import-help{margin:-3px 2px 12px;color:var(--muted);font-size:13px;line-height:1.4}
     .calendar-month{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
-    .calendar-weekday{font-size:10px;text-align:center;color:var(--muted);font-weight:900;padding:4px 0;text-transform:uppercase}
+    .calendar-weekday{font-size:12px;text-align:center;color:var(--muted);font-weight:900;padding:4px 0;text-transform:uppercase}
     .calendar-day{min-height:84px;border:1px solid var(--line);border-radius:11px;background:var(--surface);padding:5px;overflow:hidden;text-align:left;color:var(--ink)}
     .calendar-day.outside{opacity:.42}.calendar-day.today{outline:2px solid var(--team-primary);outline-offset:-2px}
-    .calendar-day-number{font-size:11px;font-weight:900;margin-bottom:4px}
-    .calendar-event-chip{display:block;width:100%;padding:4px 5px;margin:3px 0 0;border-radius:7px;background:color-mix(in srgb,var(--team-primary) 12%,white);color:var(--ink);font-size:9px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
-    .calendar-more{font-size:9px;color:var(--muted);font-weight:800;margin-top:4px}
+    .calendar-day-number{font-size:13px;font-weight:900;margin-bottom:4px}
+    .calendar-event-chip{display:block;width:100%;padding:4px 5px;margin:3px 0 0;border-radius:7px;background:color-mix(in srgb,var(--team-primary) 12%,white);color:var(--ink);font-size:11px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
+    .calendar-more{font-size:11px;color:var(--muted);font-weight:800;margin-top:4px}
     .calendar-week-stack{display:grid;gap:10px}.calendar-week-day{border:1px solid var(--line);border-radius:15px;background:var(--surface);padding:11px}.calendar-week-day-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.calendar-week-day-head b{font-size:14px}.calendar-week-day-head small{color:var(--muted)}
     .calendar-day-empty{font-size:12px;color:var(--muted);padding:7px 0}
     .calendar-event-actions{display:grid;grid-template-columns:1fr;gap:8px;margin:12px 0}
-    @media(max-width:430px){.calendar-day{min-height:74px;padding:4px}.calendar-event-chip{font-size:8px;padding:3px 4px}.schedule-calendar-actions{grid-template-columns:1fr}.schedule-date-nav{grid-template-columns:auto auto 1fr auto}}
+    @media(max-width:430px){.calendar-day{min-height:74px;padding:4px}.calendar-weekday{font-size:10px}.calendar-day-number{font-size:12px}.calendar-event-chip{font-size:10px;padding:3px 4px}.calendar-more{font-size:10px}.schedule-calendar-actions{grid-template-columns:1fr}.schedule-date-nav{grid-template-columns:auto auto 1fr auto}}
 
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -428,6 +429,7 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
           <button id="subscribeAppleCalendarBtn" type="button"> Subscribe in Apple Calendar</button>
           <button id="exportCalendarBtn" type="button" class="secondary">Export Schedule (.ics)</button>
         </div>
+        <p class="calendar-import-help">Apple Calendar subscription stays updated as coaches change the schedule. Export creates a one-time calendar file.</p>
 
         <div class="filter-row" id="scheduleFilters">
           <button class="filter-chip active" data-filter="all">All</button>
@@ -809,8 +811,20 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
 
   <section id="familySheet" class="sheet hidden" aria-modal="true">
     <div class="sheet-handle"></div>
-    <div class="sheet-head"><div><div class="eyebrow">FAMILY</div><h2>Family Connections</h2><p class="muted">Athletes can invite a parent. Parents can request another child be added.</p></div><button class="icon-close" data-close-sheet>×</button></div>
+    <div class="sheet-head"><div><div class="eyebrow">FAMILY</div><h2>Family Connections</h2><p class="muted">Every parent or guardian uses a separate account connected to the athlete.</p></div><button class="icon-close" data-close-sheet>×</button></div>
     <div id="athleteInviteParentBox" class="feature-card hidden"><h3>Invite a Parent / Guardian</h3><label>Name</label><input id="familyGuardianName"><label>Relationship</label><select id="familyGuardianRelationship"><option value="">Choose relationship…</option><option>Mother</option><option>Father</option><option>Stepparent</option><option>Grandparent</option><option>Legal Guardian</option><option>Foster Parent</option><option>Other</option></select><label>Email</label><input id="familyGuardianEmail" type="email"><label>Phone <span class="optional-label">optional if email is entered</span></label><input id="familyGuardianPhone" type="tel"><button id="familyCreateGuardianInviteBtn" class="wide">Create Parent Invite</button><div id="familyInviteShareBox"></div></div>
+    <div id="parentConnectGuardianBox" class="feature-card hidden">
+      <h3>Connect Another Parent / Guardian</h3>
+      <p class="muted">Request access for a co-parent, spouse, stepparent, grandparent, foster parent or legal guardian. A coach reviews the relationship before an account invite is created.</p>
+      <label>Athlete</label><select id="familyConnectionAthlete"></select>
+      <label>Name</label><input id="familyConnectionName" autocomplete="name">
+      <label>Relationship</label><select id="familyConnectionRelationship"><option value="">Choose relationship…</option><option>Mother</option><option>Father</option><option>Stepparent</option><option>Grandparent</option><option>Legal Guardian</option><option>Foster Parent</option><option>Other</option></select>
+      <label>Email</label><input id="familyConnectionEmail" type="email" autocomplete="email">
+      <label>Phone <span class="optional-label">optional if email is entered</span></label><input id="familyConnectionPhone" type="tel" autocomplete="tel">
+      <button id="familyRequestGuardianBtn" class="wide" type="button">Send Request to Coach</button>
+      <div id="familyConnectionStatus"></div>
+      <p class="privacy-note" style="margin-top:12px">Accounts are never merged. One guardian cannot remove another guardian or see another household’s private contact information.</p>
+    </div>
     <div id="parentAddChildBox" class="feature-card hidden"><h3>Add Another Child</h3><p class="muted">You fill out the child’s information and the coach approves the request.</p><button id="parentAddChildBtn" class="wide">Start Child Request</button></div>
   </section>
 
@@ -1019,6 +1033,23 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     <div class="sheet-head"><div><div class="eyebrow">YOU</div><h2>Account & Team</h2></div><button class="icon-close" data-close-sheet>×</button></div>
     <div class="feature-card"><b id="accountEmail">—</b><p id="accountTeamInfo" class="muted"></p><span id="accountRole" class="role-pill">—</span><div id="accountTeamLevels" class="team-level-summary"></div></div>
 
+    <div class="feature-card">
+      <div class="staff-profile-head">
+        <div id="accountProfilePhotoBox" class="staff-profile-photo-placeholder">👤</div>
+        <div class="staff-profile-copy">
+          <b>My Account Profile</b>
+          <p class="muted">Your personal photo follows your account across teams and appears in parent view.</p>
+          <label style="margin-top:8px">Profile photo</label>
+          <input id="accountPhotoInput" type="file" accept="image/*">
+        </div>
+      </div>
+      <div class="profile-grid">
+        <div><label>Display name</label><input id="accountDisplayName" autocomplete="name"></div>
+        <div><label>Phone</label><input id="accountPhone" type="tel" autocomplete="tel"></div>
+      </div>
+      <button id="saveAccountProfileBtn" class="wide" type="button">Save Account Profile</button>
+    </div>
+
     <div id="viewModeCard" class="view-mode-card hidden">
       <b>View Wrestling Manager as</b>
       <small>Switch views without changing your real permissions. Parent View shows the same family-facing navigation and athlete profile experience your linked parent account receives.</small>
@@ -1029,7 +1060,7 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     <button id="editTeamBtn" class="wide admin-only" type="button">Edit Team</button>
     <button id="communicationBtn" class="wide admin-only" type="button">Communication Settings</button>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.10.0</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.10.2</p>
   </section>
 
 
@@ -1199,7 +1230,7 @@ let editWeightClasses = [];
 let selectedLineupClass = null;
 let scheduleRows = [];
 let scheduleFilter = 'all';
-let scheduleView = localStorage.getItem('wm_schedule_view') || 'list';
+let scheduleView = ['list','month','week','day'].includes(localStorage.getItem('wm_schedule_view')) ? localStorage.getItem('wm_schedule_view') : 'list';
 let scheduleFocusDate = new Date();
 let selectedEventType = 'practice';
 let teamMemberships = [];
@@ -1230,6 +1261,7 @@ let joinRequesterRole = 'athlete';
 let joinParentPath = null;
 let joinPreview = null;
 let joinRequests = [];
+let pendingGuardianRequests = [];
 let profileAthleteId = null;
 let profileData = null;
 let viewAthleteId = null;
@@ -1237,6 +1269,7 @@ let photoCropImage = null;
 let photoCropSourceFile = null;
 let photoCropTarget = 'athlete';
 let staffProfileData = null;
+let accountProfileData = null;
 let photoCropBaseScale = 1;
 let photoCropZoomValue = 1;
 let photoCropOffsetX = 0;
@@ -2004,7 +2037,7 @@ async function activateTeam(teamId,{persist=true}={}){
   $('headerTeamName').textContent=team.name;
   $('homeTeamName').textContent=team.name;
 
-  rosterRows=[]; rosterManagementRows=[]; scheduleRows=[]; joinRequests=[]; weighInSessions=[]; memberAthletes=[]; importantAnnouncements=[]; dashboardCounts=null; certificationPlansByAthlete=new Map();
+  rosterRows=[]; rosterManagementRows=[]; scheduleRows=[]; joinRequests=[]; pendingGuardianRequests=[]; weighInSessions=[]; memberAthletes=[]; importantAnnouncements=[]; dashboardCounts=null; certificationPlansByAthlete=new Map();
   teamWeightClasses=[];
 
   const {data:seasons,error:seasonErr}=await client.from('seasons').select('*').eq('team_id',team.id).eq('active',true).order('created_at',{ascending:false}).limit(1);
@@ -2033,7 +2066,7 @@ async function activateTeam(teamId,{persist=true}={}){
   await loadTeamWeightClasses();
 
   if(isStaff){
-    await Promise.all([loadDashboard(),loadRoster(),loadSchedule(),loadJoinRequests(),loadWeighInSessions(),loadImportantAnnouncements()]);
+    await Promise.all([loadDashboard(),loadRoster(),loadSchedule(),loadJoinRequests(),loadGuardianConnectionRequests(),loadWeighInSessions(),loadImportantAnnouncements()]);
   } else if(isManager){
     await Promise.all([loadOperationalRoster(),loadSchedule(),loadWeighInSessions(),loadImportantAnnouncements()]);
   } else {
@@ -2597,7 +2630,7 @@ async function loadGuardianContacts(){
   const rows=data||[];
   $('guardianContactList').innerHTML=rows.length ? rows.map(g=>`
     <button class="guardian-contact-row" type="button" data-guardian-id="${g.id}">
-      <div><b>${esc(g.name)}</b><small>${esc(g.relationship||'Parent/guardian')} · ${esc(g.guardian_user_id?'Account connected':g.invitation_status==='pending'?'Invite pending':'Saved contact')}</small></div><span class="guardian-chevron">›</span>
+      <div><b>${esc(g.name)}</b><small>${esc(g.relationship||'Parent/guardian')} · ${esc(g.guardian_user_id?'Account connected':g.invitation_status==='pending'?'Invite pending':g.invitation_status==='approval_pending'?'Awaiting coach approval':'Saved contact')}</small></div><span class="guardian-chevron">›</span>
     </button>`).join('') : '<p class="fine">No parents or guardians saved yet.</p>';
   $('guardianContactList').querySelectorAll('[data-guardian-id]').forEach(btn=>btn.addEventListener('click',()=>{
     const g=rows.find(x=>x.id===btn.dataset.guardianId); if(!g) return;
@@ -2606,7 +2639,7 @@ async function loadGuardianContacts(){
     $('guardianRelationship').value=g.relationship||'';
     $('guardianInviteEmail').value=g.email||'';
     setPhoneValue('guardianInvitePhone',g.phone||'');
-    $('guardianSavedBox').innerHTML=`<div class="notice">${esc(g.name)} is saved on this athlete.${g.guardian_user_id?' Their account is connected.':g.invitation_status==='pending'?' An account invite is pending.':' Account access has not been connected yet.'}</div>`;
+    $('guardianSavedBox').innerHTML=`<div class="notice">${esc(g.name)} is saved on this athlete.${g.guardian_user_id?' Their account is connected.':g.invitation_status==='pending'?' An account invite is pending.':g.invitation_status==='approval_pending'?' A connected parent/guardian requested this relationship. Review it before creating the account invite.':' Account access has not been connected yet.'}</div>`;
     show('createGuardianInviteBtn',!g.guardian_user_id);
     $('createGuardianInviteBtn').disabled=false;
     $('createGuardianInviteBtn').textContent=g.invitation_status==='pending'?'Regenerate Account Invite':'Create Account Invite';
@@ -2661,6 +2694,7 @@ async function createGuardianInvite(){
   $('createGuardianInviteBtn').textContent='Invite Created';
   $('createGuardianInviteBtn').disabled=true;
   await loadGuardianContacts();
+  await loadGuardianConnectionRequests();
 }
 
 async function acceptInvite(){
@@ -2844,6 +2878,13 @@ async function loadJoinRequests(){
   $('joinRequestCount').innerHTML=joinRequests.length?`<span class="pending-count">${joinRequests.length}</span>`:'›';
 }
 
+async function loadGuardianConnectionRequests(){
+  if(!isStaff||!activeTeam){pendingGuardianRequests=[];return;}
+  const {data,error}=await client.rpc('get_pending_guardian_connection_requests',{p_team_id:activeTeam.id});
+  pendingGuardianRequests=error?[]:(data||[]);
+  renderAttention();
+}
+
 async function openJoinRequests(){
   await loadJoinRequests();
   const box=$('coachJoinRequestsList');
@@ -2915,13 +2956,13 @@ async function openWeightTrend(athleteId){
 }
 
 
-function guardianCardsHtml(guardians){
+function guardianCardsHtml(guardians,showContacts=false){
   const rows=Array.isArray(guardians)?guardians:[];
   return rows.length?rows.map(g=>{
     const contacts=[];
-    if(g.email)contacts.push(`<a href="mailto:${esc(g.email)}">✉ ${esc(g.email)}</a>`);
-    if(g.phone)contacts.push(`<a href="tel:${esc(String(g.phone).replace(/[^0-9+]/g,''))}">☎ ${esc(formatUsPhone(g.phone))}</a>`);
-    const status=g.guardian_user_id?'Account connected':g.invitation_status==='pending'?'Invite pending':'Saved contact';
+    if(showContacts&&g.email)contacts.push(`<a href="mailto:${esc(g.email)}">✉ ${esc(g.email)}</a>`);
+    if(showContacts&&g.phone)contacts.push(`<a href="tel:${esc(String(g.phone).replace(/[^0-9+]/g,''))}">☎ ${esc(formatUsPhone(g.phone))}</a>`);
+    const status=g.guardian_user_id?'Account connected':g.invitation_status==='pending'?'Invite pending':g.invitation_status==='approval_pending'?'Awaiting coach approval':'Saved contact';
     return `<div class="guardian-contact-row" style="display:block"><b>${esc(g.name||'Parent / Guardian')}</b><small>${esc(g.relationship||'Parent / guardian')} · ${esc(status)}</small>${contacts.length?`<div class="staff-contact-links" style="margin-top:8px">${contacts.join('')}</div>`:''}</div>`;
   }).join(''):'<p class="fine">No parents or guardians saved yet.</p>';
 }
@@ -2967,7 +3008,7 @@ async function openAthleteOverview(athleteId){
   contact.push(profileField('Phone',data.phone?formatUsPhone(data.phone):'Private / not shared'));
   contact.push(profileField('Birthday',data.birth_date||'Private / not shared'));
   $('viewAthleteContact').innerHTML=contact.join('');
-  $('viewAthleteGuardians').innerHTML=guardianCardsHtml(data.guardians);
+  $('viewAthleteGuardians').innerHTML=guardianCardsHtml(data.guardians,!!(data.viewer?.staff||data.viewer?.admin));
 
   const gear=[
     ['Shirt',data.shirt_size],['Shorts',data.shorts_size],['Shoe',data.shoe_size],
@@ -3001,7 +3042,7 @@ async function openAthleteProfile(athleteId){
   $('profileShirt').value=data.shirt_size||''; $('profileShorts').value=data.shorts_size||''; $('profileShoe').value=data.shoe_size||''; $('profileSinglet').value=data.singlet_size||''; $('profileWarmTop').value=data.warmup_top_size||''; $('profileWarmBottom').value=data.warmup_bottom_size||'';
   document.querySelectorAll('.profile-med').forEach(x=>x.checked=(data.medical_conditions||[]).includes(x.value)); $('profileMedicalNote').value=data.medical_notes||''; $('profileRescueLocation').value=data.rescue_item_location||''; $('profileMedicalShare').checked=!!data.disclose_medical_to_coaches;
   $('profileAgeDivisions').innerHTML=formatAgeDivisions(data.age_divisions);
-  $('profileGuardianList').innerHTML=guardianCardsHtml(data.guardians);
+  $('profileGuardianList').innerHTML=guardianCardsHtml(data.guardians,!!(data.viewer?.staff||data.viewer?.admin));
   const viewer=data.viewer||{}; const adult=data.birth_date?new Date(data.birth_date+'T12:00:00')<=new Date(new Date().setFullYear(new Date().getFullYear()-18)):false; const control=viewer.guardian||viewer.admin||(viewer.self&&adult);
   show('profileManageGuardiansBtn',!!viewer.staff);
   const staffReadOnly=viewer.staff&&!viewer.admin&&!viewer.self&&!viewer.guardian;
@@ -3084,7 +3125,9 @@ function cancelPhotoCrop(){
   photoCropImage=null;photoCropSourceFile=null;
   if($('profilePhotoInput'))$('profilePhotoInput').value='';
   if($('staffPhotoInput'))$('staffPhotoInput').value='';
+  if($('accountPhotoInput'))$('accountPhotoInput').value='';
   if(photoCropTarget==='staff'){openStaffProfile();return;}
+  if(photoCropTarget==='account'){openAccountSheet();return;}
   if(profileAthleteId)openAthleteProfile(profileAthleteId); else closeSheets();
 }
 
@@ -3092,6 +3135,28 @@ function beginStaffPhotoCrop(){
   photoCropTarget='staff';
   const file=$('staffPhotoInput').files?.[0];
   if(!file||!activeTeam)return;
+  if(!file.type.startsWith('image/')){message('Choose an image file.',true);return;}
+  photoCropSourceFile=file;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const img=new Image();
+    img.onload=()=>{
+      photoCropImage=img;
+      resetPhotoCrop();
+      closeSheets();
+      openSheet('photoCropSheet');
+      requestAnimationFrame(drawPhotoCrop);
+    };
+    img.onerror=()=>message('That photo could not be opened.',true);
+    img.src=reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function beginAccountPhotoCrop(){
+  photoCropTarget='account';
+  const file=$('accountPhotoInput').files?.[0];
+  if(!file||!session?.user)return;
   if(!file.type.startsWith('image/')){message('Choose an image file.',true);return;}
   photoCropSourceFile=file;
   const reader=new FileReader();
@@ -3126,12 +3191,26 @@ function staffProfilePayload(photoPathOverride=undefined){
 }
 
 async function saveCroppedProfilePhoto(){
-  if(!photoCropImage||!activeTeam)return;
+  if(!photoCropImage||!session?.user)return;
   const btn=$('savePhotoCropBtn');btn.disabled=true;btn.textContent='Saving…';
   drawPhotoCrop();
   const canvas=$('photoCropCanvas');
   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',0.9));
   if(!blob){btn.disabled=false;btn.textContent='Use Photo';message('Could not prepare the cropped photo.',true);return;}
+
+  if(photoCropTarget==='account'){
+    const path=`${session.user.id}/${Date.now()}-profile.jpg`;
+    const {error}=await client.storage.from('profile-photos').upload(path,blob,{contentType:'image/jpeg'});
+    if(error){btn.disabled=false;btn.textContent='Use Photo';message(error.message,true);return;}
+    const {data,error:saveErr}=await client.from('profiles').update({photo_path:path,updated_at:new Date().toISOString()}).eq('id',session.user.id).select('id,display_name,phone,photo_path').single();
+    btn.disabled=false;btn.textContent='Use Photo';
+    if(saveErr){message(saveErr.message,true);return;}
+    accountProfileData=data;photoCropImage=null;photoCropSourceFile=null;$('accountPhotoInput').value='';
+    await refreshHeaderAvatar();
+    await openAccountSheet();
+    message('Account photo cropped and updated.');
+    return;
+  }
 
   if(photoCropTarget==='staff'){
     const path=`${activeTeam.id}/staff/${session.user.id}/${Date.now()}-profile.jpg`;
@@ -3165,6 +3244,21 @@ async function staffPhotoUrl(path){
   return error?null:data?.signedUrl||null;
 }
 
+async function accountPhotoUrl(path){
+  if(!path)return null;
+  if(/^https?:\/\//i.test(path))return path;
+  const {data,error}=await client.storage.from('profile-photos').createSignedUrl(path,3600);
+  return error?null:data?.signedUrl||null;
+}
+
+async function loadAccountProfile(){
+  if(!session?.user)return null;
+  const {data,error}=await client.from('profiles').select('id,display_name,phone,photo_path').eq('id',session.user.id).maybeSingle();
+  if(error){message(error.message,true);return null;}
+  accountProfileData=data||{};
+  return accountProfileData;
+}
+
 function staffRoleLabel(role){
   return role==='head_coach'?'Head Coach':
     role==='assistant_coach'?'Assistant Coach':
@@ -3182,14 +3276,17 @@ function setHeaderAvatar(url=null){
 
 async function refreshHeaderAvatar(){
   setHeaderAvatar(null);
-  if(!activeTeam||!session?.user)return;
-  if(isStaff||isTeamAdmin){
+  if(!session?.user)return;
+  if(activeTeam&&viewMode!=='parent'&&(isStaff||isTeamAdmin)){
     const {data,error}=await client.rpc('get_my_team_staff_profile',{p_team_id:activeTeam.id});
     if(!error&&data?.photo_path){
       const url=await staffPhotoUrl(data.photo_path);
-      if(url)setHeaderAvatar(url);
+      if(url){setHeaderAvatar(url);return;}
     }
   }
+  const profile=accountProfileData||await loadAccountProfile();
+  const url=await accountPhotoUrl(profile?.photo_path);
+  if(url)setHeaderAvatar(url);
 }
 
 async function openStaffProfile(){
@@ -3247,9 +3344,28 @@ async function openStaffDirectory(){
   }).join('');
 }
 
-function openAccountSheet(){
+async function openAccountSheet(){
+  const profile=await loadAccountProfile();
+  $('accountDisplayName').value=profile?.display_name||'';
+  setPhoneValue('accountPhone',profile?.phone||'');
+  const url=await accountPhotoUrl(profile?.photo_path);
+  $('accountProfilePhotoBox').innerHTML=url?`<img class="staff-profile-photo" src="${esc(url)}" alt="Account profile photo">`:'👤';
   show('editStaffProfileBtn',!!activeTeam&&(isStaff||isTeamAdmin));
   closeSheets();openSheet('accountSheet');
+}
+
+async function saveAccountProfile(){
+  if(!session?.user)return;
+  const displayName=$('accountDisplayName').value.trim();
+  const phone=normalizePhoneDigits($('accountPhone').value);
+  if(!displayName){message('Add your display name.',true);return;}
+  const btn=$('saveAccountProfileBtn');btn.disabled=true;btn.textContent='Saving…';
+  const {data,error}=await client.from('profiles').update({display_name:displayName,phone:phone||null,updated_at:new Date().toISOString()}).eq('id',session.user.id).select('id,display_name,phone,photo_path').single();
+  btn.disabled=false;btn.textContent='Save Account Profile';
+  if(error){message(error.message,true);return;}
+  accountProfileData=data;
+  await refreshHeaderAvatar();
+  message('Account profile saved.');
 }
 
 async function openCommunicationSettings(){
@@ -3326,9 +3442,38 @@ async function openMemberProfiles(){
 
 function openFamily(){
   const athleteMembership=currentTeamMemberships.find(x=>x.role==='athlete'&&x.athlete_id); const parentMembership=currentTeamMemberships.find(x=>x.role==='parent_guardian');
-  show('athleteInviteParentBox',!!athleteMembership); show('parentAddChildBox',!!parentMembership);
+  show('athleteInviteParentBox',!!athleteMembership); show('parentConnectGuardianBox',!!parentMembership); show('parentAddChildBox',!!parentMembership);
   if(athleteMembership){ profileAthleteId=athleteMembership.athlete_id; $('familyGuardianName').value=''; $('familyGuardianRelationship').value=''; $('familyGuardianEmail').value=''; $('familyGuardianPhone').value=''; $('familyInviteShareBox').innerHTML=''; }
+  if(parentMembership){
+    const ids=new Set([
+      ...currentTeamMemberships.filter(x=>x.role==='parent_guardian'&&x.athlete_id).map(x=>x.athlete_id),
+      ...familyAthletes.map(x=>x.athlete_id)
+    ]);
+    const children=[...familyAthletes.map(x=>({id:x.athlete_id,first_name:x.first_name,last_name:x.last_name})),...memberAthletes.filter(x=>ids.has(x.id))]
+      .filter((x,i,rows)=>x.id&&rows.findIndex(y=>y.id===x.id)===i);
+    $('familyConnectionAthlete').innerHTML=children.map(a=>`<option value="${a.id}">${esc(a.first_name)} ${esc(a.last_name)}</option>`).join('');
+    $('familyConnectionName').value=''; $('familyConnectionRelationship').value=''; $('familyConnectionEmail').value=''; $('familyConnectionPhone').value=''; $('familyConnectionStatus').innerHTML='';
+  }
   closeSheets();openSheet('familySheet');
+}
+
+async function familyRequestGuardianConnection(){
+  if(!activeTeam)return;
+  const athleteId=$('familyConnectionAthlete').value;
+  const name=$('familyConnectionName').value.trim();
+  const relationship=$('familyConnectionRelationship').value;
+  const email=$('familyConnectionEmail').value.trim();
+  const phone=normalizePhoneDigits($('familyConnectionPhone').value);
+  if(!athleteId||!name||(!email&&!phone)){message('Choose the athlete and add the adult’s name plus an email or phone.',true);return;}
+  const btn=$('familyRequestGuardianBtn');btn.disabled=true;btn.textContent='Sending request…';
+  const {error}=await client.rpc('request_guardian_connection',{
+    p_athlete_id:athleteId,p_team_id:activeTeam.id,p_name:name,p_email:email||null,p_phone:phone||null,p_relationship:relationship||null
+  });
+  btn.disabled=false;btn.textContent='Send Request to Coach';
+  if(error){message(error.message,true);return;}
+  $('familyConnectionStatus').innerHTML=`<div class="notice">Request sent. A coach must verify this relationship before ${esc(name)} receives account access.</div>`;
+  $('familyConnectionName').value=''; $('familyConnectionRelationship').value=''; $('familyConnectionEmail').value=''; $('familyConnectionPhone').value='';
+  message('Parent / guardian connection request sent to the coach.');
 }
 
 async function familyCreateGuardianInvite(){
@@ -3415,7 +3560,12 @@ function setScheduleView(view){
 }
 function moveScheduleFocus(direction){
   const d=new Date(scheduleFocusDate);
-  if(scheduleView==='month')d.setMonth(d.getMonth()+direction);
+  if(scheduleView==='month'){
+    const preferredDay=Math.min(d.getDate(),28);
+    d.setDate(1);
+    d.setMonth(d.getMonth()+direction);
+    d.setDate(preferredDay);
+  }
   else if(scheduleView==='week')d.setDate(d.getDate()+7*direction);
   else d.setDate(d.getDate()+direction);
   scheduleFocusDate=d;renderSchedule();
@@ -3464,6 +3614,10 @@ function renderAttention(){
     if(!memberAthletes.length) items.push({title:'No athlete profile connected',sub:'Ask your coach for an athlete or parent invitation.',action:'more'});
   } else {
     if(upcoming.length) items.push({title:`${upcoming.length} upcoming event${upcoming.length===1?'':'s'}`,sub:'Review schedule and RSVP settings.',action:'schedule'});
+    if(pendingGuardianRequests.length){
+      const first=pendingGuardianRequests[0];
+      items.push({title:`${pendingGuardianRequests.length} family connection request${pendingGuardianRequests.length===1?'':'s'}`,sub:`Review ${first.guardian_name} for ${first.athlete_name}.`,action:'guardian-request',athleteId:first.athlete_id});
+    }
     if(homeWeighReminderActiveToday() && dashboardCounts?.not_weighed_today>0) items.push({title:`${dashboardCounts.not_weighed_today} athlete${dashboardCounts.not_weighed_today===1?'':'s'} still expected to weigh`,sub:dashboardCounts.excused_today?`${dashboardCounts.excused_today} excused athlete${dashboardCounts.excused_today===1?' is':'s are'} removed from today’s weigh-in total.`:'Open Weight Room to record today’s weights.',action:'weight'});
     if(!rosterRows.length) items.push({title:'Roster is empty',sub:'Open the roster or generate a Team Join code.',action:'roster'});
   }
@@ -3472,6 +3626,7 @@ function renderAttention(){
   $('attentionList').querySelectorAll('[data-attention-index]').forEach(btn=>btn.onclick=()=>{
     const item=items[Number(btn.dataset.attentionIndex)]; if(!item)return;
     if(item.action==='roster'){ openSheet('rosterSheet'); return; }
+    if(item.action==='guardian-request'){ openAthleteAccess(item.athleteId); return; }
     setTab(item.action||'home');
   });
 }
@@ -4155,12 +4310,12 @@ $('bootstrapTeamBtn').onclick=async()=>{
 $('newEventBtn').onclick=prepareEventForm; $('saveEventBtn').onclick=saveEvent; $('attendanceBtn').onclick=openAttendance; $('deleteEventBtn').onclick=deleteEvent; $('addEventCalendarBtn').onclick=addActiveEventToCalendar;
 $('subscribeAppleCalendarBtn').onclick=subscribeAppleCalendar; $('exportCalendarBtn').onclick=exportTeamCalendar; $('schedulePrevBtn').onclick=()=>moveScheduleFocus(-1); $('scheduleNextBtn').onclick=()=>moveScheduleFocus(1); $('scheduleTodayBtn').onclick=()=>{scheduleFocusDate=new Date();renderSchedule();}; document.querySelectorAll('[data-schedule-view]').forEach(b=>b.onclick=()=>setScheduleView(b.dataset.scheduleView));
 $('saveExcuseBtn').onclick=saveExcuse; $('createAthleteInviteBtn').onclick=createAthleteInvite; $('saveGuardianBtn').onclick=saveGuardianContact; $('createGuardianInviteBtn').onclick=createGuardianInvite;
-$('joinAsAthleteBtn').onclick=()=>setJoinRole('athlete'); $('joinAsParentBtn').onclick=async()=>{setJoinRole('parent_guardian');await loadJoinGuardianDefaults();}; $('claimExistingAthleteBtn').onclick=()=>setParentJoinPath('claim'); $('createAthleteProfileBtn').onclick=()=>setParentJoinPath('create'); $('joinBirthDate').onchange=updateJoinSensitiveControls; $('submitJoinRequestBtn').onclick=submitJoinRequest; $('joinRequestsBtn').onclick=openJoinRequests; $('saveAthleteProfileBtn').onclick=saveAthleteProfile; $('profilePhotoInput').onchange=beginProfilePhotoCrop; $('profileManageGuardiansBtn').onclick=()=>{if(profileAthleteId)openAthleteAccess(profileAthleteId);}; $('memberProfilesBtn').onclick=openMemberProfiles; $('familyBtn').onclick=openFamily; $('familyCreateGuardianInviteBtn').onclick=familyCreateGuardianInvite; $('parentAddChildBtn').onclick=()=>startJoinFlow(null,activeTeam.id,true);
+$('joinAsAthleteBtn').onclick=()=>setJoinRole('athlete'); $('joinAsParentBtn').onclick=async()=>{setJoinRole('parent_guardian');await loadJoinGuardianDefaults();}; $('claimExistingAthleteBtn').onclick=()=>setParentJoinPath('claim'); $('createAthleteProfileBtn').onclick=()=>setParentJoinPath('create'); $('joinBirthDate').onchange=updateJoinSensitiveControls; $('submitJoinRequestBtn').onclick=submitJoinRequest; $('joinRequestsBtn').onclick=openJoinRequests; $('saveAthleteProfileBtn').onclick=saveAthleteProfile; $('profilePhotoInput').onchange=beginProfilePhotoCrop; $('profileManageGuardiansBtn').onclick=()=>{if(profileAthleteId)openAthleteAccess(profileAthleteId);}; $('memberProfilesBtn').onclick=openMemberProfiles; $('familyBtn').onclick=openFamily; $('familyCreateGuardianInviteBtn').onclick=familyCreateGuardianInvite; $('familyRequestGuardianBtn').onclick=familyRequestGuardianConnection; $('parentAddChildBtn').onclick=()=>startJoinFlow(null,activeTeam.id,true);
 $('viewAthleteTrendBtn').onclick=()=>{if(viewAthleteId)openWeightTrend(viewAthleteId);};
 $('viewAthleteEditBtn').onclick=()=>{if(viewAthleteId)openAthleteProfile(viewAthleteId);};
 $('viewAthleteGuardiansBtn').onclick=()=>{if(viewAthleteId)openAthleteAccess(viewAthleteId);};
 $('viewAthleteTeamsBtn').onclick=()=>{if(viewAthleteId)openAthleteTeams(viewAthleteId);};
-$('rosterBtn').onclick=()=>openSheet('rosterSheet'); $('addAthleteBtn').onclick=openAddAthlete; $('saveAthleteBtn').onclick=saveAthlete; $('joinBtn').onclick=showTeamJoin; $('accountBtn').onclick=openAccountSheet; $('profileBtn').onclick=openAccountSheet; $('staffDirectoryBtn').onclick=openStaffDirectory; $('editStaffProfileBtn').onclick=openStaffProfile; $('saveStaffProfileBtn').onclick=saveStaffProfile; $('staffPhotoInput').onchange=beginStaffPhotoCrop; $('teamSwitcherBtn').onclick=openTeamSwitcher; $('createTeamBtn').onclick=openCreateTeam; $('saveNewTeamBtn').onclick=createTeam; $('editTeamBtn').onclick=openEditTeam; $('saveEditTeamBtn').onclick=saveEditTeam; $('communicationBtn').onclick=openCommunicationSettings; $('saveCommunicationBtn').onclick=saveCommunicationSettings; $('sendTestEmailBtn').onclick=sendTestTeamEmail;
+$('rosterBtn').onclick=()=>openSheet('rosterSheet'); $('addAthleteBtn').onclick=openAddAthlete; $('saveAthleteBtn').onclick=saveAthlete; $('joinBtn').onclick=showTeamJoin; $('accountBtn').onclick=openAccountSheet; $('profileBtn').onclick=openAccountSheet; $('accountPhotoInput').onchange=beginAccountPhotoCrop; $('saveAccountProfileBtn').onclick=saveAccountProfile; $('staffDirectoryBtn').onclick=openStaffDirectory; $('editStaffProfileBtn').onclick=openStaffProfile; $('saveStaffProfileBtn').onclick=saveStaffProfile; $('staffPhotoInput').onchange=beginStaffPhotoCrop; $('teamSwitcherBtn').onclick=openTeamSwitcher; $('createTeamBtn').onclick=openCreateTeam; $('saveNewTeamBtn').onclick=createTeam; $('editTeamBtn').onclick=openEditTeam; $('saveEditTeamBtn').onclick=saveEditTeam; $('communicationBtn').onclick=openCommunicationSettings; $('saveCommunicationBtn').onclick=saveCommunicationSettings; $('sendTestEmailBtn').onclick=sendTestTeamEmail;
 bindColorPair('newTeamPrimaryColor','newTeamPrimaryHex',updateNewTeamBrandPreview);
 bindColorPair('newTeamSecondaryColor','newTeamSecondaryHex',updateNewTeamBrandPreview);
 bindColorPair('newTeamAccentColor','newTeamAccentHex',updateNewTeamBrandPreview);
