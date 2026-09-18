@@ -127,6 +127,7 @@ body.kiosk-locked #weighInConsoleSheet:not([data-mode="open_scale"]) #weighRoste
 .team-switch-hint{margin:0;color:var(--muted);font-size:13px}
 
 
+/* v0.8.6 iPhone scale polish + weighed-today management */
 /* v0.8.5 parent claim flow + automatic team kiosk */
 /* Team kiosk: scan -> live stable weight auto-saves -> step off/zero -> resets to scan */
 /* v0.8.3 coach lineup + descent-plan board */
@@ -140,6 +141,32 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
 .kiosk-locked .console-actions{position:sticky;bottom:0;z-index:6;background:#fff;padding:6px 0 max(6px,env(safe-area-inset-bottom));margin-top:0}
 @media(max-width:520px){.parent-path-grid{grid-template-columns:1fr}.kiosk-locked #weighInConsoleSheet{padding-left:10px!important;padding-right:10px!important}.kiosk-locked .kiosk-control-bar{margin-left:-10px;margin-right:-10px}.kiosk-locked .scale-readout{flex:1 0 210px!important;min-height:210px!important}.kiosk-locked .scale-readout input{font-size:clamp(72px,23vw,126px)!important}.kiosk-locked #captureStableBtn{min-height:42px!important}.kiosk-locked .console-actions{grid-template-columns:1fr 1fr!important}.kiosk-locked .console-actions button{min-height:44px!important}}
 @media(max-height:760px){.kiosk-locked .scale-readout{flex:1 0 170px!important;min-height:170px!important}.kiosk-locked .scale-readout input{font-size:clamp(64px,18vw,108px)!important}.kiosk-locked #weighScanToken{min-height:38px!important;padding:7px 9px!important}.kiosk-locked #weighScanRow button{min-height:40px!important;padding:8px!important}.kiosk-locked #captureStableBtn{min-height:40px!important}.kiosk-locked .console-actions button{min-height:40px!important}}
+
+/* v0.8.6 iPhone portrait scale fitting + weighed-today detail sheet */
+.weighed-list{display:grid;gap:9px;margin-top:12px}
+.weighed-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:16px;padding:13px 14px}
+.weighed-row b,.weighed-row small{display:block}.weighed-row small{color:var(--muted);margin-top:3px;line-height:1.35}
+.weighed-value{text-align:right;white-space:nowrap}.weighed-value strong{display:block;font-size:23px}.weighed-value small{font-size:11px}
+.delete-test-weigh{margin-top:7px;background:#fff3f3;color:var(--danger);border:1px solid #efc2c2;padding:7px 9px;border-radius:10px;font-size:12px}
+.official-protected{display:inline-block;margin-top:7px;padding:5px 8px;border-radius:999px;background:#eef3f8;color:#52677d;font-size:10px;font-weight:900}
+@media(max-width:520px){
+  #weighInConsoleSheet .scale-readout input{
+    width:100%!important;min-width:0!important;max-width:100%!important;
+    font-size:clamp(62px,18vw,112px)!important;letter-spacing:-.045em!important;
+    text-align:center!important;padding-left:2px!important;padding-right:2px!important;
+  }
+  #weighInConsoleSheet[data-mode="open_scale"] .scale-readout input,
+  .kiosk-locked #weighInConsoleSheet[data-mode="open_scale"] .scale-readout input{
+    font-size:clamp(68px,19vw,118px)!important;
+  }
+}
+@media(orientation:landscape) and (max-height:520px){
+  #weighInConsoleSheet .scale-readout input,
+  #weighInConsoleSheet[data-mode="open_scale"] .scale-readout input{
+    font-size:clamp(58px,13vw,118px)!important;
+  }
+}
+
 </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
@@ -270,7 +297,7 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
 
         <div class="section-head"><h3>Weight room snapshot</h3></div>
         <div class="metric-grid">
-          <button type="button" class="metric metric-btn" data-go="weight"><span>Weighed today</span><strong id="weighed">0</strong></button>
+          <button type="button" class="metric metric-btn" data-weight-metric="weighed"><span>Weighed today</span><strong id="weighed">0</strong></button>
           <button type="button" class="metric metric-btn" data-go="weight"><span>Not weighed</span><strong id="notWeighed">0</strong></button>
           <button type="button" class="metric metric-btn" data-go="weight"><span>Newly eligible</span><strong id="eligible">0</strong></button>
           <button type="button" class="metric metric-btn" data-go="weight"><span>Challenges</span><strong id="challenges">0</strong></button>
@@ -328,7 +355,7 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
             <p>The kiosk PIN belongs to this iPhone/iPad or browser. Use it to unlock or exit a locked weigh-in screen.</p>
             <button id="changeKioskPinBtn" class="wide secondary">Set / Change Kiosk PIN</button>
           </div>
-          <div class="hardware-note">American Scale Bluetooth is not connected in this build yet. v0.7.2 gives us the real workflow and database foundation with manual weight entry so we can test everything before wiring the exact scale protocol.</div>
+          <div class="hardware-note">American Scale Bluetooth is supported in the native iPhone/iPad app. Connect with the scale button in the app header before starting a kiosk session.</div>
           <div class="section-head"><div><div class="eyebrow">ACTIVE</div><h3>Weigh-In Sessions</h3></div></div>
           <div id="weighInSessionList"><div class="empty-card">No active weigh-in sessions.</div></div>
         </div>
@@ -656,6 +683,16 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     <div id="managerInviteBox"></div>
   </section>
 
+  <section id="weighedTodaySheet" class="sheet hidden" aria-modal="true">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <div><div class="eyebrow">TODAY</div><h2>Weighed Today</h2><p id="weighedTodaySummary" class="team-switch-hint">Loading today’s weigh-ins…</p></div>
+      <button class="icon-close" data-close-sheet>×</button>
+    </div>
+    <div id="weighedTodayList" class="weighed-list"><div class="empty-card">Loading…</div></div>
+    <p class="fine">Coaches and team admins can remove accidental/test team weigh-ins. Weights tied to an official dual or tournament record are protected.</p>
+  </section>
+
   <section id="weighInStartSheet" class="sheet hidden" aria-modal="true">
     <div class="sheet-handle"></div>
     <div class="sheet-head"><div><div class="eyebrow">OFFICIAL WEIGH-IN</div><h2 id="weighInStartTitle">Start Weigh-In</h2></div><button class="icon-close" data-close-sheet>×</button></div>
@@ -679,7 +716,7 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     <div class="weigh-console-banner"><b>Home Team Recognition · ON</b><small>Your team’s QR/NFC credentials stay active in every mode. Event-roster athletes from other Wrestling Manager teams can also scan when their roster is synced into the event.</small></div>
     <div id="weighOfficialChip" class="operator-chip official-name-chip hidden"></div>
     <div class="lock-strip"><div><b>iPad Screen Lock</b><small>Lock this screen to the weigh-in console. A PIN is required to return to the rest of the app.</small></div><button id="lockKioskBtn" class="secondary">Lock</button></div>
-    <div class="hardware-note"><b>Scale adapter:</b> manual entry for testing. American Scale Bluetooth will plug into this same live-weight field once its protocol is connected.</div>
+    <div class="hardware-note"><b>Live scale:</b> the native iPhone/iPad app feeds the connected American Scale directly into this display. Manual entry remains available for browser testing.</div>
 
     <label data-scan-label>Scan NFC / QR / barcode</label>
     <div id="weighScanRow" class="two-col"><input id="weighScanToken" autocomplete="off" placeholder="Tap or scan credential"><button id="resolveWeighScanBtn">Identify</button></div>
@@ -769,7 +806,7 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     <div class="feature-card"><b id="accountEmail">—</b><p id="accountTeamInfo" class="muted"></p><span id="accountRole" class="role-pill">—</span><div id="accountTeamLevels" class="team-level-summary"></div></div>
     <button id="editTeamBtn" class="wide admin-only" type="button">Edit Team</button>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.8.5</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.8.6</p>
   </section>
 
   <section id="editTeamSheet" class="sheet hidden" aria-modal="true">
@@ -855,6 +892,7 @@ let teamKioskSaving = false;
 let pendingWeighMode = 'team_kiosk';
 let importantAnnouncements = [];
 let athleteTeamsAthleteId = null;
+let weighedTodayRows = [];
 
 const $ = id => document.getElementById(id);
 const show = (id, visible=true) => $(id)?.classList.toggle('hidden', !visible);
@@ -933,6 +971,61 @@ function formatAgeDivisions(age){
   return `<b>${schoolLabel(age.school_level)}</b><small>Rules year ${esc(age.rule_year||'—')}</small>${chips('USA Wrestling',age.usa_wrestling)}${chips('AAU',age.aau)}${chips('Club age band',age.club_age_band)}`;
 }
 
+
+function teamTodayDateString(){
+  const tz=activeTeam?.timezone||'America/Denver';
+  const parts=new Intl.DateTimeFormat('en-CA',{timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+  const get=t=>parts.find(x=>x.type===t)?.value||'';
+  return `${get('year')}-${get('month')}-${get('day')}`;
+}
+async function openWeighedToday(){
+  if(!activeSeason||!isStaff){message('Coach access is required.',true);return;}
+  weighedTodayRows=[];
+  $('weighedTodayList').innerHTML='<div class="empty-card">Loading today’s weigh-ins…</div>';
+  $('weighedTodaySummary').textContent=`${activeTeam?.name||'Team'} · ${teamTodayDateString()}`;
+  closeSheets();openSheet('weighedTodaySheet');
+  const {data,error}=await client.rpc('get_team_weigh_ins_for_date',{
+    p_season_id:activeSeason.id,
+    p_on_date:teamTodayDateString()
+  });
+  if(error){$('weighedTodayList').innerHTML=`<div class="empty-card">${esc(error.message)}</div>`;return;}
+  weighedTodayRows=data||[];
+  renderWeighedToday();
+}
+function renderWeighedToday(){
+  const list=$('weighedTodayList');
+  const count=weighedTodayRows.length;
+  $('weighedTodaySummary').textContent=`${activeTeam?.name||'Team'} · ${count} ${count===1?'weigh-in':'weigh-ins'} today`;
+  if(!count){list.innerHTML='<div class="empty-card">No team weigh-ins have been recorded today.</div>';return;}
+  list.innerHTML=weighedTodayRows.map(row=>`<div class="weighed-row">
+    <div>
+      <b>${esc(row.first_name)} ${esc(row.last_name)}</b>
+      <small>${esc(fmtTime(row.captured_at))} · ${esc(row.source||'scale')}${row.identification_method?` · ${esc(row.identification_method.toUpperCase())}`:''}</small>
+    </div>
+    <div class="weighed-value">
+      <strong>${Number(row.weight_lbs).toFixed(1)} lb</strong>
+      ${row.linked_official
+        ? '<span class="official-protected">OFFICIAL · PROTECTED</span>'
+        : (isStaff?`<button class="delete-test-weigh" data-delete-team-weigh="${row.weigh_in_id}">Delete Test</button>`:'')}
+    </div>
+  </div>`).join('');
+  list.querySelectorAll('[data-delete-team-weigh]').forEach(btn=>btn.onclick=()=>deleteTestWeighIn(btn.dataset.deleteTeamWeigh));
+}
+async function deleteTestWeighIn(weighInId){
+  const row=weighedTodayRows.find(x=>x.weigh_in_id===weighInId);
+  if(!row||!isStaff)return;
+  const ok=confirm(`Delete the ${Number(row.weight_lbs).toFixed(1)} lb test weigh-in for ${row.first_name} ${row.last_name}?\\n\\nThis removes it from team weight history.`);
+  if(!ok)return;
+  const {error}=await client.rpc('delete_test_weigh_in',{
+    p_weigh_in_id:weighInId,
+    p_reason:'Deleted by coach/team admin as a test or accidental weigh-in'
+  });
+  if(error){message(error.message,true);return;}
+  await loadDashboard();
+  await openWeighedToday();
+  message('Test weigh-in deleted.');
+}
+
 function setTab(name){
   ['home','schedule','messages','weight','more'].forEach(tab => show(tab+'Tab', tab===name));
   document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab===name));
@@ -945,7 +1038,7 @@ function openSheet(id){
 }
 function closeSheets(){
   if(document.body.classList.contains('kiosk-locked')) return;
-  ['eventSheet','eventDetailSheet','attendanceSheet','announcementSheet','rosterSheet','athleteTeamsSheet','addAthleteSheet','joinSheet','joinRequestSheet','coachJoinRequestsSheet','athleteProfileSheet','familySheet','excuseSheet','athleteAccessSheet','staffAccessSheet','weighInStartSheet','weighInConsoleSheet','importRosterSheet','teamSwitcherSheet','createTeamSheet','editTeamSheet','accountSheet'].forEach(id=>show(id,false));
+  ['eventSheet','eventDetailSheet','attendanceSheet','announcementSheet','rosterSheet','athleteTeamsSheet','addAthleteSheet','joinSheet','joinRequestSheet','coachJoinRequestsSheet','athleteProfileSheet','familySheet','excuseSheet','athleteAccessSheet','staffAccessSheet','weighedTodaySheet','weighInStartSheet','weighInConsoleSheet','importRosterSheet','teamSwitcherSheet','createTeamSheet','editTeamSheet','accountSheet'].forEach(id=>show(id,false));
   show('sheetBackdrop', false); document.body.style.overflow='';
 }
 
@@ -2611,7 +2704,12 @@ document.querySelectorAll('.type-btn').forEach(btn=>btn.onclick=()=>applyEventTy
 document.querySelectorAll('.nav-btn').forEach(btn=>btn.onclick=()=>setTab(btn.dataset.tab));
 document.querySelectorAll('[data-go]').forEach(btn=>btn.onclick=()=>{setTab(btn.dataset.go);if(btn.dataset.action==='create-event')setTimeout(prepareEventForm,0);});
 document.querySelectorAll('[data-back-home]').forEach(btn=>btn.onclick=()=>setTab('home'));
-document.querySelectorAll('[data-weight-metric]').forEach(btn=>btn.onclick=()=>{const labels={weighed:'Weighed today', 'not-weighed':'Not weighed today', eligible:'Newly eligible', challenges:'Challenge queue'};message(`${labels[btn.dataset.weightMetric]||'Weight Room'} details will open here as that section is built out.`);});
+document.querySelectorAll('[data-weight-metric]').forEach(btn=>btn.onclick=async()=>{
+  const metric=btn.dataset.weightMetric;
+  if(metric==='weighed'){await openWeighedToday();return;}
+  const labels={'not-weighed':'Not weighed today',eligible:'Newly eligible',challenges:'Challenge queue'};
+  message(`${labels[metric]||'Weight Room'} details will open here as that section is built out.`);
+});
 document.querySelectorAll('.filter-chip').forEach(btn=>btn.onclick=()=>{scheduleFilter=btn.dataset.filter;document.querySelectorAll('.filter-chip').forEach(x=>x.classList.toggle('active',x===btn));renderSchedule();});
 
 document.querySelectorAll('[data-issue-credential]').forEach(b=>b.onclick=()=>issueAthleteCredential(b.dataset.issueCredential));
