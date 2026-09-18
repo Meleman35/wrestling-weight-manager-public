@@ -126,6 +126,9 @@ body.kiosk-locked #weighInConsoleSheet:not([data-mode="open_scale"]) #weighRoste
 .roster-muted-card{opacity:.92}
 .team-switch-hint{margin:0;color:var(--muted);font-size:13px}
 
+
+/* v0.8.3 coach lineup + descent-plan board */
+.coach-weight-board{margin-top:18px}.coach-weight-board>.section-head{align-items:flex-end}.coach-weight-board .section-sub{display:block;color:var(--muted);font-size:12px;margin-top:3px;line-height:1.35}.weight-class-board{display:grid;gap:10px}.weight-class-group{background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden}.weight-class-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;background:#f3f6f9;border-bottom:1px solid var(--line)}.weight-class-head b{font-size:16px}.weight-class-head small{color:var(--muted);font-weight:800}.weight-athlete-row{padding:13px 14px;border-top:1px solid var(--line)}.weight-athlete-row:first-child{border-top:0}.weight-athlete-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.weight-athlete-name b{display:block}.weight-athlete-name small{display:block;color:var(--muted);margin-top:3px}.weight-athlete-number{text-align:right;white-space:nowrap;font-weight:950}.weight-athlete-number small{display:block;color:var(--muted);font-size:10px;font-weight:800;margin-top:2px}.plan-summary{margin-top:9px;padding:9px 10px;background:#f8fafc;border:1px solid #e4eaf0;border-radius:12px}.plan-summary>small{display:block;color:var(--muted);font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}.plan-path{display:flex;gap:6px;flex-wrap:wrap}.plan-chip{display:inline-flex;align-items:center;gap:4px;padding:6px 8px;border-radius:999px;background:#eaf1f8;color:#2f506f;font-size:11px;font-weight:900}.plan-chip.now{background:#e8f7ef;color:#176b45}.plan-chip.min{background:#fff5df;color:#7b5a11}.plan-chip.target{background:#efeafb;color:#5b3e90}.plan-chip.no-plan{background:#f2f3f5;color:#66717d}.plan-note{display:block;color:var(--muted);font-size:11px;margin-top:6px;line-height:1.35}.board-empty{background:#fff;border:1px dashed var(--line);border-radius:16px;padding:14px;color:var(--muted);font-size:13px}
 </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
@@ -237,6 +240,14 @@ body.kiosk-locked #weighInConsoleSheet:not([data-mode="open_scale"]) #weighRoste
           <button class="quick-card" data-go="weight"><span>⚖️</span><b>Weight Room</b><small>Weigh-ins and eligibility</small></button>
           <button class="quick-card" data-go="more"><span>☰</span><b>Team tools</b><small>Roster, join, equipment</small></button>
         </div>
+
+        <section id="coachWeightBoardSection" class="coach-weight-board coach-only">
+          <div class="section-head">
+            <div><h3>Lineup by Weight Class</h3><span class="section-sub">Coach lineup stays separate from certification eligibility. Plan chips show when a wrestler can descend to a lower class.</span></div>
+            <button class="link-btn" data-go="weight">Weight Room</button>
+          </div>
+          <div id="coachWeightBoardList" class="weight-class-board"><div class="board-empty">No active roster yet.</div></div>
+        </section>
 
         <div class="section-head"><h3>Needs attention</h3><span id="attentionCount" class="count-pill">0</span></div>
         <div id="attentionList" class="card-list">
@@ -737,7 +748,7 @@ body.kiosk-locked #weighInConsoleSheet:not([data-mode="open_scale"]) #weighRoste
     <div class="feature-card"><b id="accountEmail">—</b><p id="accountTeamInfo" class="muted"></p><span id="accountRole" class="role-pill">—</span><div id="accountTeamLevels" class="team-level-summary"></div></div>
     <button id="editTeamBtn" class="wide admin-only" type="button">Edit Team</button>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.8.2</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.8.3</p>
   </section>
 
   <section id="editTeamSheet" class="sheet hidden" aria-modal="true">
@@ -789,6 +800,7 @@ let availableTeams = [];
 let memberAthletes = [];
 let rosterManagementRows = [];
 let dashboardCounts = null;
+let certificationPlansByAthlete = new Map();
 let isStaff = false;
 let viewerRole = 'member';
 let excuseAthleteId = null;
@@ -1106,7 +1118,7 @@ async function activateTeam(teamId,{persist=true}={}){
   $('headerTeamName').textContent=team.name;
   $('homeTeamName').textContent=team.name;
 
-  rosterRows=[]; rosterManagementRows=[]; scheduleRows=[]; joinRequests=[]; weighInSessions=[]; memberAthletes=[]; importantAnnouncements=[]; dashboardCounts=null;
+  rosterRows=[]; rosterManagementRows=[]; scheduleRows=[]; joinRequests=[]; weighInSessions=[]; memberAthletes=[]; importantAnnouncements=[]; dashboardCounts=null; certificationPlansByAthlete=new Map();
 
   const {data:seasons,error:seasonErr}=await client.from('seasons').select('*').eq('team_id',team.id).eq('active',true).order('created_at',{ascending:false}).limit(1);
   if(seasonErr){message(seasonErr.message,true);return;}
@@ -1244,6 +1256,111 @@ async function loadDashboard(){
   renderAttention();
 }
 
+function fmtShortDateOnly(dateStr){
+  if(!dateStr)return '';
+  const d=new Date(`${dateStr}T12:00:00`);
+  return d.toLocaleDateString(undefined,{month:'short',day:'numeric'});
+}
+
+function weightClassText(v){
+  if(v===null||v===undefined||v==='')return '—';
+  const n=Number(v);
+  return Number.isFinite(n)?String(Number(n.toFixed(2))):String(v);
+}
+
+function buildPlanMilestones(row,plan){
+  const chips=[];
+  const nowClass=row?.eligible_weight_class;
+  if(nowClass!==null&&nowClass!==undefined&&nowClass!==''){
+    chips.push({kind:'now',text:`Eligible now: ${weightClassText(nowClass)}`});
+  }
+  if(row?.target_weight_class!==null&&row?.target_weight_class!==undefined&&row?.target_weight_class!==''){
+    chips.push({kind:'target',text:`Coach target: ${weightClassText(row.target_weight_class)}`});
+  }
+  if(!plan){
+    chips.push({kind:'no-plan',text:'No weight-loss plan on file'});
+    return chips;
+  }
+  const today=new Date(); today.setHours(0,0,0,0);
+  let lastClass=nowClass===null||nowClass===undefined?null:Number(nowClass);
+  const future=(plan.rows||[]).filter(r=>{
+    if(!r.effective_date||r.eligible_weight_class===null||r.eligible_weight_class===undefined)return false;
+    const d=new Date(`${r.effective_date}T12:00:00`);
+    return d>=today;
+  }).sort((a,b)=>String(a.effective_date).localeCompare(String(b.effective_date)));
+  for(const r of future){
+    const cls=Number(r.eligible_weight_class);
+    if(Number.isFinite(cls) && (lastClass===null || cls!==lastClass)){
+      chips.push({kind:'future',text:`${weightClassText(cls)} · ${fmtShortDateOnly(r.effective_date)}`});
+      lastClass=cls;
+    }
+    if(chips.filter(c=>c.kind==='future').length>=4)break;
+  }
+  if(plan.minimum_weight_class!==null&&plan.minimum_weight_class!==undefined&&plan.minimum_weight_class!==''){
+    const minText=`Minimum: ${weightClassText(plan.minimum_weight_class)}${plan.final_date?` · ${fmtShortDateOnly(plan.final_date)}`:''}`;
+    if(!chips.some(c=>c.text.startsWith('Minimum:')))chips.push({kind:'min',text:minText});
+  }
+  return chips;
+}
+
+function renderCoachWeightClassBoard(){
+  const container=$('coachWeightBoardList');
+  const section=$('coachWeightBoardSection');
+  if(!container||!section)return;
+  section.classList.toggle('hidden-role',!isStaff);
+  if(!isStaff)return;
+  const rows=(rosterRows||[]).filter(r=>r.roster_status!=='standby'&&r.roster_status!=='removed'&&r.roster_status!=='inactive');
+  if(!rows.length){container.innerHTML='<div class="board-empty">No active athletes on this roster yet.</div>';return;}
+
+  const groups=new Map();
+  rows.forEach(r=>{
+    const key=(r.current_lineup_class===null||r.current_lineup_class===undefined||r.current_lineup_class==='')?'unassigned':String(Number(r.current_lineup_class));
+    if(!groups.has(key))groups.set(key,[]);
+    groups.get(key).push(r);
+  });
+  const ordered=[...groups.entries()].sort((a,b)=>{
+    if(a[0]==='unassigned')return 1;
+    if(b[0]==='unassigned')return -1;
+    return Number(a[0])-Number(b[0]);
+  });
+
+  container.innerHTML=ordered.map(([cls,athletes])=>{
+    const title=cls==='unassigned'?'Unassigned':`${weightClassText(cls)} lb`;
+    const body=athletes.sort((a,b)=>String(a.last_name).localeCompare(String(b.last_name))).map(r=>{
+      const plan=certificationPlansByAthlete.get(r.athlete_id)||null;
+      const chips=buildPlanMilestones(r,plan);
+      const latest=r.latest_weight!==null&&r.latest_weight!==undefined?`${Number(r.latest_weight).toFixed(1)} lb`:'—';
+      const eligible=r.eligible_weight_class!==null&&r.eligible_weight_class!==undefined?`Eligible ${weightClassText(r.eligible_weight_class)}`:'Eligibility —';
+      const note=plan?.weekly_loss_limit?`Plan weekly loss limit: ${Number(plan.weekly_loss_limit)}${plan.minimum_weight?` · certified minimum ${Number(plan.minimum_weight).toFixed(1)} lb`:''}`:(plan?.minimum_weight?`Certified minimum ${Number(plan.minimum_weight).toFixed(1)} lb`:(!plan?'Upload/import a certification plan to show descent dates and class options.':''));
+      return `<div class="weight-athlete-row">
+        <div class="weight-athlete-top">
+          <div class="weight-athlete-name"><b>${esc(r.first_name)} ${esc(r.last_name)}</b><small>${esc(rosterStatusLabel(r.roster_status))} · ${esc(eligible)}</small></div>
+          <div class="weight-athlete-number">${esc(latest)}<small>latest weight</small></div>
+        </div>
+        <div class="plan-summary"><small>Weight-loss plan options</small><div class="plan-path">${chips.map(c=>`<span class="plan-chip ${esc(c.kind)}">${esc(c.text)}</span>`).join('')}</div>${note?`<span class="plan-note">${esc(note)}</span>`:''}</div>
+      </div>`;
+    }).join('');
+    return `<section class="weight-class-group"><div class="weight-class-head"><b>${esc(title)}</b><small>${athletes.length} wrestler${athletes.length===1?'':'s'}</small></div><div>${body}</div></section>`;
+  }).join('');
+}
+
+async function loadCoachWeightClassBoard(){
+  if(!isStaff||!activeSeason){certificationPlansByAthlete=new Map();renderCoachWeightClassBoard();return;}
+  const {data:plans,error}=await client.from('certification_plans').select('id,athlete_id,minimum_weight,minimum_weight_class,weekly_loss_limit,final_date,version,active').eq('season_id',activeSeason.id).eq('active',true);
+  if(error){console.warn('Certification plans:',error.message);certificationPlansByAthlete=new Map();renderCoachWeightClassBoard();return;}
+  const map=new Map((plans||[]).map(p=>[p.athlete_id,{...p,rows:[]}]))
+  const ids=(plans||[]).map(p=>p.id);
+  if(ids.length){
+    const {data:planRows,error:rowErr}=await client.from('certification_plan_rows').select('plan_id,effective_date,label,eligible_weight,eligible_weight_class,note').in('plan_id',ids).order('effective_date',{ascending:true});
+    if(!rowErr){
+      const byPlan=new Map((plans||[]).map(p=>[p.id,p.athlete_id]));
+      (planRows||[]).forEach(pr=>{const athleteId=byPlan.get(pr.plan_id);const item=map.get(athleteId);if(item)item.rows.push(pr);});
+    } else console.warn('Certification plan rows:',rowErr.message);
+  }
+  certificationPlansByAthlete=map;
+  renderCoachWeightClassBoard();
+}
+
 function rosterStatusLabel(status){
   return ({varsity:'Varsity',jv:'JV',both:'Varsity & JV',unassigned:'Unassigned',inactive:'Inactive',standby:'Standby',removed:'Removed'})[status]||status||'Unassigned';
 }
@@ -1327,6 +1444,7 @@ async function loadRoster(){
     $('inactiveRosterList').querySelectorAll('[data-athlete-teams]').forEach(btn=>btn.onclick=()=>openAthleteTeams(btn.dataset.athleteTeams));
     bindRosterManagementActions($('inactiveRosterList'));
   }
+  await loadCoachWeightClassBoard();
 }
 
 function athleteTeamRow(athleteId){
@@ -2180,7 +2298,7 @@ async function acceptOfficialWeight(){
   if(stableReadingKey!==`${selectedWeighInEntry.id}|${weight.toFixed(2)}`) await captureStableReading();
   const {error}=await client.rpc('record_official_weigh_in',{p_session_id:activeWeighInSession.id,p_roster_entry_id:selectedWeighInEntry.id,p_weight_lbs:weight,p_status:'accepted',p_identification_method:['nfc','qr','barcode'].includes(selectedIdentificationMethod)?selectedIdentificationMethod:'roster',p_team_weigh_in_id:stableTeamWeighInId,p_station_name:'Primary Scale',p_note:null});
   if(error){message(error.message,true);return;}
-  message(`${selectedWeighInEntry.first_name} ${selectedWeighInEntry.last_name} accepted at ${weight.toFixed(1)} lb.`); await loadRecentOfficialWeights(); clearWeighConsole();
+  message(`${selectedWeighInEntry.first_name} ${selectedWeighInEntry.last_name} accepted at ${weight.toFixed(1)} lb.`); await loadRecentOfficialWeights(); if(isStaff)await Promise.all([loadRoster(),loadDashboard()]); clearWeighConsole();
 }
 
 async function markReweigh(){
