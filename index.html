@@ -685,7 +685,7 @@ button.wide{width:100%;margin-top:16px}.stack-actions{display:grid;gap:9px;margi
     <div class="sheet-head"><div><div class="eyebrow">YOU</div><h2>Account & Team</h2></div><button class="icon-close" data-close-sheet>×</button></div>
     <div class="feature-card"><b id="accountEmail">—</b><p id="accountTeamInfo" class="muted"></p><span id="accountRole" class="role-pill">—</span></div>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.7.4</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.7.5</p>
   </section>
 
   <script>
@@ -820,7 +820,7 @@ function openSheet(id){
 }
 function closeSheets(){
   if(document.body.classList.contains('kiosk-locked')) return;
-  ['eventSheet','eventDetailSheet','attendanceSheet','rosterSheet','addAthleteSheet','joinSheet','joinRequestSheet','coachJoinRequestsSheet','athleteProfileSheet','familySheet','excuseSheet','athleteAccessSheet','staffAccessSheet','weighInStartSheet','weighInConsoleSheet','importRosterSheet','teamSwitcherSheet','createTeamSheet','accountSheet'].forEach(id=>show(id,false));
+  ['eventSheet','eventDetailSheet','attendanceSheet','announcementSheet','rosterSheet','addAthleteSheet','joinSheet','joinRequestSheet','coachJoinRequestsSheet','athleteProfileSheet','familySheet','excuseSheet','athleteAccessSheet','staffAccessSheet','weighInStartSheet','weighInConsoleSheet','importRosterSheet','teamSwitcherSheet','createTeamSheet','accountSheet'].forEach(id=>show(id,false));
   show('sheetBackdrop', false); document.body.style.overflow='';
 }
 
