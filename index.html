@@ -177,7 +177,7 @@ button.wide{width:100%;margin-top:16px}.stack-actions{display:grid;gap:9px;margi
       </select>
       <label>Season</label>
       <input id="seasonName" value="2026-27">
-      <button id="createTeamBtn" class="wide">Create Organization + Team</button>
+      <button id="bootstrapTeamBtn" class="wide">Create Organization + Team</button>
     </div>
   </section>
 
@@ -663,7 +663,7 @@ button.wide{width:100%;margin-top:16px}.stack-actions{display:grid;gap:9px;margi
     <div class="sheet-head"><div><div class="eyebrow">YOU</div><h2>Account & Team</h2></div><button class="icon-close" data-close-sheet>×</button></div>
     <div class="feature-card"><b id="accountEmail">—</b><p id="accountTeamInfo" class="muted"></p><span id="accountRole" class="role-pill">—</span></div>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.7.2</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.7.3</p>
   </section>
 
   <script>
@@ -1941,7 +1941,7 @@ $('signInBtn').onclick=async()=>{message('');const {error}=await client.auth.sig
 $('signOutBtn').onclick=async()=>{await client.auth.signOut();location.reload();};
 $('acceptInviteBtn').onclick=acceptInvite;
 $('setupJoinBtn').onclick=()=>startJoinFlow($('setupJoinCode').value.trim());
-$('createTeamBtn').onclick=async()=>{
+$('bootstrapTeamBtn').onclick=async()=>{
   const {error}=await client.rpc('bootstrap_wrestling_organization',{p_organization_name:$('orgName').value.trim(),p_team_name:$('teamName').value.trim(),p_team_type:$('teamType').value,p_gender_scope:$('genderScope').value,p_season_name:$('seasonName').value.trim()});
   if(error){message(error.message,true);return;} message('Organization and team created.'); await refresh();
 };
