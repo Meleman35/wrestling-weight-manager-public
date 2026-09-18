@@ -188,6 +188,7 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
 .staff-share-grid{display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px}
 .staff-directory-card{display:grid;grid-template-columns:auto 1fr;gap:13px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:10px}
 .staff-directory-card .staff-profile-photo,.staff-directory-card .staff-profile-photo-placeholder{width:70px;height:70px;font-size:28px}
+.agreement-summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}.agreement-summary{background:#f5f8fb;border:1px solid var(--line);border-radius:15px;padding:11px;text-align:center}.agreement-summary b,.agreement-summary span{display:block}.agreement-summary b{font-size:22px}.agreement-summary span{font-size:11px;color:var(--muted);font-weight:800;margin-top:3px}.agreement-document{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;margin:12px 0;max-height:48vh;overflow:auto;line-height:1.55}.agreement-document h3{margin:0 0 5px}.agreement-document h4{font-size:15px;margin:18px 0 4px}.agreement-document p{margin:0 0 10px;color:#33475b}.agreement-version{display:inline-flex;padding:5px 8px;border-radius:999px;background:#eef3f8;color:#425a72;font-size:11px;font-weight:900}.agreement-status-row{background:#fff;border:1px solid var(--line);border-radius:16px;padding:13px;margin-bottom:8px}.agreement-status-top{display:flex;align-items:center;justify-content:space-between;gap:10px}.agreement-status-row b,.agreement-status-row small{display:block}.agreement-status-row small{color:var(--muted);margin-top:4px}.agreement-check{display:inline-grid;place-items:center;width:29px;height:29px;border-radius:50%;background:#e4f5ec;color:#16714a;font-weight:950}.agreement-check.pending{background:#fff2dd;color:#9a6110}.agreement-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.agreement-badge{padding:5px 8px;border-radius:999px;background:#eef3f8;color:#425a72;font-size:11px;font-weight:900}.agreement-badge.media-full{background:#e4f5ec;color:#16714a}.agreement-badge.media-limited{background:#fff2dd;color:#8a5b16}.agreement-badge.media-none{background:#f1f2f4;color:#5e6670}.agreement-private-note{margin-top:9px;padding:9px 10px;background:#fff8e5;border-radius:11px;color:#72550e;font-size:12px;line-height:1.4}.agreement-choice-list{display:grid;gap:8px;margin:9px 0 14px}.agreement-choice{display:flex;align-items:flex-start;gap:10px;background:#f7f9fb;border:1px solid var(--line);border-radius:14px;padding:11px}.agreement-choice input{width:20px;height:20px;margin-top:1px}.agreement-choice b,.agreement-choice small{display:block}.agreement-choice small{color:var(--muted);margin-top:3px;line-height:1.3}.agreement-sign-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.agreement-attest{display:flex;align-items:flex-start;gap:10px;background:#eef6ff;border:1px solid #c9def4;border-radius:14px;padding:12px;margin:13px 0}.agreement-attest input{width:20px;height:20px;flex:0 0 auto}.agreement-attest span{font-size:13px;line-height:1.4;color:#31577d}.agreement-editor-content{min-height:430px;font-family:inherit;line-height:1.45}.agreement-complete-banner{background:#e7f7ef;border:1px solid #b9e3cd;color:#176b49;border-radius:15px;padding:12px;margin:10px 0}.agreement-pending-banner{background:#fff7e8;border:1px solid #edd9aa;color:#7a5713;border-radius:15px;padding:12px;margin:10px 0}@media(max-width:520px){.agreement-sign-grid{grid-template-columns:1fr}.agreement-summary-grid{grid-template-columns:1fr 1fr 1fr}.agreement-summary b{font-size:19px}}
 .staff-directory-copy{min-width:0}
 .staff-directory-copy b{display:block;font-size:17px}
 .staff-directory-copy .staff-title{display:block;color:var(--muted);font-size:12px;font-weight:800;margin-top:2px}
@@ -493,6 +494,7 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
           <button id="rosterBtn" class="menu-row coach-only"><span>👥</span><div><b>Roster</b><small>Athletes, profiles, standby and team transfers</small></div><i>›</i></button>
           <button id="joinBtn" class="menu-row coach-only"><span>🔗</span><div><b>Team Join</b><small>QR code, text, email and team code</small></div><i>›</i></button>
           <button id="joinRequestsBtn" class="menu-row coach-only"><span>✅</span><div><b>Join Requests</b><small>Approve or deny athletes and parents</small></div><i id="joinRequestCount">›</i></button>
+          <button id="agreementsBtn" class="menu-row"><span>✍️</span><div><b>Team Agreement</b><small>Expectations, signatures and social-media permissions</small></div><i id="agreementMenuCount">›</i></button>
           <button id="memberProfilesBtn" class="menu-row member-only"><span>👤</span><div><b>My Athlete Profiles</b><small>Photo, sizes, contact permissions and age divisions</small></div><i>›</i></button>
           <button id="familyBtn" class="menu-row member-only"><span>👨‍👩‍👧</span><div><b>Family</b><small>Invite a parent or add another child</small></div><i>›</i></button>
           <button id="staffDirectoryBtn" class="menu-row"><span>📇</span><div><b>Coaches & Staff</b><small>Team staff photos and the contact information they choose to share</small></div><i>›</i></button>
@@ -828,6 +830,39 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     <div id="parentAddChildBox" class="feature-card hidden"><h3>Add Another Child</h3><p class="muted">You fill out the child’s information and the coach approves the request.</p><button id="parentAddChildBtn" class="wide">Start Child Request</button></div>
   </section>
 
+  <section id="agreementsSheet" class="sheet hidden" aria-modal="true">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><div><div class="eyebrow">TEAM AGREEMENT</div><h2>Expectations & Permissions</h2><p class="muted">One place for team standards, signatures and social-media choices.</p></div><button class="icon-close" data-close-sheet>×</button></div>
+
+    <div id="agreementCoachView" class="hidden">
+      <div id="agreementCoachTemplateBox"></div>
+      <div id="agreementCoachSummary" class="agreement-summary-grid"></div>
+      <button id="editAgreementBtn" class="wide admin-only" type="button">Edit / Publish Team Agreement</button>
+      <h3 class="subhead">Roster Status</h3>
+      <div id="agreementStatusList"><div class="empty-card">Loading agreement status…</div></div>
+    </div>
+
+    <div id="agreementFamilyView" class="hidden">
+      <label>Athlete</label>
+      <select id="agreementAthleteSelect"></select>
+      <div id="agreementFamilyContent"><div class="empty-card">Loading team agreement…</div></div>
+    </div>
+  </section>
+
+  <section id="agreementEditorSheet" class="sheet hidden" aria-modal="true">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><div><div class="eyebrow">TEAM ADMIN</div><h2>Agreement Builder</h2><p class="muted">Published versions remain attached to existing signatures. Publishing changes creates a new version for the roster to sign.</p></div><button class="icon-close" data-close-sheet>×</button></div>
+    <div id="agreementEditorVersionNote" class="privacy-note"></div>
+    <label>Agreement title</label><input id="agreementEditorTitle" type="text">
+    <label>Introduction</label><textarea id="agreementEditorIntro" rows="4"></textarea>
+    <label>Agreement content</label><textarea id="agreementEditorContent" class="agreement-editor-content"></textarea>
+    <label class="toggle-row"><span><b>Require athlete signature</b><small>The agreement stays pending until the athlete signs.</small></span><input id="agreementRequireAthlete" type="checkbox" checked></label>
+    <label class="toggle-row"><span><b>Require parent / guardian signature</b><small>Recommended for school and youth teams.</small></span><input id="agreementRequireParent" type="checkbox" checked></label>
+    <label class="toggle-row"><span><b>Collect social-media permission</b><small>Parents choose full, limited or no permission separately from the agreement.</small></span><input id="agreementMediaEnabled" type="checkbox" checked></label>
+    <div class="two-col"><button id="saveAgreementDraftBtn" class="secondary" type="button">Save Draft</button><button id="publishAgreementBtn" type="button">Publish Version</button></div>
+    <p class="fine">Publishing a new version does not alter previous signature records. Athletes and parents will sign the newly published version.</p>
+  </section>
+
 
   <section id="excuseSheet" class="sheet hidden" aria-modal="true">
     <div class="sheet-handle"></div>
@@ -1060,7 +1095,7 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     <button id="editTeamBtn" class="wide admin-only" type="button">Edit Team</button>
     <button id="communicationBtn" class="wide admin-only" type="button">Communication Settings</button>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.10.2</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.11.0</p>
   </section>
 
 
@@ -1218,6 +1253,46 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
 const SUPABASE_URL = 'https://vfocpoyexnjsjpxhhyqr.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_aX7mx8Myn8sok3bhPPmphQ_fWN8o38P';
 const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const DEFAULT_AGREEMENT_TITLE='Team Wrestling Agreement';
+const DEFAULT_AGREEMENT_INTRO='Our wrestling program is committed to helping every athlete grow academically, athletically, and personally. Wrestling is demanding, and success requires consistent effort, accountability, communication, and support from athletes, families, and coaches.';
+const DEFAULT_AGREEMENT_CONTENT=`1. Academics and eligibility
+Athletes are students first. Each athlete is expected to remain academically eligible, communicate early when schoolwork becomes difficult, and use available teacher, school, and team support. School and district eligibility rules always apply.
+
+2. Respect, sportsmanship, and conduct
+Athletes will treat teammates, opponents, officials, teachers, school staff, bus drivers, families, and coaches with respect. Hazing, bullying, harassment, retaliation, discriminatory conduct, and unsafe behavior are not acceptable. Concerns will be addressed with appropriate, progressive consequences consistent with school and team policy.
+
+3. Wrestling room standards
+Only approved footwear is allowed on the mats. Food is not permitted in the wrestling room. Athletes will help keep the room and mats clean, arrive in clean practice clothing, follow coach directions, and begin assigned warm-up or drilling promptly.
+
+4. Practice expectations
+Practice is a learning environment. Athletes are expected to be attentive during instruction, work with purpose, support teammates, and participate in assigned technique, live wrestling, conditioning, recovery, or modified activity. Athletes should arrive dressed and ready at the time shown on the team schedule.
+
+5. Hygiene, skin conditions, and illness
+Athletes must shower as soon as possible after practice and competition, wash practice clothing after each use, and report possible skin conditions or contagious illness immediately. Return-to-participation requirements will follow school, state association, and medical guidance. Required medical clearance must be provided before returning.
+
+6. Attendance and punctuality
+Every absence or late arrival must be communicated to the coaching staff as early as possible by the athlete or parent/guardian. Teams may define reasonable consequences for unexcused absences or late arrivals. Missing the final practice before competition may affect participation unless excused by the coaching staff. Reasonable consideration will be given to illness, injury, academics, family needs, school activities, split-season participation, and emergencies.
+
+7. Injury expectations
+Injured athletes are expected to attend practice when medically and practically appropriate and complete approved rehabilitation, observation, or modified work. Health and medical restrictions come first. Travel and competition participation remain subject to medical clearance, school policy, roster needs, and coaching decisions.
+
+8. School, travel, and bus conduct
+Athletes will follow all school and transportation rules, remain where coaches can locate them, respect drivers and chaperones, and represent the program appropriately. Parents and guardians should be on time for pickup and follow team checkout procedures during travel.
+
+9. Tournament and competition conduct
+Athletes attend events to compete, prepare, recover, and support teammates. They may sit with family when permitted, but must remain reachable, follow warm-up and reporting instructions, and avoid behavior that distracts from competition or disrupts the event.
+
+10. Parent and guardian partnership
+Parents and guardians are asked to encourage effort, growth, resilience, and sportsmanship. Please allow coaches to coach and officials to officiate. Questions or concerns should first be discussed privately with the coaching staff at an appropriate time, not during a match or in front of athletes. Unresolved concerns may be taken through the school or organization leadership.
+
+11. Coach commitments
+Coaches will teach wrestling skills, promote athlete safety and development, communicate expectations, model respectful conduct, and apply team standards as consistently and fairly as possible. Coaches will follow applicable school, state association, USA Wrestling, and SafeSport requirements.
+
+12. Lettering or recognition standards
+When applicable, athletes must complete the season in good academic and social standing, meet team attendance and participation expectations, and fulfill school and team requirements. Team-specific criteria should be clearly communicated by the coaching staff and verified under school or organization policy.
+
+13. Acknowledgment
+Signing confirms that the athlete and parent/guardian have read and discussed this agreement, understand the expectations, and know how to contact the coaching staff with questions. A social-media choice is recorded separately and may be changed by contacting the coaching staff. Declining social-media permission does not affect team membership or participation.`;
 
 let session = null;
 let activeTeam = null;
@@ -1262,6 +1337,11 @@ let joinParentPath = null;
 let joinPreview = null;
 let joinRequests = [];
 let pendingGuardianRequests = [];
+let agreementStatusRows = [];
+let agreementPublishedTemplate = null;
+let agreementEditorData = null;
+let agreementCurrentData = null;
+let agreementAthleteId = null;
 let profileAthleteId = null;
 let profileData = null;
 let viewAthleteId = null;
@@ -1446,7 +1526,7 @@ function openSheet(id){
 }
 function closeSheets(){
   if(document.body.classList.contains('kiosk-locked')) return;
-  ['eventSheet','eventDetailSheet','attendanceSheet','announcementSheet','rosterSheet','athleteTeamsSheet','addAthleteSheet','joinSheet','joinRequestSheet','coachJoinRequestsSheet','athleteViewSheet','athleteProfileSheet','weightTrendSheet','photoCropSheet','communicationSheet','staffProfileSheet','staffDirectorySheet','familySheet','excuseSheet','athleteAccessSheet','staffAccessSheet','weighedTodaySheet','weighInStartSheet','weighInConsoleSheet','importRosterSheet','teamSwitcherSheet','createTeamSheet','editTeamSheet','lineupClassSheet','accountSheet'].forEach(id=>show(id,false));
+  ['eventSheet','eventDetailSheet','attendanceSheet','announcementSheet','rosterSheet','athleteTeamsSheet','addAthleteSheet','joinSheet','joinRequestSheet','coachJoinRequestsSheet','athleteViewSheet','athleteProfileSheet','weightTrendSheet','photoCropSheet','communicationSheet','staffProfileSheet','staffDirectorySheet','familySheet','agreementsSheet','agreementEditorSheet','excuseSheet','athleteAccessSheet','staffAccessSheet','weighedTodaySheet','weighInStartSheet','weighInConsoleSheet','importRosterSheet','teamSwitcherSheet','createTeamSheet','editTeamSheet','lineupClassSheet','accountSheet'].forEach(id=>show(id,false));
   show('sheetBackdrop', false); document.body.style.overflow='';
 }
 
@@ -2037,7 +2117,7 @@ async function activateTeam(teamId,{persist=true}={}){
   $('headerTeamName').textContent=team.name;
   $('homeTeamName').textContent=team.name;
 
-  rosterRows=[]; rosterManagementRows=[]; scheduleRows=[]; joinRequests=[]; pendingGuardianRequests=[]; weighInSessions=[]; memberAthletes=[]; importantAnnouncements=[]; dashboardCounts=null; certificationPlansByAthlete=new Map();
+  rosterRows=[]; rosterManagementRows=[]; scheduleRows=[]; joinRequests=[]; pendingGuardianRequests=[]; agreementStatusRows=[]; agreementPublishedTemplate=null; agreementEditorData=null; agreementCurrentData=null; agreementAthleteId=null; weighInSessions=[]; memberAthletes=[]; importantAnnouncements=[]; dashboardCounts=null; certificationPlansByAthlete=new Map();
   teamWeightClasses=[];
 
   const {data:seasons,error:seasonErr}=await client.from('seasons').select('*').eq('team_id',team.id).eq('active',true).order('created_at',{ascending:false}).limit(1);
@@ -2066,7 +2146,7 @@ async function activateTeam(teamId,{persist=true}={}){
   await loadTeamWeightClasses();
 
   if(isStaff){
-    await Promise.all([loadDashboard(),loadRoster(),loadSchedule(),loadJoinRequests(),loadGuardianConnectionRequests(),loadWeighInSessions(),loadImportantAnnouncements()]);
+    await Promise.all([loadDashboard(),loadRoster(),loadSchedule(),loadJoinRequests(),loadGuardianConnectionRequests(),loadAgreementCoachStatus(false),loadWeighInSessions(),loadImportantAnnouncements()]);
   } else if(isManager){
     await Promise.all([loadOperationalRoster(),loadSchedule(),loadWeighInSessions(),loadImportantAnnouncements()]);
   } else {
@@ -2124,6 +2204,7 @@ function applyRoleUI(){
   show('rosterBtn', isStaff);
   show('joinBtn', isStaff);
   show('joinRequestsBtn', isStaff);
+  show('agreementsBtn', isStaff || (!isManager && agreementAthleteChoices().length>0));
   show('staffAccessBtn', isTeamAdmin);
   show('editStaffProfileBtn', actualIsStaff && viewMode!=='parent');
   show('communicationBtn', actualIsTeamAdmin && viewMode!=='parent');
@@ -3483,6 +3564,199 @@ async function familyCreateGuardianInvite(){
   const token=data?.[0]?.invitation_token||data?.invitation_token,url=inviteUrl(token); $('familyInviteShareBox').innerHTML=`<div class="token-box">${esc(token)}</div><div id="familyQr" class="qr-wrap"></div><div class="share-grid"><button data-fam="text">Text</button><button data-fam="email">Email</button><button data-fam="copy">Copy Link</button><button data-fam="share">Share</button></div>`; makeQr('familyQr',url); $('familyInviteShareBox').querySelector('[data-fam="text"]').onclick=()=>shareByText(`Connect as my parent/guardian in Wrestling Manager: ${url}`); $('familyInviteShareBox').querySelector('[data-fam="email"]').onclick=()=>sendGuardianInviteEmail(email,name,url); $('familyInviteShareBox').querySelector('[data-fam="copy"]').onclick=()=>copyText(url); $('familyInviteShareBox').querySelector('[data-fam="share"]').onclick=()=>systemShare('Wrestling Manager parent invite','Connect to my athlete profile',url);
 }
 
+function agreementAthleteChoices(){
+  const rows=[];
+  familyAthletes.forEach(a=>rows.push({id:a.athlete_id,first_name:a.first_name,last_name:a.last_name,relationship:a.relationship||'Child'}));
+  currentTeamMemberships.filter(x=>x.role==='athlete'&&x.athlete_id).forEach(m=>{
+    const a=memberAthletes.find(x=>x.id===m.athlete_id)||rosterRows.find(x=>x.athlete_id===m.athlete_id)||rosterManagementRows.find(x=>x.athlete_id===m.athlete_id);
+    rows.push({id:m.athlete_id,first_name:a?.first_name||'My',last_name:a?.last_name||'Profile',relationship:'Self'});
+  });
+  currentTeamMemberships.filter(x=>x.role==='parent_guardian'&&x.athlete_id).forEach(m=>{
+    if(rows.some(x=>x.id===m.athlete_id))return;
+    const a=memberAthletes.find(x=>x.id===m.athlete_id)||rosterRows.find(x=>x.athlete_id===m.athlete_id)||rosterManagementRows.find(x=>x.athlete_id===m.athlete_id);
+    rows.push({id:m.athlete_id,first_name:a?.first_name||'Linked',last_name:a?.last_name||'Athlete',relationship:'Parent / Guardian'});
+  });
+  return rows.filter((x,i,all)=>x.id&&all.findIndex(y=>y.id===x.id)===i);
+}
+
+function agreementContentHtml(text){
+  return String(text||'').split(/\n\s*\n/).filter(Boolean).map(block=>{
+    const lines=block.split('\n');
+    const first=lines.shift()?.trim()||'';
+    if(/^\d+\.|^(attendance|injury|lettering|acknowledgment)/i.test(first)){
+      return `<h4>${esc(first)}</h4><p>${esc(lines.join('\n')).replace(/\n/g,'<br>')}</p>`;
+    }
+    return `<p>${esc(block).replace(/\n/g,'<br>')}</p>`;
+  }).join('');
+}
+
+function agreementMediaLabel(value){
+  return value==='full'?'Full permission':value==='limited'?'Limited permission':value==='none'?'No social media':'Not selected';
+}
+
+function agreementStatusLabel(value){
+  return value==='complete'?'Complete':value==='missing_athlete'?'Needs athlete signature':value==='missing_parent'?'Needs parent signature':value==='missing_media_choice'?'Needs media choice':value==='not_started'?'Not started':'Incomplete';
+}
+
+async function loadAgreementCoachStatus(renderSheet=true){
+  if(!activeTeam||!isStaff){agreementStatusRows=[];return;}
+  const [templateResult,statusResult]=await Promise.all([
+    client.from('team_agreement_templates').select('id,title,version,published_at,requires_athlete_signature,requires_parent_signature,media_consent_enabled').eq('team_id',activeTeam.id).eq('status','published').maybeSingle(),
+    client.rpc('get_team_agreement_status',{p_team_id:activeTeam.id,p_season_id:activeSeason?.id||null})
+  ]);
+  agreementPublishedTemplate=templateResult.error?null:templateResult.data;
+  agreementStatusRows=statusResult.error?[]:(statusResult.data||[]);
+  const pending=agreementStatusRows.filter(x=>x.status!=='complete').length;
+  $('agreementMenuCount').innerHTML=pending?`<span class="pending-count">${pending}</span>`:'›';
+  renderAttention();
+  if(!renderSheet)return;
+
+  $('agreementCoachTemplateBox').innerHTML=agreementPublishedTemplate?
+    `<div class="feature-card"><b>${esc(agreementPublishedTemplate.title)}</b><p class="muted">Published version ${agreementPublishedTemplate.version}${agreementPublishedTemplate.published_at?' · '+esc(fmtDateTime(agreementPublishedTemplate.published_at)):''}</p></div>`:
+    `<div class="empty-card">No agreement is published for this team yet.${isTeamAdmin?' Use the Agreement Builder to start with the improved wrestling template.':''}</div>`;
+  const complete=agreementStatusRows.filter(x=>x.status==='complete').length;
+  const started=agreementStatusRows.filter(x=>x.status!=='not_started').length;
+  $('agreementCoachSummary').innerHTML=`<div class="agreement-summary"><b>${agreementStatusRows.length}</b><span>ROSTER</span></div><div class="agreement-summary"><b>${complete}</b><span>COMPLETE</span></div><div class="agreement-summary"><b>${Math.max(0,agreementStatusRows.length-complete)}</b><span>PENDING</span></div>`;
+  if(!agreementPublishedTemplate){$('agreementStatusList').innerHTML='<div class="empty-card">Publish an agreement to begin collecting signatures.</div>';return;}
+  $('agreementStatusList').innerHTML=agreementStatusRows.length?agreementStatusRows.map(r=>{
+    const completeRow=r.status==='complete';
+    const details=[];
+    if(r.media_preferences)details.push(`<div class="agreement-private-note"><b>Posting preference:</b> ${esc(r.media_preferences)}</div>`);
+    if(r.parent_concerns)details.push(`<div class="agreement-private-note"><b>Parent concern / note:</b> ${esc(r.parent_concerns)}</div>`);
+    return `<div class="agreement-status-row"><div class="agreement-status-top"><div><b>${esc(r.athlete_name)}</b><small>${esc(agreementStatusLabel(r.status))}${r.completed_at?' · '+esc(fmtDateTime(r.completed_at)):''}</small></div><span class="agreement-check ${completeRow?'':'pending'}">${completeRow?'✓':'!'}</span></div><div class="agreement-badges"><span class="agreement-badge">Athlete ${r.athlete_signed?'✓':'—'}</span><span class="agreement-badge">Parent ${r.parent_signed?'✓':'—'}</span>${agreementPublishedTemplate.media_consent_enabled?`<span class="agreement-badge media-${esc(r.media_consent||'none-selected')}">${esc(agreementMediaLabel(r.media_consent))}</span>`:''}</div>${details.join('')}</div>`;
+  }).join(''):'<div class="empty-card">No active roster athletes were found for this season.</div>';
+}
+
+async function openAgreements(){
+  if(!activeTeam)return;
+  closeSheets();openSheet('agreementsSheet');
+  show('agreementCoachView',isStaff);
+  show('agreementFamilyView',!isStaff);
+  show('editAgreementBtn',isTeamAdmin);
+  if(isStaff){
+    $('agreementStatusList').innerHTML='<div class="empty-card">Loading agreement status…</div>';
+    await loadAgreementCoachStatus(true);
+    return;
+  }
+  const choices=agreementAthleteChoices();
+  $('agreementAthleteSelect').innerHTML=choices.map(a=>`<option value="${a.id}">${esc(a.first_name)} ${esc(a.last_name)}</option>`).join('');
+  if(!choices.length){$('agreementFamilyContent').innerHTML='<div class="empty-card">No athlete profile is connected to this account on the active team.</div>';return;}
+  agreementAthleteId=choices[0].id;
+  $('agreementAthleteSelect').value=agreementAthleteId;
+  await loadFamilyAgreement(agreementAthleteId);
+}
+
+async function loadFamilyAgreement(athleteId){
+  if(!activeTeam||!athleteId)return;
+  agreementAthleteId=athleteId;
+  $('agreementFamilyContent').innerHTML='<div class="empty-card">Loading team agreement…</div>';
+  const {data,error}=await client.rpc('get_team_agreement_for_athlete',{p_team_id:activeTeam.id,p_athlete_id:athleteId});
+  if(error){$('agreementFamilyContent').innerHTML=`<div class="empty-card">${esc(error.message)}</div>`;return;}
+  agreementCurrentData=data||{};
+  const template=data?.template;
+  const submission=data?.submission||{};
+  const viewer=data?.viewer||{};
+  if(!template){$('agreementFamilyContent').innerHTML='<div class="empty-card">This team has not published an agreement yet.</div>';return;}
+  const athlete=agreementAthleteChoices().find(x=>x.id===athleteId)||{};
+  const complete=!!submission.completed_at;
+  const profile=accountProfileData||await loadAccountProfile();
+  const media=submission.media_consent||'';
+  const athleteSignature=submission.athlete_signature_name||(viewer.guardian?`${athlete.first_name||''} ${athlete.last_name||''}`.trim():'');
+  const parentSignature=submission.parent_signature_name||(viewer.guardian?(profile?.display_name||''):'');
+  const athleteNeeded=template.requires_athlete_signature;
+  const parentNeeded=template.requires_parent_signature;
+  const canParent=!!viewer.guardian;
+  $('agreementFamilyContent').innerHTML=`
+    <div class="${complete?'agreement-complete-banner':'agreement-pending-banner'}"><b>${complete?'✓ Agreement complete':'Agreement still needs signatures'}</b><br>${complete?`Completed ${esc(fmtDateTime(submission.completed_at))}`:'Review the published agreement and complete the required fields below.'}</div>
+    <div class="agreement-document"><span class="agreement-version">Version ${template.version}</span><h3>${esc(template.title)}</h3><p>${esc(template.introduction)}</p>${agreementContentHtml(template.content_text)}</div>
+    ${template.media_consent_enabled?`<div id="agreementMediaSection" class="${canParent?'':'hidden'}"><h3 class="subhead">Social Media Permission</h3><p class="muted">This choice is separate from accepting the team agreement and can be changed later.</p><div class="agreement-choice-list"><label class="agreement-choice"><input type="radio" name="agreementMediaChoice" value="full" ${media==='full'?'checked':''}><span><b>Full permission</b><small>Name, individual or team photos/video, results, awards and team recognition may be posted.</small></span></label><label class="agreement-choice"><input type="radio" name="agreementMediaChoice" value="limited" ${media==='limited'?'checked':''}><span><b>Limited permission</b><small>Team/group content is allowed. Use the preference box to explain name, tagging or individual-photo limits.</small></span></label><label class="agreement-choice"><input type="radio" name="agreementMediaChoice" value="none" ${media==='none'?'checked':''}><span><b>No social media permission</b><small>Do not intentionally identify or feature this athlete on team social media.</small></span></label></div><label>Posting preferences or limits <span class="optional-label">optional</span></label><textarea id="agreementMediaPreferences" maxlength="4000" placeholder="Example: Group photos are okay, but please do not tag her personal account.">${esc(submission.media_preferences||'')}</textarea></div>`:''}
+    ${canParent?`<h3 class="subhead">Parent / Guardian Notes</h3><label>Concerns or information for the coaching staff <span class="optional-label">optional and private</span></label><textarea id="agreementParentConcerns" maxlength="4000" placeholder="Share concerns about the agreement, your athlete, or how coaches should handle public posts.">${esc(submission.parent_concerns||'')}</textarea>`:''}
+    <h3 class="subhead">Electronic Signatures</h3><div class="agreement-sign-grid">${athleteNeeded?`<div><label>Athlete typed signature</label><input id="agreementAthleteSignature" value="${esc(athleteSignature)}" autocomplete="name"><p class="fine">The athlete should type or approve their full name.</p></div>`:''}${parentNeeded?`<div class="${canParent?'':'hidden'}"><label>Parent / guardian typed signature</label><input id="agreementParentSignature" value="${esc(parentSignature)}" autocomplete="name"><label>Relationship</label><input id="agreementParentRelationship" value="${esc(athlete.relationship==='Self'?'':athlete.relationship||'Parent / Guardian')}"></div>`:''}</div>
+    ${!canParent&&parentNeeded?`<div class="privacy-note">Your athlete signature can be saved now. A connected parent or guardian must sign separately before the agreement is complete.</div>`:''}
+    ${!canParent&&template.media_consent_enabled?`<div class="privacy-note">A connected parent or guardian controls the social-media choice.</div>`:''}
+    <label class="agreement-attest"><input id="agreementAttest" type="checkbox"><span>I have read this published agreement and certify that the typed signature${canParent?'s are authorized and accurately represent the athlete and parent/guardian':' is my electronic signature'}.</span></label>
+    <button id="submitAgreementBtn" class="wide sticky-save" type="button">${complete?'Update Agreement & Permissions':'Submit Agreement'}</button>
+    <p class="fine">The app records the published version, signed-in account and server date/time. Declining social-media permission does not affect participation.</p>`;
+  $('submitAgreementBtn').onclick=submitFamilyAgreement;
+}
+
+async function submitFamilyAgreement(){
+  const data=agreementCurrentData||{};
+  const template=data.template;
+  const viewer=data.viewer||{};
+  if(!template||!agreementAthleteId)return;
+  const attest=$('agreementAttest')?.checked;
+  const athleteSig=$('agreementAthleteSignature')?.value.trim()||null;
+  const parentSig=$('agreementParentSignature')?.value.trim()||null;
+  const media=document.querySelector('input[name="agreementMediaChoice"]:checked')?.value||null;
+  if(template.requires_athlete_signature&&!athleteSig){message('Add the athlete typed signature.',true);return;}
+  if(viewer.guardian&&template.requires_parent_signature&&!parentSig){message('Add the parent / guardian typed signature.',true);return;}
+  if(viewer.guardian&&template.media_consent_enabled&&!media){message('Choose a social-media permission.',true);return;}
+  if(!attest){message('Check the acknowledgment before submitting.',true);return;}
+  const btn=$('submitAgreementBtn');btn.disabled=true;btn.textContent='Recording signatures…';
+  const {data:result,error}=await client.rpc('submit_team_agreement',{
+    p_template_id:template.id,
+    p_athlete_id:agreementAthleteId,
+    p_athlete_signature_name:athleteSig,
+    p_parent_signature_name:viewer.guardian?parentSig:null,
+    p_parent_relationship:viewer.guardian?($('agreementParentRelationship')?.value.trim()||null):null,
+    p_media_consent:viewer.guardian?media:null,
+    p_media_preferences:viewer.guardian?($('agreementMediaPreferences')?.value.trim()||null):null,
+    p_parent_concerns:viewer.guardian?($('agreementParentConcerns')?.value.trim()||null):null,
+    p_attest:true
+  });
+  btn.disabled=false;btn.textContent='Submit Agreement';
+  if(error){message(error.message,true);return;}
+  await loadFamilyAgreement(agreementAthleteId);
+  message(result?.completed_at?'Team agreement completed and signed.':'Signature saved. Another required signature is still pending.');
+}
+
+async function openAgreementEditor(){
+  if(!activeTeam||!isTeamAdmin){message('Team admin access required.',true);return;}
+  const {data,error}=await client.rpc('get_team_agreement_editor',{p_team_id:activeTeam.id});
+  if(error){message(error.message,true);return;}
+  agreementEditorData=data||{};
+  const source=data?.draft||data?.published||{};
+  $('agreementEditorTitle').value=source.title||`${activeTeam.name} Team Agreement`;
+  $('agreementEditorIntro').value=source.introduction||DEFAULT_AGREEMENT_INTRO;
+  $('agreementEditorContent').value=source.content_text||DEFAULT_AGREEMENT_CONTENT;
+  $('agreementRequireAthlete').checked=source.requires_athlete_signature!==false;
+  $('agreementRequireParent').checked=source.requires_parent_signature!==false;
+  $('agreementMediaEnabled').checked=source.media_consent_enabled!==false;
+  $('agreementEditorVersionNote').innerHTML=data?.draft?`Editing draft version <b>${data.draft.version}</b>. The published agreement remains version ${data?.published?.version||'—'} until you publish.`:data?.published?`Published version <b>${data.published.version}</b> is active. Saving will create the next draft version.`:'No agreement exists yet. This starter copy can be fully edited for your team.';
+  closeSheets();openSheet('agreementEditorSheet');
+}
+
+async function saveAgreementDraft(silent=false){
+  if(!activeTeam||!isTeamAdmin)return null;
+  const title=$('agreementEditorTitle').value.trim(),intro=$('agreementEditorIntro').value.trim(),content=$('agreementEditorContent').value.trim();
+  if(!title||content.length<40){message('Add an agreement title and complete agreement content.',true);return null;}
+  const btn=$('saveAgreementDraftBtn');btn.disabled=true;btn.textContent='Saving…';
+  const {data,error}=await client.rpc('save_team_agreement_draft',{
+    p_team_id:activeTeam.id,p_title:title,p_introduction:intro,p_content_text:content,
+    p_requires_athlete_signature:$('agreementRequireAthlete').checked,
+    p_requires_parent_signature:$('agreementRequireParent').checked,
+    p_media_consent_enabled:$('agreementMediaEnabled').checked
+  });
+  btn.disabled=false;btn.textContent='Save Draft';
+  if(error){message(error.message,true);return null;}
+  if(!silent)message('Agreement draft saved. Families will not see it until it is published.');
+  return data;
+}
+
+async function publishAgreementDraft(){
+  if(!confirm('Publish this agreement version? Every active roster athlete will need to complete the newly published version.'))return;
+  const draftId=await saveAgreementDraft(true);
+  if(!draftId)return;
+  const btn=$('publishAgreementBtn');btn.disabled=true;btn.textContent='Publishing…';
+  const {error}=await client.rpc('publish_team_agreement',{p_template_id:draftId});
+  btn.disabled=false;btn.textContent='Publish Version';
+  if(error){message(error.message,true);return;}
+  closeSheets();
+  await openAgreements();
+  message('Team agreement published. Signature status is now ready for the roster.');
+}
+
 
 async function loadSchedule(){
   if (!activeTeam) return;
@@ -3618,6 +3892,8 @@ function renderAttention(){
       const first=pendingGuardianRequests[0];
       items.push({title:`${pendingGuardianRequests.length} family connection request${pendingGuardianRequests.length===1?'':'s'}`,sub:`Review ${first.guardian_name} for ${first.athlete_name}.`,action:'guardian-request',athleteId:first.athlete_id});
     }
+    const pendingAgreements=agreementStatusRows.filter(x=>x.status!=='complete').length;
+    if(agreementPublishedTemplate&&pendingAgreements)items.push({title:`${pendingAgreements} team agreement${pendingAgreements===1?' is':'s are'} still pending`,sub:'Review athlete and parent signatures and media choices.',action:'agreements'});
     if(homeWeighReminderActiveToday() && dashboardCounts?.not_weighed_today>0) items.push({title:`${dashboardCounts.not_weighed_today} athlete${dashboardCounts.not_weighed_today===1?'':'s'} still expected to weigh`,sub:dashboardCounts.excused_today?`${dashboardCounts.excused_today} excused athlete${dashboardCounts.excused_today===1?' is':'s are'} removed from today’s weigh-in total.`:'Open Weight Room to record today’s weights.',action:'weight'});
     if(!rosterRows.length) items.push({title:'Roster is empty',sub:'Open the roster or generate a Team Join code.',action:'roster'});
   }
@@ -3627,6 +3903,7 @@ function renderAttention(){
     const item=items[Number(btn.dataset.attentionIndex)]; if(!item)return;
     if(item.action==='roster'){ openSheet('rosterSheet'); return; }
     if(item.action==='guardian-request'){ openAthleteAccess(item.athleteId); return; }
+    if(item.action==='agreements'){ openAgreements(); return; }
     setTab(item.action||'home');
   });
 }
@@ -4310,7 +4587,7 @@ $('bootstrapTeamBtn').onclick=async()=>{
 $('newEventBtn').onclick=prepareEventForm; $('saveEventBtn').onclick=saveEvent; $('attendanceBtn').onclick=openAttendance; $('deleteEventBtn').onclick=deleteEvent; $('addEventCalendarBtn').onclick=addActiveEventToCalendar;
 $('subscribeAppleCalendarBtn').onclick=subscribeAppleCalendar; $('exportCalendarBtn').onclick=exportTeamCalendar; $('schedulePrevBtn').onclick=()=>moveScheduleFocus(-1); $('scheduleNextBtn').onclick=()=>moveScheduleFocus(1); $('scheduleTodayBtn').onclick=()=>{scheduleFocusDate=new Date();renderSchedule();}; document.querySelectorAll('[data-schedule-view]').forEach(b=>b.onclick=()=>setScheduleView(b.dataset.scheduleView));
 $('saveExcuseBtn').onclick=saveExcuse; $('createAthleteInviteBtn').onclick=createAthleteInvite; $('saveGuardianBtn').onclick=saveGuardianContact; $('createGuardianInviteBtn').onclick=createGuardianInvite;
-$('joinAsAthleteBtn').onclick=()=>setJoinRole('athlete'); $('joinAsParentBtn').onclick=async()=>{setJoinRole('parent_guardian');await loadJoinGuardianDefaults();}; $('claimExistingAthleteBtn').onclick=()=>setParentJoinPath('claim'); $('createAthleteProfileBtn').onclick=()=>setParentJoinPath('create'); $('joinBirthDate').onchange=updateJoinSensitiveControls; $('submitJoinRequestBtn').onclick=submitJoinRequest; $('joinRequestsBtn').onclick=openJoinRequests; $('saveAthleteProfileBtn').onclick=saveAthleteProfile; $('profilePhotoInput').onchange=beginProfilePhotoCrop; $('profileManageGuardiansBtn').onclick=()=>{if(profileAthleteId)openAthleteAccess(profileAthleteId);}; $('memberProfilesBtn').onclick=openMemberProfiles; $('familyBtn').onclick=openFamily; $('familyCreateGuardianInviteBtn').onclick=familyCreateGuardianInvite; $('familyRequestGuardianBtn').onclick=familyRequestGuardianConnection; $('parentAddChildBtn').onclick=()=>startJoinFlow(null,activeTeam.id,true);
+$('joinAsAthleteBtn').onclick=()=>setJoinRole('athlete'); $('joinAsParentBtn').onclick=async()=>{setJoinRole('parent_guardian');await loadJoinGuardianDefaults();}; $('claimExistingAthleteBtn').onclick=()=>setParentJoinPath('claim'); $('createAthleteProfileBtn').onclick=()=>setParentJoinPath('create'); $('joinBirthDate').onchange=updateJoinSensitiveControls; $('submitJoinRequestBtn').onclick=submitJoinRequest; $('joinRequestsBtn').onclick=openJoinRequests; $('agreementsBtn').onclick=openAgreements; $('editAgreementBtn').onclick=openAgreementEditor; $('saveAgreementDraftBtn').onclick=()=>saveAgreementDraft(false); $('publishAgreementBtn').onclick=publishAgreementDraft; $('agreementAthleteSelect').onchange=e=>loadFamilyAgreement(e.target.value); $('saveAthleteProfileBtn').onclick=saveAthleteProfile; $('profilePhotoInput').onchange=beginProfilePhotoCrop; $('profileManageGuardiansBtn').onclick=()=>{if(profileAthleteId)openAthleteAccess(profileAthleteId);}; $('memberProfilesBtn').onclick=openMemberProfiles; $('familyBtn').onclick=openFamily; $('familyCreateGuardianInviteBtn').onclick=familyCreateGuardianInvite; $('familyRequestGuardianBtn').onclick=familyRequestGuardianConnection; $('parentAddChildBtn').onclick=()=>startJoinFlow(null,activeTeam.id,true);
 $('viewAthleteTrendBtn').onclick=()=>{if(viewAthleteId)openWeightTrend(viewAthleteId);};
 $('viewAthleteEditBtn').onclick=()=>{if(viewAthleteId)openAthleteProfile(viewAthleteId);};
 $('viewAthleteGuardiansBtn').onclick=()=>{if(viewAthleteId)openAthleteAccess(viewAthleteId);};
