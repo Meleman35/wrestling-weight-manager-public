@@ -175,6 +175,38 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
   }
 }
 
+
+.staff-profile-photo{width:96px;height:96px;border-radius:50%;object-fit:cover;background:#e9eef3;border:3px solid #fff;box-shadow:0 3px 14px rgba(0,0,0,.12)}
+.staff-profile-photo-placeholder{width:96px;height:96px;border-radius:50%;display:grid;place-items:center;background:#e9eef3;font-size:38px;border:3px solid #fff;box-shadow:0 3px 14px rgba(0,0,0,.08)}
+.staff-profile-head{display:flex;align-items:center;gap:16px;margin:10px 0 16px}
+.staff-profile-head .staff-profile-copy{min-width:0;flex:1}
+.staff-share-grid{display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px}
+.staff-directory-card{display:grid;grid-template-columns:auto 1fr;gap:13px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:10px}
+.staff-directory-card .staff-profile-photo,.staff-directory-card .staff-profile-photo-placeholder{width:70px;height:70px;font-size:28px}
+.staff-directory-copy{min-width:0}
+.staff-directory-copy b{display:block;font-size:17px}
+.staff-directory-copy .staff-title{display:block;color:var(--muted);font-size:12px;font-weight:800;margin-top:2px}
+.staff-contact-links{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+.staff-contact-links a{display:inline-flex;align-items:center;gap:5px;text-decoration:none;background:#eef4fb;color:var(--accent2);border-radius:999px;padding:7px 10px;font-size:12px;font-weight:900}
+.staff-contact-none{display:block;color:var(--muted);font-size:12px;margin-top:8px;line-height:1.35}
+
+
+.lineup-class-btn{margin-top:7px;padding:7px 10px;border-radius:10px;border:1px solid color-mix(in srgb,var(--team-primary) 24%,#cbd5e1);background:#fff;color:var(--team-primary);font-weight:800;font-size:.78rem}
+#editTeamSheet .team-branding-block + .team-branding-block{margin-top:14px}
+
+  .weight-class-settings{margin-top:18px}
+  .weight-class-settings .fine{margin-top:4px}
+  .weight-class-preset-note{margin:10px 0;padding:10px 12px;border-radius:12px;background:var(--soft);font-size:.88rem;color:var(--muted)}
+  .weight-class-chip-list{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+  .weight-class-edit-chip{display:inline-flex;align-items:center;gap:6px;padding:8px 10px;border-radius:999px;background:#eef2f7;border:1px solid #d8dee8;font-weight:800}
+  .weight-class-edit-chip button{border:0;background:transparent;color:#9b1c1c;font-size:1rem;line-height:1;padding:0 2px}
+  .weight-class-add-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end}
+  .weight-class-choice-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:10px 0 14px}
+  .weight-class-choice{border:2px solid #d8dee8;background:#fff;border-radius:14px;padding:12px 8px;font-weight:900;text-align:center;color:#172033}
+  .weight-class-choice.selected{border-color:var(--team-primary);background:color-mix(in srgb,var(--team-primary) 12%,white)}
+  .weight-class-choice small{display:block;font-size:.72rem;color:var(--muted);font-weight:700;margin-top:3px}
+  @media(max-width:480px){.weight-class-choice-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
 </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
@@ -290,7 +322,7 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
 
         <section id="coachWeightBoardSection" class="coach-weight-board coach-only">
           <div class="section-head">
-            <div><h3>Lineup by Weight Class</h3><span class="section-sub">Coach lineup stays separate from certification eligibility. Plan chips show when a wrestler can descend to a lower class.</span></div>
+            <div><h3>Lineup by Weight Class</h3><span id="coachWeightBoardHelp" class="section-sub">Coach-controlled lineup by weight class.</span></div>
             <button class="link-btn" data-go="weight">Weight Room</button>
           </div>
           <div id="coachWeightBoardList" class="weight-class-board"><div class="board-empty">No active roster yet.</div></div>
@@ -383,6 +415,7 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
           <button id="joinRequestsBtn" class="menu-row coach-only"><span>✅</span><div><b>Join Requests</b><small>Approve or deny athletes and parents</small></div><i id="joinRequestCount">›</i></button>
           <button id="memberProfilesBtn" class="menu-row member-only"><span>👤</span><div><b>My Athlete Profiles</b><small>Photo, sizes, contact permissions and age divisions</small></div><i>›</i></button>
           <button id="familyBtn" class="menu-row member-only"><span>👨‍👩‍👧</span><div><b>Family</b><small>Invite a parent or add another child</small></div><i>›</i></button>
+          <button id="staffDirectoryBtn" class="menu-row"><span>📇</span><div><b>Coaches & Staff</b><small>Team staff photos and the contact information they choose to share</small></div><i>›</i></button>
           <button id="staffAccessBtn" class="menu-row admin-only"><span>🪪</span><div><b>Manager / Limited Staff</b><small>Invite attendance or weigh-in helpers without exposing private team data</small></div><i>›</i></button>
           <button class="menu-row disabled"><span>🎽</span><div><b>Equipment</b><small>Singlets, shoes, headgear and more</small></div><i>›</i></button>
           <button class="menu-row disabled"><span>📁</span><div><b>Files & Photos</b><small>Team documents and albums</small></div><i>›</i></button>
@@ -618,7 +651,7 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
 
   <section id="photoCropSheet" class="sheet hidden" aria-modal="true">
     <div class="sheet-handle"></div>
-    <div class="sheet-head"><div><div class="eyebrow">PROFILE PHOTO</div><h2>Position Photo</h2><p class="muted">Drag the picture so the athlete's face is centered inside the circle.</p></div><button class="icon-close" id="cancelPhotoCropBtn">×</button></div>
+    <div class="sheet-head"><div><div class="eyebrow">PROFILE PHOTO</div><h2>Position Photo</h2><p class="muted">Drag the picture so the face is centered inside the circle.</p></div><button class="icon-close" id="cancelPhotoCropBtn">×</button></div>
     <div class="photo-crop-frame"><canvas id="photoCropCanvas" width="640" height="640"></canvas></div>
     <div class="photo-crop-slider"><span>−</span><input id="photoCropZoom" type="range" min="1" max="3" value="1" step="0.01"><span>＋</span></div>
     <p class="photo-crop-help">Drag to reposition · use the slider to zoom. The saved photo will stay square and display as a circle throughout Wrestling Manager.</p>
@@ -800,6 +833,9 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
       <option value="coed">Coed</option>
       <option value="open">Open</option>
     </select>
+    <label>State / association location</label>
+    <select id="newTeamState"></select>
+    <p class="fine">For high-school teams, Wrestling Manager uses the verified state-association weight-class rule for that season when one is available. It will never substitute Wyoming rules for another state.</p>
     <label>Programs served <span class="muted">select all that apply</span></label>
     <div id="newTeamLevels" class="level-check-grid">
       <label class="level-check"><input type="checkbox" value="elementary">Elementary</label>
@@ -821,9 +857,10 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     <label>Season name</label>
     <input id="newTeamSeasonName" type="text" placeholder="2026-27">
     <div class="two-col">
-      <div><label>Season starts <span class="muted">optional</span></label><input id="newTeamStarts" type="date"></div>
-      <div><label>Season ends <span class="muted">optional</span></label><input id="newTeamEnds" type="date"></div>
+      <div><label>First day of season <span class="muted">optional unless reminder is on</span></label><input id="newTeamStarts" type="date"></div>
+      <div><label>Last day of season <span class="muted">optional unless reminder is on</span></label><input id="newTeamEnds" type="date"></div>
     </div>
+    <label class="toggle-row"><span><b>Show daily weigh-in reminder on Home</b><small>Only appears between the first and last day of the season. Leave off for clubs or teams that do not expect daily weigh-ins.</small></span><input id="newTeamHomeWeighReminder" type="checkbox"></label>
     <button id="saveNewTeamBtn" class="wide" type="button">Create Team & Switch</button>
     <p class="fine">Only organization admins can create a new team. Rosters, attendance, weights and settings stay separate for each team.</p>
   </section>
@@ -832,9 +869,45 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     <div class="sheet-handle"></div>
     <div class="sheet-head"><div><div class="eyebrow">YOU</div><h2>Account & Team</h2></div><button class="icon-close" data-close-sheet>×</button></div>
     <div class="feature-card"><b id="accountEmail">—</b><p id="accountTeamInfo" class="muted"></p><span id="accountRole" class="role-pill">—</span><div id="accountTeamLevels" class="team-level-summary"></div></div>
+    <button id="editStaffProfileBtn" class="wide hidden" type="button">Edit My Coach / Staff Profile</button>
     <button id="editTeamBtn" class="wide admin-only" type="button">Edit Team</button>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.8.8</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.9.3</p>
+  </section>
+
+  <section id="staffProfileSheet" class="sheet hidden" aria-modal="true">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><div><div class="eyebrow">COACH / STAFF PROFILE</div><h2>My Team Profile</h2><p class="muted">Choose what athletes and parents can see for this team.</p></div><button class="icon-close" data-close-sheet>×</button></div>
+    <div class="staff-profile-head">
+      <div id="staffProfilePhotoBox" class="staff-profile-photo-placeholder">👤</div>
+      <div class="staff-profile-copy">
+        <b id="staffProfileRoleLabel">Coach / Staff</b>
+        <p class="muted">This profile is shown in Coaches & Staff for the active team.</p>
+        <label style="margin-top:8px">Profile photo</label>
+        <input id="staffPhotoInput" type="file" accept="image/*">
+      </div>
+    </div>
+    <div class="profile-grid">
+      <div><label>Display name</label><input id="staffDisplayName" autocomplete="name"></div>
+      <div><label>Title</label><input id="staffTitle" placeholder="Head Coach"></div>
+    </div>
+    <label>Contact email</label><input id="staffEmail" type="email" autocomplete="email">
+    <label>Phone</label><input id="staffPhone" type="tel" autocomplete="tel">
+    <h3 class="subhead">Sharing</h3>
+    <div class="staff-share-grid">
+      <label class="toggle-row"><span><b>Show email to athletes</b><small>Athletes on this team can see the contact email above.</small></span><input id="staffShareEmailAthletes" type="checkbox"></label>
+      <label class="toggle-row"><span><b>Show phone to athletes</b><small>Athletes on this team can see your phone number.</small></span><input id="staffSharePhoneAthletes" type="checkbox"></label>
+      <label class="toggle-row"><span><b>Show email to parents / guardians</b><small>Linked parents can see the contact email above.</small></span><input id="staffShareEmailParents" type="checkbox"></label>
+      <label class="toggle-row"><span><b>Show phone to parents / guardians</b><small>Linked parents can see your phone number.</small></span><input id="staffSharePhoneParents" type="checkbox"></label>
+    </div>
+    <p class="privacy-note">Contact sharing is team-specific. Other coaches and team admins can still see staff contact information for team operations.</p>
+    <button id="saveStaffProfileBtn" class="wide sticky-save" type="button">Save Staff Profile</button>
+  </section>
+
+  <section id="staffDirectorySheet" class="sheet hidden" aria-modal="true">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><div><div class="eyebrow">TEAM DIRECTORY</div><h2>Coaches & Staff</h2><p class="muted">Contact details appear only when that staff member has chosen to share them with your role.</p></div><button class="icon-close" data-close-sheet>×</button></div>
+    <div id="staffDirectoryList"><div class="empty-card">Loading coaches and staff…</div></div>
   </section>
 
   <section id="editTeamSheet" class="sheet hidden" aria-modal="true">
@@ -855,6 +928,9 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
       <option value="coed">Coed</option>
       <option value="open">Open</option>
     </select>
+    <label>State / association location</label>
+    <select id="editTeamState"></select>
+    <p id="editTeamStateRuleNote" class="fine"></p>
     <label>Programs served <span class="muted">select all that apply</span></label>
     <div id="editTeamLevels" class="level-check-grid">
       <label class="level-check"><input type="checkbox" value="elementary">Elementary</label>
@@ -863,6 +939,31 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
       <label class="level-check"><input type="checkbox" value="college">College</label>
       <label class="level-check"><input type="checkbox" value="club">Club</label>
     </div>
+    <div class="team-branding-block">
+      <h3>Season Home Settings</h3>
+      <p class="fine">Control whether coaches see “athletes still expected to weigh” on Home.</p>
+      <label class="toggle-row"><span><b>Show daily weigh-in reminder on Home</b><small>The reminder only appears during the date range below.</small></span><input id="editTeamHomeWeighReminder" type="checkbox"></label>
+      <div class="two-col">
+        <div><label>First day of season</label><input id="editSeasonStarts" type="date"></div>
+        <div><label>Last day of season</label><input id="editSeasonEnds" type="date"></div>
+      </div>
+    </div>
+    <div class="team-branding-block weight-class-settings">
+      <h3>Weight Classes</h3>
+      <p class="fine">High school and college teams can use preset classes. Middle school, elementary and club teams can build any number of custom classes.</p>
+      <label>Weight class setup</label>
+      <select id="editWeightClassPreset"></select>
+      <div id="editWeightClassPresetNote" class="weight-class-preset-note"></div>
+      <div id="editWeightClassList" class="weight-class-chip-list"></div>
+      <div id="customWeightClassAddRow" class="weight-class-add-row">
+        <div>
+          <label>Add weight class</label>
+          <input id="editWeightClassAdd" type="text" inputmode="numeric" pattern="[0-9]*" enterkeyhint="done" autocomplete="off" placeholder="Example: 82">
+        </div>
+        <button id="addCustomWeightClassBtn" class="secondary" type="button">Add Class</button>
+      </div>
+    </div>
+
     <div class="team-branding-block">
       <h3>Team Branding</h3>
       <p class="fine">The active team controls the colors used throughout Wrestling Manager.</p>
@@ -882,6 +983,23 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     <button id="saveEditTeamBtn" class="wide" type="button">Save Team</button>
   </section>
 
+
+  <section id="lineupClassSheet" class="sheet hidden" aria-modal="true">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><div><div class="eyebrow">LINEUP</div><h2>Set Weight Class</h2><p id="lineupClassAthleteName" class="muted">Athlete</p></div><button class="icon-close" data-close-sheet>×</button></div>
+    <div id="lineupClassPresetWrap">
+      <label>Select a team weight class</label>
+      <div id="lineupClassChoices" class="weight-class-choice-grid"></div>
+    </div>
+    <div id="lineupClassManualWrap" class="hidden">
+      <label>Current lineup weight class</label>
+      <input id="lineupClassInput" type="text" inputmode="numeric" pattern="[0-9]*" enterkeyhint="done" autocomplete="off" placeholder="Example: 145">
+      <p class="fine">No team classes are configured yet. You can enter one here or add the team’s classes under Edit Team.</p>
+    </div>
+    <p class="fine">This is coach-controlled. It does not change automatically when certification eligibility changes.</p>
+    <div class="two-col"><button id="saveLineupClassBtn" class="wide" type="button">Save Class</button><button id="clearLineupClassBtn" class="wide secondary" type="button">Clear</button></div>
+  </section>
+
   <script>
 const SUPABASE_URL = 'https://vfocpoyexnjsjpxhhyqr.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_aX7mx8Myn8sok3bhPPmphQ_fWN8o38P';
@@ -892,6 +1010,10 @@ let activeTeam = null;
 let activeSeason = null;
 let activeEvent = null;
 let rosterRows = [];
+let teamWeightClasses = [];
+let activeStateWeightRule = null;
+let editWeightClasses = [];
+let selectedLineupClass = null;
 let scheduleRows = [];
 let scheduleFilter = 'all';
 let selectedEventType = 'practice';
@@ -903,6 +1025,7 @@ let memberAthletes = [];
 let rosterManagementRows = [];
 let dashboardCounts = null;
 let certificationPlansByAthlete = new Map();
+let lineupClassAthleteId = null;
 let isStaff = false;
 let viewerRole = 'member';
 let excuseAthleteId = null;
@@ -919,6 +1042,8 @@ let profileAthleteId = null;
 let profileData = null;
 let photoCropImage = null;
 let photoCropSourceFile = null;
+let photoCropTarget = 'athlete';
+let staffProfileData = null;
 let photoCropBaseScale = 1;
 let photoCropZoomValue = 1;
 let photoCropOffsetX = 0;
@@ -1075,7 +1200,7 @@ async function deleteTestWeighIn(weighInId){
     p_weigh_in_id:weighInId,
     p_reason:'Deleted by coach/team admin as a test or accidental weigh-in'
   });
-  if(error){message(error.message,true);return;}
+  if(error){message((error||seasonError).message,true);return;}
   await loadDashboard();
   await openWeighedToday();
   message('Test weigh-in deleted.');
@@ -1093,7 +1218,7 @@ function openSheet(id){
 }
 function closeSheets(){
   if(document.body.classList.contains('kiosk-locked')) return;
-  ['eventSheet','eventDetailSheet','attendanceSheet','announcementSheet','rosterSheet','athleteTeamsSheet','addAthleteSheet','joinSheet','joinRequestSheet','coachJoinRequestsSheet','athleteProfileSheet','photoCropSheet','familySheet','excuseSheet','athleteAccessSheet','staffAccessSheet','weighedTodaySheet','weighInStartSheet','weighInConsoleSheet','importRosterSheet','teamSwitcherSheet','createTeamSheet','editTeamSheet','accountSheet'].forEach(id=>show(id,false));
+  ['eventSheet','eventDetailSheet','attendanceSheet','announcementSheet','rosterSheet','athleteTeamsSheet','addAthleteSheet','joinSheet','joinRequestSheet','coachJoinRequestsSheet','athleteProfileSheet','photoCropSheet','staffProfileSheet','staffDirectorySheet','familySheet','excuseSheet','athleteAccessSheet','staffAccessSheet','weighedTodaySheet','weighInStartSheet','weighInConsoleSheet','importRosterSheet','teamSwitcherSheet','createTeamSheet','editTeamSheet','lineupClassSheet','accountSheet'].forEach(id=>show(id,false));
   show('sheetBackdrop', false); document.body.style.overflow='';
 }
 
@@ -1290,6 +1415,186 @@ function openTeamSwitcher(){
   openSheet('teamSwitcherSheet');
 }
 
+
+const WEIGHT_CLASS_PRESETS={
+  nfhs_girls_12:{label:'NFHS Girls · 12 classes',weights:[100,107,114,120,126,132,138,145,152,165,185,235],growth:0},
+  nfhs_girls_13:{label:'NFHS Girls · 13 classes',weights:[100,106,112,118,124,130,136,142,148,155,170,190,235],growth:0},
+  nfhs_girls_14:{label:'NFHS Girls · 14 classes',weights:[100,105,110,115,120,125,130,135,140,145,155,170,190,235],growth:0},
+  nfhs_boys_12:{label:'NFHS Boys · 12 classes',weights:[108,116,124,131,138,145,152,160,170,190,215,285],growth:0},
+  nfhs_boys_13:{label:'NFHS Boys · 13 classes',weights:[107,114,121,127,133,139,145,152,160,172,189,215,285],growth:0},
+  nfhs_boys_14:{label:'NFHS Boys · 14 classes',weights:[106,113,120,126,132,138,144,150,157,165,175,190,215,285],growth:0},
+  wyoming_hs_girls_14:{label:'Wyoming High School Girls · 14 classes',weights:[100,105,110,115,120,125,130,135,140,145,155,170,190,235],growth:2},
+  wyoming_hs_boys_14:{label:'Wyoming High School Boys · 14 classes',weights:[106,113,120,126,132,138,144,150,157,165,175,190,215,285],growth:2},
+  ncaa_women:{label:'NCAA Women · 10 classes',weights:[103,110,117,124,131,138,145,160,180,207],growth:0},
+  ncaa_men:{label:'NCAA Men · 10 classes',weights:[125,133,141,149,157,165,174,184,197,285],growth:0},
+  custom:{label:'Custom',weights:[],growth:0}
+};
+
+const US_STATES=[
+  ['AL','Alabama'],['AK','Alaska'],['AZ','Arizona'],['AR','Arkansas'],['CA','California'],['CO','Colorado'],['CT','Connecticut'],['DE','Delaware'],['DC','District of Columbia'],['FL','Florida'],['GA','Georgia'],['HI','Hawaii'],['ID','Idaho'],['IL','Illinois'],['IN','Indiana'],['IA','Iowa'],['KS','Kansas'],['KY','Kentucky'],['LA','Louisiana'],['ME','Maine'],['MD','Maryland'],['MA','Massachusetts'],['MI','Michigan'],['MN','Minnesota'],['MS','Mississippi'],['MO','Missouri'],['MT','Montana'],['NE','Nebraska'],['NV','Nevada'],['NH','New Hampshire'],['NJ','New Jersey'],['NM','New Mexico'],['NY','New York'],['NC','North Carolina'],['ND','North Dakota'],['OH','Ohio'],['OK','Oklahoma'],['OR','Oregon'],['PA','Pennsylvania'],['RI','Rhode Island'],['SC','South Carolina'],['SD','South Dakota'],['TN','Tennessee'],['TX','Texas'],['UT','Utah'],['VT','Vermont'],['VA','Virginia'],['WA','Washington'],['WV','West Virginia'],['WI','Wisconsin'],['WY','Wyoming']
+];
+
+function stateName(code){
+  return US_STATES.find(x=>x[0]===String(code||'').toUpperCase())?.[1]||String(code||'');
+}
+
+function populateStateSelect(id,value=''){
+  const el=$(id);if(!el)return;
+  const current=String(value||'').toUpperCase();
+  el.innerHTML='<option value="">Select state</option>'+US_STATES.map(([code,name])=>`<option value="${code}">${esc(name)} (${code})</option>`).join('');
+  el.value=current;
+}
+
+function teamIsHighSchoolOnly(teamType,levels){
+  const lvls=levels||[];
+  return teamType==='school' && lvls.includes('high_school') && !lvls.includes('college');
+}
+
+function recommendedWeightPreset(teamType,gender,levels){
+  const lvls=levels||[];
+  if(teamIsHighSchoolOnly(teamType,lvls) && ['girls','boys'].includes(gender))return 'state_high_school';
+  if(teamType==='school' && lvls.includes('college') && !lvls.includes('high_school')){
+    if(gender==='girls')return 'ncaa_women';
+    if(gender==='boys')return 'ncaa_men';
+  }
+  return 'custom';
+}
+
+function weightPresetOptions(teamType,gender,levels){
+  const options=[];
+  if(teamIsHighSchoolOnly(teamType,levels) && ['girls','boys'].includes(gender)){
+    const stateLabel=activeStateWeightRule?.rule_label || `${stateName(activeTeam?.state_code)||'State'} high-school association preset`;
+    options.push(['state_high_school',stateLabel]);
+    if(gender==='girls'){
+      options.push(['nfhs_girls_12','NFHS Girls · 12 classes'],['nfhs_girls_13','NFHS Girls · 13 classes'],['nfhs_girls_14','NFHS Girls · 14 classes']);
+    }else{
+      options.push(['nfhs_boys_12','NFHS Boys · 12 classes'],['nfhs_boys_13','NFHS Boys · 13 classes'],['nfhs_boys_14','NFHS Boys · 14 classes']);
+    }
+  }
+  if(teamType==='school' && (levels||[]).includes('college')){
+    if(gender==='girls')options.push(['ncaa_women','NCAA Women · 10 classes']);
+    if(gender==='boys')options.push(['ncaa_men','NCAA Men · 10 classes']);
+  }
+  options.push(['custom','Custom / Club / Middle School / Elementary']);
+  return options;
+}
+
+function populateWeightPresetSelect(selectedValue){
+  const el=$('editWeightClassPreset');if(!el)return;
+  const options=weightPresetOptions(activeTeam?.team_type,activeTeam?.gender_scope,activeTeam?.service_levels||[]);
+  const values=new Set(options.map(x=>x[0]));
+  let selected=selectedValue||recommendedWeightPreset(activeTeam?.team_type,activeTeam?.gender_scope,activeTeam?.service_levels||[]);
+  if(!values.has(selected))selected=values.has('state_high_school')?'state_high_school':'custom';
+  el.innerHTML=options.map(([v,label])=>`<option value="${v}">${esc(label)}</option>`).join('');
+  el.value=selected;
+}
+
+async function loadTeamWeightClasses(){
+  teamWeightClasses=[];activeStateWeightRule=null;
+  if(!activeTeam?.id)return;
+  const {data,error}=await client.from('team_weight_classes').select('id,team_id,weight_lbs,display_label,sort_order,active').eq('team_id',activeTeam.id).eq('active',true).order('sort_order',{ascending:true}).order('weight_lbs',{ascending:true});
+  if(error){console.warn('Weight classes:',error.message);}else teamWeightClasses=(data||[]).map(x=>({...x,weight_lbs:Number(x.weight_lbs)}));
+  if(activeTeam.state_code&&activeSeason?.name&&['girls','boys'].includes(activeTeam.gender_scope)){
+    const {data:rule,error:ruleErr}=await client.from('state_high_school_weight_rules')
+      .select('state_code,season_name,gender_scope,association_name,rule_label,weights,growth_allowance_lbs,growth_allowance_month,growth_allowance_day,source_url,verified_on')
+      .eq('state_code',activeTeam.state_code).eq('season_name',activeSeason.name).eq('gender_scope',activeTeam.gender_scope).eq('active',true).maybeSingle();
+    if(ruleErr)console.warn('State weight rule:',ruleErr.message);
+    activeStateWeightRule=rule||null;
+  }
+}
+
+function growthAllowanceStartDate(){
+  const lbs=Number(activeTeam?.growth_allowance_lbs||0);
+  const month=Number(activeTeam?.growth_allowance_month||0);
+  const day=Number(activeTeam?.growth_allowance_day||0);
+  if(!lbs||!month||!day)return null;
+  let year=null;
+  if(activeSeason?.starts_on){
+    const start=new Date(`${activeSeason.starts_on}T12:00:00`);
+    year=start.getFullYear();
+    const candidate=new Date(year,month-1,day,12);
+    if(candidate<start)year++;
+  } else {
+    const m=String(activeSeason?.name||'').match(/(20\d{2})\D+(\d{2,4})/);
+    if(m){
+      year=m[2].length===2?Number(String(m[1]).slice(0,2)+m[2]):Number(m[2]);
+    }
+  }
+  if(!year){
+    const now=new Date();
+    year=now.getFullYear();
+    if(now.getMonth()+1>month || (now.getMonth()+1===month&&now.getDate()>day)) year=now.getFullYear();
+  }
+  return new Date(year,month-1,day,0,0,0,0);
+}
+
+function teamGrowthAllowanceActive(onDate=new Date()){
+  const start=growthAllowanceStartDate();
+  if(!start)return false;
+  const d=new Date(onDate);d.setHours(12,0,0,0);
+  if(d<start)return false;
+  if(activeSeason?.ends_on){
+    const end=new Date(`${activeSeason.ends_on}T23:59:59`);
+    if(d>end)return false;
+  }
+  return true;
+}
+
+function displayTeamWeightClass(v,{withLimit=false}={}){
+  if(v===null||v===undefined||v==='')return '—';
+  const base=Number(v);
+  if(!Number.isFinite(base))return String(v);
+  const allowance=teamGrowthAllowanceActive()?Number(activeTeam?.growth_allowance_lbs||0):0;
+  if(allowance>0){
+    const a=Number(allowance.toFixed(2));
+    return withLimit?`${weightClassText(base)} +${a} (${weightClassText(base+a)} lb limit)`:`${weightClassText(base)} +${a}`;
+  }
+  return weightClassText(base);
+}
+
+function renderEditWeightClasses(){
+  const preset=$('editWeightClassPreset')?.value||'custom';
+  const list=$('editWeightClassList');
+  const note=$('editWeightClassPresetNote');
+  const addRow=$('customWeightClassAddRow');
+  if(!list||!note||!addRow)return;
+  if(preset==='custom'){
+    note.textContent='Custom classes can contain any number of weights. Add or remove classes below.';
+    addRow.classList.remove('hidden');
+  }else if(preset==='state_high_school'){
+    addRow.classList.add('hidden');
+    if(activeStateWeightRule){
+      editWeightClasses=(activeStateWeightRule.weights||[]).map(Number).filter(Number.isFinite);
+      const growth=Number(activeStateWeightRule.growth_allowance_lbs||0);
+      const date=(activeStateWeightRule.growth_allowance_month&&activeStateWeightRule.growth_allowance_day)?` · +${growth} begins ${activeStateWeightRule.growth_allowance_month}/${activeStateWeightRule.growth_allowance_day}`:'';
+      note.textContent=`${activeStateWeightRule.association_name} · ${activeStateWeightRule.season_name}${date}. Verified state preset.`;
+    }else{
+      editWeightClasses=[];
+      note.textContent=`No verified ${activeSeason?.name||'current-season'} high-school rule is loaded yet for ${stateName(activeTeam?.state_code)||'this state'}. Wrestling Manager will not guess or substitute Wyoming. Choose the correct NFHS 12/13/14 set or Custom.`;
+    }
+  }else{
+    const info=WEIGHT_CLASS_PRESETS[preset]||WEIGHT_CLASS_PRESETS.custom;
+    note.textContent=preset.startsWith('nfhs_')
+      ? 'NFHS standard set. Confirm this is the set selected by your state association for this season.'
+      : 'College preset. Choose Custom if your program or event uses a different list.';
+    addRow.classList.add('hidden');
+    editWeightClasses=[...info.weights];
+  }
+  editWeightClasses=[...new Set(editWeightClasses.map(Number).filter(Number.isFinite))].sort((a,b)=>a-b);
+  list.innerHTML=editWeightClasses.length?editWeightClasses.map(w=>`<span class="weight-class-edit-chip">${esc(weightClassText(w))}${preset==='custom'?`<button type="button" aria-label="Remove ${esc(weightClassText(w))}" data-remove-edit-weight="${w}">×</button>`:''}</span>`).join(''):'<span class="muted">No weight classes configured for this preset yet.</span>';
+  list.querySelectorAll('[data-remove-edit-weight]').forEach(btn=>btn.onclick=()=>{editWeightClasses=editWeightClasses.filter(w=>Number(w)!==Number(btn.dataset.removeEditWeight));renderEditWeightClasses();});
+}
+
+function addCustomWeightClass(){
+  if(($('editWeightClassPreset')?.value||'custom')!=='custom')return;
+  const raw=String($('editWeightClassAdd')?.value||'').replace(/[^0-9.]/g,'');
+  const value=Number(raw);
+  if(!Number.isFinite(value)||value<20||value>500){message('Enter a valid weight class.',true);return;}
+  if(!editWeightClasses.some(w=>Number(w)===value))editWeightClasses.push(value);
+  $('editWeightClassAdd').value='';
+  renderEditWeightClasses();
+}
+
 function defaultSeasonName(){
   const now=new Date();
   const y=now.getFullYear();
@@ -1304,6 +1609,7 @@ function openCreateTeam(){
   $('newTeamName').value='';
   $('newTeamType').value='school';
   $('newTeamGender').value='girls';
+  populateStateSelect('newTeamState',activeTeam?.state_code||'');
   setTeamLevels('newTeamLevels',[]);
   $('newTeamSeasonName').value=defaultSeasonName();
   $('newTeamPrimaryColor').value='#163A67';$('newTeamPrimaryHex').value='#163A67';
@@ -1312,6 +1618,7 @@ function openCreateTeam(){
   updateNewTeamBrandPreview();
   $('newTeamStarts').value='';
   $('newTeamEnds').value='';
+  $('newTeamHomeWeighReminder').checked=false;
   show('teamSwitcherSheet',false);
   openSheet('createTeamSheet');
   setTimeout(()=>$('newTeamName')?.focus(),80);
@@ -1323,26 +1630,43 @@ async function createTeam(){
   if(!name){message('Enter a team name.',true);return;}
   const btn=$('saveNewTeamBtn');
   btn.disabled=true; btn.textContent='Creating…';
+  const reminderOn=$('newTeamHomeWeighReminder').checked;
+  const starts=$('newTeamStarts').value||null, ends=$('newTeamEnds').value||null;
+  if(reminderOn && (!starts||!ends)){message('Add the first and last day of the season before turning on the Home weigh-in reminder.',true);btn.disabled=false;btn.textContent='Create Team & Switch';return;}
+  if(starts&&ends&&ends<starts){message('The last day of the season cannot be before the first day.',true);btn.disabled=false;btn.textContent='Create Team & Switch';return;}
   const levels=selectedTeamLevels('newTeamLevels');
   if(!levels.length){message('Select at least one program level this team serves.',true);btn.disabled=false;btn.textContent='Create Team & Switch';return;}
-  const {data,error}=await client.rpc('create_team_in_organization_v3',{
+  const newTeamType=$('newTeamType').value;
+  const newTeamGender=$('newTeamGender').value;
+  const {data,error}=await client.rpc('create_team_in_organization_v4',{
     p_organization_id:activeTeam.organization_id,
     p_team_name:name,
-    p_team_type:$('newTeamType').value,
-    p_gender_scope:$('newTeamGender').value,
+    p_team_type:newTeamType,
+    p_gender_scope:newTeamGender,
     p_service_levels:levels,
+    p_state_code:$('newTeamState').value||null,
     p_primary_color:normalizeTeamColor($('newTeamPrimaryHex').value,'#163A67'),
     p_secondary_color:normalizeTeamColor($('newTeamSecondaryHex').value,'#285E9E'),
     p_accent_color:normalizeTeamColor($('newTeamAccentHex').value,'#FFFFFF'),
     p_season_name:$('newTeamSeasonName').value.trim()||defaultSeasonName(),
-    p_starts_on:$('newTeamStarts').value||null,
-    p_ends_on:$('newTeamEnds').value||null,
+    p_starts_on:starts,
+    p_ends_on:ends,
     p_timezone:activeTeam.timezone||'America/Denver'
   });
   btn.disabled=false; btn.textContent='Create Team & Switch';
   if(error){message(error.message,true);return;}
   const row=Array.isArray(data)?data[0]:data;
   const newTeamId=row?.team_id;
+  const newSeasonId=row?.season_id;
+  if(newSeasonId){
+    const {error:seasonError}=await client.rpc('update_team_season_settings',{p_season_id:newSeasonId,p_starts_on:starts,p_ends_on:ends,p_home_weigh_reminder_enabled:reminderOn});
+    if(seasonError){message(`Team created, but season Home settings could not save: ${seasonError.message}`,true);}
+  }
+  if(newTeamId&&newSeasonId){
+    const presetResult=await client.rpc('apply_recommended_team_weight_classes',{p_team_id:newTeamId,p_season_id:newSeasonId});
+    if(presetResult.error){message(`Team created, but weight classes could not be initialized: ${presetResult.error.message}`,true);}
+    else if(presetResult.data?.reason==='state_rule_not_verified'){message(`Team created. ${stateName($('newTeamState').value)} does not have a verified ${$('newTeamSeasonName').value.trim()||defaultSeasonName()} preset loaded yet, so weight classes were left Custom rather than using another state's rules.`);}
+  }
   closeSheets();
   if(newTeamId) localStorage.setItem('wm_active_team_id',newTeamId);
   await refresh();
@@ -1354,7 +1678,13 @@ function openEditTeam(){
   $('editTeamName').value=activeTeam.name||'';
   $('editTeamType').value=activeTeam.team_type||'school';
   $('editTeamGender').value=activeTeam.gender_scope||'open';
+  populateStateSelect('editTeamState',activeTeam.state_code||'');
+  const stateNote=$('editTeamStateRuleNote');
+  if(stateNote) stateNote.textContent=activeStateWeightRule?`${activeStateWeightRule.association_name} rule loaded for ${activeStateWeightRule.season_name}.`:`High-school state rules are season-specific. If no verified rule is loaded, choose the correct NFHS set or Custom.`;
   setTeamLevels('editTeamLevels',activeTeam.service_levels||[]);
+  $('editTeamHomeWeighReminder').checked=!!activeSeason?.home_weigh_reminder_enabled;
+  $('editSeasonStarts').value=activeSeason?.starts_on||'';
+  $('editSeasonEnds').value=activeSeason?.ends_on||'';
   const p=normalizeTeamColor(activeTeam.primary_color,'#163A67'),s=normalizeTeamColor(activeTeam.secondary_color,'#285E9E'),a=normalizeTeamColor(activeTeam.accent_color,'#FFFFFF');
   $('editTeamPrimaryColor').value=p;$('editTeamPrimaryHex').value=p;
   $('editTeamSecondaryColor').value=s;$('editTeamSecondaryHex').value=s;
@@ -1362,6 +1692,12 @@ function openEditTeam(){
   $('editTeamBannerY').value=String(Number(activeTeam.banner_position_y??50));
   $('editTeamBannerFile').value='';
   pendingRemoveTeamBanner=false;
+  let currentPreset=activeTeam.weight_class_preset||recommendedWeightPreset(activeTeam.team_type,activeTeam.gender_scope,activeTeam.service_levels||[]);
+  if(currentPreset==='wyoming_hs_girls_14'||currentPreset==='wyoming_hs_boys_14') currentPreset='state_high_school';
+  populateWeightPresetSelect(currentPreset);
+  editWeightClasses=teamWeightClasses.map(x=>Number(x.weight_lbs)).filter(Number.isFinite);
+  if(!editWeightClasses.length && $('editWeightClassPreset').value!=='custom' && $('editWeightClassPreset').value!=='state_high_school') editWeightClasses=[...(WEIGHT_CLASS_PRESETS[$('editWeightClassPreset').value]?.weights||[])];
+  renderEditWeightClasses();
   updateEditTeamBrandPreview();
   closeSheets();openSheet('editTeamSheet');
   loadEditTeamBannerPreview();
@@ -1376,6 +1712,10 @@ async function saveEditTeam(){
   const secondary=normalizeTeamColor($('editTeamSecondaryHex').value,null);
   const accent=normalizeTeamColor($('editTeamAccentHex').value,null);
   if(!primary||!secondary||!accent){message('Team colors must use a six-digit hex value such as #163A67.',true);return;}
+  const reminderOn=$('editTeamHomeWeighReminder').checked;
+  const seasonStarts=$('editSeasonStarts').value||null, seasonEnds=$('editSeasonEnds').value||null;
+  if(reminderOn && (!seasonStarts||!seasonEnds)){message('Add the first and last day of the season before turning on the Home weigh-in reminder.',true);return;}
+  if(seasonStarts&&seasonEnds&&seasonEnds<seasonStarts){message('The last day of the season cannot be before the first day.',true);return;}
   const btn=$('saveEditTeamBtn');btn.disabled=true;btn.textContent='Saving…';
   const oldBannerPath=activeTeam.banner_path||null;
   let bannerPath=pendingRemoveTeamBanner?null:oldBannerPath;
@@ -1392,27 +1732,52 @@ async function saveEditTeam(){
       message(err?.message||'Could not upload the team banner.',true);return;
     }
   }
-  const {error}=await client.rpc('update_team_settings_v2',{
+  const {error}=await client.rpc('update_team_settings_v3',{
     p_team_id:activeTeam.id,
     p_name:name,
     p_team_type:$('editTeamType').value,
     p_gender_scope:$('editTeamGender').value,
     p_service_levels:levels,
+    p_state_code:$('editTeamState').value||null,
     p_primary_color:primary,
     p_secondary_color:secondary,
     p_accent_color:accent,
     p_banner_path:bannerPath,
     p_banner_position_y:Number($('editTeamBannerY').value)||50
   });
+  let seasonError=null,weightClassError=null;
+  if(!error&&activeSeason?.id){
+    const seasonResult=await client.rpc('update_team_season_settings',{p_season_id:activeSeason.id,p_starts_on:seasonStarts,p_ends_on:seasonEnds,p_home_weigh_reminder_enabled:reminderOn});
+    seasonError=seasonResult.error;
+  }
+  let weightClassWarning='';
+  if(!error&&!seasonError){
+    const preset=$('editWeightClassPreset').value||'custom';
+    if(preset==='custom'){
+      const result=await client.rpc('save_custom_team_weight_classes',{p_team_id:activeTeam.id,p_weights:editWeightClasses});
+      weightClassError=result.error;
+    }else if(preset==='state_high_school'){
+      const result=await client.rpc('apply_state_high_school_weight_classes',{p_team_id:activeTeam.id,p_season_id:activeSeason.id});
+      weightClassError=result.error;
+      if(!weightClassError&&!result.data?.applied){
+        const fallback=await client.rpc('apply_team_weight_class_preset_v2',{p_team_id:activeTeam.id,p_preset:'custom'});
+        weightClassError=fallback.error;
+        weightClassWarning=`No verified state preset is loaded for ${stateName($('editTeamState').value)||'this state'} / ${activeSeason.name}. Weight classes were changed to Custom instead of guessing.`;
+      }
+    }else{
+      const result=await client.rpc('apply_team_weight_class_preset_v2',{p_team_id:activeTeam.id,p_preset:preset});
+      weightClassError=result.error;
+    }
+  }
   btn.disabled=false;btn.textContent='Save Team';
-  if(error){
+  if(error||seasonError||weightClassError){
     if(newBannerFile&&bannerPath&&bannerPath!==oldBannerPath)await client.storage.from('team-media').remove([bannerPath]);
-    message(error.message,true);return;
+    message(error?.message||seasonError?.message||weightClassError?.message||'Could not save team settings.',true);return;
   }
   if(oldBannerPath&&oldBannerPath!==bannerPath)await client.storage.from('team-media').remove([oldBannerPath]);
   if(pendingTeamBannerObjectUrl){URL.revokeObjectURL(pendingTeamBannerObjectUrl);pendingTeamBannerObjectUrl=null;}
   pendingRemoveTeamBanner=false;
-  closeSheets();await refresh();message('Team settings and branding saved.');
+  closeSheets();await refresh();message(weightClassWarning||'Team settings and branding saved.');
 }
 
 async function activateTeam(teamId,{persist=true}={}){
@@ -1439,6 +1804,7 @@ async function activateTeam(teamId,{persist=true}={}){
   $('homeTeamName').textContent=team.name;
 
   rosterRows=[]; rosterManagementRows=[]; scheduleRows=[]; joinRequests=[]; weighInSessions=[]; memberAthletes=[]; importantAnnouncements=[]; dashboardCounts=null; certificationPlansByAthlete=new Map();
+  teamWeightClasses=[];
 
   const {data:seasons,error:seasonErr}=await client.from('seasons').select('*').eq('team_id',team.id).eq('active',true).order('created_at',{ascending:false}).limit(1);
   if(seasonErr){message(seasonErr.message,true);return;}
@@ -1463,6 +1829,7 @@ async function activateTeam(teamId,{persist=true}={}){
 
   applyRoleUI();
   renderTeamSwitcher();
+  await loadTeamWeightClasses();
 
   if(isStaff){
     await Promise.all([loadDashboard(),loadRoster(),loadSchedule(),loadJoinRequests(),loadWeighInSessions(),loadImportantAnnouncements()]);
@@ -1558,6 +1925,25 @@ async function resolveImportantAnnouncement(postId){
   await loadImportantAnnouncements();message('Announcement resolved.');
 }
 
+function localTodayYMD(){
+  const d=new Date();
+  const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+
+function homeWeighReminderActiveToday(){
+  if(!activeSeason?.home_weigh_reminder_enabled)return false;
+  if(!activeSeason?.starts_on||!activeSeason?.ends_on)return false;
+  const today=localTodayYMD();
+  return today>=activeSeason.starts_on && today<=activeSeason.ends_on;
+}
+
+function teamUsesCertificationPlans(){
+  if(!activeTeam)return false;
+  const levels=activeTeam.service_levels||[];
+  return activeTeam.team_type==='school' && (levels.includes('high_school')||levels.includes('college'));
+}
+
 async function loadDashboard(){
   if (!activeSeason) return;
   const { data: counts, error } = await client.rpc('team_dashboard_counts_v2',{p_season_id:activeSeason.id});
@@ -1629,6 +2015,10 @@ function renderCoachWeightClassBoard(){
   if(!container||!section)return;
   section.classList.toggle('hidden-role',!isStaff);
   if(!isStaff)return;
+  const usesPlans=teamUsesCertificationPlans();
+  if($('coachWeightBoardHelp')) $('coachWeightBoardHelp').textContent=usesPlans
+    ? 'Coach lineup stays separate from certification eligibility. Plan chips show when a wrestler can descend to a lower class.'
+    : 'Coach-controlled lineup by weight class. Certification / weight-loss plans are only shown for high-school and college school teams.';
   const rows=(rosterRows||[]).filter(r=>r.roster_status!=='standby'&&r.roster_status!=='removed'&&r.roster_status!=='inactive');
   if(!rows.length){container.innerHTML='<div class="board-empty">No active athletes on this roster yet.</div>';return;}
 
@@ -1645,13 +2035,13 @@ function renderCoachWeightClassBoard(){
   });
 
   container.innerHTML=ordered.map(([cls,athletes])=>{
-    const title=cls==='unassigned'?'Unassigned':`${weightClassText(cls)} lb`;
+    const title=cls==='unassigned'?'Unassigned':`${displayTeamWeightClass(cls)} lb`;
     const body=athletes.sort((a,b)=>String(a.last_name).localeCompare(String(b.last_name))).map(r=>{
-      const plan=certificationPlansByAthlete.get(r.athlete_id)||null;
-      const chips=buildPlanMilestones(r,plan);
+      const plan=usesPlans?(certificationPlansByAthlete.get(r.athlete_id)||null):null;
+      const chips=usesPlans?buildPlanMilestones(r,plan):[];
       const latest=r.latest_weight!==null&&r.latest_weight!==undefined?`${Number(r.latest_weight).toFixed(1)} lb`:'—';
-      const eligible=r.eligible_weight_class!==null&&r.eligible_weight_class!==undefined?`Eligible ${weightClassText(r.eligible_weight_class)}`:'Eligibility —';
-      const note=plan?.weekly_loss_limit?`Plan weekly loss limit: ${Number(plan.weekly_loss_limit)}${plan.minimum_weight?` · certified minimum ${Number(plan.minimum_weight).toFixed(1)} lb`:''}`:(plan?.minimum_weight?`Certified minimum ${Number(plan.minimum_weight).toFixed(1)} lb`:(!plan?'Upload/import a certification plan to show descent dates and class options.':''));
+      const eligible=usesPlans?(r.eligible_weight_class!==null&&r.eligible_weight_class!==undefined?`Eligible ${weightClassText(r.eligible_weight_class)}`:'Eligibility —'):'';
+      const note=usesPlans?(plan?.weekly_loss_limit?`Plan weekly loss limit: ${Number(plan.weekly_loss_limit)}${plan.minimum_weight?` · certified minimum ${Number(plan.minimum_weight).toFixed(1)} lb`:''}`:(plan?.minimum_weight?`Certified minimum ${Number(plan.minimum_weight).toFixed(1)} lb`:(!plan?'Upload/import a certification plan to show descent dates and class options.':''))):'';
       const latestWeightControl=r.latest_weigh_in_id
         ? (r.latest_weight_linked_official
           ? `<div class="weight-athlete-number latest-weight-protected">${esc(latest)}<small>official · protected</small></div>`
@@ -1659,15 +2049,63 @@ function renderCoachWeightClassBoard(){
         : `<div class="weight-athlete-number">${esc(latest)}<small>latest weight</small></div>`;
       return `<div class="weight-athlete-row">
         <div class="weight-athlete-top">
-          <div class="weight-athlete-name"><b>${esc(r.first_name)} ${esc(r.last_name)}</b><small>${esc(rosterStatusLabel(r.roster_status))} · ${esc(eligible)}</small></div>
+          <div class="weight-athlete-name"><b>${esc(r.first_name)} ${esc(r.last_name)}</b><small>${esc(rosterStatusLabel(r.roster_status))}${eligible?` · ${esc(eligible)}`:''}</small><button class="lineup-class-btn" type="button" data-set-lineup-class="${r.athlete_id}">${r.current_lineup_class?`Change class (${esc(displayTeamWeightClass(r.current_lineup_class))})`:'Set lineup class'}</button></div>
           ${latestWeightControl}
         </div>
-        <div class="plan-summary"><small>Weight-loss plan options</small><div class="plan-path">${chips.map(c=>`<span class="plan-chip ${esc(c.kind)}">${esc(c.text)}</span>`).join('')}</div>${note?`<span class="plan-note">${esc(note)}</span>`:''}</div>
+        ${usesPlans?`<div class="plan-summary"><small>Weight-loss plan options</small><div class="plan-path">${chips.map(c=>`<span class="plan-chip ${esc(c.kind)}">${esc(c.text)}</span>`).join('')}</div>${note?`<span class="plan-note">${esc(note)}</span>`:''}</div>`:''}
       </div>`;
     }).join('');
     return `<section class="weight-class-group"><div class="weight-class-head"><b>${esc(title)}</b><small>${athletes.length} wrestler${athletes.length===1?'':'s'}</small></div><div>${body}</div></section>`;
   }).join('');
   container.querySelectorAll('[data-delete-latest-weigh]').forEach(btn=>btn.onclick=()=>deleteLatestLineupWeighIn(btn.dataset.deleteLatestWeigh,btn.dataset.deleteAthleteName,btn.dataset.deleteWeight));
+  container.querySelectorAll('[data-set-lineup-class]').forEach(btn=>btn.onclick=()=>openLineupClassSheet(btn.dataset.setLineupClass));
+}
+
+function openLineupClassSheet(athleteId){
+  const row=rosterRows.find(x=>x.athlete_id===athleteId);
+  if(!row||!isStaff)return;
+  lineupClassAthleteId=athleteId;
+  selectedLineupClass=row.current_lineup_class===null||row.current_lineup_class===undefined?null:Number(row.current_lineup_class);
+  $('lineupClassAthleteName').textContent=`${row.first_name} ${row.last_name}`;
+  $('lineupClassInput').value=row.current_lineup_class??'';
+  const choices=$('lineupClassChoices');
+  const hasConfigured=teamWeightClasses.length>0;
+  show('lineupClassPresetWrap',hasConfigured);
+  show('lineupClassManualWrap',!hasConfigured);
+  if(hasConfigured){
+    choices.innerHTML=teamWeightClasses.map(w=>{
+      const base=Number(w.weight_lbs);
+      const selected=selectedLineupClass===base?' selected':'';
+      return `<button class="weight-class-choice${selected}" type="button" data-lineup-choice="${base}">${esc(displayTeamWeightClass(base,{withLimit:true}))}</button>`;
+    }).join('');
+    choices.querySelectorAll('[data-lineup-choice]').forEach(btn=>btn.onclick=()=>{
+      selectedLineupClass=Number(btn.dataset.lineupChoice);
+      choices.querySelectorAll('.weight-class-choice').forEach(x=>x.classList.toggle('selected',Number(x.dataset.lineupChoice)===selectedLineupClass));
+    });
+  }
+  openSheet('lineupClassSheet');
+  if(!hasConfigured)setTimeout(()=>$('lineupClassInput')?.focus(),120);
+}
+
+async function saveLineupClass(clear=false){
+  if(!lineupClassAthleteId||!activeSeason||!isStaff)return;
+  let value=null;
+  if(!clear){
+    if(teamWeightClasses.length){
+      value=selectedLineupClass;
+      if(value===null||value===undefined){message('Select a weight class or tap Clear.',true);return;}
+    }else{
+      const raw=$('lineupClassInput').value.replace(/[^0-9.]/g,'');
+      if(!raw){message('Enter a weight class or tap Clear.',true);return;}
+      value=Number(raw);
+      if(!Number.isFinite(value)||value<20||value>500){message('Enter a valid wrestling weight class.',true);return;}
+    }
+  }
+  const {error}=await client.rpc('set_athlete_lineup_class',{p_season_id:activeSeason.id,p_athlete_id:lineupClassAthleteId,p_lineup_class:value});
+  if(error){message(error.message,true);return;}
+  closeSheets();lineupClassAthleteId=null;selectedLineupClass=null;
+  await loadRoster();
+  message(clear?'Lineup class cleared.':`Lineup class set to ${displayTeamWeightClass(value)}.`);
 }
 
 async function deleteLatestLineupWeighIn(weighInId,athleteName,weightLabel){
@@ -1682,7 +2120,7 @@ async function deleteLatestLineupWeighIn(weighInId,athleteName,weightLabel){
 }
 
 async function loadCoachWeightClassBoard(){
-  if(!isStaff||!activeSeason){certificationPlansByAthlete=new Map();renderCoachWeightClassBoard();return;}
+  if(!isStaff||!activeSeason||!teamUsesCertificationPlans()){certificationPlansByAthlete=new Map();renderCoachWeightClassBoard();return;}
   const {data:plans,error}=await client.from('certification_plans').select('id,athlete_id,minimum_weight,minimum_weight_class,weekly_loss_limit,final_date,version,active').eq('season_id',activeSeason.id).eq('active',true);
   if(error){console.warn('Certification plans:',error.message);certificationPlansByAthlete=new Map();renderCoachWeightClassBoard();return;}
   const map=new Map((plans||[]).map(p=>[p.athlete_id,{...p,rows:[]}]))
@@ -1751,10 +2189,11 @@ async function loadRoster(){
   $('rosterList').innerHTML=rosterRows.length?rosterRows.map(r=>{
     const m=manageMap.get(r.athlete_id);
     return `<div class="roster-card">
-      <div><b>${esc(r.first_name)} ${esc(r.last_name)}</b><small>${esc(rosterStatusLabel(r.roster_status))} · lineup ${esc(r.current_lineup_class ?? '—')} · eligible ${esc(r.eligible_weight_class ?? '—')}</small>${m?.status_reason?`<small>${esc(m.status_reason)}</small>`:''}${rosterManageButtons(r.athlete_id)}</div>
+      <div><b>${esc(r.first_name)} ${esc(r.last_name)}</b><small>${esc(rosterStatusLabel(r.roster_status))} · lineup ${esc(r.current_lineup_class!==null&&r.current_lineup_class!==undefined?displayTeamWeightClass(r.current_lineup_class):'—')} · eligible ${esc(r.eligible_weight_class ?? '—')}</small>${m?.status_reason?`<small>${esc(m.status_reason)}</small>`:''}${rosterManageButtons(r.athlete_id)}</div>
       <div class="roster-actions">
         <div class="weight-value">${esc(r.latest_weight ?? '—')}<small> lb</small></div>
         <button class="roster-access-btn" data-profile-athlete="${r.athlete_id}">Profile</button>
+        <button class="roster-access-btn" data-set-lineup-class="${r.athlete_id}">${r.current_lineup_class?'Change Class':'Set Class'}</button>
         ${isTeamAdmin?`<button class="roster-access-btn" data-athlete-teams="${r.athlete_id}">Teams / Transfer</button>`:''}
         <button class="roster-access-btn" data-access-athlete="${r.athlete_id}">Invite</button>
       </div>
@@ -1764,6 +2203,7 @@ async function loadRoster(){
   $('rosterList').querySelectorAll('[data-access-athlete]').forEach(btn=>btn.onclick=()=>openAthleteAccess(btn.dataset.accessAthlete));
   $('rosterList').querySelectorAll('[data-profile-athlete]').forEach(btn=>btn.onclick=()=>openAthleteProfile(btn.dataset.profileAthlete));
   $('rosterList').querySelectorAll('[data-athlete-teams]').forEach(btn=>btn.onclick=()=>openAthleteTeams(btn.dataset.athleteTeams));
+  $('rosterList').querySelectorAll('[data-set-lineup-class]').forEach(btn=>btn.onclick=()=>openLineupClassSheet(btn.dataset.setLineupClass));
   bindRosterManagementActions($('rosterList'));
 
   const inactiveRows=rosterManagementRows.filter(x=>!x.active || ['standby','removed','inactive'].includes(x.roster_status));
@@ -2206,6 +2646,7 @@ async function saveAthleteProfile(){
 }
 
 function beginProfilePhotoCrop(){
+  photoCropTarget='athlete';
   const file=$('profilePhotoInput').files?.[0];
   if(!file||!profileAthleteId)return;
   if(!file.type.startsWith('image/')){message('Choose an image file.',true);return;}
@@ -2260,17 +2701,71 @@ function drawPhotoCrop(){
 
 function cancelPhotoCrop(){
   photoCropImage=null;photoCropSourceFile=null;
-  $('profilePhotoInput').value='';
+  if($('profilePhotoInput'))$('profilePhotoInput').value='';
+  if($('staffPhotoInput'))$('staffPhotoInput').value='';
+  if(photoCropTarget==='staff'){openStaffProfile();return;}
   if(profileAthleteId)openAthleteProfile(profileAthleteId); else closeSheets();
 }
 
+function beginStaffPhotoCrop(){
+  photoCropTarget='staff';
+  const file=$('staffPhotoInput').files?.[0];
+  if(!file||!activeTeam)return;
+  if(!file.type.startsWith('image/')){message('Choose an image file.',true);return;}
+  photoCropSourceFile=file;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const img=new Image();
+    img.onload=()=>{
+      photoCropImage=img;
+      resetPhotoCrop();
+      closeSheets();
+      openSheet('photoCropSheet');
+      requestAnimationFrame(drawPhotoCrop);
+    };
+    img.onerror=()=>message('That photo could not be opened.',true);
+    img.src=reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function staffProfilePayload(photoPathOverride=undefined){
+  return {
+    p_team_id:activeTeam.id,
+    p_display_name:$('staffDisplayName').value.trim(),
+    p_title:$('staffTitle').value.trim()||null,
+    p_contact_email:$('staffEmail').value.trim()||null,
+    p_phone:$('staffPhone').value.trim()||null,
+    p_photo_path:photoPathOverride===undefined?(staffProfileData?.photo_path||null):photoPathOverride,
+    p_share_email_with_athletes:$('staffShareEmailAthletes').checked,
+    p_share_phone_with_athletes:$('staffSharePhoneAthletes').checked,
+    p_share_email_with_parents:$('staffShareEmailParents').checked,
+    p_share_phone_with_parents:$('staffSharePhoneParents').checked
+  };
+}
+
 async function saveCroppedProfilePhoto(){
-  if(!photoCropImage||!profileAthleteId||!activeTeam)return;
+  if(!photoCropImage||!activeTeam)return;
   const btn=$('savePhotoCropBtn');btn.disabled=true;btn.textContent='Saving…';
   drawPhotoCrop();
   const canvas=$('photoCropCanvas');
   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',0.9));
   if(!blob){btn.disabled=false;btn.textContent='Use Photo';message('Could not prepare the cropped photo.',true);return;}
+
+  if(photoCropTarget==='staff'){
+    const path=`${activeTeam.id}/staff/${session.user.id}/${Date.now()}-profile.jpg`;
+    const {error}=await client.storage.from('team-media').upload(path,blob,{upsert:true,contentType:'image/jpeg'});
+    if(error){btn.disabled=false;btn.textContent='Use Photo';message(error.message,true);return;}
+    const {data,error:saveErr}=await client.rpc('update_my_team_staff_profile',staffProfilePayload(path));
+    btn.disabled=false;btn.textContent='Use Photo';
+    if(saveErr){message(saveErr.message,true);return;}
+    staffProfileData=data;photoCropImage=null;photoCropSourceFile=null;$('staffPhotoInput').value='';
+    await openStaffProfile();
+    message('Coach / staff photo cropped and updated.');
+    return;
+  }
+
+  if(!profileAthleteId){btn.disabled=false;btn.textContent='Use Photo';return;}
   const path=`${profileAthleteId}/${Date.now()}-profile.jpg`;
   const {error}=await client.storage.from('athlete-photos').upload(path,blob,{upsert:true,contentType:'image/jpeg'});
   if(error){btn.disabled=false;btn.textContent='Use Photo';message(error.message,true);return;}
@@ -2280,6 +2775,79 @@ async function saveCroppedProfilePhoto(){
   photoCropImage=null;photoCropSourceFile=null;$('profilePhotoInput').value='';
   await openAthleteProfile(profileAthleteId);
   message('Profile photo cropped and updated.');
+}
+
+async function staffPhotoUrl(path){
+  if(!path)return null;
+  if(/^https?:\/\//i.test(path))return path;
+  const {data,error}=await client.storage.from('team-media').createSignedUrl(path,3600);
+  return error?null:data?.signedUrl||null;
+}
+
+function staffRoleLabel(role){
+  return role==='head_coach'?'Head Coach':
+    role==='assistant_coach'?'Assistant Coach':
+    role==='manager'?'Team Manager':
+    role==='organization_admin'?'Organization Admin':'Coach / Staff';
+}
+
+async function openStaffProfile(){
+  if(!activeTeam||!(isStaff||isTeamAdmin)){message('Coach or team admin access is required.',true);return;}
+  const {data,error}=await client.rpc('get_my_team_staff_profile',{p_team_id:activeTeam.id});
+  if(error){message(error.message,true);return;}
+  staffProfileData=data||{};
+  $('staffProfileRoleLabel').textContent=staffRoleLabel(staffProfileData.role);
+  $('staffDisplayName').value=staffProfileData.display_name||'';
+  $('staffTitle').value=staffProfileData.title||staffRoleLabel(staffProfileData.role);
+  $('staffEmail').value=staffProfileData.email||session?.user?.email||'';
+  setPhoneValue('staffPhone',staffProfileData.phone||'');
+  $('staffShareEmailAthletes').checked=!!staffProfileData.share_email_with_athletes;
+  $('staffSharePhoneAthletes').checked=!!staffProfileData.share_phone_with_athletes;
+  $('staffShareEmailParents').checked=!!staffProfileData.share_email_with_parents;
+  $('staffSharePhoneParents').checked=!!staffProfileData.share_phone_with_parents;
+  $('staffProfilePhotoBox').className='staff-profile-photo-placeholder';
+  const url=await staffPhotoUrl(staffProfileData.photo_path);
+  $('staffProfilePhotoBox').innerHTML=url?`<img class="staff-profile-photo" src="${esc(url)}" alt="Coach profile photo">`:'👤';
+  closeSheets();openSheet('staffProfileSheet');
+}
+
+async function saveStaffProfile(){
+  if(!activeTeam)return;
+  const btn=$('saveStaffProfileBtn');btn.disabled=true;btn.textContent='Saving…';
+  const {data,error}=await client.rpc('update_my_team_staff_profile',staffProfilePayload());
+  btn.disabled=false;btn.textContent='Save Staff Profile';
+  if(error){message(error.message,true);return;}
+  staffProfileData=data||staffProfileData;
+  message('Coach / staff profile saved.');
+  await openStaffProfile();
+}
+
+async function openStaffDirectory(){
+  if(!activeTeam)return;
+  closeSheets();openSheet('staffDirectorySheet');
+  $('staffDirectoryList').innerHTML='<div class="empty-card">Loading coaches and staff…</div>';
+  const {data,error}=await client.rpc('get_team_staff_directory',{p_team_id:activeTeam.id});
+  if(error){$('staffDirectoryList').innerHTML=`<div class="empty-card">${esc(error.message)}</div>`;return;}
+  const rows=await Promise.all((data||[]).map(async r=>({...r,photo_url:await staffPhotoUrl(r.photo_path)})));
+  if(!rows.length){$('staffDirectoryList').innerHTML='<div class="empty-card">No coaches or staff are connected to this team yet.</div>';return;}
+  $('staffDirectoryList').innerHTML=rows.map(r=>{
+    const contacts=[];
+    if(r.email)contacts.push(`<a href="mailto:${esc(r.email)}">✉ ${esc(r.email)}</a>`);
+    if(r.phone)contacts.push(`<a href="tel:${esc(String(r.phone).replace(/[^0-9+]/g,''))}">☎ ${esc(formatUsPhone(r.phone))}</a>`);
+    return `<div class="staff-directory-card">
+      ${r.photo_url?`<img class="staff-profile-photo" src="${esc(r.photo_url)}" alt="${esc(r.display_name)}">`:`<div class="staff-profile-photo-placeholder">👤</div>`}
+      <div class="staff-directory-copy">
+        <b>${esc(r.display_name||'Coach / Staff')}</b>
+        <span class="staff-title">${esc(r.title||staffRoleLabel(r.role))}</span>
+        ${contacts.length?`<div class="staff-contact-links">${contacts.join('')}</div>`:`<span class="staff-contact-none">This staff member has not shared contact information with your role.</span>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openAccountSheet(){
+  show('editStaffProfileBtn',!!activeTeam&&(isStaff||isTeamAdmin));
+  closeSheets();openSheet('accountSheet');
 }
 
 async function openMemberProfiles(){
@@ -2346,7 +2914,7 @@ function renderAttention(){
     if(!memberAthletes.length) items.push({title:'No athlete profile connected',sub:'Ask your coach for an athlete or parent invitation.',action:'more'});
   } else {
     if(upcoming.length) items.push({title:`${upcoming.length} upcoming event${upcoming.length===1?'':'s'}`,sub:'Review schedule and RSVP settings.',action:'schedule'});
-    if(dashboardCounts?.not_weighed_today>0) items.push({title:`${dashboardCounts.not_weighed_today} athlete${dashboardCounts.not_weighed_today===1?'':'s'} still expected to weigh`,sub:dashboardCounts.excused_today?`${dashboardCounts.excused_today} excused athlete${dashboardCounts.excused_today===1?' is':'s are'} removed from today’s weigh-in total.`:'Open Weight Room to record today’s weights.',action:'weight'});
+    if(homeWeighReminderActiveToday() && dashboardCounts?.not_weighed_today>0) items.push({title:`${dashboardCounts.not_weighed_today} athlete${dashboardCounts.not_weighed_today===1?'':'s'} still expected to weigh`,sub:dashboardCounts.excused_today?`${dashboardCounts.excused_today} excused athlete${dashboardCounts.excused_today===1?' is':'s are'} removed from today’s weigh-in total.`:'Open Weight Room to record today’s weights.',action:'weight'});
     if(!rosterRows.length) items.push({title:'Roster is empty',sub:'Open the roster or generate a Team Join code.',action:'roster'});
   }
   $('attentionCount').textContent=items.length;
@@ -2985,7 +3553,7 @@ $('bootstrapTeamBtn').onclick=async()=>{
 $('newEventBtn').onclick=prepareEventForm; $('saveEventBtn').onclick=saveEvent; $('attendanceBtn').onclick=openAttendance; $('deleteEventBtn').onclick=deleteEvent;
 $('saveExcuseBtn').onclick=saveExcuse; $('createAthleteInviteBtn').onclick=createAthleteInvite; $('saveGuardianBtn').onclick=saveGuardianContact; $('createGuardianInviteBtn').onclick=createGuardianInvite;
 $('joinAsAthleteBtn').onclick=()=>setJoinRole('athlete'); $('joinAsParentBtn').onclick=async()=>{setJoinRole('parent_guardian');await loadJoinGuardianDefaults();}; $('claimExistingAthleteBtn').onclick=()=>setParentJoinPath('claim'); $('createAthleteProfileBtn').onclick=()=>setParentJoinPath('create'); $('joinBirthDate').onchange=updateJoinSensitiveControls; $('submitJoinRequestBtn').onclick=submitJoinRequest; $('joinRequestsBtn').onclick=openJoinRequests; $('saveAthleteProfileBtn').onclick=saveAthleteProfile; $('profilePhotoInput').onchange=beginProfilePhotoCrop; $('memberProfilesBtn').onclick=openMemberProfiles; $('familyBtn').onclick=openFamily; $('familyCreateGuardianInviteBtn').onclick=familyCreateGuardianInvite; $('parentAddChildBtn').onclick=()=>startJoinFlow(null,activeTeam.id,true);
-$('rosterBtn').onclick=()=>openSheet('rosterSheet'); $('addAthleteBtn').onclick=openAddAthlete; $('saveAthleteBtn').onclick=saveAthlete; $('joinBtn').onclick=showTeamJoin; $('accountBtn').onclick=()=>openSheet('accountSheet'); $('profileBtn').onclick=()=>openSheet('accountSheet'); $('teamSwitcherBtn').onclick=openTeamSwitcher; $('createTeamBtn').onclick=openCreateTeam; $('saveNewTeamBtn').onclick=createTeam; $('editTeamBtn').onclick=openEditTeam; $('saveEditTeamBtn').onclick=saveEditTeam;
+$('rosterBtn').onclick=()=>openSheet('rosterSheet'); $('addAthleteBtn').onclick=openAddAthlete; $('saveAthleteBtn').onclick=saveAthlete; $('joinBtn').onclick=showTeamJoin; $('accountBtn').onclick=openAccountSheet; $('profileBtn').onclick=openAccountSheet; $('staffDirectoryBtn').onclick=openStaffDirectory; $('editStaffProfileBtn').onclick=openStaffProfile; $('saveStaffProfileBtn').onclick=saveStaffProfile; $('staffPhotoInput').onchange=beginStaffPhotoCrop; $('teamSwitcherBtn').onclick=openTeamSwitcher; $('createTeamBtn').onclick=openCreateTeam; $('saveNewTeamBtn').onclick=createTeam; $('editTeamBtn').onclick=openEditTeam; $('saveEditTeamBtn').onclick=saveEditTeam;
 bindColorPair('newTeamPrimaryColor','newTeamPrimaryHex',updateNewTeamBrandPreview);
 bindColorPair('newTeamSecondaryColor','newTeamSecondaryHex',updateNewTeamBrandPreview);
 bindColorPair('newTeamAccentColor','newTeamAccentHex',updateNewTeamBrandPreview);
@@ -2999,6 +3567,24 @@ $('editTeamBannerY').addEventListener('input',()=>{const img=$('editTeamBannerPr
 $('removeTeamBannerBtn').onclick=removePendingTeamBanner;
 
 $('profileTeamsBtn').onclick=()=>{if(profileAthleteId)openAthleteTeams(profileAthleteId);}; $('changeKioskPinBtn').onclick=changeKioskPin; updateKioskPinStatus();
+$('saveLineupClassBtn').onclick=()=>saveLineupClass(false);
+$('clearLineupClassBtn').onclick=()=>saveLineupClass(true);
+$('lineupClassInput').addEventListener('input',e=>{e.target.value=e.target.value.replace(/[^0-9.]/g,'').slice(0,5);});
+$('editWeightClassAdd')?.addEventListener('input',e=>{e.target.value=e.target.value.replace(/[^0-9.]/g,'').slice(0,5);});
+$('addCustomWeightClassBtn')?.addEventListener('click',addCustomWeightClass);
+$('editWeightClassAdd')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addCustomWeightClass();}});
+$('editWeightClassPreset')?.addEventListener('change',()=>{
+  const preset=$('editWeightClassPreset').value;
+  if(preset==='state_high_school') editWeightClasses=(activeStateWeightRule?.weights||[]).map(Number).filter(Number.isFinite);
+  else if(preset!=='custom') editWeightClasses=[...(WEIGHT_CLASS_PRESETS[preset]?.weights||[])];
+  renderEditWeightClasses();
+});
+$('editTeamState')?.addEventListener('change',()=>{
+  const note=$('editTeamStateRuleNote');
+  if(note) note.textContent='State changed. Save the team, then reopen Edit Team to load the verified rule for that state and season.';
+});
+['joinGraduationYear','profileGradYear','lineupClassInput','editWeightClassAdd'].forEach(id=>{const el=$(id);if(el){el.setAttribute('inputmode','numeric');el.setAttribute('pattern','[0-9]*');el.setAttribute('enterkeyhint','done');}});
+document.querySelectorAll('input[type="number"]').forEach(el=>{if(!el.getAttribute('inputmode'))el.setAttribute('inputmode',el.step&&String(el.step).includes('.')?'decimal':'numeric');el.setAttribute('enterkeyhint','done');});
 $('sheetBackdrop').onclick=closeSheets; document.querySelectorAll('[data-close-sheet]').forEach(x=>x.onclick=closeSheets);
 $('cancelPhotoCropBtn').onclick=cancelPhotoCrop;
 $('resetPhotoCropBtn').onclick=resetPhotoCrop;
