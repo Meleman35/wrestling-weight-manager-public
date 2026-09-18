@@ -970,8 +970,35 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     <div class="feature-card"><b id="accountEmail">—</b><p id="accountTeamInfo" class="muted"></p><span id="accountRole" class="role-pill">—</span><div id="accountTeamLevels" class="team-level-summary"></div></div>
     <button id="editStaffProfileBtn" class="wide hidden" type="button">Edit My Coach / Staff Profile</button>
     <button id="editTeamBtn" class="wide admin-only" type="button">Edit Team</button>
+    <button id="communicationBtn" class="wide admin-only" type="button">Communication Settings</button>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.9.5</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.9.7</p>
+  </section>
+
+
+  <section id="communicationSheet" class="sheet hidden" aria-modal="true">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><div><div class="eyebrow">TEAM COMMUNICATION</div><h2>Communication Settings</h2><p class="muted">Choose the team identity used for email sent through Wrestling Manager.</p></div><button class="icon-close" data-close-sheet>×</button></div>
+    <div class="feature-card">
+      <b>Outgoing email</b>
+      <p class="muted">Wrestling Manager sends through the verified wrestlingmanager.app domain. Replies can go directly to your team's regular email account.</p>
+    </div>
+    <label>Sender name</label>
+    <input id="teamSenderName" type="text" placeholder="Lyman Girls Wrestling">
+    <label>Sending address</label>
+    <div class="two-col" style="grid-template-columns:1fr auto;align-items:end">
+      <input id="teamSenderLocalPart" type="text" autocomplete="off" placeholder="messages">
+      <div style="padding:13px 0;font-weight:900;color:var(--muted)">@wrestlingmanager.app</div>
+    </div>
+    <label>Reply-To / primary team email</label>
+    <input id="teamReplyToEmail" type="email" autocomplete="email" placeholder="team@gmail.com">
+    <label class="toggle-row"><span><b>Email sending enabled</b><small>Turn off to pause app-generated email for this team.</small></span><input id="teamEmailEnabled" type="checkbox" checked></label>
+    <button id="saveCommunicationBtn" class="wide" type="button">Save Communication Settings</button>
+    <h3 class="subhead">Test Email</h3>
+    <label>Send a test to</label>
+    <input id="teamTestEmail" type="email" autocomplete="email">
+    <button id="sendTestEmailBtn" class="wide secondary" type="button">Send Test Email</button>
+    <div id="communicationStatus"></div>
   </section>
 
   <section id="staffProfileSheet" class="sheet hidden" aria-modal="true">
@@ -1320,7 +1347,7 @@ function openSheet(id){
 }
 function closeSheets(){
   if(document.body.classList.contains('kiosk-locked')) return;
-  ['eventSheet','eventDetailSheet','attendanceSheet','announcementSheet','rosterSheet','athleteTeamsSheet','addAthleteSheet','joinSheet','joinRequestSheet','coachJoinRequestsSheet','athleteViewSheet','athleteProfileSheet','weightTrendSheet','photoCropSheet','staffProfileSheet','staffDirectorySheet','familySheet','excuseSheet','athleteAccessSheet','staffAccessSheet','weighedTodaySheet','weighInStartSheet','weighInConsoleSheet','importRosterSheet','teamSwitcherSheet','createTeamSheet','editTeamSheet','lineupClassSheet','accountSheet'].forEach(id=>show(id,false));
+  ['eventSheet','eventDetailSheet','attendanceSheet','announcementSheet','rosterSheet','athleteTeamsSheet','addAthleteSheet','joinSheet','joinRequestSheet','coachJoinRequestsSheet','athleteViewSheet','athleteProfileSheet','weightTrendSheet','photoCropSheet','communicationSheet','staffProfileSheet','staffDirectorySheet','familySheet','excuseSheet','athleteAccessSheet','staffAccessSheet','weighedTodaySheet','weighInStartSheet','weighInConsoleSheet','importRosterSheet','teamSwitcherSheet','createTeamSheet','editTeamSheet','lineupClassSheet','accountSheet'].forEach(id=>show(id,false));
   show('sheetBackdrop', false); document.body.style.overflow='';
 }
 
@@ -2473,7 +2500,7 @@ async function createAthleteInvite(){
   });
   if(error){message(error.message,true);return;}
   const token=data?.[0]?.invitation_token||data?.invitation_token;
-  const url=inviteUrl(token); $('athleteInviteTokenBox').innerHTML=`<div class="token-box">${esc(token||'Invite created')}</div><div id="athleteInviteQr" class="qr-wrap"></div><div class="share-grid"><button data-ai="text">Text</button><button data-ai="email">Email</button><button data-ai="copy">Copy Link</button><button data-ai="share">Share</button></div><p class="fine">Private invite for ${esc(a.email)}.</p>`; makeQr('athleteInviteQr',url); $('athleteInviteTokenBox').querySelector('[data-ai="text"]').onclick=()=>shareByText(`Join ${activeTeam.name} as your athlete profile: ${url}`); $('athleteInviteTokenBox').querySelector('[data-ai="email"]').onclick=()=>shareByEmail(`Join ${activeTeam.name}`,`Use this private athlete invitation: ${url}`); $('athleteInviteTokenBox').querySelector('[data-ai="copy"]').onclick=()=>copyText(url); $('athleteInviteTokenBox').querySelector('[data-ai="share"]').onclick=()=>systemShare('Wrestling Manager invite','Private athlete invitation',url);
+  const url=inviteUrl(token); $('athleteInviteTokenBox').innerHTML=`<div class="token-box">${esc(token||'Invite created')}</div><div id="athleteInviteQr" class="qr-wrap"></div><div class="share-grid"><button data-ai="text">Text</button><button data-ai="email">Email</button><button data-ai="copy">Copy Link</button><button data-ai="share">Share</button></div><p class="fine">Private invite for ${esc(a.email)}.</p>`; makeQr('athleteInviteQr',url); $('athleteInviteTokenBox').querySelector('[data-ai="text"]').onclick=()=>shareByText(`Join ${activeTeam.name} as your athlete profile: ${url}`); $('athleteInviteTokenBox').querySelector('[data-ai="email"]').onclick=()=>sendAthleteInviteEmail(a.email,url); $('athleteInviteTokenBox').querySelector('[data-ai="copy"]').onclick=()=>copyText(url); $('athleteInviteTokenBox').querySelector('[data-ai="share"]').onclick=()=>systemShare('Wrestling Manager invite','Private athlete invitation',url);
 }
 
 async function saveGuardianContact(){
@@ -2509,7 +2536,7 @@ async function createGuardianInvite(){
   if(error){ $('createGuardianInviteBtn').disabled=false; $('createGuardianInviteBtn').textContent='Create Account Invite'; message(error.message,true);return; }
   const token=data?.[0]?.invitation_token||data?.invitation_token;
   accessGuardianRecord.invitation_status='pending';
-  const url=inviteUrl(token); $('guardianInviteTokenBox').innerHTML=`<div class="token-box">${esc(token||'Invite created')}</div><div id="guardianInviteQr" class="qr-wrap"></div><div class="share-grid"><button data-gi="text">Text</button><button data-gi="email">Email</button><button data-gi="copy">Copy Link</button><button data-gi="share">Share</button></div><p class="fine"><b>Private parent invite.</b> A replacement invalidates the older code.</p>`; makeQr('guardianInviteQr',url); $('guardianInviteTokenBox').querySelector('[data-gi="text"]').onclick=()=>shareByText(`Connect to ${accessAthleteRecord?.first_name||'your athlete'} in Wrestling Manager: ${url}`); $('guardianInviteTokenBox').querySelector('[data-gi="email"]').onclick=()=>shareByEmail('Wrestling Manager parent invite',`Connect to your athlete: ${url}`); $('guardianInviteTokenBox').querySelector('[data-gi="copy"]').onclick=()=>copyText(url); $('guardianInviteTokenBox').querySelector('[data-gi="share"]').onclick=()=>systemShare('Wrestling Manager parent invite','Connect to your athlete',url);
+  const url=inviteUrl(token); $('guardianInviteTokenBox').innerHTML=`<div class="token-box">${esc(token||'Invite created')}</div><div id="guardianInviteQr" class="qr-wrap"></div><div class="share-grid"><button data-gi="text">Text</button><button data-gi="email">Email</button><button data-gi="copy">Copy Link</button><button data-gi="share">Share</button></div><p class="fine"><b>Private parent invite.</b> A replacement invalidates the older code.</p>`; makeQr('guardianInviteQr',url); $('guardianInviteTokenBox').querySelector('[data-gi="text"]').onclick=()=>shareByText(`Connect to ${accessAthleteRecord?.first_name||'your athlete'} in Wrestling Manager: ${url}`); $('guardianInviteTokenBox').querySelector('[data-gi="email"]').onclick=()=>sendGuardianInviteEmail(email,name,url); $('guardianInviteTokenBox').querySelector('[data-gi="copy"]').onclick=()=>copyText(url); $('guardianInviteTokenBox').querySelector('[data-gi="share"]').onclick=()=>systemShare('Wrestling Manager parent invite','Connect to your athlete',url);
   $('createGuardianInviteBtn').textContent='Invite Created';
   $('createGuardianInviteBtn').disabled=true;
   await loadGuardianContacts();
@@ -3104,6 +3131,70 @@ function openAccountSheet(){
   closeSheets();openSheet('accountSheet');
 }
 
+async function openCommunicationSettings(){
+  if(!activeTeam||!isTeamAdmin){message('Team admin access required.',true);return;}
+  closeSheets();openSheet('communicationSheet');
+  $('communicationStatus').innerHTML='';
+  const {data,error}=await client.rpc('get_team_communication_settings',{p_team_id:activeTeam.id});
+  if(error){message(error.message,true);return;}
+  $('teamSenderName').value=data?.sender_name||activeTeam.name||'Wrestling Manager';
+  $('teamSenderLocalPart').value=data?.sender_local_part||'messages';
+  $('teamReplyToEmail').value=data?.reply_to_email||'';
+  $('teamEmailEnabled').checked=data?.email_enabled!==false;
+  $('teamTestEmail').value=session?.user?.email||'';
+}
+
+async function saveCommunicationSettings(){
+  if(!activeTeam)return;
+  const btn=$('saveCommunicationBtn');btn.disabled=true;btn.textContent='Saving…';
+  const {data,error}=await client.rpc('update_team_communication_settings',{
+    p_team_id:activeTeam.id,
+    p_sender_name:$('teamSenderName').value.trim(),
+    p_sender_local_part:$('teamSenderLocalPart').value.trim().toLowerCase()||'messages',
+    p_reply_to_email:$('teamReplyToEmail').value.trim()||null,
+    p_email_enabled:$('teamEmailEnabled').checked
+  });
+  btn.disabled=false;btn.textContent='Save Communication Settings';
+  if(error){message(error.message,true);return;}
+  $('communicationStatus').innerHTML=`<div class="notice">Saved. Email will send as <b>${esc(data?.sender_name||'Wrestling Manager')}</b> &lt;${esc(data?.from_email||'messages@wrestlingmanager.app')}&gt;${data?.reply_to_email?` and replies go to <b>${esc(data.reply_to_email)}</b>.`:'.'}</div>`;
+}
+
+async function sendTeamEmail(recipients,subject,textBody,htmlBody,messageType='team_email',metadata={}){
+  if(!activeTeam)throw new Error('No active team selected.');
+  const {data,error}=await client.functions.invoke('send-team-email',{body:{
+    team_id:activeTeam.id,recipients,subject,text:textBody||'',html:htmlBody||'',message_type:messageType,metadata
+  }});
+  if(error)throw error;
+  if(data?.failed)throw new Error(data.results?.find(x=>!x.ok)?.error||'Email failed to send.');
+  return data;
+}
+
+async function sendTestTeamEmail(){
+  const email=$('teamTestEmail').value.trim();if(!email){message('Enter an email address for the test.',true);return;}
+  const btn=$('sendTestEmailBtn');btn.disabled=true;btn.textContent='Sending…';
+  try{
+    const data=await sendTeamEmail([{email,name:'Test recipient'}],`Wrestling Manager email test — ${activeTeam.name}`,`This is a test email from ${activeTeam.name} through Wrestling Manager.`,`<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto"><h2>${esc(activeTeam.name)}</h2><p>This is a test email sent securely through <b>Wrestling Manager</b>.</p><p>If you received this, team email delivery is working.</p></div>`,'test_email');
+    $('communicationStatus').innerHTML=`<div class="notice">✅ Test email submitted to <b>${esc(email)}</b> from ${esc(data?.from||'Wrestling Manager')}.</div>`;
+  }catch(e){$('communicationStatus').innerHTML=`<div class="notice" style="background:#fff0f0;color:#8d2d2d">Email failed: ${esc(e?.message||String(e))}</div>`;}
+  btn.disabled=false;btn.textContent='Send Test Email';
+}
+
+async function sendGuardianInviteEmail(email,name,url){
+  if(!email){message('This parent/guardian does not have an email address saved.',true);return;}
+  try{
+    await sendTeamEmail([{email,name:name||'Parent / Guardian'}],`${activeTeam.name} — Wrestling Manager parent invite`,`${name||'Parent/Guardian'},\n\nYou have been invited to connect to an athlete in ${activeTeam.name} on Wrestling Manager.\n\nOpen this private invitation: ${url}\n\nThis link is private and should not be forwarded.`,`<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto"><h2>${esc(activeTeam.name)}</h2><p>Hello ${esc(name||'Parent / Guardian')},</p><p>You have been invited to connect to an athlete in <b>${esc(activeTeam.name)}</b> on Wrestling Manager.</p><p><a href="${esc(url)}" style="display:inline-block;padding:12px 18px;background:#163A67;color:#fff;text-decoration:none;border-radius:10px;font-weight:bold">Open Private Invitation</a></p><p style="font-size:12px;color:#667085">This invitation is private. Do not forward it.</p></div>`,'guardian_invite',{athlete_id:accessAthleteId});
+    message(`Invite email sent to ${email}.`);
+  }catch(e){message(`Email failed: ${e?.message||e}`,true);}
+}
+
+async function sendAthleteInviteEmail(email,url){
+  if(!email){message('This athlete does not have an email address saved.',true);return;}
+  try{
+    await sendTeamEmail([{email,name:accessAthleteRecord?`${accessAthleteRecord.first_name||''} ${accessAthleteRecord.last_name||''}`.trim():'Athlete'}],`${activeTeam.name} — Wrestling Manager athlete invite`,`You have been invited to connect your athlete profile for ${activeTeam.name}.\n\nOpen this private invitation: ${url}\n\nThis link is private and should not be forwarded.`,`<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto"><h2>${esc(activeTeam.name)}</h2><p>You have been invited to connect your athlete profile on Wrestling Manager.</p><p><a href="${esc(url)}" style="display:inline-block;padding:12px 18px;background:#163A67;color:#fff;text-decoration:none;border-radius:10px;font-weight:bold">Open Private Invitation</a></p><p style="font-size:12px;color:#667085">This invitation is private. Do not forward it.</p></div>`,'athlete_invite',{athlete_id:accessAthleteId});
+    message(`Invite email sent to ${email}.`);
+  }catch(e){message(`Email failed: ${e?.message||e}`,true);}
+}
+
 async function openMemberProfiles(){
   if(!memberAthletes.length){message('No athlete profile is connected to this account yet.',true);return;}
   if(memberAthletes.length===1){openAthleteProfile(memberAthletes[0].id);return;}
@@ -3123,7 +3214,7 @@ async function familyCreateGuardianInvite(){
   const athleteMembership=currentTeamMemberships.find(x=>x.role==='athlete'&&x.athlete_id); if(!athleteMembership)return;
   const name=$('familyGuardianName').value.trim(),relationship=$('familyGuardianRelationship').value,email=$('familyGuardianEmail').value.trim(),phone=$('familyGuardianPhone').value.trim(); if(!name||(!email&&!phone)){message('Add the parent name and email or phone.',true);return;}
   const {data,error}=await client.rpc('create_guardian_invitation_v2',{p_athlete_id:athleteMembership.athlete_id,p_team_id:activeTeam.id,p_name:name,p_relationship:relationship||null,p_email:email||null,p_phone:phone||null,p_expires_in_days:14}); if(error){message(error.message,true);return;}
-  const token=data?.[0]?.invitation_token||data?.invitation_token,url=inviteUrl(token); $('familyInviteShareBox').innerHTML=`<div class="token-box">${esc(token)}</div><div id="familyQr" class="qr-wrap"></div><div class="share-grid"><button data-fam="text">Text</button><button data-fam="email">Email</button><button data-fam="copy">Copy Link</button><button data-fam="share">Share</button></div>`; makeQr('familyQr',url); $('familyInviteShareBox').querySelector('[data-fam="text"]').onclick=()=>shareByText(`Connect as my parent/guardian in Wrestling Manager: ${url}`); $('familyInviteShareBox').querySelector('[data-fam="email"]').onclick=()=>shareByEmail('Wrestling Manager parent invite',`Connect to my athlete profile: ${url}`); $('familyInviteShareBox').querySelector('[data-fam="copy"]').onclick=()=>copyText(url); $('familyInviteShareBox').querySelector('[data-fam="share"]').onclick=()=>systemShare('Wrestling Manager parent invite','Connect to my athlete profile',url);
+  const token=data?.[0]?.invitation_token||data?.invitation_token,url=inviteUrl(token); $('familyInviteShareBox').innerHTML=`<div class="token-box">${esc(token)}</div><div id="familyQr" class="qr-wrap"></div><div class="share-grid"><button data-fam="text">Text</button><button data-fam="email">Email</button><button data-fam="copy">Copy Link</button><button data-fam="share">Share</button></div>`; makeQr('familyQr',url); $('familyInviteShareBox').querySelector('[data-fam="text"]').onclick=()=>shareByText(`Connect as my parent/guardian in Wrestling Manager: ${url}`); $('familyInviteShareBox').querySelector('[data-fam="email"]').onclick=()=>sendGuardianInviteEmail(email,name,url); $('familyInviteShareBox').querySelector('[data-fam="copy"]').onclick=()=>copyText(url); $('familyInviteShareBox').querySelector('[data-fam="share"]').onclick=()=>systemShare('Wrestling Manager parent invite','Connect to my athlete profile',url);
 }
 
 
@@ -3862,7 +3953,7 @@ $('viewAthleteTrendBtn').onclick=()=>{if(viewAthleteId)openWeightTrend(viewAthle
 $('viewAthleteEditBtn').onclick=()=>{if(viewAthleteId)openAthleteProfile(viewAthleteId);};
 $('viewAthleteGuardiansBtn').onclick=()=>{if(viewAthleteId)openAthleteAccess(viewAthleteId);};
 $('viewAthleteTeamsBtn').onclick=()=>{if(viewAthleteId)openAthleteTeams(viewAthleteId);};
-$('rosterBtn').onclick=()=>openSheet('rosterSheet'); $('addAthleteBtn').onclick=openAddAthlete; $('saveAthleteBtn').onclick=saveAthlete; $('joinBtn').onclick=showTeamJoin; $('accountBtn').onclick=openAccountSheet; $('profileBtn').onclick=openAccountSheet; $('staffDirectoryBtn').onclick=openStaffDirectory; $('editStaffProfileBtn').onclick=openStaffProfile; $('saveStaffProfileBtn').onclick=saveStaffProfile; $('staffPhotoInput').onchange=beginStaffPhotoCrop; $('teamSwitcherBtn').onclick=openTeamSwitcher; $('createTeamBtn').onclick=openCreateTeam; $('saveNewTeamBtn').onclick=createTeam; $('editTeamBtn').onclick=openEditTeam; $('saveEditTeamBtn').onclick=saveEditTeam;
+$('rosterBtn').onclick=()=>openSheet('rosterSheet'); $('addAthleteBtn').onclick=openAddAthlete; $('saveAthleteBtn').onclick=saveAthlete; $('joinBtn').onclick=showTeamJoin; $('accountBtn').onclick=openAccountSheet; $('profileBtn').onclick=openAccountSheet; $('staffDirectoryBtn').onclick=openStaffDirectory; $('editStaffProfileBtn').onclick=openStaffProfile; $('saveStaffProfileBtn').onclick=saveStaffProfile; $('staffPhotoInput').onchange=beginStaffPhotoCrop; $('teamSwitcherBtn').onclick=openTeamSwitcher; $('createTeamBtn').onclick=openCreateTeam; $('saveNewTeamBtn').onclick=createTeam; $('editTeamBtn').onclick=openEditTeam; $('saveEditTeamBtn').onclick=saveEditTeam; $('communicationBtn').onclick=openCommunicationSettings; $('saveCommunicationBtn').onclick=saveCommunicationSettings; $('sendTestEmailBtn').onclick=sendTestTeamEmail;
 bindColorPair('newTeamPrimaryColor','newTeamPrimaryHex',updateNewTeamBrandPreview);
 bindColorPair('newTeamSecondaryColor','newTeamSecondaryHex',updateNewTeamBrandPreview);
 bindColorPair('newTeamAccentColor','newTeamAccentHex',updateNewTeamBrandPreview);
