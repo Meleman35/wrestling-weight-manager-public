@@ -238,6 +238,27 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     .phase-badge{font-size:10px;font-weight:900;padding:4px 7px;border-radius:999px;background:var(--surface);border:1px solid var(--line);white-space:nowrap}
     .recurring-pill{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:900;padding:3px 7px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line);margin-left:6px}
 
+    .schedule-toolbar{display:grid;gap:10px;margin-bottom:10px}
+    .schedule-view-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;background:var(--surface-2);border:1px solid var(--line);padding:5px;border-radius:15px}
+    .schedule-view-btn{background:transparent;color:var(--ink);padding:9px 4px;border-radius:10px;font-size:12px;font-weight:900}
+    .schedule-view-btn.active{background:var(--team-primary);color:var(--team-primary-text)}
+    .schedule-date-nav{display:grid;grid-template-columns:auto auto 1fr auto;gap:7px;align-items:center}
+    .schedule-date-nav button{padding:9px 11px;background:var(--surface-2);color:var(--ink);border:1px solid var(--line)}
+    .schedule-period-label{text-align:center;font-size:14px;font-weight:900;min-width:0}
+    .schedule-calendar-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 11px}
+    .schedule-calendar-actions button{padding:10px 8px;font-size:12px}
+    .calendar-month{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+    .calendar-weekday{font-size:10px;text-align:center;color:var(--muted);font-weight:900;padding:4px 0;text-transform:uppercase}
+    .calendar-day{min-height:84px;border:1px solid var(--line);border-radius:11px;background:var(--surface);padding:5px;overflow:hidden;text-align:left;color:var(--ink)}
+    .calendar-day.outside{opacity:.42}.calendar-day.today{outline:2px solid var(--team-primary);outline-offset:-2px}
+    .calendar-day-number{font-size:11px;font-weight:900;margin-bottom:4px}
+    .calendar-event-chip{display:block;width:100%;padding:4px 5px;margin:3px 0 0;border-radius:7px;background:color-mix(in srgb,var(--team-primary) 12%,white);color:var(--ink);font-size:9px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
+    .calendar-more{font-size:9px;color:var(--muted);font-weight:800;margin-top:4px}
+    .calendar-week-stack{display:grid;gap:10px}.calendar-week-day{border:1px solid var(--line);border-radius:15px;background:var(--surface);padding:11px}.calendar-week-day-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.calendar-week-day-head b{font-size:14px}.calendar-week-day-head small{color:var(--muted)}
+    .calendar-day-empty{font-size:12px;color:var(--muted);padding:7px 0}
+    .calendar-event-actions{display:grid;grid-template-columns:1fr;gap:8px;margin:12px 0}
+    @media(max-width:430px){.calendar-day{min-height:74px;padding:4px}.calendar-event-chip{font-size:8px;padding:3px 4px}.schedule-calendar-actions{grid-template-columns:1fr}.schedule-date-nav{grid-template-columns:auto auto 1fr auto}}
+
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
@@ -387,6 +408,27 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
           <div><div class="eyebrow">TEAM CALENDAR</div><h2>Schedule</h2></div>
           <button id="newEventBtn" class="primary-small">＋ New</button>
         </div>
+
+        <div class="schedule-toolbar">
+          <div class="schedule-view-tabs" id="scheduleViewTabs">
+            <button class="schedule-view-btn active" data-schedule-view="list">List</button>
+            <button class="schedule-view-btn" data-schedule-view="month">Month</button>
+            <button class="schedule-view-btn" data-schedule-view="week">Week</button>
+            <button class="schedule-view-btn" data-schedule-view="day">Day</button>
+          </div>
+          <div id="scheduleDateNav" class="schedule-date-nav hidden">
+            <button id="schedulePrevBtn" type="button" aria-label="Previous">‹</button>
+            <button id="scheduleTodayBtn" type="button">Today</button>
+            <div id="schedulePeriodLabel" class="schedule-period-label"></div>
+            <button id="scheduleNextBtn" type="button" aria-label="Next">›</button>
+          </div>
+        </div>
+
+        <div class="schedule-calendar-actions">
+          <button id="subscribeAppleCalendarBtn" type="button"> Subscribe in Apple Calendar</button>
+          <button id="exportCalendarBtn" type="button" class="secondary">Export Schedule (.ics)</button>
+        </div>
+
         <div class="filter-row" id="scheduleFilters">
           <button class="filter-chip active" data-filter="all">All</button>
           <button class="filter-chip" data-filter="practice">Practice</button>
@@ -537,6 +579,7 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     <div class="sheet-handle"></div>
     <div class="sheet-head"><div><div id="detailType" class="eyebrow">EVENT</div><h2 id="detailTitle">Event</h2></div><button class="icon-close" data-close-sheet>×</button></div>
     <div id="detailMeta" class="detail-meta"></div>
+    <div class="calendar-event-actions"><button id="addEventCalendarBtn" type="button">Add This Event to Calendar</button></div>
     <div id="memberRsvpBox" class="hidden"></div>
     <div id="coachEventActions" class="detail-actions">
       <button id="attendanceBtn">Take Attendance</button>
@@ -986,7 +1029,7 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     <button id="editTeamBtn" class="wide admin-only" type="button">Edit Team</button>
     <button id="communicationBtn" class="wide admin-only" type="button">Communication Settings</button>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.9.8</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.10.0</p>
   </section>
 
 
@@ -1156,6 +1199,8 @@ let editWeightClasses = [];
 let selectedLineupClass = null;
 let scheduleRows = [];
 let scheduleFilter = 'all';
+let scheduleView = localStorage.getItem('wm_schedule_view') || 'list';
+let scheduleFocusDate = new Date();
 let selectedEventType = 'practice';
 let teamMemberships = [];
 let currentTeamMemberships = [];
@@ -2038,7 +2083,7 @@ async function renderFamilyAthletes(){
     if(a.photo_path){const {data}=await client.storage.from('athlete-photos').createSignedUrl(a.photo_path,3600);photo=data?.signedUrl||'';}
     rows.push(`<button class="family-athlete-card" type="button" data-family-athlete="${a.athlete_id}">${photo?`<img class="family-athlete-photo" src="${esc(photo)}" alt="${esc(a.first_name)}">`:`<div class="family-athlete-placeholder">👤</div>`}<div><b>${esc(a.first_name)} ${esc(a.last_name)}</b><small>${esc(a.relationship||'Child')}${a.roster_status?' · '+esc(String(a.roster_status).replace('_',' ')):''}</small></div><span>›</span></button>`);
   }
-  containers.forEach(c=>{c.innerHTML=rows.join('');c.querySelectorAll('[data-family-athlete]').forEach(b=>b.onclick=()=>openAthleteView(b.dataset.familyAthlete));});
+  containers.forEach(c=>{c.innerHTML=rows.join('');c.querySelectorAll('[data-family-athlete]').forEach(b=>b.onclick=()=>openAthleteOverview(b.dataset.familyAthlete));});
 }
 
 function applyRoleUI(){
@@ -3302,12 +3347,96 @@ async function loadSchedule(){
   renderSchedule(); renderUpcomingHome(); renderAttention();
 }
 
+function dateKeyLocal(value){
+  const d=value instanceof Date?value:new Date(value);
+  if(!Number.isFinite(d.getTime())) return '';
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function startOfWeek(date){const d=new Date(date);d.setHours(0,0,0,0);d.setDate(d.getDate()-d.getDay());return d;}
+function addDays(date,n){const d=new Date(date);d.setDate(d.getDate()+n);return d;}
+function sameDay(a,b){return dateKeyLocal(a)===dateKeyLocal(b);}
+function filteredScheduleRows(){
+  return scheduleFilter==='all'?[...scheduleRows]:scheduleRows.filter(e=>e.event_type===scheduleFilter);
+}
+function scheduleEventsForDate(date){const key=dateKeyLocal(date);return filteredScheduleRows().filter(e=>dateKeyLocal(e.starts_at)===key);}
+function schedulePeriodText(){
+  if(scheduleView==='month') return scheduleFocusDate.toLocaleString(undefined,{month:'long',year:'numeric'});
+  if(scheduleView==='week'){const start=startOfWeek(scheduleFocusDate),end=addDays(start,6);return `${start.toLocaleString(undefined,{month:'short',day:'numeric'})} – ${end.toLocaleString(undefined,{month:'short',day:'numeric',year:'numeric'})}`;}
+  if(scheduleView==='day') return scheduleFocusDate.toLocaleString(undefined,{weekday:'long',month:'short',day:'numeric',year:'numeric'});
+  return 'Upcoming';
+}
+function renderScheduleControls(){
+  document.querySelectorAll('[data-schedule-view]').forEach(b=>b.classList.toggle('active',b.dataset.scheduleView===scheduleView));
+  show('scheduleDateNav',scheduleView!=='list');
+  if($('schedulePeriodLabel')) $('schedulePeriodLabel').textContent=schedulePeriodText();
+}
+function monthCalendarHtml(){
+  const y=scheduleFocusDate.getFullYear(),m=scheduleFocusDate.getMonth();
+  const first=new Date(y,m,1),gridStart=startOfWeek(first),today=new Date();
+  const heads=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(x=>`<div class="calendar-weekday">${x}</div>`).join('');
+  let cells='';
+  for(let i=0;i<42;i++){
+    const d=addDays(gridStart,i),events=scheduleEventsForDate(d),outside=d.getMonth()!==m;
+    const chips=events.slice(0,2).map(e=>`<button type="button" class="calendar-event-chip" data-event-id="${e.id}" title="${esc(e.title)}">${esc(e.title)}</button>`).join('');
+    cells+=`<div class="calendar-day ${outside?'outside':''} ${sameDay(d,today)?'today':''}" data-calendar-day="${dateKeyLocal(d)}"><div class="calendar-day-number">${d.getDate()}</div>${chips}${events.length>2?`<div class="calendar-more">+${events.length-2} more</div>`:''}</div>`;
+  }
+  return `<div class="calendar-month">${heads}${cells}</div>`;
+}
+function weekCalendarHtml(){
+  const start=startOfWeek(scheduleFocusDate);
+  let html='<div class="calendar-week-stack">';
+  for(let i=0;i<7;i++){
+    const d=addDays(start,i),events=scheduleEventsForDate(d);
+    html+=`<div class="calendar-week-day" data-calendar-day="${dateKeyLocal(d)}"><div class="calendar-week-day-head"><b>${d.toLocaleString(undefined,{weekday:'long'})}</b><small>${d.toLocaleString(undefined,{month:'short',day:'numeric'})}</small></div>${events.length?events.map(eventCard).join(''):'<div class="calendar-day-empty">No events</div>'}</div>`;
+  }
+  return html+'</div>';
+}
+function dayCalendarHtml(){
+  const events=scheduleEventsForDate(scheduleFocusDate);
+  return events.length?events.map(eventCard).join(''):'<div class="empty-card">No events on this day.</div>';
+}
 function renderSchedule(){
-  const now=Date.now()-24*60*60*1000;
-  let list=scheduleRows.filter(e=>new Date(e.starts_at).getTime()>=now);
-  if(scheduleFilter!=='all') list=list.filter(e=>e.event_type===scheduleFilter);
-  $('scheduleList').innerHTML=list.length?list.map(eventCard).join(''):'<div class="empty-card">No matching events yet.</div>';
-  $('scheduleList').querySelectorAll('[data-event-id]').forEach(btn=>btn.onclick=()=>openEventDetail(btn.dataset.eventId));
+  renderScheduleControls();
+  const box=$('scheduleList');
+  if(scheduleView==='month') box.innerHTML=monthCalendarHtml();
+  else if(scheduleView==='week') box.innerHTML=weekCalendarHtml();
+  else if(scheduleView==='day') box.innerHTML=dayCalendarHtml();
+  else {
+    const now=Date.now()-24*60*60*1000;
+    const list=filteredScheduleRows().filter(e=>new Date(e.starts_at).getTime()>=now);
+    box.innerHTML=list.length?list.map(eventCard).join(''):'<div class="empty-card">No matching events yet.</div>';
+  }
+  box.querySelectorAll('[data-event-id]').forEach(btn=>btn.onclick=e=>{e.stopPropagation();openEventDetail(btn.dataset.eventId);});
+  box.querySelectorAll('[data-calendar-day]').forEach(day=>day.onclick=e=>{if(e.target.closest('[data-event-id]'))return;scheduleFocusDate=new Date(`${day.dataset.calendarDay}T12:00:00`);scheduleView='day';localStorage.setItem('wm_schedule_view',scheduleView);renderSchedule();});
+}
+function setScheduleView(view){
+  if(!['list','month','week','day'].includes(view))return;
+  scheduleView=view;localStorage.setItem('wm_schedule_view',view);renderSchedule();
+}
+function moveScheduleFocus(direction){
+  const d=new Date(scheduleFocusDate);
+  if(scheduleView==='month')d.setMonth(d.getMonth()+direction);
+  else if(scheduleView==='week')d.setDate(d.getDate()+7*direction);
+  else d.setDate(d.getDate()+direction);
+  scheduleFocusDate=d;renderSchedule();
+}
+async function calendarFeedUrl(eventId=null){
+  if(!activeTeam) throw new Error('Choose a team first.');
+  const {data,error}=await client.rpc('get_or_create_calendar_subscription',{p_team_id:activeTeam.id});
+  if(error) throw error;
+  const token=typeof data==='string'?data:String(data||'');
+  if(!token) throw new Error('Could not create calendar link.');
+  return `${SUPABASE_URL}/functions/v1/team-calendar?token=${encodeURIComponent(token)}${eventId?`&event=${encodeURIComponent(eventId)}`:''}`;
+}
+async function subscribeAppleCalendar(){
+  try{const httpsUrl=await calendarFeedUrl();const webcal=httpsUrl.replace(/^https:/i,'webcal:');window.location.href=webcal;}catch(e){message(e?.message||String(e),true);}
+}
+async function exportTeamCalendar(){
+  try{const url=await calendarFeedUrl();window.location.href=url;}catch(e){message(e?.message||String(e),true);}
+}
+async function addActiveEventToCalendar(){
+  if(!activeEvent)return;
+  try{const url=await calendarFeedUrl(activeEvent.id);window.location.href=url;}catch(e){message(e?.message||String(e),true);}
 }
 function renderUpcomingHome(){
   const upcoming=scheduleRows.filter(e=>new Date(e.starts_at)>new Date()).slice(0,3);
@@ -4023,7 +4152,8 @@ $('bootstrapTeamBtn').onclick=async()=>{
   if(error){message(error.message,true);return;} message('Organization and team created.'); await refresh();
 };
 
-$('newEventBtn').onclick=prepareEventForm; $('saveEventBtn').onclick=saveEvent; $('attendanceBtn').onclick=openAttendance; $('deleteEventBtn').onclick=deleteEvent;
+$('newEventBtn').onclick=prepareEventForm; $('saveEventBtn').onclick=saveEvent; $('attendanceBtn').onclick=openAttendance; $('deleteEventBtn').onclick=deleteEvent; $('addEventCalendarBtn').onclick=addActiveEventToCalendar;
+$('subscribeAppleCalendarBtn').onclick=subscribeAppleCalendar; $('exportCalendarBtn').onclick=exportTeamCalendar; $('schedulePrevBtn').onclick=()=>moveScheduleFocus(-1); $('scheduleNextBtn').onclick=()=>moveScheduleFocus(1); $('scheduleTodayBtn').onclick=()=>{scheduleFocusDate=new Date();renderSchedule();}; document.querySelectorAll('[data-schedule-view]').forEach(b=>b.onclick=()=>setScheduleView(b.dataset.scheduleView));
 $('saveExcuseBtn').onclick=saveExcuse; $('createAthleteInviteBtn').onclick=createAthleteInvite; $('saveGuardianBtn').onclick=saveGuardianContact; $('createGuardianInviteBtn').onclick=createGuardianInvite;
 $('joinAsAthleteBtn').onclick=()=>setJoinRole('athlete'); $('joinAsParentBtn').onclick=async()=>{setJoinRole('parent_guardian');await loadJoinGuardianDefaults();}; $('claimExistingAthleteBtn').onclick=()=>setParentJoinPath('claim'); $('createAthleteProfileBtn').onclick=()=>setParentJoinPath('create'); $('joinBirthDate').onchange=updateJoinSensitiveControls; $('submitJoinRequestBtn').onclick=submitJoinRequest; $('joinRequestsBtn').onclick=openJoinRequests; $('saveAthleteProfileBtn').onclick=saveAthleteProfile; $('profilePhotoInput').onchange=beginProfilePhotoCrop; $('profileManageGuardiansBtn').onclick=()=>{if(profileAthleteId)openAthleteAccess(profileAthleteId);}; $('memberProfilesBtn').onclick=openMemberProfiles; $('familyBtn').onclick=openFamily; $('familyCreateGuardianInviteBtn').onclick=familyCreateGuardianInvite; $('parentAddChildBtn').onclick=()=>startJoinFlow(null,activeTeam.id,true);
 $('viewAthleteTrendBtn').onclick=()=>{if(viewAthleteId)openWeightTrend(viewAthleteId);};
