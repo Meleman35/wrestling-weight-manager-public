@@ -207,7 +207,33 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
   .weight-class-choice small{display:block;font-size:.72rem;color:var(--muted);font-weight:700;margin-top:3px}
   @media(max-width:480px){.weight-class-choice-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
-</style>
+
+
+    .practice-repeat-box{margin:14px 0;padding:14px;border:1px solid var(--line);border-radius:16px;background:var(--surface-2)}
+    .weekday-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:8px 0 12px}
+    .weekday-btn{padding:10px 2px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-weight:800;font-size:12px}
+    .weekday-btn.active{background:var(--team-secondary);color:var(--team-secondary-text);border-color:var(--team-secondary)}
+    .practice-weight-note{font-size:12px;line-height:1.4;color:var(--muted);margin:8px 0 0}
+    .trend-summary-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:14px 0}
+    .trend-metric{padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface-2)}
+    .trend-metric span{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+    .trend-metric b{display:block;font-size:22px;margin-top:4px}
+    .trend-filter-row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px}
+    .trend-filter{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 12px;font-weight:800}
+    .trend-filter.active{background:var(--team-primary);color:var(--team-primary-text);border-color:var(--team-primary)}
+    .trend-chart-wrap{border:1px solid var(--line);border-radius:16px;background:var(--surface);padding:10px;overflow:hidden}
+    .trend-chart-wrap svg{width:100%;height:230px;display:block}
+    .trend-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:8px 0}
+    .trend-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;background:var(--team-primary)}
+    .trend-dot.post{background:var(--team-secondary)}
+    .trend-dot.other{background:#777}
+    .trend-history{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+    .trend-row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2)}
+    .trend-row small{display:block;color:var(--muted)}
+    .phase-badge{font-size:10px;font-weight:900;padding:4px 7px;border-radius:999px;background:var(--surface);border:1px solid var(--line);white-space:nowrap}
+    .recurring-pill{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:900;padding:3px 7px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line);margin-left:6px}
+
+  </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
@@ -469,6 +495,23 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
       <div><label>Weigh-in</label><input id="eventWeighIn" type="datetime-local"></div>
     </div>
 
+    <div id="practiceOptions" class="practice-repeat-box">
+      <label class="toggle-row" style="margin-top:0"><span><b>Track pre / post-practice weights</b><small>Daily scale readings can be labeled automatically from this practice schedule.</small></span><input id="practiceWeightTracking" type="checkbox" checked></label>
+      <div id="practiceWeightTiming">
+        <div class="two-col"><div><label>Pre-practice cutoff</label><input id="practicePreCutoff" type="time"></div><div><label>Post-practice begins</label><input id="practicePostStart" type="time"></div></div>
+        <p class="practice-weight-note">Example: for a 5–7 PM practice, set pre cutoff to 5:00 PM and post begins to 6:00 or 7:00 PM. Morning practices work the same way.</p>
+      </div>
+      <label class="toggle-row"><span><b>Repeat weekly</b><small>Create the practice automatically on selected weekdays during the season.</small></span><input id="repeatPractice" type="checkbox"></label>
+      <div id="repeatPracticeOptions" class="hidden">
+        <label>Practice days</label>
+        <div class="weekday-grid" id="practiceWeekdays">
+          <button type="button" class="weekday-btn" data-repeat-day="1">Mon</button><button type="button" class="weekday-btn" data-repeat-day="2">Tue</button><button type="button" class="weekday-btn" data-repeat-day="3">Wed</button><button type="button" class="weekday-btn" data-repeat-day="4">Thu</button><button type="button" class="weekday-btn" data-repeat-day="5">Fri</button><button type="button" class="weekday-btn" data-repeat-day="6">Sat</button><button type="button" class="weekday-btn" data-repeat-day="7">Sun</button>
+        </div>
+        <div class="two-col"><div><label>Repeat from</label><input id="practiceRepeatStart" type="date"></div><div><label>Repeat through</label><input id="practiceRepeatEnd" type="date"></div></div>
+        <label class="toggle-row"><span><b>Keep this practice on dual / tournament days</b><small>Off by default. Competition removes that repeating practice. Turn this on for a required morning practice before competition.</small></span><input id="practiceKeepCompetitionDay" type="checkbox"></label>
+      </div>
+    </div>
+
     <label class="toggle-row"><span><b>RSVP enabled</b><small>Athletes and parents can choose Going / Maybe / Not Going</small></span><input id="rsvpEnabled" type="checkbox" checked></label>
     <label class="toggle-row"><span><b>Track attendance</b><small>Coaches can mark Present, Late, Absent or Modified</small></span><input id="attendanceRequired" type="checkbox" checked></label>
     <label class="toggle-row"><span><b>Count toward season attendance</b><small>Open Mat and Camp default to off</small></span><input id="countsSeason" type="checkbox" checked></label>
@@ -593,6 +636,13 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     <label class="toggle-row"><span><b>Allow coaches to see exact birthday</b><small>Age division is calculated even when exact birthday is hidden</small></span><input id="joinShareBirth" type="checkbox"></label>
     <label class="toggle-row"><span><b>Allow team SMS notifications</b><small>Phone number can be stored without enabling team texts</small></span><input id="joinSms" type="checkbox"></label>
 
+    <div id="profileFamilyCard" class="feature-card">
+      <h3 style="margin-top:0">Parents / Guardians</h3>
+      <p class="muted">Family contacts stay with the athlete profile when the athlete moves between teams.</p>
+      <div id="profileGuardianList"></div>
+      <button id="profileManageGuardiansBtn" class="wide secondary hidden" type="button">Manage Parent / Guardian Contacts</button>
+    </div>
+
     <h3 class="subhead">Gear sizes</h3>
     <div class="profile-grid"><div><label>Shirt</label><input id="joinShirt" placeholder="YS, AM, AL…"></div><div><label>Shorts</label><input id="joinShorts"></div><div><label>Shoe</label><input id="joinShoe"></div><div><label>Singlet</label><input id="joinSinglet"></div><div><label>Warm-up top</label><input id="joinWarmTop"></div><div><label>Warm-up bottom</label><input id="joinWarmBottom"></div></div>
 
@@ -625,6 +675,7 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     <div class="sheet-head"><div><div class="eyebrow">ATHLETE PROFILE</div><h2 id="profileAthleteName">Athlete</h2><p class="muted">Profile, gear sizing, privacy and age divisions</p></div><button class="icon-close" data-close-sheet>×</button></div>
     <div class="profile-photo-row"><div id="profilePhotoBox" class="profile-photo-placeholder">👤</div><div><label style="margin-top:0">Profile photo</label><input id="profilePhotoInput" type="file" accept="image/*"><div class="tiny">Athlete, parent or authorized team staff can update the picture.</div></div></div>
     <div id="profileAgeDivisions" class="join-summary"></div>
+    <button id="profileWeightTrendBtn" class="wide secondary" type="button">📈 Weight Trend</button>
     <div class="profile-grid"><div><label>First name</label><input id="profileFirstName"></div><div><label>Last name</label><input id="profileLastName"></div></div>
     <div class="profile-grid"><div><label>Birthday</label><input id="profileBirthDate" type="date"></div><div><label>School level</label><select id="profileSchoolLevel"><option value="">Choose…</option><option value="elementary">Elementary</option><option value="middle_school">Middle School</option><option value="high_school">High School</option><option value="college">College</option><option value="adult">Adult / Open</option><option value="other">Other</option></select></div></div>
     <div class="profile-grid"><div><label>Grade</label><select id="profileGrade"><option value="">Choose…</option><option>K</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option value="college">College</option></select></div><div><label>Graduation year</label><input id="profileGradYear" inputmode="numeric"></div></div>
@@ -656,6 +707,17 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     <div class="photo-crop-slider"><span>−</span><input id="photoCropZoom" type="range" min="1" max="3" value="1" step="0.01"><span>＋</span></div>
     <p class="photo-crop-help">Drag to reposition · use the slider to zoom. The saved photo will stay square and display as a circle throughout Wrestling Manager.</p>
     <div class="photo-crop-actions"><button id="resetPhotoCropBtn" class="secondary" type="button">Reset</button><button id="savePhotoCropBtn" type="button">Use Photo</button></div>
+  </section>
+
+  <section id="weightTrendSheet" class="sheet hidden" aria-modal="true">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><div><div class="eyebrow">WEIGHT TREND</div><h2 id="weightTrendAthleteName">Athlete</h2><p class="muted">Daily trend, pre/post-practice weights and weight-management progress</p></div><button class="icon-close" data-close-sheet>×</button></div>
+    <div class="trend-filter-row"><button class="trend-filter" data-trend-days="7">7 Days</button><button class="trend-filter active" data-trend-days="30">30 Days</button><button class="trend-filter" data-trend-days="0">Season</button></div>
+    <div id="weightTrendSummary" class="trend-summary-grid"></div>
+    <div class="trend-chart-wrap"><svg id="weightTrendChart" viewBox="0 0 720 230" role="img" aria-label="Athlete weight trend"></svg></div>
+    <div class="trend-legend"><span><i class="trend-dot"></i>Pre-practice</span><span><i class="trend-dot post"></i>Post-practice</span><span><i class="trend-dot other"></i>Other weigh-in</span></div>
+    <div id="weightTrendPlan" class="join-summary hidden"></div>
+    <div id="weightTrendHistory" class="trend-history"></div>
   </section>
 
   <section id="familySheet" class="sheet hidden" aria-modal="true">
@@ -872,7 +934,7 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     <button id="editStaffProfileBtn" class="wide hidden" type="button">Edit My Coach / Staff Profile</button>
     <button id="editTeamBtn" class="wide admin-only" type="button">Edit Team</button>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.9.3</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.9.5</p>
   </section>
 
   <section id="staffProfileSheet" class="sheet hidden" aria-modal="true">
@@ -1073,6 +1135,8 @@ let pendingWeighMode = 'team_kiosk';
 let importantAnnouncements = [];
 let athleteTeamsAthleteId = null;
 let weighedTodayRows = [];
+let weightTrendAthleteId = null;
+let weightTrendDays = 30;
 
 const $ = id => document.getElementById(id);
 const show = (id, visible=true) => $(id)?.classList.toggle('hidden', !visible);
@@ -1218,7 +1282,7 @@ function openSheet(id){
 }
 function closeSheets(){
   if(document.body.classList.contains('kiosk-locked')) return;
-  ['eventSheet','eventDetailSheet','attendanceSheet','announcementSheet','rosterSheet','athleteTeamsSheet','addAthleteSheet','joinSheet','joinRequestSheet','coachJoinRequestsSheet','athleteProfileSheet','photoCropSheet','staffProfileSheet','staffDirectorySheet','familySheet','excuseSheet','athleteAccessSheet','staffAccessSheet','weighedTodaySheet','weighInStartSheet','weighInConsoleSheet','importRosterSheet','teamSwitcherSheet','createTeamSheet','editTeamSheet','lineupClassSheet','accountSheet'].forEach(id=>show(id,false));
+  ['eventSheet','eventDetailSheet','attendanceSheet','announcementSheet','rosterSheet','athleteTeamsSheet','addAthleteSheet','joinSheet','joinRequestSheet','coachJoinRequestsSheet','athleteProfileSheet','weightTrendSheet','photoCropSheet','staffProfileSheet','staffDirectorySheet','familySheet','excuseSheet','athleteAccessSheet','staffAccessSheet','weighedTodaySheet','weighInStartSheet','weighInConsoleSheet','importRosterSheet','teamSwitcherSheet','createTeamSheet','editTeamSheet','lineupClassSheet','accountSheet'].forEach(id=>show(id,false));
   show('sheetBackdrop', false); document.body.style.overflow='';
 }
 
@@ -2611,6 +2675,55 @@ async function reviewJoinRequest(id,approve){
   await Promise.all([loadJoinRequests(),loadRoster(),loadDashboard()]); await openJoinRequests();
 }
 
+function mean(nums){return nums.length?nums.reduce((a,b)=>a+b,0)/nums.length:null;}
+function trendDelta(points,days){
+  if(points.length<2)return null; const latest=points[points.length-1]; const cutoff=new Date(latest.captured_at).getTime()-days*86400000;
+  const base=points.find(p=>new Date(p.captured_at).getTime()>=cutoff)||points[0]; return Number(latest.weight_lbs)-Number(base.weight_lbs);
+}
+function fmtDelta(v){if(v==null||!Number.isFinite(v))return '—';return `${v>0?'+':''}${v.toFixed(1)} lb`;}
+function renderWeightTrend(data){
+  const points=(data?.points||[]).map(p=>({...p,weight_lbs:Number(p.weight_lbs)})).filter(p=>Number.isFinite(p.weight_lbs));
+  const latest=points.at(-1); const now=Date.now();
+  const last7=points.filter(p=>new Date(p.captured_at).getTime()>=now-7*86400000).map(p=>p.weight_lbs);
+  const latestDay=latest?new Date(latest.captured_at).toLocaleDateString():null;
+  const sameDay=latestDay?points.filter(p=>new Date(p.captured_at).toLocaleDateString()===latestDay):[];
+  const pre=sameDay.filter(p=>p.practice_phase==='pre_practice').at(-1); const post=sameDay.filter(p=>p.practice_phase==='post_practice').at(-1);
+  const practiceChange=pre&&post?post.weight_lbs-pre.weight_lbs:null;
+  $('weightTrendSummary').innerHTML=`
+    <div class="trend-metric"><span>Latest</span><b>${latest?latest.weight_lbs.toFixed(1)+' lb':'—'}</b></div>
+    <div class="trend-metric"><span>7-day average</span><b>${last7.length?mean(last7).toFixed(1)+' lb':'—'}</b></div>
+    <div class="trend-metric"><span>7-day change</span><b>${fmtDelta(trendDelta(points,7))}</b></div>
+    <div class="trend-metric"><span>Latest practice change</span><b>${fmtDelta(practiceChange)}</b></div>`;
+
+  const svg=$('weightTrendChart');
+  if(points.length<2){svg.innerHTML='<text x="360" y="115" text-anchor="middle" fill="currentColor" opacity=".55">At least two weigh-ins are needed for a trend line.</text>';}
+  else{
+    const W=720,H=230,pad=34; const times=points.map(p=>new Date(p.captured_at).getTime()); const vals=points.map(p=>p.weight_lbs);
+    const plan=(data.plan_rows||[]).map(r=>({t:new Date(`${r.effective_date}T12:00:00`).getTime(),w:Number(r.eligible_weight)})).filter(x=>Number.isFinite(x.w));
+    const allVals=vals.concat(plan.map(x=>x.w)); let min=Math.min(...allVals),max=Math.max(...allVals); if(max-min<5){min-=2.5;max+=2.5;} else {min-=1;max+=1;}
+    const minT=Math.min(...times),maxT=Math.max(...times); const x=t=>pad+(maxT===minT?0.5:(t-minT)/(maxT-minT))*(W-2*pad); const y=v=>H-pad-(v-min)/(max-min)*(H-2*pad);
+    const path=points.map((p,i)=>`${i?'L':'M'} ${x(times[i]).toFixed(1)} ${y(p.weight_lbs).toFixed(1)}`).join(' ');
+    let out=`<line x1="${pad}" y1="${H-pad}" x2="${W-pad}" y2="${H-pad}" stroke="currentColor" opacity=".15"/><path d="${path}" fill="none" stroke="var(--team-primary)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`;
+    if(plan.length>1){const pp=plan.filter(z=>z.t>=minT&&z.t<=maxT).map((z,i)=>`${i?'L':'M'} ${x(z.t).toFixed(1)} ${y(z.w).toFixed(1)}`).join(' ');if(pp)out+=`<path d="${pp}" fill="none" stroke="var(--team-secondary)" stroke-width="2.5" stroke-dasharray="8 7" opacity=".8"/>`;}
+    points.forEach((p,i)=>{const fill=p.practice_phase==='pre_practice'?'var(--team-primary)':p.practice_phase==='post_practice'?'var(--team-secondary)':'#777';out+=`<circle cx="${x(times[i]).toFixed(1)}" cy="${y(p.weight_lbs).toFixed(1)}" r="5" fill="${fill}" stroke="white" stroke-width="2"/>`;});
+    out+=`<text x="${pad}" y="18" font-size="12" fill="currentColor" opacity=".55">${max.toFixed(1)} lb</text><text x="${pad}" y="${H-5}" font-size="12" fill="currentColor" opacity=".55">${min.toFixed(1)} lb</text>`;
+    svg.innerHTML=out;
+  }
+  const plan=[]; if(data.current_lineup_class)plan.push(`Lineup: ${data.current_lineup_class} lb`);if(data.target_weight_class)plan.push(`Target: ${data.target_weight_class} lb`);if(data.minimum_weight_class)plan.push(`Certified minimum class: ${data.minimum_weight_class} lb`);if(data.minimum_weight)plan.push(`Minimum weight: ${Number(data.minimum_weight).toFixed(1)} lb`);
+  show('weightTrendPlan',plan.length);$('weightTrendPlan').innerHTML=plan.length?`<b>Weight management</b><br>${plan.map(esc).join(' · ')}`:'';
+  $('weightTrendHistory').innerHTML=points.length?[...points].reverse().slice(0,60).map(p=>{const phase=p.practice_phase==='pre_practice'?'PRE':p.practice_phase==='post_practice'?'POST':'WEIGH-IN';return `<div class="trend-row"><div><b>${p.weight_lbs.toFixed(1)} lb</b><small>${fmtDateTime(p.captured_at)}${p.practice_title?' · '+esc(p.practice_title):''}</small></div><span class="phase-badge">${phase}</span></div>`}).join(''):'<div class="empty-card">No weigh-ins in this time range yet.</div>';
+}
+async function loadWeightTrend(){
+  if(!weightTrendAthleteId||!activeSeason)return; $('weightTrendSummary').innerHTML='<div class="empty-card">Loading trend…</div>';
+  const {data,error}=await client.rpc('get_athlete_weight_trend',{p_athlete_id:weightTrendAthleteId,p_season_id:activeSeason.id,p_days:weightTrendDays});
+  if(error){message(error.message,true);return;} renderWeightTrend(data||{});
+}
+async function openWeightTrend(athleteId){
+  weightTrendAthleteId=athleteId; const a=rosterRows.find(x=>x.athlete_id===athleteId)||rosterManagementRows.find(x=>x.athlete_id===athleteId)||memberAthletes.find(x=>x.id===athleteId);
+  $('weightTrendAthleteName').textContent=a?`${a.first_name||''} ${a.last_name||''}`.trim():(profileData?`${profileData.first_name||''} ${profileData.last_name||''}`.trim():'Athlete');
+  document.querySelectorAll('[data-trend-days]').forEach(b=>b.classList.toggle('active',Number(b.dataset.trendDays)===weightTrendDays)); closeSheets();openSheet('weightTrendSheet');await loadWeightTrend();
+}
+
 async function openAthleteProfile(athleteId){
   if(!activeTeam)return;
   const {data,error}=await client.rpc('get_athlete_profile_for_team',{p_athlete_id:athleteId,p_team_id:activeTeam.id});
@@ -2622,7 +2735,16 @@ async function openAthleteProfile(athleteId){
   $('profileShirt').value=data.shirt_size||''; $('profileShorts').value=data.shorts_size||''; $('profileShoe').value=data.shoe_size||''; $('profileSinglet').value=data.singlet_size||''; $('profileWarmTop').value=data.warmup_top_size||''; $('profileWarmBottom').value=data.warmup_bottom_size||'';
   document.querySelectorAll('.profile-med').forEach(x=>x.checked=(data.medical_conditions||[]).includes(x.value)); $('profileMedicalNote').value=data.medical_notes||''; $('profileRescueLocation').value=data.rescue_item_location||''; $('profileMedicalShare').checked=!!data.disclose_medical_to_coaches;
   $('profileAgeDivisions').innerHTML=formatAgeDivisions(data.age_divisions);
+  const guardians=Array.isArray(data.guardians)?data.guardians:[];
+  $('profileGuardianList').innerHTML=guardians.length?guardians.map(g=>{
+    const contacts=[];
+    if(g.email)contacts.push(`<a href="mailto:${esc(g.email)}">✉ ${esc(g.email)}</a>`);
+    if(g.phone)contacts.push(`<a href="tel:${esc(String(g.phone).replace(/[^0-9+]/g,''))}">☎ ${esc(formatUsPhone(g.phone))}</a>`);
+    const status=g.guardian_user_id?'Account connected':g.invitation_status==='pending'?'Invite pending':'Saved contact';
+    return `<div class="guardian-contact-row" style="display:block"><b>${esc(g.name||'Parent / Guardian')}</b><small>${esc(g.relationship||'Parent / guardian')} · ${esc(status)}</small>${contacts.length?`<div class="staff-contact-links" style="margin-top:8px">${contacts.join('')}</div>`:''}</div>`;
+  }).join(''):'<p class="fine">No parents or guardians saved yet.</p>';
   const viewer=data.viewer||{}; const adult=data.birth_date?new Date(data.birth_date+'T12:00:00')<=new Date(new Date().setFullYear(new Date().getFullYear()-18)):false; const control=viewer.guardian||viewer.admin||(viewer.self&&adult);
+  show('profileManageGuardiansBtn',!!viewer.staff);
   const staffReadOnly=viewer.staff&&!viewer.admin&&!viewer.self&&!viewer.guardian;
   show('profileTeamTransferBox',!!isTeamAdmin);
   ['profileShareEmail','profileSharePhone','profileShareBirth','profileSms','profileMedicalShare'].forEach(id=>$(id).disabled=!control);
@@ -2898,7 +3020,7 @@ function eventCard(e){
   const optional=!e.counts_toward_season_attendance;
   return `<button class="event-card" data-event-id="${e.id}">
     <div class="event-date"><small>${mon}</small><b>${day}</b></div>
-    <div class="event-info"><b>${esc(e.title)}</b><small>${eventLabel(e.event_type)} · ${fmtTime(e.starts_at)}${e.location_name?' · '+esc(e.location_name):''}</small></div>
+    <div class="event-info"><b>${esc(e.title)}${e.practice_series_id?'<span class="recurring-pill">↻ REPEATS</span>':''}</b><small>${eventLabel(e.event_type)} · ${fmtTime(e.starts_at)}${e.location_name?' · '+esc(e.location_name):''}</small></div>
     <div class="event-side"><span>${optional?'OPTIONAL':'SEASON'}</span><small>›</small></div>
   </button>`;
 }
@@ -2925,6 +3047,17 @@ function renderAttention(){
     setTab(item.action||'home');
   });
 }
+function timeValueFromDate(d){return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;}
+function datePartFromLocalInput(value){return value?value.slice(0,10):'';}
+function combineLocalDateTime(dateValue,timeValue){return dateValue&&timeValue?toIsoOrNull(`${dateValue}T${timeValue}`):null;}
+function selectedPracticeWeekdays(){return [...document.querySelectorAll('[data-repeat-day].active')].map(b=>Number(b.dataset.repeatDay)).filter(n=>n>=1&&n<=7);}
+function updatePracticeOptionVisibility(){
+  const isPractice=selectedEventType==='practice';
+  show('practiceOptions',isPractice);
+  show('repeatPracticeOptions',isPractice&&$('repeatPractice').checked);
+  show('practiceWeightTiming',isPractice&&$('practiceWeightTracking').checked);
+  if(!isPractice)$('repeatPractice').checked=false;
+}
 function prepareEventForm(){
   selectedEventType='practice';
   document.querySelectorAll('.type-btn').forEach(b=>b.classList.toggle('active',b.dataset.type==='practice'));
@@ -2933,6 +3066,13 @@ function prepareEventForm(){
   const end=new Date(start.getTime()+2*60*60*1000);
   $('eventStart').value=localDateTimeValue(start); $('eventEnd').value=localDateTimeValue(end); $('eventArrival').value=''; $('eventWeighIn').value='';
   $('rsvpEnabled').checked=true; $('attendanceRequired').checked=true; $('countsSeason').checked=true; $('checkoutEnabled').checked=false;
+  $('practiceWeightTracking').checked=true; $('repeatPractice').checked=false; $('practiceKeepCompetitionDay').checked=false;
+  $('practicePreCutoff').value=timeValueFromDate(start); $('practicePostStart').value=timeValueFromDate(end);
+  $('practiceRepeatStart').value=datePartFromLocalInput($('eventStart').value);
+  $('practiceRepeatEnd').value=activeSeason?.ends_on||datePartFromLocalInput($('eventStart').value);
+  document.querySelectorAll('[data-repeat-day]').forEach(b=>b.classList.remove('active'));
+  [1,2,3,4].forEach(n=>document.querySelector(`[data-repeat-day="${n}"]`)?.classList.add('active'));
+  updatePracticeOptionVisibility();
   openSheet('eventSheet');
 }
 
@@ -2944,6 +3084,7 @@ function applyEventTypeDefaults(type){
   $('countsSeason').checked=!['open_mat','camp'].includes(type);
   $('checkoutEnabled').checked=['dual','tournament','camp','travel'].includes(type);
   $('attendanceRequired').checked=!['travel'].includes(type);
+  updatePracticeOptionVisibility();
 }
 
 async function saveEvent(){
@@ -2951,14 +3092,40 @@ async function saveEvent(){
   const title=$('eventTitle').value.trim(); const start=$('eventStart').value;
   if(!title||!start){ message('Add an event title and start time.',true); return; }
   $('saveEventBtn').disabled=true; $('saveEventBtn').textContent='Creating…';
+
+  if(selectedEventType==='practice' && $('repeatPractice').checked){
+    if(!activeSeason.starts_on||!activeSeason.ends_on){$('saveEventBtn').disabled=false;$('saveEventBtn').textContent='Create Event';message('Set the first and last day of the season under Edit Team before creating a repeating practice.',true);return;}
+    const days=selectedPracticeWeekdays();
+    if(!days.length){$('saveEventBtn').disabled=false;$('saveEventBtn').textContent='Create Event';message('Choose at least one practice day.',true);return;}
+    const first=$('practiceRepeatStart').value||datePartFromLocalInput(start); const last=$('practiceRepeatEnd').value||activeSeason.ends_on;
+    const startTime=start.slice(11,16); const endTime=($('eventEnd').value||start).slice(11,16);
+    const {error}=await client.rpc('create_recurring_practice_series',{
+      p_team_id:activeTeam.id,p_season_id:activeSeason.id,p_title:title,p_weekdays:days,
+      p_start_time:startTime,p_end_time:endTime,p_first_on:first,p_last_on:last,
+      p_location_name:$('eventLocation').value.trim()||null,p_location_address:$('eventAddress').value.trim()||null,
+      p_description:$('eventDescription').value.trim()||null,p_attendance_required:$('attendanceRequired').checked,
+      p_rsvp_enabled:$('rsvpEnabled').checked,p_counts_toward_season_attendance:$('countsSeason').checked,
+      p_keep_on_competition_day:$('practiceKeepCompetitionDay').checked,p_classify_weights:$('practiceWeightTracking').checked,
+      p_pre_weigh_cutoff_time:$('practicePreCutoff').value||startTime,p_post_weigh_start_time:$('practicePostStart').value||endTime
+    });
+    $('saveEventBtn').disabled=false; $('saveEventBtn').textContent='Create Event';
+    if(error){message(error.message,true);return;}
+    closeSheets();message('Repeating practice schedule created.');await loadSchedule();return;
+  }
+
+  const startDate=datePartFromLocalInput(start);
   const payload={
     team_id:activeTeam.id,season_id:activeSeason.id,event_type:selectedEventType,title,
     description:$('eventDescription').value.trim()||null,starts_at:toIsoOrNull(start),ends_at:toIsoOrNull($('eventEnd').value),arrival_at:toIsoOrNull($('eventArrival').value),weigh_in_at:toIsoOrNull($('eventWeighIn').value),
     location_name:$('eventLocation').value.trim()||null,location_address:$('eventAddress').value.trim()||null,
     attendance_required:$('attendanceRequired').checked,rsvp_enabled:$('rsvpEnabled').checked,checkout_enabled:$('checkoutEnabled').checked,
-    counts_toward_season_attendance:$('countsSeason').checked,created_by:session.user.id
+    counts_toward_season_attendance:$('countsSeason').checked,created_by:session.user.id,
+    pre_weigh_cutoff_at:selectedEventType==='practice'&&$('practiceWeightTracking').checked?combineLocalDateTime(startDate,$('practicePreCutoff').value||start.slice(11,16)):null,
+    post_weigh_start_at:selectedEventType==='practice'&&$('practiceWeightTracking').checked?combineLocalDateTime(startDate,$('practicePostStart').value||(($('eventEnd').value||start).slice(11,16))):null
   };
   const { error }=await client.from('team_events').insert(payload);
+  if(!error && ['dual','tournament'].includes(selectedEventType)) await client.rpc('sync_recurring_practices_for_season',{p_season_id:activeSeason.id});
+  if(!error && selectedEventType==='practice') await client.rpc('reclassify_practice_weights_for_season',{p_season_id:activeSeason.id});
   $('saveEventBtn').disabled=false; $('saveEventBtn').textContent='Create Event';
   if(error){ message(error.message,true); return; }
   closeSheets(); message(`${eventLabel(selectedEventType)} created.`); await loadSchedule();
@@ -2973,6 +3140,8 @@ async function openEventDetail(id){
     ${activeEvent.weigh_in_at?`<div class="meta-row"><span>⚖️</span><div><b>Weigh-in</b><small>${fmtDateTime(activeEvent.weigh_in_at)}</small></div></div>`:''}
     ${(activeEvent.location_name||activeEvent.location_address)?`<div class="meta-row"><span>📍</span><div><b>${esc(activeEvent.location_name||'Location')}</b><small>${esc(activeEvent.location_address||'')}</small></div></div>`:''}
     <div class="meta-row"><span>${activeEvent.counts_toward_season_attendance?'✓':'○'}</span><div><b>${activeEvent.counts_toward_season_attendance?'Counts toward season attendance':'Optional / does not affect season attendance'}</b><small>${activeEvent.rsvp_enabled?'RSVP enabled':'RSVP disabled'} · ${activeEvent.attendance_required?'Attendance tracked':'Attendance not required'}</small></div></div>
+    ${activeEvent.event_type==='practice'&&(activeEvent.pre_weigh_cutoff_at||activeEvent.post_weigh_start_at)?`<div class="meta-row"><span>⚖️</span><div><b>Practice weight tracking</b><small>${activeEvent.pre_weigh_cutoff_at?'Pre through '+fmtTime(activeEvent.pre_weigh_cutoff_at):''}${activeEvent.pre_weigh_cutoff_at&&activeEvent.post_weigh_start_at?' · ':''}${activeEvent.post_weigh_start_at?'Post from '+fmtTime(activeEvent.post_weigh_start_at):''}</small></div></div>`:''}
+    ${activeEvent.practice_series_id?`<div class="meta-row"><span>↻</span><div><b>Repeating practice</b><small>${activeEvent.generated_from_series?'Generated from the weekly practice schedule. Deleting this occurrence will skip only this date.':'Recurring practice'}</small></div></div>`:''}
     ${activeEvent.description?`<div class="meta-row"><span>📝</span><div><b>Notes</b><small>${esc(activeEvent.description)}</small></div></div>`:''}`;
   $('attendanceBtn').classList.toggle('hidden',!activeEvent.attendance_required || !canAttendance);
   $('deleteEventBtn').classList.toggle('hidden',!isStaff);
@@ -3111,10 +3280,14 @@ async function markAttendance(athleteId,status){
 
 async function deleteEvent(){
   if(!activeEvent) return;
-  if(!confirm(`Delete ${activeEvent.title}?`)) return;
-  const { error }=await client.from('team_events').delete().eq('id',activeEvent.id);
+  const recurring=!!activeEvent.practice_series_id;
+  if(!confirm(recurring?`Skip this ${activeEvent.title} occurrence? The rest of the repeating schedule will stay.`:`Delete ${activeEvent.title}?`)) return;
+  let error=null;
+  if(recurring){({error}=await client.rpc('skip_recurring_practice_occurrence',{p_event_id:activeEvent.id}));}
+  else {({error}=await client.from('team_events').delete().eq('id',activeEvent.id));}
   if(error){ message(error.message,true); return; }
-  closeSheets(); activeEvent=null; message('Event deleted.'); await loadSchedule();
+  if(!recurring && ['dual','tournament'].includes(activeEvent.event_type) && activeSeason) await client.rpc('sync_recurring_practices_for_season',{p_season_id:activeSeason.id});
+  closeSheets(); activeEvent=null; message(recurring?'Practice occurrence skipped.':'Event deleted.'); await loadSchedule();
 }
 
 async function issueAthleteCredential(type){
@@ -3552,7 +3725,7 @@ $('bootstrapTeamBtn').onclick=async()=>{
 
 $('newEventBtn').onclick=prepareEventForm; $('saveEventBtn').onclick=saveEvent; $('attendanceBtn').onclick=openAttendance; $('deleteEventBtn').onclick=deleteEvent;
 $('saveExcuseBtn').onclick=saveExcuse; $('createAthleteInviteBtn').onclick=createAthleteInvite; $('saveGuardianBtn').onclick=saveGuardianContact; $('createGuardianInviteBtn').onclick=createGuardianInvite;
-$('joinAsAthleteBtn').onclick=()=>setJoinRole('athlete'); $('joinAsParentBtn').onclick=async()=>{setJoinRole('parent_guardian');await loadJoinGuardianDefaults();}; $('claimExistingAthleteBtn').onclick=()=>setParentJoinPath('claim'); $('createAthleteProfileBtn').onclick=()=>setParentJoinPath('create'); $('joinBirthDate').onchange=updateJoinSensitiveControls; $('submitJoinRequestBtn').onclick=submitJoinRequest; $('joinRequestsBtn').onclick=openJoinRequests; $('saveAthleteProfileBtn').onclick=saveAthleteProfile; $('profilePhotoInput').onchange=beginProfilePhotoCrop; $('memberProfilesBtn').onclick=openMemberProfiles; $('familyBtn').onclick=openFamily; $('familyCreateGuardianInviteBtn').onclick=familyCreateGuardianInvite; $('parentAddChildBtn').onclick=()=>startJoinFlow(null,activeTeam.id,true);
+$('joinAsAthleteBtn').onclick=()=>setJoinRole('athlete'); $('joinAsParentBtn').onclick=async()=>{setJoinRole('parent_guardian');await loadJoinGuardianDefaults();}; $('claimExistingAthleteBtn').onclick=()=>setParentJoinPath('claim'); $('createAthleteProfileBtn').onclick=()=>setParentJoinPath('create'); $('joinBirthDate').onchange=updateJoinSensitiveControls; $('submitJoinRequestBtn').onclick=submitJoinRequest; $('joinRequestsBtn').onclick=openJoinRequests; $('saveAthleteProfileBtn').onclick=saveAthleteProfile; $('profilePhotoInput').onchange=beginProfilePhotoCrop; $('profileManageGuardiansBtn').onclick=()=>{if(profileAthleteId)openAthleteAccess(profileAthleteId);}; $('memberProfilesBtn').onclick=openMemberProfiles; $('familyBtn').onclick=openFamily; $('familyCreateGuardianInviteBtn').onclick=familyCreateGuardianInvite; $('parentAddChildBtn').onclick=()=>startJoinFlow(null,activeTeam.id,true);
 $('rosterBtn').onclick=()=>openSheet('rosterSheet'); $('addAthleteBtn').onclick=openAddAthlete; $('saveAthleteBtn').onclick=saveAthlete; $('joinBtn').onclick=showTeamJoin; $('accountBtn').onclick=openAccountSheet; $('profileBtn').onclick=openAccountSheet; $('staffDirectoryBtn').onclick=openStaffDirectory; $('editStaffProfileBtn').onclick=openStaffProfile; $('saveStaffProfileBtn').onclick=saveStaffProfile; $('staffPhotoInput').onchange=beginStaffPhotoCrop; $('teamSwitcherBtn').onclick=openTeamSwitcher; $('createTeamBtn').onclick=openCreateTeam; $('saveNewTeamBtn').onclick=createTeam; $('editTeamBtn').onclick=openEditTeam; $('saveEditTeamBtn').onclick=saveEditTeam;
 bindColorPair('newTeamPrimaryColor','newTeamPrimaryHex',updateNewTeamBrandPreview);
 bindColorPair('newTeamSecondaryColor','newTeamSecondaryHex',updateNewTeamBrandPreview);
@@ -3596,6 +3769,13 @@ cropCanvas.addEventListener('pointermove',e=>{if(!photoCropDragging||!photoCropI
 ['pointerup','pointercancel','pointerleave'].forEach(type=>cropCanvas.addEventListener(type,()=>{photoCropDragging=false;}));
 document.addEventListener('gesturestart',e=>e.preventDefault(),{passive:false});
 document.addEventListener('gesturechange',e=>e.preventDefault(),{passive:false});
+$('repeatPractice').addEventListener('change',updatePracticeOptionVisibility);
+$('practiceWeightTracking').addEventListener('change',updatePracticeOptionVisibility);
+document.querySelectorAll('[data-repeat-day]').forEach(btn=>btn.onclick=()=>btn.classList.toggle('active'));
+$('eventStart').addEventListener('change',()=>{if(selectedEventType!=='practice')return;const v=$('eventStart').value;if(!v)return;if(!$('practicePreCutoff').value)$('practicePreCutoff').value=v.slice(11,16);if(!$('practiceRepeatStart').value)$('practiceRepeatStart').value=v.slice(0,10);});
+$('eventEnd').addEventListener('change',()=>{if(selectedEventType!=='practice')return;const v=$('eventEnd').value;if(v&&!$('practicePostStart').value)$('practicePostStart').value=v.slice(11,16);});
+$('profileWeightTrendBtn').onclick=()=>{if(profileAthleteId)openWeightTrend(profileAthleteId);};
+document.querySelectorAll('[data-trend-days]').forEach(btn=>btn.onclick=async()=>{weightTrendDays=Number(btn.dataset.trendDays);document.querySelectorAll('[data-trend-days]').forEach(x=>x.classList.toggle('active',x===btn));await loadWeightTrend();});
 document.querySelectorAll('.type-btn').forEach(btn=>btn.onclick=()=>applyEventTypeDefaults(btn.dataset.type));
 document.querySelectorAll('.nav-btn').forEach(btn=>btn.onclick=()=>setTab(btn.dataset.tab));
 document.querySelectorAll('[data-go]').forEach(btn=>btn.onclick=()=>{setTab(btn.dataset.go);if(btn.dataset.action==='create-event')setTimeout(prepareEventForm,0);});
