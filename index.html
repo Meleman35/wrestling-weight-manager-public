@@ -59,6 +59,7 @@ button.wide{width:100%;margin-top:16px}.stack-actions{display:grid;gap:9px;margi
 .menu-card{overflow:hidden}.menu-row{width:100%;display:grid;grid-template-columns:32px 1fr 20px;align-items:center;gap:10px;text-align:left;background:#fff;color:var(--ink);border-radius:0;padding:16px;border-bottom:1px solid var(--line)}.menu-row:last-child{border-bottom:0}.menu-row span{font-size:20px}.menu-row b,.menu-row small{display:block}.menu-row small{color:var(--muted);margin-top:3px}.menu-row i{font-size:25px;font-style:normal;color:#7a8490}.menu-row.disabled{opacity:.56}
 .bottom-nav{position:fixed;z-index:30;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(5,1fr);background:var(--team-primary);border-top:2px solid var(--team-secondary);padding:0 0 env(safe-area-inset-bottom);box-shadow:0 -4px 18px rgba(0,0,0,.08)}.nav-btn{position:relative;background:var(--team-primary);color:var(--team-primary-text);padding:9px 2px 8px;border-radius:0;min-height:62px;border-right:1px solid var(--team-nav-line);opacity:.76}.nav-btn:last-child{border-right:0}.nav-btn span{display:block;font-size:20px;line-height:1}.nav-btn small{display:block;font-size:10px;font-weight:900;margin-top:5px}.nav-btn.active{background:var(--team-secondary);color:var(--team-secondary-text);opacity:1;box-shadow:inset 0 4px 0 var(--team-accent)}.nav-count-badge{position:absolute;top:4px;right:clamp(5px,12%,18px);display:none;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:#ff3b30;color:#fff;border:2px solid var(--team-primary);box-shadow:0 2px 5px rgba(0,0,0,.28);font-size:11px!important;line-height:1!important;font-weight:950;z-index:2}.nav-btn.active .nav-count-badge{border-color:var(--team-secondary)}.nav-count-badge.show{display:grid}
 .pull-refresh{position:fixed;z-index:19;top:calc(66px + env(safe-area-inset-top));left:50%;display:flex;align-items:center;gap:8px;min-height:38px;padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.97);color:#244d78;border:1px solid #d7e2ed;box-shadow:0 5px 18px rgba(24,45,69,.18);font-size:13px;font-weight:900;opacity:0;pointer-events:none;transform:translate(-50%,-58px);transition:opacity .16s ease,transform .16s ease}.pull-refresh.visible{opacity:1}.pull-refresh.refreshing{opacity:1;transform:translate(-50%,8px)}.pull-refresh-spinner{width:17px;height:17px;border:3px solid #cbd9e7;border-top-color:#1677ee;border-radius:50%;transform:rotate(0deg)}.pull-refresh.ready .pull-refresh-spinner{border-color:#1b8755}.pull-refresh.refreshing .pull-refresh-spinner{animation:pull-refresh-spin .75s linear infinite}@keyframes pull-refresh-spin{to{transform:rotate(360deg)}}
+.personal-weight-list{display:grid;gap:9px;margin-top:10px}.personal-weight-card{width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;text-align:left;background:#f7f9fb;color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:13px 14px}.personal-weight-card b,.personal-weight-card small{display:block}.personal-weight-card small{color:var(--muted);margin-top:4px;line-height:1.35}.personal-weight-value{text-align:right;font-size:22px;font-weight:950;color:var(--team-primary)}.personal-weight-value small{font-size:10px;color:var(--muted);font-weight:850}.personal-weight-private{margin:10px 2px 0;color:var(--muted);font-size:11px;line-height:1.4}
 .layout-block{min-width:0}.layout-editor-list{display:grid;gap:8px;margin-top:10px}.layout-editor-row{display:grid;grid-template-columns:34px 1fr 42px 42px;align-items:center;gap:8px;background:#f6f8fa;border:1px solid var(--line);border-radius:15px;padding:9px}.layout-editor-row>span:first-child{font-size:20px;text-align:center}.layout-editor-row b{display:block}.layout-editor-row small{display:block;color:var(--muted);margin-top:2px}.layout-move{padding:9px 4px;background:#e7edf4;color:#294766;min-height:38px}.layout-note{background:#eef5fc;border:1px solid #d4e4f5;border-radius:15px;padding:12px;color:#355d87;line-height:1.4}.claim-match-list{display:grid;gap:8px;margin-top:10px}.claim-match-card{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;background:#f7f9fb;color:var(--ink);border:1px solid var(--line);padding:13px}.claim-match-card.active{border:2px solid var(--team-secondary);background:#edf5ff}.claim-match-card b,.claim-match-card small{display:block}.claim-match-card small{color:var(--muted);margin-top:4px}.size-category{margin-bottom:8px}.gear-size-note{font-size:12px;color:var(--muted);margin:5px 0 10px}
 .backdrop{position:fixed;inset:0;z-index:50;background:rgba(15,22,30,.46);backdrop-filter:blur(2px)}
 .sheet{position:fixed;z-index:60;left:50%;transform:translateX(-50%);bottom:0;width:min(760px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:26px 26px 0 0;padding:12px 18px calc(24px + env(safe-area-inset-bottom));box-shadow:0 -12px 45px rgba(0,0,0,.18)}
@@ -501,13 +502,13 @@ button{touch-action:manipulation}
         <div id="upcomingHome" class="card-list"><div class="empty-card">No upcoming events yet.</div></div>
         </section>
 
-        <section class="home-feed-block layout-block" data-layout-key="weight_snapshot"><div class="section-head"><div class="feed-author"><span class="feed-author-icon">⚖️</span><span><h3>Weight Room Snapshot</h3><small>Today’s private team totals</small></span></div></div>
-        <div class="metric-grid">
+        <section id="weightSnapshotSection" class="home-feed-block layout-block" data-layout-key="weight_snapshot"><div class="section-head"><div class="feed-author"><span class="feed-author-icon">⚖️</span><span><h3>Weight Room Snapshot</h3><small id="weightSnapshotSubtitle">Today’s private team totals</small></span></div></div>
+        <div id="teamWeightSnapshotMetrics" class="metric-grid">
           <button type="button" class="metric metric-btn" data-weight-metric="weighed"><span>Weighed today</span><strong id="weighed">0</strong></button>
           <button type="button" class="metric metric-btn" data-go="weight"><span>Not weighed</span><strong id="notWeighed">0</strong></button>
           <button type="button" class="metric metric-btn" data-go="weight"><span>Newly eligible</span><strong id="eligible">0</strong></button>
           <button type="button" class="metric metric-btn" data-go="weight"><span>Challenges</span><strong id="challenges">0</strong></button>
-        </div></section>
+        </div><div id="homePersonalWeightList" class="personal-weight-list hidden"></div></section>
         </div>
       </section>
 
@@ -568,12 +569,13 @@ button{touch-action:manipulation}
       <section id="weightTab" class="tabview hidden">
         <button type="button" class="tab-back-btn" data-back-home><span>←</span> Back to Home</button>
         <div class="section-head top-space"><div><div class="eyebrow">WRESTLING-SPECIFIC</div><h2>Weight Room</h2></div></div>
-        <div class="metric-grid">
+        <div id="teamWeightRoomMetrics" class="metric-grid">
           <button type="button" class="metric metric-btn" data-weight-metric="weighed"><span>Weighed today</span><strong id="weighed2">0</strong></button>
           <button type="button" class="metric metric-btn" data-weight-metric="not-weighed"><span>Not weighed</span><strong id="notWeighed2">0</strong></button>
           <button type="button" class="metric metric-btn" data-weight-metric="eligible"><span>Newly eligible</span><strong id="eligible2">0</strong></button>
           <button type="button" class="metric metric-btn" data-weight-metric="challenges"><span>Challenges</span><strong id="challenges2">0</strong></button>
         </div>
+        <section id="personalWeightRoomSection" class="feature-card hidden"><div class="section-head" style="margin-top:0"><div><div class="eyebrow">PRIVATE ATHLETE WEIGHTS</div><h3 id="personalWeightRoomTitle">My Weight</h3></div></div><div id="weightRoomPersonalWeightList" class="personal-weight-list"></div><p class="personal-weight-private">Only the athlete, their connected parent or guardian, and authorized team staff can view these weights.</p></section>
         <div id="weighInModeArea">
           <div class="section-head"><div><div class="eyebrow">SCALE MODES</div><h3>Weigh-In Console</h3></div><span class="operator-chip">Home Team Recognition · Always On</span></div>
           <div class="mode-grid">
@@ -1699,6 +1701,7 @@ let currentTeamMemberships = [];
 let organizationMemberships = [];
 let availableTeams = [];
 let memberAthletes = [];
+let personalWeightSnapshots = [];
 let familyAthletes = [];
 let viewMode = 'staff';
 let actualIsStaff = false;
@@ -2347,7 +2350,10 @@ function setTab(name){
   if (name==='home') loadImportantAnnouncements();
   if (name==='schedule') loadSchedule();
   if (name==='messages') loadCommunications();
-  if (name==='weight' && canWeighIn) loadWeighInSessions();
+  if (name==='weight'){
+    if(canWeighIn)loadWeighInSessions();
+    if(personalWeightAthletes().length)loadPersonalWeightSnapshots();
+  }
 }
 
 function openSheet(id){
@@ -2966,7 +2972,7 @@ async function activateTeam(teamId,{persist=true}={}){
   const managerMembership=currentTeamMemberships.find(x=>x.role==='manager');
   actualIsManager=!!managerMembership&&!actualIsStaff;
   actualCanAttendance=actualIsStaff || !!managerMembership?.permissions?.attendance;
-  actualCanWeighIn=actualIsStaff || !!managerMembership?.permissions?.weigh_in;
+  actualCanWeighIn=orgAdmin || currentTeamMemberships.some(x=>x.permissions?.weigh_in===true) || currentTeamMemberships.some(x=>x.role==='head_coach');
   actualCanMassText=actualIsTeamAdmin || currentTeamMemberships.some(x=>['head_coach','assistant_coach','manager'].includes(x.role)&&x.permissions?.mass_text===true) || orgAdmin;
 
   const familyResult=await client.rpc('get_my_family_athletes',{p_team_id:team.id});
@@ -2977,7 +2983,7 @@ async function activateTeam(teamId,{persist=true}={}){
 
   $('headerTeamName').textContent=team.name;
 
-  rosterRows=[]; rosterManagementRows=[]; scheduleRows=[]; joinRequests=[]; pendingGuardianRequests=[]; agreementStatusRows=[]; agreementPublishedTemplate=null; agreementEditorData=null; agreementPreviewDraftId=null; agreementCurrentData=null; agreementAthleteId=null; calendarSubscriptionUrl=null; adultAccessRows=[]; selectedAdultAccessUserId=null; medicalClearanceCases=[]; medicalCurrentCaseId=null; weighInSessions=[]; memberAthletes=[]; importantAnnouncements=[]; communicationThreads=[]; communicationDirectory=[]; communicationNotifications=[]; communicationSafetyFlags=[]; communicationInboxRenderSignature=''; communicationNotificationRenderSignature=''; activeCommunicationThread=null; activeCommunicationMessages=[]; activeCommunicationReceipts=new Map(); activeCommunicationParticipants=new Map(); smsReplyOwners=[]; smsReplies=[]; smsUnreadReplies=0; dashboardCounts=null; certificationPlansByAthlete=new Map();
+  rosterRows=[]; rosterManagementRows=[]; scheduleRows=[]; joinRequests=[]; pendingGuardianRequests=[]; agreementStatusRows=[]; agreementPublishedTemplate=null; agreementEditorData=null; agreementPreviewDraftId=null; agreementCurrentData=null; agreementAthleteId=null; calendarSubscriptionUrl=null; adultAccessRows=[]; selectedAdultAccessUserId=null; medicalClearanceCases=[]; medicalCurrentCaseId=null; weighInSessions=[]; memberAthletes=[]; personalWeightSnapshots=[]; importantAnnouncements=[]; communicationThreads=[]; communicationDirectory=[]; communicationNotifications=[]; communicationSafetyFlags=[]; communicationInboxRenderSignature=''; communicationNotificationRenderSignature=''; activeCommunicationThread=null; activeCommunicationMessages=[]; activeCommunicationReceipts=new Map(); activeCommunicationParticipants=new Map(); smsReplyOwners=[]; smsReplies=[]; smsUnreadReplies=0; dashboardCounts=null; certificationPlansByAthlete=new Map();
   teamWeightClasses=[];
 
   const {data:seasons,error:seasonErr}=await client.from('seasons').select('*').eq('team_id',team.id).eq('active',true).order('created_at',{ascending:false}).limit(1);
@@ -3013,6 +3019,7 @@ async function activateTeam(teamId,{persist=true}={}){
   } else {
     await Promise.all([loadMemberAthletes(),loadSchedule(),loadImportantAnnouncements()]);
   }
+  await loadPersonalWeightSnapshots();
   if(!isManager) await loadMedicalClearanceCases(false);
   subscribeAnnouncementRealtime();
   loadCommunications(false);
@@ -3083,11 +3090,13 @@ function applyRoleUI(){
   if(createQuick) createQuick.classList.toggle('hidden',!isStaff);
   const teamTools=document.querySelector('.quick-card[data-go="more"]');
   if(teamTools) teamTools.classList.toggle('hidden',!isStaff&&!isManager);
+  const hasPersonalWeights=personalWeightAthletes().length>0;
   const weightQuick=document.querySelector('.quick-card[data-go="weight"]');
-  if(weightQuick) weightQuick.classList.toggle('hidden',!canWeighIn);
-  document.querySelectorAll('#homeTab .metric-grid').forEach(x=>x.classList.toggle('hidden',!isStaff));
-  const weightHead=[...document.querySelectorAll('#homeTab .section-head h3')].find(x=>x.textContent.includes('Weight room'));
-  if(weightHead) weightHead.parentElement.classList.toggle('hidden',!isStaff);
+  if(weightQuick) weightQuick.classList.toggle('hidden',!canWeighIn&&!hasPersonalWeights);
+  show('teamWeightSnapshotMetrics',isStaff);
+  show('teamWeightRoomMetrics',isStaff);
+  show('personalWeightRoomSection',!isStaff&&hasPersonalWeights);
+  show('weighInModeArea',canWeighIn);
   const messagesNav=document.querySelector('.nav-btn[data-tab="messages"]');
   if(messagesNav) messagesNav.classList.remove('hidden');
   show('smsActionRow',canMassText||smsUnreadReplies>0);
@@ -3107,6 +3116,52 @@ async function loadMemberAthletes(){
   if(error){ message(error.message,true); memberAthletes=[]; return; }
   memberAthletes=data||[];
   await renderFamilyAthletes();
+}
+
+function personalWeightAthletes(){
+  const rows=new Map();
+  familyAthletes.forEach(a=>rows.set(String(a.athlete_id),{id:a.athlete_id,first_name:a.first_name,last_name:a.last_name,relationship:a.relationship||'Child'}));
+  memberAthletes.forEach(a=>rows.set(String(a.id),{id:a.id,first_name:a.first_name,last_name:a.last_name,relationship:rows.get(String(a.id))?.relationship||'Athlete'}));
+  currentTeamMemberships.filter(x=>x.athlete_id).forEach(x=>{
+    const athlete=memberAthletes.find(a=>String(a.id)===String(x.athlete_id));
+    if(athlete)rows.set(String(athlete.id),{id:athlete.id,first_name:athlete.first_name,last_name:athlete.last_name,relationship:'Athlete'});
+  });
+  return [...rows.values()];
+}
+
+function renderPersonalWeightSnapshots(){
+  const home=$('homePersonalWeightList'),room=$('weightRoomPersonalWeightList');
+  const available=personalWeightSnapshots.length>0;
+  const familyFacing=!isStaff&&personalWeightAthletes().length>0;
+  show('homePersonalWeightList',familyFacing);
+  show('personalWeightRoomSection',familyFacing);
+  show('teamWeightSnapshotMetrics',isStaff);
+  show('teamWeightRoomMetrics',isStaff);
+  show('weighInModeArea',canWeighIn);
+  if($('weightSnapshotSubtitle'))$('weightSnapshotSubtitle').textContent=isStaff?'Today’s private team totals':'Private athlete weight and progress';
+  if($('personalWeightRoomTitle'))$('personalWeightRoomTitle').textContent=personalWeightSnapshots.length===1?'My Weight':'My Athletes’ Weights';
+  const html=available?personalWeightSnapshots.map(row=>{
+    const latest=row.latest;
+    const value=latest?`${Number(latest.weight_lbs).toFixed(1)} lb`:'—';
+    const when=latest?fmtDateTime(latest.captured_at):'No recorded weigh-in yet';
+    return `<button type="button" class="personal-weight-card" data-personal-weight-athlete="${row.id}"><span><b>${esc(row.first_name)} ${esc(row.last_name)}</b><small>${esc(row.relationship)} · ${esc(when)}</small></span><span class="personal-weight-value">${esc(value)}<small>${latest?'View trend':'Weight history'}</small></span></button>`;
+  }).join(''):'<div class="empty-card">No athlete weight profile is connected to this account.</div>';
+  [home,room].filter(Boolean).forEach(box=>{box.innerHTML=html;box.querySelectorAll('[data-personal-weight-athlete]').forEach(btn=>btn.onclick=()=>openWeightTrend(btn.dataset.personalWeightAthlete));});
+  applyRoleUI();
+}
+
+async function loadPersonalWeightSnapshots(){
+  if(!activeSeason){personalWeightSnapshots=[];renderPersonalWeightSnapshots();return;}
+  const athletes=personalWeightAthletes();
+  if(!athletes.length){personalWeightSnapshots=[];renderPersonalWeightSnapshots();return;}
+  const results=await Promise.all(athletes.map(async athlete=>{
+    const {data,error}=await client.rpc('get_athlete_weight_trend',{p_athlete_id:athlete.id,p_season_id:activeSeason.id,p_days:0});
+    if(error){console.warn(`Private weight for ${athlete.id}:`,error.message);return {...athlete,latest:null,error:true};}
+    const points=Array.isArray(data?.points)?data.points:[];
+    return {...athlete,latest:points.at(-1)||null};
+  }));
+  personalWeightSnapshots=results;
+  renderPersonalWeightSnapshots();
 }
 
 function membershipRoleForAthlete(athleteId){
@@ -3193,7 +3248,7 @@ async function refreshTeamData({manual=false,force=false}={}){
   if(manual&&indicator){indicator.style.transform='translate(-50%,8px)';indicator.classList.add('visible','refreshing');indicator.classList.remove('ready');if(label)label.textContent='Refreshing…';}
   const teamId=activeTeam.id,seasonId=activeSeason.id;
   const request=(async()=>{
-    const jobs=[loadImportantAnnouncements(),loadSchedule(),loadCommunications(false)];
+    const jobs=[loadImportantAnnouncements(),loadSchedule(),loadCommunications(false),loadPersonalWeightSnapshots()];
     if(isStaff)jobs.push(loadDashboard(),loadRoster(),loadJoinRequests(),loadGuardianConnectionRequests(),loadAgreementCoachStatus(false),loadWeighInSessions());
     else if(isManager)jobs.push(loadOperationalRoster(),loadWeighInSessions());
     else jobs.push(loadMemberAthletes());
