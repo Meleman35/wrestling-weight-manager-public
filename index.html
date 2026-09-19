@@ -311,10 +311,11 @@ button:focus-visible,.pressable:focus-visible{outline:3px solid color-mix(in srg
 #scheduleCommunicationMessageBtn{width:auto;margin:4px auto 0;padding:7px 11px;background:transparent;color:#087cff;box-shadow:none!important;font-size:12px}.recipient-avatar,.recipient-avatar-placeholder{width:42px;height:42px;flex:0 0 42px;border-radius:50%;object-fit:cover;background:#e5e5ea;display:grid;place-items:center;color:#59636f;font-size:11px;font-weight:900}.recipient-option{display:grid;grid-template-columns:24px 42px minmax(0,1fr);align-items:center}.recipient-option input{margin:0}.recipient-option b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media(max-width:680px){#communicationThreadSheet{inset:0;left:0;bottom:0;transform:none;width:100%;height:100dvh;max-height:none;border-radius:0;padding-top:env(safe-area-inset-top)}#communicationThreadSheet>.sheet-handle{display:none}.chat-thread-header{padding-left:2px;padding-right:2px}#communicationThreadSheet .message-list{min-height:0}.message-bubble{max-width:78vw}}
 /* v0.14.3: iMessage-like message spacing, dates, media composer and live receipts. */
-.chat-thread-header{grid-template-columns:50px minmax(0,1fr) 50px;padding:8px 0 7px}.chat-back{width:46px;height:46px;border:1px solid #dedee3;background:#fff;color:#111;font-size:35px}.chat-thread-avatar,.chat-thread-avatar-placeholder{width:52px;height:52px;margin-bottom:3px}.chat-thread-identity h2{font-size:17px!important;font-weight:850}.chat-thread-identity p{font-size:11px;color:#8e8e93}.chat-header-spacer{width:46px}
+.chat-thread-header{grid-template-columns:50px minmax(0,1fr) 50px;padding:8px 0 7px}.chat-back{width:46px;height:46px;border:1px solid #dedee3;background:#fff;color:#111;font-size:35px}.chat-thread-avatar,.chat-thread-avatar-placeholder{width:52px;height:52px;margin-bottom:3px}.chat-thread-identity h2{font-size:17px!important;font-weight:850}.guardian-thread-shield{display:inline-block;margin-right:4px;font-size:.9em;vertical-align:1px}.chat-thread-identity p{font-size:11px;color:#8e8e93}.chat-header-spacer{width:46px}
 #communicationThreadSheet .message-list{padding:10px 0 12px}.message-date-separator{text-align:center;color:#9a9aa1;font-size:11px;font-weight:750;margin:18px 0 10px}.message-row{width:100%}.message-line{max-width:96%}.message-bubble{padding:9px 13px;font-size:16px;white-space:pre-wrap}.message-meta{opacity:.9}.message-row.direct-chat:not(.mine) .message-meta .sender-label{display:none}.message-row.direct-chat:not(.mine) .message-meta .meta-divider{display:none}.message-row.direct-chat:not(.mine) .message-meta{margin-left:5px}.message-receipts{display:flex;flex-direction:column;align-items:flex-end;gap:2px}.message-receipts span{display:block}
 .communication-media-preview{display:grid;grid-template-columns:58px minmax(0,1fr) 36px;align-items:center;gap:9px;border:1px solid #d1d1d6;background:#f4f4f6;border-radius:17px;padding:8px;margin:7px 0 0}.communication-media-preview img,.communication-media-preview video{width:58px;height:58px;border-radius:12px;object-fit:cover;background:#ddd}.communication-media-preview b,.communication-media-preview small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.communication-media-preview small{color:#75757b;margin-top:3px}.communication-media-preview button{width:32px;height:32px;padding:0;border-radius:50%;background:#dedee3;color:#222;box-shadow:none!important}
-.message-composer{grid-template-columns:36px minmax(0,1fr) 38px}.message-composer .composer-media-btn{width:34px;height:34px;min-height:34px;background:#ededf0;color:#52525a;border:1px solid #d1d1d6;font-size:24px;font-weight:400}.message-composer .composer-media-btn:disabled{opacity:.38}.message-media{max-width:min(76vw,520px);overflow:hidden;border-radius:18px;background:#e9e9eb}.message-row.mine .message-media{margin-left:auto}.message-media img,.message-media video{display:block;width:100%;max-height:48vh;object-fit:cover;background:#111}.message-media-caption{padding:9px 12px;white-space:pre-wrap}.message-media-safety{display:flex;gap:5px;align-items:center;padding:6px 10px;background:#f5f5f7;color:#6e6e73;font-size:9px}.message-row.mine .message-media-safety{background:#eaf4ff;color:#35658d}.message-media-hidden{border:1px dashed #c4c5ca;border-radius:16px;padding:14px;color:#6e6e73;background:#f6f6f8;font-size:12px}.message-bubble.media-label-only{display:none}
+.message-composer{grid-template-columns:36px minmax(0,1fr) 38px}.message-composer .composer-media-btn{width:34px;height:34px;min-height:34px;background:#ededf0;color:#52525a;border:1px solid #d1d1d6;font-size:24px;font-weight:400}.message-composer .composer-media-btn:disabled{opacity:.38}.message-media{max-width:min(76vw,520px);overflow:hidden;border-radius:18px;background:#e9e9eb}.message-row.mine .message-media{margin-left:auto}.message-media img,.message-media video{display:block;width:100%;max-height:48vh;object-fit:cover;background:#111}.message-media-open{display:block;width:100%;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none!important;overflow:hidden}.message-media-open:active{transform:none}.message-media-caption{padding:9px 12px;white-space:pre-wrap}.message-media-safety{display:flex;gap:5px;align-items:center;padding:6px 10px;background:#f5f5f7;color:#6e6e73;font-size:9px}.message-row.mine .message-media-safety{background:#eaf4ff;color:#35658d}.message-media-hidden{border:1px dashed #c4c5ca;border-radius:16px;padding:14px;color:#6e6e73;background:#f6f6f8;font-size:12px}.message-bubble.media-label-only{display:none}
+.communication-media-lightbox{position:fixed;inset:0;z-index:15000;display:flex;align-items:center;justify-content:center;padding:max(64px,env(safe-area-inset-top)) 16px max(42px,env(safe-area-inset-bottom));background:rgba(0,0,0,.94);overscroll-behavior:contain}.communication-media-lightbox.hidden{display:none}.communication-media-lightbox img{display:block;max-width:100%;max-height:100%;object-fit:contain;border-radius:10px}.communication-media-lightbox-close{position:absolute;top:max(14px,env(safe-area-inset-top));right:16px;width:46px;height:46px;min-height:46px;padding:0;border-radius:50%;background:rgba(60,60,67,.82);color:#fff;font-size:31px;line-height:1;box-shadow:none!important}.communication-media-lightbox-close:active{transform:none}
 .media-permission-group{border-top:1px solid var(--line);margin-top:12px;padding-top:10px}.media-permission-group>h4{margin:0 0 4px}.media-permission-group>p{margin:0 0 8px;color:var(--muted);font-size:12px;line-height:1.4}
 .communication-search-wrap{position:relative;margin:12px 0}.communication-search-wrap input{padding-left:39px;border-radius:18px;background:#f0f0f3;border-color:transparent}.communication-search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#77777d;pointer-events:none}.communication-search-results{display:grid;gap:7px;margin:-4px 0 13px}.communication-search-result{width:100%;display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:9px;text-align:left;background:#fff;color:#111;border:1px solid #dedee3;border-radius:15px;padding:10px;box-shadow:none!important}.communication-search-result>span:first-child{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:#ededf0}.communication-search-result b,.communication-search-result small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.communication-search-result small{color:#77777d;margin-top:3px}.communication-search-result time{color:#999;font-size:10px}.communication-search-note{font-size:11px;color:var(--muted);padding:2px 5px}
 @media(max-width:680px){.chat-thread-header{padding-left:4px;padding-right:4px}.message-media{max-width:78vw}}
@@ -732,6 +733,11 @@ button{touch-action:manipulation}
     <button id="scheduleCommunicationMessageBtn" type="button" class="wide secondary">🕒 Send Later</button>
     <div class="inline-actions"><button id="endGuardianSafetyTestBtn" type="button" class="danger-outline hidden">End Test</button></div>
   </section>
+
+  <div id="communicationMediaLightbox" class="communication-media-lightbox hidden" role="dialog" aria-modal="true" aria-label="Photo preview">
+    <button id="closeCommunicationMediaLightboxBtn" class="communication-media-lightbox-close" type="button" aria-label="Close photo preview">×</button>
+    <img id="communicationMediaLightboxImage" alt="Shared photo preview">
+  </div>
 
   <section id="conversationActionsSheet" class="sheet hidden" aria-modal="true">
     <div class="sheet-handle"></div>
@@ -1404,7 +1410,7 @@ button{touch-action:manipulation}
     <button id="customizeLayoutBtn" class="wide secondary" type="button">↕ Customize App Layout</button>
     <button id="securityBtn" class="wide secondary" type="button">🔒 Sign-In & App Security</button>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.15.6</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.15.8</p>
   </section>
 
   <section id="layoutEditorSheet" class="sheet hidden" aria-modal="true">
@@ -1832,6 +1838,29 @@ let securityUnlockedThisLaunch=false;
 let shouldLockWhenVisible=false;
 let nativeNotificationState={native:false,authorizationStatus:'unknown',token:null,environment:'production',bundleId:'',appVersion:''};
 let pendingNativeNotificationPayload=null;
+let nativeWakeSessionPromise=null;
+
+async function ensureNativeWakeSession(forceRefresh=false){
+  if(nativeWakeSessionPromise)return nativeWakeSessionPromise;
+  const task=(async()=>{
+    try{client.auth.startAutoRefresh?.();}catch(error){console.warn('Auth foreground refresh:',error);}
+    const currentOutcome=await settleWithin(client.auth.getSession(),8000,'App session');
+    if(!currentOutcome.ok||currentOutcome.value?.error||!currentOutcome.value?.data?.session)return false;
+    session=currentOutcome.value.data.session;
+    if(forceRefresh){
+      const refreshOutcome=await settleWithin(client.auth.refreshSession(),12000,'Secure session refresh');
+      if(refreshOutcome.ok&&!refreshOutcome.value?.error&&refreshOutcome.value?.data?.session){
+        session=refreshOutcome.value.data.session;
+      }else{
+        console.warn('Notification session refresh:',refreshOutcome.value?.error?.message||refreshOutcome.error?.message||'Using the current valid session.');
+      }
+    }
+    return !!session?.user;
+  })();
+  nativeWakeSessionPromise=task;
+  try{return await task;}
+  finally{if(nativeWakeSessionPromise===task)nativeWakeSessionPromise=null;}
+}
 
 function nativeNotificationHandler(){
   return window.webkit?.messageHandlers?.wrestlingManagerNotifications
@@ -1900,6 +1929,11 @@ async function routeNativeNotification(rawPayload={}){
   if(nativeSecurityAvailable()&&!nativeSecurityStatusReady)return;
   if(securityState.appLockEnabled&&!securityUnlockedThisLaunch)return;
   if(!$('appLockOverlay')?.classList.contains('hidden'))return;
+  const sessionReady=await ensureNativeWakeSession(true);
+  if(!sessionReady)return;
+  if(nativeSecurityAvailable()&&!nativeSecurityStatusReady)return;
+  if(securityState.appLockEnabled&&!securityUnlockedThisLaunch)return;
+  if(!$('appLockOverlay')?.classList.contains('hidden'))return;
   if(!activeTeam||!activeSeason)return;
   pendingNativeNotificationPayload=null;
   if(payload.notification_id){
@@ -1926,6 +1960,10 @@ window.wrestlingManagerNotificationResponse=function(payload={}){
   }else if(payload.type==='opened'){
     routeNativeNotification(payload.payload||{});
   }else if(payload.type==='received'){
+    const notificationPayload=payload.payload?.wm||payload.payload||{};
+    if(notificationPayload.thread_id){
+      scheduleActiveCommunicationThreadRefresh(notificationPayload.thread_id,120,[500,1200,2400]);
+    }
     loadCommunications(false);syncNativeNotificationBadge();
   }else if(payload.type==='registrationError'||payload.type==='permissionError'){
     message(payload.message||'This device could not register for notifications.',true);
@@ -1987,8 +2025,15 @@ function prepareAppLockForBackground(){
 window.wrestlingManagerAppDidEnterBackground=prepareAppLockForBackground;
 window.wrestlingManagerAppDidBecomeActive=function(){
   recoverInteractionLayer();
+  try{client.auth.startAutoRefresh?.();}catch(error){console.warn('Auth foreground start:',error);}
   if(shouldLockWhenVisible)lockApp();
-  refreshActiveCommunicationReceipts(true);
+  if(shouldLockWhenVisible)return;
+  ensureNativeWakeSession(false).then(ready=>{
+    if(!ready)return;
+    refreshActiveCommunicationReceipts(true);
+    if(pendingNativeNotificationPayload)routeNativeNotification(pendingNativeNotificationPayload);
+    else if(activeTeam&&activeSeason&&!$('messagesTab').classList.contains('hidden'))loadCommunications(false);
+  });
 };
 window.wrestlingManagerSecurityResponse=function(payload={}){
   if(payload.state)securityState={...securityState,...payload.state,native:true};
@@ -3172,6 +3217,22 @@ async function hydrateCommunicationAttachments(rows){
   }));
 }
 
+function openCommunicationMediaLightbox(url){
+  if(!url)return;
+  const lightbox=$('communicationMediaLightbox'),image=$('communicationMediaLightboxImage');
+  image.src=url;
+  lightbox.classList.remove('hidden');
+  document.body.style.overflow='hidden';
+}
+
+function closeCommunicationMediaLightbox(){
+  const lightbox=$('communicationMediaLightbox'),image=$('communicationMediaLightboxImage');
+  lightbox.classList.add('hidden');
+  image.removeAttribute('src');
+  if(!$('communicationThreadSheet')?.classList.contains('hidden'))document.body.style.overflow='hidden';
+  else document.body.style.overflow='';
+}
+
 function clearPendingCommunicationMedia(){
   pendingCommunicationMediaFile=null;
   if(pendingCommunicationMediaObjectUrl)URL.revokeObjectURL(pendingCommunicationMediaObjectUrl);
@@ -3368,12 +3429,14 @@ function renderCommunicationSafetySummary(){
   $('openCommunicationSafetyBtn').onclick=openCommunicationSafetyReview;
 }
 
-function scheduleActiveCommunicationThreadRefresh(threadId,delay=120){
+function scheduleActiveCommunicationThreadRefresh(threadId,delay=120,retryDelays=[]){
   if(!activeCommunicationThread||String(activeCommunicationThread.thread_id)!==String(threadId))return;
   clearTimeout(communicationThreadRefreshTimer);
-  communicationThreadRefreshTimer=setTimeout(()=>{
+  communicationThreadRefreshTimer=setTimeout(async()=>{
     if(!activeCommunicationThread||String(activeCommunicationThread.thread_id)!==String(threadId)||$('communicationThreadSheet')?.classList.contains('hidden'))return;
-    openCommunicationThread(threadId,{keepOpen:true,preserveScroll:true});
+    await openCommunicationThread(threadId,{keepOpen:true,preserveScroll:true});
+    const [nextDelay,...remainingDelays]=retryDelays;
+    if(Number.isFinite(nextDelay))scheduleActiveCommunicationThreadRefresh(threadId,nextDelay,remainingDelays);
   },delay);
 }
 
@@ -3381,12 +3444,13 @@ function subscribeCommunicationRealtime(){
   if(!activeTeam||communicationRealtimeChannels.length)return;
   const messageChannel=client.channel(`wm-communication-${activeTeam.id}`)
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'communication_messages',filter:`team_id=eq.${activeTeam.id}`},payload=>{
-      scheduleActiveCommunicationThreadRefresh(payload.new.thread_id,160);
+      const isMediaMessage=/^\[(Photo|Video)\]$/i.test(String(payload.new.body||''));
+      scheduleActiveCommunicationThreadRefresh(payload.new.thread_id,160,isMediaMessage?[500,1200,2400]:[]);
       loadCommunications(false);
       if(document.hidden&&'Notification' in window&&Notification.permission==='granted'&&payload.new.sender_user_id!==session?.user?.id)new Notification('New Wrestling Manager message',{body:'Open the app to read your team message.'});
     })
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'communication_attachments',filter:`team_id=eq.${activeTeam.id}`},payload=>{
-      scheduleActiveCommunicationThreadRefresh(payload.new.thread_id,80);
+      scheduleActiveCommunicationThreadRefresh(payload.new.thread_id,80,[500,1200]);
     }).subscribe();
   const notificationChannel=client.channel(`wm-notifications-${session.user.id}`)
     .on('postgres_changes',{event:'*',schema:'public',table:'communication_notifications',filter:`user_id=eq.${session.user.id}`},()=>loadCommunications(false)).subscribe();
@@ -3495,11 +3559,16 @@ async function performOpenCommunicationThread(threadId,{keepOpen=false,preserveS
   const distanceFromBottom=messageList?messageList.scrollHeight-messageList.scrollTop-messageList.clientHeight:0;
   const safetyTest=String(activeCommunicationThread.title||'').startsWith('🧪 TEST:');
   $('communicationThreadKind').textContent=safetyTest?'GUARDIAN SAFETY TEST':communicationKindLabel(activeCommunicationThread.kind);
-  $('communicationThreadTitle').textContent=safetyTest
+  const threadTitle=safetyTest
     ?String(activeCommunicationThread.title||'Safety Test').replace(/^🧪 TEST:\s*Test Coach\s*↔\s*/i,'🧪 Test: Coach ↔ ')
     :activeCommunicationThread.title||'Conversation';
+  $('communicationThreadTitle').innerHTML=!safetyTest&&activeCommunicationThread.guardian_mirrored
+    ?`<span class="guardian-thread-shield" aria-label="Guardian safeguarded conversation" title="Guardian safeguarded conversation">🛡️</span>${esc(threadTitle)}`
+    :esc(threadTitle);
   $('communicationThreadParticipants').textContent=safetyTest?'Simulation only · External alerts disabled':activeCommunicationThread.participant_names||'';
-  show('communicationGuardianMirror',!!activeCommunicationThread.guardian_mirrored&&!safetyTest);
+  // The Messages screen explains guardian-safe design once. Inside a thread,
+  // the shield beside the name is the compact, transparent indicator.
+  show('communicationGuardianMirror',false);
   show('communicationSafetyTestBanner',safetyTest);
   show('communicationSafetyTestRoleWrap',safetyTest&&!!activeCommunicationThread.can_post);
   show('communicationComposer',!!activeCommunicationThread.can_post);
@@ -3633,7 +3702,7 @@ function renderCommunicationMessages(rows,{preserveScroll=false,distanceFromBott
       }else if(m.attachment_can_view&&m.attachment_url){
         const content=String(m.attachment_mime_type||'').startsWith('video/')
           ?`<video src="${esc(m.attachment_url)}" controls playsinline preload="metadata"></video>`
-          :`<img src="${esc(m.attachment_url)}" alt="Shared photo">`;
+          :`<button type="button" class="message-media-open" data-preview-communication-image="${esc(m.attachment_url)}" aria-label="Open shared photo"><img src="${esc(m.attachment_url)}" alt="Shared photo"></button>`;
         media=`<div class="message-media">${content}${!labelOnly&&m.body?`<div class="message-media-caption">${esc(m.body)}</div>`:''}<div class="message-media-safety">🛡️ Media retained in the safeguarded message history${m.attachment_safety_status==='review'?' · review marked':''}</div></div>`;
       }else media='<div class="message-media-hidden">🛡️ A parent or guardian has limited media viewing for this account.</div>';
     }
@@ -3651,6 +3720,7 @@ function renderCommunicationMessages(rows,{preserveScroll=false,distanceFromBott
   list.querySelectorAll('[data-edit-message]').forEach(b=>b.onclick=()=>editCommunicationMessage(b.dataset.editMessage,rows.find(x=>x.message_id===b.dataset.editMessage)?.body||''));
   list.querySelectorAll('[data-remove-message]').forEach(b=>b.onclick=()=>removeCommunicationMessage(b.dataset.removeMessage));
   list.querySelectorAll('[data-report-message]').forEach(b=>b.onclick=()=>reportCommunicationMessage(b.dataset.reportMessage));
+  list.querySelectorAll('[data-preview-communication-image]').forEach(b=>b.onclick=()=>openCommunicationMediaLightbox(b.dataset.previewCommunicationImage));
   list.scrollTop=preserveScroll?Math.max(0,list.scrollHeight-list.clientHeight-distanceFromBottom):list.scrollHeight;
 }
 
@@ -6821,7 +6891,12 @@ $('saveSecurityPinBtn').onclick=()=>{const pin=$('securityPin').value,confirm=$(
 $('removeSecurityPinBtn').onclick=()=>{if(confirm('Remove the separate Wrestling Manager PIN from this device?'))postNativeSecurity('removePin');};
 $('securityPasswordResetBtn').onclick=()=>{$('recoveryEmail').value=session?.user?.email||'';closeSheets();openSheet('forgotPasswordSheet');};
 $('lockedSignOutBtn').onclick=async()=>{await disableNativePushDeviceBeforeSignOut();await client.auth.signOut();show('appLockOverlay',false);location.reload();};
-document.addEventListener('visibilitychange',()=>{if(document.hidden)prepareAppLockForBackground();else window.wrestlingManagerAppDidBecomeActive();});
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){
+    try{client.auth.stopAutoRefresh?.();}catch(error){console.warn('Auth background stop:',error);}
+    prepareAppLockForBackground();
+  }else window.wrestlingManagerAppDidBecomeActive();
+});
 $('staffViewModeBtn').onclick=()=>setViewMode('staff'); $('parentViewModeBtn').onclick=()=>setViewMode('parent');
 $('acceptInviteBtn').onclick=acceptInvite;
 $('setupJoinBtn').onclick=()=>startJoinFlow($('setupJoinCode').value.trim());
@@ -6986,6 +7061,9 @@ $('newCommunicationType').onchange=()=>{$('newCommunicationRecipientCount').text
 $('sendCommunicationMessageBtn').onclick=sendCommunicationMessage;
 $('addCommunicationMediaBtn').onclick=()=>{if(activeCommunicationMediaAccess?.can_send)$('communicationMediaInput').click();else message(activeCommunicationMediaAccess?.reason||'Parent approval is required to send photos or videos.',true);};
 $('communicationMediaInput').onchange=e=>chooseCommunicationMedia(e.target.files?.[0]);
+$('closeCommunicationMediaLightboxBtn').onclick=closeCommunicationMediaLightbox;
+$('communicationMediaLightbox').onclick=event=>{if(event.target===$('communicationMediaLightbox'))closeCommunicationMediaLightbox();};
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('communicationMediaLightbox').classList.contains('hidden'))closeCommunicationMediaLightbox();});
 $('scheduleCommunicationMessageBtn').onclick=openScheduleMessage;
 $('confirmScheduleMessageBtn').onclick=confirmScheduleMessage;
 $('communicationMessageBody').addEventListener('input',e=>{e.currentTarget.style.height='38px';e.currentTarget.style.height=`${Math.min(e.currentTarget.scrollHeight,108)}px`;});
@@ -7019,12 +7097,21 @@ $('joinCodeBtn').onclick=showTeamJoin;
 
 setupPhoneFormatting();
 window.addEventListener('pageshow',recoverInteractionLayer);
-document.addEventListener('visibilitychange',()=>{if(!document.hidden){recoverInteractionLayer();refreshActiveCommunicationReceipts(true);if(activeTeam&&activeSeason&&!$('messagesTab').classList.contains('hidden'))loadCommunications(false);}});
 setRememberSession(shouldRememberSession());
-client.auth.onAuthStateChange((event)=>setTimeout(async()=>{
-  await refresh();
-  if(event==='PASSWORD_RECOVERY'){closeSheets();openSheet('resetPasswordSheet');}
-},0));
+client.auth.onAuthStateChange((event,nextSession)=>{
+  session=nextSession||null;
+  if(event==='TOKEN_REFRESHED'){
+    if(pendingNativeNotificationPayload&&nativeSecurityStatusReady&&(!securityState.appLockEnabled||securityUnlockedThisLaunch))routeNativeNotification(pendingNativeNotificationPayload);
+    return;
+  }
+  // The explicit initial refresh below owns startup. Running it again for
+  // INITIAL_SESSION creates two competing team/message loads in WKWebView.
+  if(event==='INITIAL_SESSION')return;
+  setTimeout(async()=>{
+    await refresh();
+    if(event==='PASSWORD_RECOVERY'){closeSheets();openSheet('resetPasswordSheet');}
+  },0);
+});
 setupGearSelects();
 refresh();
 
