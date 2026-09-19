@@ -58,6 +58,7 @@ button.wide{width:100%;margin-top:16px}.stack-actions{display:grid;gap:9px;margi
 .feature-card{padding:17px;margin-top:12px}.feature-card h3{margin:0 0 8px}.feature-card p{color:var(--muted);line-height:1.45}.mini-row{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid var(--line)}.mini-row b{color:#5d6875}
 .menu-card{overflow:hidden}.menu-row{width:100%;display:grid;grid-template-columns:32px 1fr 20px;align-items:center;gap:10px;text-align:left;background:#fff;color:var(--ink);border-radius:0;padding:16px;border-bottom:1px solid var(--line)}.menu-row:last-child{border-bottom:0}.menu-row span{font-size:20px}.menu-row b,.menu-row small{display:block}.menu-row small{color:var(--muted);margin-top:3px}.menu-row i{font-size:25px;font-style:normal;color:#7a8490}.menu-row.disabled{opacity:.56}
 .bottom-nav{position:fixed;z-index:30;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(5,1fr);background:var(--team-primary);border-top:2px solid var(--team-secondary);padding:0 0 env(safe-area-inset-bottom);box-shadow:0 -4px 18px rgba(0,0,0,.08)}.nav-btn{background:var(--team-primary);color:var(--team-primary-text);padding:9px 2px 8px;border-radius:0;min-height:62px;border-right:1px solid var(--team-nav-line);opacity:.76}.nav-btn:last-child{border-right:0}.nav-btn span{display:block;font-size:20px;line-height:1}.nav-btn small{display:block;font-size:10px;font-weight:900;margin-top:5px}.nav-btn.active{background:var(--team-secondary);color:var(--team-secondary-text);opacity:1;box-shadow:inset 0 4px 0 var(--team-accent)}
+.layout-block{min-width:0}.layout-editor-list{display:grid;gap:8px;margin-top:10px}.layout-editor-row{display:grid;grid-template-columns:34px 1fr 42px 42px;align-items:center;gap:8px;background:#f6f8fa;border:1px solid var(--line);border-radius:15px;padding:9px}.layout-editor-row>span:first-child{font-size:20px;text-align:center}.layout-editor-row b{display:block}.layout-editor-row small{display:block;color:var(--muted);margin-top:2px}.layout-move{padding:9px 4px;background:#e7edf4;color:#294766;min-height:38px}.layout-note{background:#eef5fc;border:1px solid #d4e4f5;border-radius:15px;padding:12px;color:#355d87;line-height:1.4}.claim-match-list{display:grid;gap:8px;margin-top:10px}.claim-match-card{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;background:#f7f9fb;color:var(--ink);border:1px solid var(--line);padding:13px}.claim-match-card.active{border:2px solid var(--team-secondary);background:#edf5ff}.claim-match-card b,.claim-match-card small{display:block}.claim-match-card small{color:var(--muted);margin-top:4px}.size-category{margin-bottom:8px}.gear-size-note{font-size:12px;color:var(--muted);margin:5px 0 10px}
 .backdrop{position:fixed;inset:0;z-index:50;background:rgba(15,22,30,.46);backdrop-filter:blur(2px)}
 .sheet{position:fixed;z-index:60;left:50%;transform:translateX(-50%);bottom:0;width:min(760px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:26px 26px 0 0;padding:12px 18px calc(24px + env(safe-area-inset-bottom));box-shadow:0 -12px 45px rgba(0,0,0,.18)}
 .sheet-handle{width:52px;height:5px;border-radius:99px;background:#d7dce2;margin:0 auto 12px}.sheet-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.sheet-head h2{margin:3px 0 0;font-size:26px}.icon-close{width:40px;height:40px;border-radius:50%;padding:0;background:#edf1f5;color:#28313a;font-size:26px;line-height:1}.type-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.type-btn{background:#edf1f5;color:#28323c;padding:10px 7px}.type-btn.active{background:var(--accent);color:#fff}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:8px}.toggle-row{display:flex;align-items:center;justify-content:space-between;gap:16px;background:#f6f8fa;border:1px solid #e8ecf0;border-radius:16px;padding:13px 14px;margin:10px 0}.toggle-row span{min-width:0}.toggle-row b,.toggle-row small{display:block}.toggle-row small{color:var(--muted);font-weight:500;line-height:1.3;margin-top:3px}.toggle-row input{width:24px;height:24px;flex:0 0 24px}.sticky-save{position:sticky;bottom:0;box-shadow:0 -8px 20px #fff}
@@ -352,7 +353,7 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     <header class="app-header">
       <button id="teamSwitcherBtn" class="team-switcher" type="button">
         <span>
-          <small>Wrestling Manager</small>
+          <small id="headerSeasonName">Season</small>
           <strong id="headerTeamName">Team</strong>
         </span>
         <span class="chev">⌄</span>
@@ -363,34 +364,26 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     <main class="content">
       <section id="homeTab" class="tabview">
         <div id="teamBanner" class="team-banner hidden"><img id="teamBannerImg" alt="Team banner"></div>
-        <div class="hero-card">
-          <div>
-            <div class="eyebrow">WRESTLING MANAGER</div>
-            <h2 id="homeTeamName">Team</h2>
-            <p id="homeSeasonName">Season</p>
-          </div>
-          <span class="live-pill">LIVE</span>
-        </div>
-
-        <section id="importantAnnouncementsSection" class="important-announcements">
+        <div id="homeLayoutBlocks">
+        <section id="importantAnnouncementsSection" class="important-announcements layout-block" data-layout-key="important">
           <div class="section-head"><h3>📣 Important Announcements</h3><button id="newAnnouncementBtn" class="link-btn coach-only">＋ Post</button></div>
           <div id="importantAnnouncementsList"><div class="announcement-empty">No important announcements right now.</div></div>
         </section>
 
-        <section id="myAthletesHomeSection" class="family-athlete-home hidden">
+        <section id="myAthletesHomeSection" class="family-athlete-home hidden layout-block" data-layout-key="my_athletes">
           <div class="section-head"><div><h3>My Athletes</h3><span class="section-sub">Your children stay visible even if you also coach or administer the team.</span></div></div>
           <div id="myAthletesHomeList" class="family-athlete-list"></div>
           <button id="athleteChatPermissionsHomeBtn" type="button" class="wide secondary">👨‍👩‍👧 Choose My Athlete’s Chat Access</button>
         </section>
 
-        <div class="quick-grid">
+        <div class="quick-grid layout-block" data-layout-key="quick_actions">
           <button class="quick-card" data-go="schedule" data-action="create-event"><span>＋</span><b>Create event</b><small>Practice, dual, open mat…</small></button>
           <button class="quick-card" data-go="schedule"><span>✓</span><b>Attendance</b><small>RSVPs and check-in</small></button>
           <button class="quick-card" data-go="weight"><span>⚖️</span><b>Weight Room</b><small>Weigh-ins and eligibility</small></button>
           <button class="quick-card" data-go="more"><span>☰</span><b>Team tools</b><small>Roster, join, equipment</small></button>
         </div>
 
-        <section id="coachWeightBoardSection" class="coach-weight-board coach-only">
+        <section id="coachWeightBoardSection" class="coach-weight-board coach-only layout-block" data-layout-key="coach_weight_board">
           <div class="section-head">
             <div><h3>Lineup by Weight Class</h3><span id="coachWeightBoardHelp" class="section-sub">Coach-controlled lineup by weight class.</span></div>
             <button class="link-btn" data-go="weight">Weight Room</button>
@@ -398,20 +391,22 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
           <div id="coachWeightBoardList" class="weight-class-board"><div class="board-empty">No active roster yet.</div></div>
         </section>
 
-        <div class="section-head"><h3>Needs attention</h3><span id="attentionCount" class="count-pill">0</span></div>
+        <section class="layout-block" data-layout-key="attention"><div class="section-head"><h3>Needs attention</h3><span id="attentionCount" class="count-pill">0</span></div>
         <div id="attentionList" class="card-list">
           <div class="empty-card">Nothing needs attention right now.</div>
-        </div>
+        </div></section>
 
-        <div class="section-head"><h3>Upcoming</h3><button class="link-btn" data-go="schedule">See schedule</button></div>
+        <section class="layout-block" data-layout-key="upcoming"><div class="section-head"><h3>Upcoming</h3><button class="link-btn" data-go="schedule">See schedule</button></div>
         <div id="upcomingHome" class="card-list"><div class="empty-card">No upcoming events yet.</div></div>
+        </section>
 
-        <div class="section-head"><h3>Weight room snapshot</h3></div>
+        <section class="layout-block" data-layout-key="weight_snapshot"><div class="section-head"><h3>Weight room snapshot</h3></div>
         <div class="metric-grid">
           <button type="button" class="metric metric-btn" data-weight-metric="weighed"><span>Weighed today</span><strong id="weighed">0</strong></button>
           <button type="button" class="metric metric-btn" data-go="weight"><span>Not weighed</span><strong id="notWeighed">0</strong></button>
           <button type="button" class="metric metric-btn" data-go="weight"><span>Newly eligible</span><strong id="eligible">0</strong></button>
           <button type="button" class="metric metric-btn" data-go="weight"><span>Challenges</span><strong id="challenges">0</strong></button>
+        </div></section>
         </div>
       </section>
 
@@ -501,29 +496,29 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
       <section id="moreTab" class="tabview hidden">
         <button type="button" class="tab-back-btn" data-back-home><span>←</span> Back to Home</button>
         <div class="section-head top-space"><div><div class="eyebrow">TEAM MANAGEMENT</div><h2>More</h2></div></div>
-        <div class="menu-card">
-          <button id="rosterBtn" class="menu-row coach-only"><span>👥</span><div><b>Roster</b><small>Athletes, profiles, standby and team transfers</small></div><i>›</i></button>
-          <button id="joinBtn" class="menu-row coach-only"><span>🔗</span><div><b>Team Join</b><small>QR code, text, email and team code</small></div><i>›</i></button>
-          <button id="joinRequestsBtn" class="menu-row coach-only"><span>✅</span><div><b>Join Requests</b><small>Approve or deny athletes and parents</small></div><i id="joinRequestCount">›</i></button>
-          <button id="agreementsBtn" class="menu-row"><span>✍️</span><div><b>Team Agreement</b><small>Expectations, signatures and social-media permissions</small></div><i id="agreementMenuCount">›</i></button>
-          <button id="medicalClearanceBtn" class="menu-row"><span>🩺</span><div><b>Medical Clearance</b><small>NFHS skin forms, doctor notes and return-to-participation status</small></div><i id="medicalMenuCount">›</i></button>
-          <button id="memberProfilesBtn" class="menu-row member-only"><span>👤</span><div><b>My Athlete Profiles</b><small>Photo, sizes, contact permissions and age divisions</small></div><i>›</i></button>
-          <button id="familyBtn" class="menu-row member-only"><span>👨‍👩‍👧</span><div><b>Family</b><small>Invite a parent or add another child</small></div><i>›</i></button>
-          <button id="staffDirectoryBtn" class="menu-row"><span>📇</span><div><b>Coaches & Staff</b><small>Team staff photos and the contact information they choose to share</small></div><i>›</i></button>
-          <button id="staffAccessBtn" class="menu-row admin-only"><span>🪪</span><div><b>Adult Roles & Admins</b><small>Assign coaches, team leaders, volunteers and multiple administrators</small></div><i>›</i></button>
-          <button class="menu-row disabled"><span>🎽</span><div><b>Equipment</b><small>Singlets, shoes, headgear and more</small></div><i>›</i></button>
-          <button class="menu-row disabled"><span>📁</span><div><b>Files & Photos</b><small>Team documents and albums</small></div><i>›</i></button>
-          <button id="accountBtn" class="menu-row"><span>⚙️</span><div><b>Account & Team</b><small>Profile, team and sign out</small></div><i>›</i></button>
+        <div id="moreMenuCard" class="menu-card">
+          <button id="rosterBtn" class="menu-row coach-only" data-layout-key="roster"><span>👥</span><div><b>Roster</b><small>Athletes, profiles, standby and team transfers</small></div><i>›</i></button>
+          <button id="joinBtn" class="menu-row coach-only" data-layout-key="join"><span>🔗</span><div><b>Team Join</b><small>QR code, text, email and team code</small></div><i>›</i></button>
+          <button id="joinRequestsBtn" class="menu-row coach-only" data-layout-key="join_requests"><span>✅</span><div><b>Join Requests</b><small>Approve or deny athletes and parents</small></div><i id="joinRequestCount">›</i></button>
+          <button id="agreementsBtn" class="menu-row" data-layout-key="agreements"><span>✍️</span><div><b>Team Agreement</b><small>Expectations, signatures and social-media permissions</small></div><i id="agreementMenuCount">›</i></button>
+          <button id="medicalClearanceBtn" class="menu-row" data-layout-key="medical"><span>🩺</span><div><b>Medical Clearance</b><small>NFHS skin forms, doctor notes and return-to-participation status</small></div><i id="medicalMenuCount">›</i></button>
+          <button id="memberProfilesBtn" class="menu-row member-only" data-layout-key="member_profiles"><span>👤</span><div><b>My Athlete Profiles</b><small>Photo, sizes, contact permissions and age divisions</small></div><i>›</i></button>
+          <button id="familyBtn" class="menu-row member-only" data-layout-key="family"><span>👨‍👩‍👧</span><div><b>Family</b><small>Invite a parent or add another child</small></div><i>›</i></button>
+          <button id="staffDirectoryBtn" class="menu-row" data-layout-key="staff_directory"><span>📇</span><div><b>Coaches & Staff</b><small>Team staff photos and the contact information they choose to share</small></div><i>›</i></button>
+          <button id="staffAccessBtn" class="menu-row admin-only" data-layout-key="staff_access"><span>🪪</span><div><b>Adult Roles & Admins</b><small>Assign coaches, team leaders, volunteers and multiple administrators</small></div><i>›</i></button>
+          <button class="menu-row disabled" data-layout-key="equipment"><span>🎽</span><div><b>Equipment</b><small>Singlets, shoes, headgear and more</small></div><i>›</i></button>
+          <button class="menu-row disabled" data-layout-key="files"><span>📁</span><div><b>Files & Photos</b><small>Team documents and albums</small></div><i>›</i></button>
+          <button id="accountBtn" class="menu-row" data-layout-key="account"><span>⚙️</span><div><b>Account & Team</b><small>Profile, team and sign out</small></div><i>›</i></button>
         </div>
       </section>
     </main>
 
     <nav class="bottom-nav">
-      <button class="nav-btn active" data-tab="home"><span>⌂</span><small>Home</small></button>
-      <button class="nav-btn" data-tab="schedule"><span>▣</span><small>Schedule</small></button>
-      <button class="nav-btn" data-tab="messages"><span>◯</span><small>Messages</small></button>
-      <button class="nav-btn" data-tab="weight"><span>⚖</span><small>Weight Room</small></button>
-      <button class="nav-btn" data-tab="more"><span>☰</span><small>More</small></button>
+      <button class="nav-btn active" data-tab="home" data-layout-key="home"><span>⌂</span><small>Home</small></button>
+      <button class="nav-btn" data-tab="schedule" data-layout-key="schedule"><span>▣</span><small>Schedule</small></button>
+      <button class="nav-btn" data-tab="messages" data-layout-key="messages"><span>◯</span><small>Messages</small></button>
+      <button class="nav-btn" data-tab="weight" data-layout-key="weight"><span>⚖</span><small>Weight Room</small></button>
+      <button class="nav-btn" data-tab="more" data-layout-key="more"><span>☰</span><small>More</small></button>
     </nav>
   </section>
 
@@ -822,6 +817,13 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     <h3 id="joinAthleteHeading" class="subhead">Athlete</h3>
     <div id="joinAthleteNameRow" class="profile-grid"><div><label>First name</label><input id="joinFirstName" name="athlete_first_name" autocomplete="off"></div><div><label>Last name</label><input id="joinLastName" name="athlete_last_name" autocomplete="off"></div></div>
     <div id="joinAthleteDobSchoolRow" class="profile-grid"><div><label>Birthday <span class="optional-label">recommended when claiming</span></label><input id="joinBirthDate" type="date" autocomplete="off"></div><div id="joinSchoolLevelBox"><label>School level</label><select id="joinSchoolLevel"><option value="">Choose…</option><option value="elementary">Elementary</option><option value="middle_school">Middle School</option><option value="high_school">High School</option><option value="college">College</option><option value="adult">Adult / Open</option><option value="other">Other</option></select></div></div>
+    <div id="joinProfileClaimBox" class="feature-card">
+      <b>Find an existing profile first</b>
+      <p class="muted">We only show an exact, private match for your verified account details. This prevents duplicate athlete and parent profiles.</p>
+      <button id="findClaimableProfileBtn" class="wide secondary" type="button">Find Existing Profile</button>
+      <div id="joinClaimMatches" class="claim-match-list"></div>
+      <button id="continueNewProfileBtn" class="wide secondary hidden" type="button">No match — Create New Profile</button>
+    </div>
     <div id="joinNewAthleteDetails">
     <div class="profile-grid"><div><label>Grade</label><select id="joinGrade"><option value="">Choose…</option><option>K</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option value="college">College</option></select></div><div><label>Graduation year <span class="optional-label">optional</span></label><input id="joinGraduationYear" inputmode="numeric"></div></div>
     <label>Athlete email <span class="optional-label">optional for parent-led registration</span></label><input id="joinAthleteEmail" type="email">
@@ -834,7 +836,9 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     <label class="toggle-row"><span><b>Allow team SMS notifications</b><small>Phone number can be stored without enabling team texts</small></span><input id="joinSms" type="checkbox"></label>
 
     <h3 class="subhead">Gear sizes</h3>
-    <div class="profile-grid"><div><label>Shirt</label><input id="joinShirt" placeholder="YS, AM, AL…"></div><div><label>Shorts</label><input id="joinShorts"></div><div><label>Shoe</label><input id="joinShoe"></div><div><label>Singlet</label><input id="joinSinglet"></div><div><label>Warm-up top</label><input id="joinWarmTop"></div><div><label>Warm-up bottom</label><input id="joinWarmBottom"></div></div>
+    <label>Apparel category</label><select id="joinGearCategory" class="size-category"><option value="Youth">Youth</option><option value="Adult">Adult</option></select>
+    <div class="profile-grid"><div><label>Shirt</label><select id="joinShirt" class="apparel-size"></select></div><div><label>Shorts</label><select id="joinShorts" class="apparel-size"></select></div><div><label>Singlet</label><select id="joinSinglet" class="apparel-size"></select></div><div><label>Warm-up top</label><select id="joinWarmTop" class="apparel-size"></select></div><div><label>Warm-up bottom</label><select id="joinWarmBottom" class="apparel-size"></select></div></div>
+    <div class="profile-grid"><div><label>Shoe category</label><select id="joinShoeCategory"><option value="Youth">Youth</option><option value="Adult">Adult</option></select></div><div><label>Wrestling shoe size</label><select id="joinShoe"></select></div></div>
 
     <h3 class="subhead">Important medical information <span class="optional-label">optional</span></h3>
     <p class="muted">Only add information the family is comfortable sharing for practices, travel, competition or emergencies.</p>
@@ -920,7 +924,9 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     </div>
 
     <h3 class="subhead">Gear sizes</h3>
-    <div class="profile-grid"><div><label>Shirt</label><input id="profileShirt"></div><div><label>Shorts</label><input id="profileShorts"></div><div><label>Shoe</label><input id="profileShoe"></div><div><label>Singlet</label><input id="profileSinglet"></div><div><label>Warm-up top</label><input id="profileWarmTop"></div><div><label>Warm-up bottom</label><input id="profileWarmBottom"></div></div>
+    <label>Apparel category</label><select id="profileGearCategory" class="size-category"><option value="Youth">Youth</option><option value="Adult">Adult</option></select>
+    <div class="profile-grid"><div><label>Shirt</label><select id="profileShirt" class="apparel-size"></select></div><div><label>Shorts</label><select id="profileShorts" class="apparel-size"></select></div><div><label>Singlet</label><select id="profileSinglet" class="apparel-size"></select></div><div><label>Warm-up top</label><select id="profileWarmTop" class="apparel-size"></select></div><div><label>Warm-up bottom</label><select id="profileWarmBottom" class="apparel-size"></select></div></div>
+    <div class="profile-grid"><div><label>Shoe category</label><select id="profileShoeCategory"><option value="Youth">Youth</option><option value="Adult">Adult</option></select></div><div><label>Wrestling shoe size</label><select id="profileShoe"></select></div></div>
 
     <div class="medical-box"><h3 style="margin-top:0">Medical / Emergency</h3><div class="medical-checks"><label><input type="checkbox" class="profile-med" value="Diabetes">Diabetes</label><label><input type="checkbox" class="profile-med" value="Asthma">Asthma</label><label><input type="checkbox" class="profile-med" value="Severe allergy / Anaphylaxis">Severe allergy</label><label><input type="checkbox" class="profile-med" value="Seizure disorder">Seizure disorder</label></div><label>Notes</label><textarea id="profileMedicalNote"></textarea><label>Rescue item location</label><input id="profileRescueLocation"><label class="toggle-row"><span><b>Share medical information with coaching staff</b><small>Parent-controlled for minors</small></span><input id="profileMedicalShare" type="checkbox"></label></div>
     <div id="profileSensitiveNote" class="privacy-note hidden"></div>
@@ -1283,8 +1289,19 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     <button id="editStaffProfileBtn" class="wide hidden" type="button">Edit My Coach / Staff Profile</button>
     <button id="editTeamBtn" class="wide admin-only" type="button">Edit Team</button>
     <button id="communicationBtn" class="wide admin-only" type="button">Communication Settings</button>
+    <button id="customizeLayoutBtn" class="wide secondary" type="button">↕ Customize App Layout</button>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.13.3</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.13.4</p>
+  </section>
+
+  <section id="layoutEditorSheet" class="sheet hidden" aria-modal="true">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><div><div class="eyebrow">YOUR APP</div><h2>Customize Layout</h2><p class="muted">Move the parts you use most. This layout follows your account across teams and devices.</p></div><button class="icon-close" data-close-sheet>×</button></div>
+    <div class="layout-note">Use the arrows to arrange Home, the bottom navigation, and More. Hidden role-only tools stay hidden when you do not have access.</div>
+    <h3 class="subhead">Home</h3><div id="homeLayoutEditor" class="layout-editor-list"></div>
+    <h3 class="subhead">Bottom navigation</h3><div id="navLayoutEditor" class="layout-editor-list"></div>
+    <h3 class="subhead">More</h3><div id="moreLayoutEditor" class="layout-editor-list"></div>
+    <button id="saveLayoutBtn" class="wide sticky-save" type="button">Save My Layout</button>
   </section>
 
 
@@ -1525,6 +1542,8 @@ let pendingJoinCode = new URLSearchParams(location.search).get('join') || '';
 let pendingInviteToken = new URLSearchParams(location.search).get('invite') || '';
 let joinRequesterRole = 'athlete';
 let joinParentPath = null;
+let joinMatchSearchCompleted = false;
+let selectedClaimAthleteId = null;
 let joinPreview = null;
 let joinRequests = [];
 let pendingGuardianRequests = [];
@@ -1589,6 +1608,17 @@ let weighedTodayRows = [];
 let weightTrendAthleteId = null;
 let weightTrendDays = 30;
 
+const APPAREL_SIZES=['XS','S','M','L','XL','XXL','XXXL'];
+const YOUTH_SHOE_SIZES=['10','10.5','11','11.5','12','12.5','13','13.5','1','1.5','2','2.5','3','3.5','4','4.5','5','5.5','6','6.5','7'];
+const ADULT_SHOE_SIZES=['4','4.5','5','5.5','6','6.5','7','7.5','8','8.5','9','9.5','10','10.5','11','11.5','12','12.5','13','13.5','14','15','16','17','18'];
+const UI_LAYOUT_META={
+  home:{important:['📣','Important Announcements'],my_athletes:['👨‍👩‍👧','My Athletes'],quick_actions:['⚡','Quick Actions'],coach_weight_board:['🤼','Lineup by Weight Class'],attention:['✅','Needs Attention'],upcoming:['📅','Upcoming'],weight_snapshot:['⚖️','Weight Room Snapshot']},
+  nav:{home:['⌂','Home'],schedule:['▣','Schedule'],messages:['◯','Messages'],weight:['⚖','Weight Room'],more:['☰','More']},
+  more:{roster:['👥','Roster'],join:['🔗','Team Join'],join_requests:['✅','Join Requests'],agreements:['✍️','Team Agreement'],medical:['🩺','Medical Clearance'],member_profiles:['👤','My Athlete Profiles'],family:['👨‍👩‍👧','Family'],staff_directory:['📇','Coaches & Staff'],staff_access:['🪪','Adult Roles & Admins'],equipment:['🎽','Equipment'],files:['📁','Files & Photos'],account:['⚙️','Account & Team']}
+};
+const DEFAULT_UI_LAYOUT={home:Object.keys(UI_LAYOUT_META.home),nav:Object.keys(UI_LAYOUT_META.nav),more:Object.keys(UI_LAYOUT_META.more)};
+let pendingUiLayout=null;
+
 const $ = id => document.getElementById(id);
 const show = (id, visible=true) => $(id)?.classList.toggle('hidden', !visible);
 const esc = value => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -1615,6 +1645,62 @@ function setupPhoneFormatting(){
     input.addEventListener('blur',apply);
     if(input.value) apply();
   });
+}
+
+function fillSelect(select,values,placeholder='Choose…'){
+  if(!select)return;
+  const current=select.value;
+  select.innerHTML=`<option value="">${placeholder}</option>`+values.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+  if(values.includes(current))select.value=current;
+}
+function setupGearSelects(){
+  document.querySelectorAll('.apparel-size').forEach(s=>fillSelect(s,APPAREL_SIZES));
+  ['join','profile'].forEach(prefix=>{
+    const category=$(`${prefix}ShoeCategory`),size=$(`${prefix}Shoe`);
+    const update=()=>fillSelect(size,category?.value==='Adult'?ADULT_SHOE_SIZES:YOUTH_SHOE_SIZES,'Select size…');
+    if(category)category.onchange=update;update();
+  });
+}
+function parseStoredSize(value,defaultCategory='Youth'){
+  const raw=String(value||'').trim();
+  if(!raw)return {category:defaultCategory,size:''};
+  const long=raw.match(/^(Youth|Adult)\s+(.+)$/i);
+  if(long)return {category:/^adult$/i.test(long[1])?'Adult':'Youth',size:long[2].toUpperCase()};
+  const short=raw.match(/^([YA])\s*(XS|S|M|L|XL|XXL|XXXL)$/i);
+  if(short)return {category:short[1].toUpperCase()==='A'?'Adult':'Youth',size:short[2].toUpperCase()};
+  return {category:defaultCategory,size:raw.toUpperCase()};
+}
+function storedApparelValue(prefix,id){const size=$(prefix+id)?.value;return size?`${$(prefix+'GearCategory')?.value||'Youth'} ${size}`:null;}
+function storedShoeValue(prefix){const size=$(prefix+'Shoe')?.value;return size?`${$(prefix+'ShoeCategory')?.value||'Youth'} ${size}`:null;}
+function normalizedLayout(source={}){
+  const result={};
+  Object.keys(DEFAULT_UI_LAYOUT).forEach(group=>{
+    const saved=Array.isArray(source?.[group])?source[group]:[];
+    result[group]=[...saved.filter((x,i)=>DEFAULT_UI_LAYOUT[group].includes(x)&&saved.indexOf(x)===i),...DEFAULT_UI_LAYOUT[group].filter(x=>!saved.includes(x))];
+  });
+  return result;
+}
+function localUiLayout(){try{return JSON.parse(localStorage.getItem('wm_ui_layout')||'{}');}catch{return {};}}
+function reorderChildren(parent,order){if(!parent)return;order.forEach(key=>{const el=[...parent.children].find(x=>x.dataset.layoutKey===key);if(el)parent.appendChild(el);});}
+function applyUiPreferences(){
+  const layout=normalizedLayout(accountProfileData?.ui_preferences?.layout||localUiLayout());
+  reorderChildren($('homeLayoutBlocks'),layout.home);reorderChildren(document.querySelector('.bottom-nav'),layout.nav);reorderChildren($('moreMenuCard'),layout.more);
+}
+function renderLayoutGroup(group,id){
+  const box=$(id),order=pendingUiLayout[group];if(!box)return;
+  box.innerHTML=order.map((key,index)=>{const meta=UI_LAYOUT_META[group][key]||['↕',key];return `<div class="layout-editor-row"><span>${meta[0]}</span><span><b>${esc(meta[1])}</b><small>${index+1} of ${order.length}</small></span><button class="layout-move" type="button" data-layout-move="${group}:${index}:-1" ${index===0?'disabled':''}>↑</button><button class="layout-move" type="button" data-layout-move="${group}:${index}:1" ${index===order.length-1?'disabled':''}>↓</button></div>`;}).join('');
+  box.querySelectorAll('[data-layout-move]').forEach(btn=>btn.onclick=()=>{const [g,i,d]=btn.dataset.layoutMove.split(':');const from=Number(i),to=from+Number(d);[pendingUiLayout[g][from],pendingUiLayout[g][to]]=[pendingUiLayout[g][to],pendingUiLayout[g][from]];renderAllLayoutEditors();});
+}
+function renderAllLayoutEditors(){renderLayoutGroup('home','homeLayoutEditor');renderLayoutGroup('nav','navLayoutEditor');renderLayoutGroup('more','moreLayoutEditor');}
+function openLayoutEditor(){pendingUiLayout=normalizedLayout(accountProfileData?.ui_preferences?.layout||localUiLayout());renderAllLayoutEditors();closeSheets();openSheet('layoutEditorSheet');}
+async function saveUiLayout(){
+  if(!pendingUiLayout||!session?.user)return;
+  const preferences={...(accountProfileData?.ui_preferences||{}),layout:pendingUiLayout};localStorage.setItem('wm_ui_layout',JSON.stringify(pendingUiLayout));
+  const btn=$('saveLayoutBtn');btn.disabled=true;btn.textContent='Saving…';
+  const {data,error}=await client.from('profiles').update({ui_preferences:preferences,updated_at:new Date().toISOString()}).eq('id',session.user.id).select('id,display_name,phone,photo_path,ui_preferences').single();
+  btn.disabled=false;btn.textContent='Save My Layout';
+  if(error){accountProfileData={...(accountProfileData||{}),ui_preferences:preferences};applyUiPreferences();message('Layout saved on this device. Apply the database patch to sync it across devices.');closeSheets();return;}
+  accountProfileData=data;applyUiPreferences();closeSheets();message('Your app layout is saved.');
 }
 
 function message(text, bad=false){
@@ -1734,7 +1820,7 @@ function openSheet(id){
 }
 function closeSheets(){
   if(document.body.classList.contains('kiosk-locked')) return;
-  ['eventSheet','eventDetailSheet','attendanceSheet','announcementSheet','communicationThreadSheet','communicationMuteSheet','newCommunicationSheet','guardianSafetyTestSheet','athleteChatPermissionsSheet','scheduleMessageSheet','communicationPreferencesSheet','communicationNotificationsSheet','massTextSheet','textRepliesSheet','communicationSafetySheet','rosterSheet','athleteTeamsSheet','addAthleteSheet','joinSheet','joinRequestSheet','coachJoinRequestsSheet','athleteViewSheet','athleteProfileSheet','weightTrendSheet','photoCropSheet','communicationSheet','staffProfileSheet','staffDirectorySheet','familySheet','agreementsSheet','agreementEditorSheet','agreementPreviewSheet','calendarSubscriptionSheet','medicalClearanceSheet','medicalCaseSheet','excuseSheet','athleteAccessSheet','staffAccessSheet','weighedTodaySheet','weighInStartSheet','weighInConsoleSheet','importRosterSheet','teamSwitcherSheet','createTeamSheet','editTeamSheet','lineupClassSheet','accountSheet'].forEach(id=>show(id,false));
+  ['eventSheet','eventDetailSheet','attendanceSheet','announcementSheet','communicationThreadSheet','communicationMuteSheet','newCommunicationSheet','guardianSafetyTestSheet','athleteChatPermissionsSheet','scheduleMessageSheet','communicationPreferencesSheet','communicationNotificationsSheet','massTextSheet','textRepliesSheet','communicationSafetySheet','rosterSheet','athleteTeamsSheet','addAthleteSheet','joinSheet','joinRequestSheet','coachJoinRequestsSheet','athleteViewSheet','athleteProfileSheet','weightTrendSheet','photoCropSheet','communicationSheet','staffProfileSheet','staffDirectorySheet','familySheet','agreementsSheet','agreementEditorSheet','agreementPreviewSheet','calendarSubscriptionSheet','medicalClearanceSheet','medicalCaseSheet','excuseSheet','athleteAccessSheet','staffAccessSheet','weighedTodaySheet','weighInStartSheet','weighInConsoleSheet','importRosterSheet','teamSwitcherSheet','createTeamSheet','editTeamSheet','lineupClassSheet','accountSheet','layoutEditorSheet'].forEach(id=>show(id,false));
   show('sheetBackdrop', false); document.body.style.overflow='';
 }
 
@@ -1750,6 +1836,8 @@ async function refresh(){
   }
 
   $('accountEmail').textContent = session.user.email || session.user.id;
+  await loadAccountProfile();
+  applyUiPreferences();
 
   // If a signed-in adult has a pending guardian invite sent to this same verified email,
   // link it automatically so dual-role adults can immediately see their child.
@@ -2329,7 +2417,6 @@ async function activateTeam(teamId,{persist=true}={}){
   applyEffectiveViewMode();
 
   $('headerTeamName').textContent=team.name;
-  $('homeTeamName').textContent=team.name;
 
   rosterRows=[]; rosterManagementRows=[]; scheduleRows=[]; joinRequests=[]; pendingGuardianRequests=[]; agreementStatusRows=[]; agreementPublishedTemplate=null; agreementEditorData=null; agreementPreviewDraftId=null; agreementCurrentData=null; agreementAthleteId=null; calendarSubscriptionUrl=null; adultAccessRows=[]; selectedAdultAccessUserId=null; medicalClearanceCases=[]; medicalCurrentCaseId=null; weighInSessions=[]; memberAthletes=[]; importantAnnouncements=[]; communicationThreads=[]; communicationDirectory=[]; communicationNotifications=[]; communicationSafetyFlags=[]; activeCommunicationThread=null; smsReplyOwners=[]; smsReplies=[]; smsUnreadReplies=0; dashboardCounts=null; certificationPlansByAthlete=new Map();
   teamWeightClasses=[];
@@ -2338,7 +2425,7 @@ async function activateTeam(teamId,{persist=true}={}){
   if(seasonErr){message(seasonErr.message,true);return;}
   if(!seasons?.length){
     activeSeason=null;
-    $('homeSeasonName').textContent='No active season';
+    $('headerSeasonName').textContent='No active season';
     $('accountTeamInfo').textContent=`${team.name} · No active season`;
     $('accountTeamLevels').innerHTML=renderTeamLevelPills(team.service_levels||[]);
     show('editTeamBtn',isTeamAdmin);
@@ -2349,7 +2436,7 @@ async function activateTeam(teamId,{persist=true}={}){
   }
 
   activeSeason=seasons[0];
-  $('homeSeasonName').textContent=`${activeSeason.name} Season`;
+  $('headerSeasonName').textContent=`${activeSeason.name} Season`;
   $('accountTeamInfo').textContent=`${team.name} · ${activeSeason.name}`;
   $('accountTeamLevels').innerHTML=renderTeamLevelPills(team.service_levels||[]);
   show('editTeamBtn',isTeamAdmin);
@@ -2361,6 +2448,7 @@ async function activateTeam(teamId,{persist=true}={}){
 
   if(isStaff){
     await Promise.all([loadDashboard(),loadRoster(),loadSchedule(),loadJoinRequests(),loadGuardianConnectionRequests(),loadAgreementCoachStatus(false),loadWeighInSessions(),loadImportantAnnouncements()]);
+    subscribeTeamJoinRealtime();
   } else if(isManager){
     await Promise.all([loadOperationalRoster(),loadSchedule(),loadWeighInSessions(),loadImportantAnnouncements()]);
   } else {
@@ -3431,6 +3519,8 @@ async function loadJoinGuardianDefaults(){
 async function startJoinFlow(code,teamId=null,parentExisting=false){
   joinRequesterRole=parentExisting?'parent_guardian':'athlete';
   joinParentPath=parentExisting?'create':null;
+  joinMatchSearchCompleted=false;
+  selectedClaimAthleteId=null;
   joinPreview=null;
   if(code){
     const {data,error}=await client.rpc('preview_team_join_code',{p_join_code:code});
@@ -3444,6 +3534,8 @@ async function startJoinFlow(code,teamId=null,parentExisting=false){
   } else return;
   $('joinRequestTitle').textContent=parentExisting?'Add Athlete':'Join Team';
   ['joinFirstName','joinLastName','joinBirthDate','joinGraduationYear','joinAthletePhone','joinShirt','joinShorts','joinShoe','joinSinglet','joinWarmTop','joinWarmBottom','joinMedicalNote','joinRescueLocation','joinGuardianName','joinGuardianRelationship','joinGuardianEmail','joinGuardianPhone'].forEach(id=>{if($(id))$(id).value='';});
+  $('joinGearCategory').value='Youth';$('joinShoeCategory').value='Youth';setupGearSelects();
+  $('joinClaimMatches').innerHTML='';show('continueNewProfileBtn',false);
   $('joinSchoolLevel').value=''; $('joinGrade').value='';
   document.querySelectorAll('.join-med').forEach(x=>x.checked=false);
   ['joinShareEmail','joinSharePhone','joinShareBirth','joinSms','joinMedicalShare'].forEach(id=>$(id).checked=false);
@@ -3458,9 +3550,11 @@ async function startJoinFlow(code,teamId=null,parentExisting=false){
 function setParentJoinPath(path){
   joinParentPath=path;
   const isClaim=path==='claim';
+  if(path==='claim'){joinMatchSearchCompleted=false;selectedClaimAthleteId=null;}
   $('claimExistingAthleteBtn')?.classList.toggle('active',isClaim);
   $('createAthleteProfileBtn')?.classList.toggle('active',path==='create');
   ['joinAthleteHeading','joinAthleteNameRow','joinAthleteDobSchoolRow'].forEach(id=>show(id,!!path));
+  show('joinProfileClaimBox',!!path||joinRequesterRole==='athlete');
   show('joinNewAthleteDetails',path==='create'||joinRequesterRole==='athlete');
   show('joinSchoolLevelBox',path==='create'||joinRequesterRole==='athlete');
   show('joinClaimHelp',isClaim);
@@ -3475,6 +3569,8 @@ function setParentJoinPath(path){
 
 function setJoinRole(role){
   joinRequesterRole=role;
+  joinMatchSearchCompleted=false;selectedClaimAthleteId=null;
+  if($('joinClaimMatches'))$('joinClaimMatches').innerHTML='';show('continueNewProfileBtn',false);
   $('joinAsAthleteBtn').classList.toggle('active',role==='athlete');
   $('joinAsParentBtn').classList.toggle('active',role==='parent_guardian');
   show('parentJoinChoice',role==='parent_guardian');
@@ -3486,7 +3582,7 @@ function setJoinRole(role){
     joinParentPath=null;
     $('joinGuardianEmail').value=$('joinGuardianEmail').value||session?.user?.email||'';
     ['joinFirstName','joinLastName','joinBirthDate'].forEach(id=>{if($(id))$(id).value='';});
-    ['joinAthleteHeading','joinAthleteNameRow','joinAthleteDobSchoolRow','joinNewAthleteDetails','joinClaimHelp'].forEach(id=>show(id,false));
+    ['joinAthleteHeading','joinAthleteNameRow','joinAthleteDobSchoolRow','joinNewAthleteDetails','joinClaimHelp','joinProfileClaimBox'].forEach(id=>show(id,false));
     $('claimExistingAthleteBtn')?.classList.remove('active');
     $('createAthleteProfileBtn')?.classList.remove('active');
     $('joinRequestSheet')?.classList.remove('join-claim-mode');
@@ -3512,27 +3608,44 @@ function updateJoinSensitiveControls(){
 function collectJoinProfile(){
   return {
     school_level:$('joinSchoolLevel').value||null, grade_level:$('joinGrade').value||null, graduation_year:$('joinGraduationYear').value.trim()||null,
-    shirt_size:$('joinShirt').value.trim()||null, shorts_size:$('joinShorts').value.trim()||null, shoe_size:$('joinShoe').value.trim()||null, singlet_size:$('joinSinglet').value.trim()||null, warmup_top_size:$('joinWarmTop').value.trim()||null, warmup_bottom_size:$('joinWarmBottom').value.trim()||null,
+    shirt_size:storedApparelValue('join','Shirt'), shorts_size:storedApparelValue('join','Shorts'), shoe_size:storedShoeValue('join'), singlet_size:storedApparelValue('join','Singlet'), warmup_top_size:storedApparelValue('join','WarmTop'), warmup_bottom_size:storedApparelValue('join','WarmBottom'),
     share_email_with_coaches:$('joinShareEmail').checked, share_phone_with_coaches:$('joinSharePhone').checked, share_birth_date_with_coaches:$('joinShareBirth').checked, sms_opt_in:$('joinSms').checked,
     medical_conditions:[...document.querySelectorAll('.join-med:checked')].map(x=>x.value), medical_notes:$('joinMedicalNote').value.trim()||null, rescue_item_location:$('joinRescueLocation').value.trim()||null, disclose_medical_to_coaches:$('joinMedicalShare').checked
   };
 }
+
+async function findClaimableProfile(){
+  const first=$('joinFirstName').value.trim(),last=$('joinLastName').value.trim();
+  if(!first||!last){message('Enter the athlete first and last name before searching.',true);return;}
+  const btn=$('findClaimableProfileBtn');btn.disabled=true;btn.textContent='Checking securely…';
+  const {data,error}=await client.rpc('find_claimable_team_profiles',{p_join_code:$('joinRequestCode').value||null,p_team_id:$('joinRequestTeamId').value||null,p_claimant_role:joinRequesterRole,p_athlete_first_name:first,p_athlete_last_name:last,p_athlete_birth_date:$('joinBirthDate').value||null});
+  btn.disabled=false;btn.textContent='Find Existing Profile';
+  if(error){message(error.message,true);return;}
+  joinMatchSearchCompleted=true;selectedClaimAthleteId=null;
+  const rows=data||[],box=$('joinClaimMatches');
+  box.innerHTML=rows.length?rows.map(r=>`<button class="claim-match-card" type="button" data-claim-athlete="${esc(r.athlete_id)}"><span><b>${esc(r.display_name||`${first} ${last}`)}</b><small>${esc(r.team_name||'Team')} · ${esc(r.match_reason||'Verified match')}</small></span><span>This is ${joinRequesterRole==='athlete'?'me':'my athlete'} ›</span></button>`).join(''):'<div class="empty-card">No secure match was found. You can create a new profile without exposing anyone else on the roster.</div>';
+  box.querySelectorAll('[data-claim-athlete]').forEach(card=>card.onclick=()=>{selectedClaimAthleteId=card.dataset.claimAthlete;box.querySelectorAll('.claim-match-card').forEach(x=>x.classList.toggle('active',x===card));joinParentPath='claim';$('submitJoinRequestBtn').textContent='Send Profile Claim for Approval';show('joinNewAthleteDetails',false);});
+  show('continueNewProfileBtn',!rows.length);
+  if(rows.length)message('Select the matching profile. A coach or admin will approve the connection.');
+}
+function continueWithNewProfile(){selectedClaimAthleteId=null;joinParentPath='create';joinMatchSearchCompleted=true;show('joinNewAthleteDetails',true);$('submitJoinRequestBtn').textContent='Send Join Request';message('No existing profile selected. Complete the new athlete profile below.');}
 
 async function submitJoinRequest(){
   const first=$('joinFirstName').value.trim(),last=$('joinLastName').value.trim(),gname=$('joinGuardianName').value.trim();
   if(joinRequesterRole==='parent_guardian'&&!joinParentPath){message('Choose Claim My Athlete or Create Athlete Profile first.',true);return;}
   if(!first||!last||!gname){message('Add the athlete name and the parent/guardian name.',true);return;}
   if(joinRequesterRole==='athlete'&&!$('joinAthleteEmail').value.trim()){message('Athlete email is required when the athlete is creating their own account.',true);return;}
+  if(!joinMatchSearchCompleted){message('Use Find Existing Profile first. This prevents duplicate athlete and parent profiles.',true);return;}
 
   $('submitJoinRequestBtn').disabled=true;
   $('submitJoinRequestBtn').textContent=joinRequesterRole==='parent_guardian'&&joinParentPath==='claim'?'Sending claim…':'Sending…';
 
-  if(joinRequesterRole==='parent_guardian'&&joinParentPath==='claim'){
-    const {error}=await client.rpc('submit_existing_athlete_claim',{
+  if(selectedClaimAthleteId){
+    const {error}=await client.rpc('submit_team_profile_claim',{
       p_join_code:$('joinRequestCode').value||null,
       p_team_id:$('joinRequestTeamId').value||null,
-      p_athlete_first_name:first,
-      p_athlete_last_name:last,
+      p_claimant_role:joinRequesterRole,
+      p_athlete_id:selectedClaimAthleteId,
       p_athlete_birth_date:$('joinBirthDate').value||null,
       p_guardian_name:gname,
       p_guardian_email:$('joinGuardianEmail').value.trim()||null,
@@ -3541,7 +3654,7 @@ async function submitJoinRequest(){
     });
     $('submitJoinRequestBtn').disabled=false;$('submitJoinRequestBtn').textContent='Send Claim Request';
     if(error){message(error.message,true);return;}
-    closeSheets();message('Athlete claim sent. The coach will approve the link to your parent/guardian account.');
+    closeSheets();message('Profile claim sent. A coach or admin will approve the account connection.');
     return;
   }
 
@@ -3584,6 +3697,14 @@ async function loadJoinRequests(){
   $('joinRequestCount').innerHTML=joinRequests.length?`<span class="pending-count">${joinRequests.length}</span>`:'›';
 }
 
+function subscribeTeamJoinRealtime(){
+  if(!activeTeam||!isStaff)return;
+  const channel=client.channel(`wm-team-joins-${activeTeam.id}`)
+    .on('postgres_changes',{event:'*',schema:'public',table:'team_join_requests',filter:`team_id=eq.${activeTeam.id}`},async()=>{await loadJoinRequests();renderAttention();message('Team join requests updated.');})
+    .subscribe();
+  communicationRealtimeChannels.push(channel);
+}
+
 async function loadGuardianConnectionRequests(){
   if(!isStaff||!activeTeam){pendingGuardianRequests=[];return;}
   const {data,error}=await client.rpc('get_pending_guardian_connection_requests',{p_team_id:activeTeam.id});
@@ -3598,7 +3719,7 @@ async function openJoinRequests(){
   const ids=joinRequests.map(x=>x.id);
   const {data:guardians}=await client.from('join_request_guardians').select('*').in('join_request_id',ids);
   const gmap=new Map(); (guardians||[]).forEach(g=>{if(!gmap.has(g.join_request_id))gmap.set(g.join_request_id,[]);gmap.get(g.join_request_id).push(g);});
-  box.innerHTML=joinRequests.map(r=>{const p=r.profile_data||{};const gs=gmap.get(r.id)||[];const med=(p.medical_conditions||[]);const isClaim=!!r.claim_athlete_id||p.join_intent==='claim_existing';const lead=r.requester_role==='athlete'?'Athlete self-registration':(isClaim?'Existing athlete claim':'Parent creating athlete profile');const detail=isClaim?'Link parent/guardian to the athlete already on this roster':`${esc(p.school_level?schoolLabel(p.school_level):'School level not entered')}${p.grade_level?' · Grade '+esc(p.grade_level):''}`;return `<div class="request-card"><h3>${esc(r.athlete_first_name)} ${esc(r.athlete_last_name)}</h3><p><b>${esc(lead)}</b> · ${detail}</p><p>Birthday: ${esc(r.athlete_birth_date||'not entered')}${isClaim?'':' · Contact: '+esc(r.athlete_email||r.athlete_phone||'none')}</p><p>Guardian: ${esc(gs.map(g=>g.name).join(', ')||'—')}</p>${med.length?`<p><span class="badge-alert">Medical info disclosed</span> ${esc(med.join(', '))}</p>`:''}<div class="request-actions"><button data-approve-request="${r.id}">${isClaim?'Approve Claim':'Approve'}</button><button class="deny" data-deny-request="${r.id}">Deny</button></div></div>`}).join('');
+  box.innerHTML=joinRequests.map(r=>{const p=r.profile_data||{};const gs=gmap.get(r.id)||[];const med=(p.medical_conditions||[]);const isClaim=!!r.claim_athlete_id||p.join_intent==='claim_existing';const athleteClaim=isClaim&&r.requester_role==='athlete';const lead=athleteClaim?'Athlete claiming existing profile':(isClaim?'Parent / guardian claiming existing athlete':'Parent creating athlete profile');const detail=isClaim?(athleteClaim?'Connect this login to the existing athlete profile':'Link this parent/guardian to the athlete already on the roster'):`${esc(p.school_level?schoolLabel(p.school_level):'School level not entered')}${p.grade_level?' · Grade '+esc(p.grade_level):''}`;return `<div class="request-card"><h3>${esc(r.athlete_first_name)} ${esc(r.athlete_last_name)}</h3><p><b>${esc(lead)}</b> · ${detail}</p><p>Birthday: ${esc(r.athlete_birth_date||'not entered')}${isClaim?'':' · Contact: '+esc(r.athlete_email||r.athlete_phone||'none')}</p><p>Guardian: ${esc(gs.map(g=>g.name).join(', ')||'—')}</p>${med.length?`<p><span class="badge-alert">Medical info disclosed</span> ${esc(med.join(', '))}</p>`:''}<div class="request-actions"><button data-approve-request="${r.id}">${isClaim?'Approve Claim':'Approve'}</button><button class="deny" data-deny-request="${r.id}">Deny</button></div></div>`}).join('');
   box.querySelectorAll('[data-approve-request]').forEach(b=>b.onclick=()=>reviewJoinRequest(b.dataset.approveRequest,true));
   box.querySelectorAll('[data-deny-request]').forEach(b=>b.onclick=()=>reviewJoinRequest(b.dataset.denyRequest,false));
   closeSheets();openSheet('coachJoinRequestsSheet');
@@ -3608,7 +3729,7 @@ async function reviewJoinRequest(id,approve){
   const req=joinRequests.find(x=>x.id===id);const isClaim=!!req?.claim_athlete_id||(req?.profile_data||{}).join_intent==='claim_existing';
   const result=approve?await client.rpc('approve_team_join_request_v2',{p_request_id:id}):await client.rpc('deny_team_join_request',{p_request_id:id,p_note:null});
   if(result.error){message(result.error.message,true);return;}
-  message(approve?(isClaim?'Parent/guardian linked to the existing athlete.':'Athlete approved and added to the roster.'):'Join request denied.');
+  message(approve?(isClaim?(req?.requester_role==='athlete'?'Athlete login linked to the existing profile.':'Parent/guardian linked to the existing athlete.'):'Athlete approved and added to the roster.'):'Join request denied.');
   await Promise.all([loadJoinRequests(),loadRoster(),loadDashboard()]); await openJoinRequests();
 }
 
@@ -3745,7 +3866,10 @@ async function openAthleteProfile(athleteId){
   $('profileAthleteName').textContent=`${data.first_name} ${data.last_name}`;
   $('profileFirstName').value=data.first_name||''; $('profileLastName').value=data.last_name||''; $('profileBirthDate').value=data.birth_date||''; $('profileSchoolLevel').value=data.school_level||''; $('profileGrade').value=data.grade_level||''; $('profileGradYear').value=data.graduation_year||'';
   $('profileEmail').value=data.email||''; setPhoneValue('profilePhone',data.phone||''); $('profileShareEmail').checked=!!data.share_email_with_coaches; $('profileSharePhone').checked=!!data.share_phone_with_coaches; $('profileShareBirth').checked=!!data.share_birth_date_with_coaches; $('profileSms').checked=!!data.sms_opt_in;
-  $('profileShirt').value=data.shirt_size||''; $('profileShorts').value=data.shorts_size||''; $('profileShoe').value=data.shoe_size||''; $('profileSinglet').value=data.singlet_size||''; $('profileWarmTop').value=data.warmup_top_size||''; $('profileWarmBottom').value=data.warmup_bottom_size||'';
+  const apparelValues=['shirt_size','shorts_size','singlet_size','warmup_top_size','warmup_bottom_size'].map(key=>parseStoredSize(data[key]));
+  const apparelCategory=apparelValues.find(x=>x.size)?.category||'Youth';$('profileGearCategory').value=apparelCategory;
+  [['profileShirt',0],['profileShorts',1],['profileSinglet',2],['profileWarmTop',3],['profileWarmBottom',4]].forEach(([id,index])=>{$(id).value=apparelValues[index].size;});
+  const shoe=parseStoredSize(data.shoe_size);$('profileShoeCategory').value=shoe.category;fillSelect($('profileShoe'),shoe.category==='Adult'?ADULT_SHOE_SIZES:YOUTH_SHOE_SIZES,'Select size…');$('profileShoe').value=shoe.size;
   document.querySelectorAll('.profile-med').forEach(x=>x.checked=(data.medical_conditions||[]).includes(x.value)); $('profileMedicalNote').value=data.medical_notes||''; $('profileRescueLocation').value=data.rescue_item_location||''; $('profileMedicalShare').checked=!!data.disclose_medical_to_coaches;
   $('profileAgeDivisions').innerHTML=formatAgeDivisions(data.age_divisions);
   $('profileGuardianList').innerHTML=guardianCardsHtml(data.guardians,!!(data.viewer?.staff||data.viewer?.admin));
@@ -3766,7 +3890,7 @@ async function openAthleteProfile(athleteId){
 
 async function saveAthleteProfile(){
   if(!profileAthleteId||!activeTeam)return;
-  const payload={first_name:$('profileFirstName').value.trim(),last_name:$('profileLastName').value.trim(),birth_date:$('profileBirthDate').value||null,school_level:$('profileSchoolLevel').value||null,grade_level:$('profileGrade').value||null,graduation_year:$('profileGradYear').value.trim()||null,email:$('profileEmail').value.trim()||null,phone:$('profilePhone').value.trim()||null,share_email_with_coaches:$('profileShareEmail').checked,share_phone_with_coaches:$('profileSharePhone').checked,share_birth_date_with_coaches:$('profileShareBirth').checked,sms_opt_in:$('profileSms').checked,shirt_size:$('profileShirt').value.trim()||null,shorts_size:$('profileShorts').value.trim()||null,shoe_size:$('profileShoe').value.trim()||null,singlet_size:$('profileSinglet').value.trim()||null,warmup_top_size:$('profileWarmTop').value.trim()||null,warmup_bottom_size:$('profileWarmBottom').value.trim()||null,medical_conditions:[...document.querySelectorAll('.profile-med:checked')].map(x=>x.value),medical_notes:$('profileMedicalNote').value.trim()||null,rescue_item_location:$('profileRescueLocation').value.trim()||null,disclose_medical_to_coaches:$('profileMedicalShare').checked};
+  const payload={first_name:$('profileFirstName').value.trim(),last_name:$('profileLastName').value.trim(),birth_date:$('profileBirthDate').value||null,school_level:$('profileSchoolLevel').value||null,grade_level:$('profileGrade').value||null,graduation_year:$('profileGradYear').value.trim()||null,email:$('profileEmail').value.trim()||null,phone:$('profilePhone').value.trim()||null,share_email_with_coaches:$('profileShareEmail').checked,share_phone_with_coaches:$('profileSharePhone').checked,share_birth_date_with_coaches:$('profileShareBirth').checked,sms_opt_in:$('profileSms').checked,shirt_size:storedApparelValue('profile','Shirt'),shorts_size:storedApparelValue('profile','Shorts'),shoe_size:storedShoeValue('profile'),singlet_size:storedApparelValue('profile','Singlet'),warmup_top_size:storedApparelValue('profile','WarmTop'),warmup_bottom_size:storedApparelValue('profile','WarmBottom'),medical_conditions:[...document.querySelectorAll('.profile-med:checked')].map(x=>x.value),medical_notes:$('profileMedicalNote').value.trim()||null,rescue_item_location:$('profileRescueLocation').value.trim()||null,disclose_medical_to_coaches:$('profileMedicalShare').checked};
   $('saveAthleteProfileBtn').disabled=true; $('saveAthleteProfileBtn').textContent='Saving…';
   const {data,error}=await client.rpc('update_athlete_profile_v2',{p_athlete_id:profileAthleteId,p_team_id:activeTeam.id,p_profile:payload});
   $('saveAthleteProfileBtn').disabled=false; $('saveAthleteProfileBtn').textContent='Save Profile';
@@ -3908,7 +4032,7 @@ async function saveCroppedProfilePhoto(){
     const path=`${session.user.id}/${Date.now()}-profile.jpg`;
     const {error}=await client.storage.from('profile-photos').upload(path,blob,{contentType:'image/jpeg'});
     if(error){btn.disabled=false;btn.textContent='Use Photo';message(error.message,true);return;}
-    const {data,error:saveErr}=await client.from('profiles').update({photo_path:path,updated_at:new Date().toISOString()}).eq('id',session.user.id).select('id,display_name,phone,photo_path').single();
+    const {data,error:saveErr}=await client.from('profiles').update({photo_path:path,updated_at:new Date().toISOString()}).eq('id',session.user.id).select('id,display_name,phone,photo_path,ui_preferences').single();
     btn.disabled=false;btn.textContent='Use Photo';
     if(saveErr){message(saveErr.message,true);return;}
     accountProfileData=data;photoCropImage=null;photoCropSourceFile=null;$('accountPhotoInput').value='';
@@ -3957,7 +4081,7 @@ async function accountPhotoUrl(path){
 
 async function loadAccountProfile(){
   if(!session?.user)return null;
-  const {data,error}=await client.from('profiles').select('id,display_name,phone,photo_path').eq('id',session.user.id).maybeSingle();
+  const {data,error}=await client.from('profiles').select('id,display_name,phone,photo_path,ui_preferences').eq('id',session.user.id).maybeSingle();
   if(error){message(error.message,true);return null;}
   accountProfileData=data||{};
   return accountProfileData;
@@ -3986,6 +4110,14 @@ async function refreshHeaderAvatar(){
     if(!error&&data?.photo_path){
       const url=await staffPhotoUrl(data.photo_path);
       if(url){setHeaderAvatar(url);return;}
+    }
+  }
+  if(activeTeam){
+    const athleteMembership=currentTeamMemberships.find(m=>m.role==='athlete'&&m.athlete_id);
+    if(athleteMembership){
+      const {data}=await client.from('athletes').select('photo_path').eq('id',athleteMembership.athlete_id).maybeSingle();
+      const athleteUrl=await athletePhotoUrl(data?.photo_path);
+      if(athleteUrl){setHeaderAvatar(athleteUrl);return;}
     }
   }
   const profile=accountProfileData||await loadAccountProfile();
@@ -4064,7 +4196,7 @@ async function saveAccountProfile(){
   const phone=normalizePhoneDigits($('accountPhone').value);
   if(!displayName){message('Add your display name.',true);return;}
   const btn=$('saveAccountProfileBtn');btn.disabled=true;btn.textContent='Saving…';
-  const {data,error}=await client.from('profiles').update({display_name:displayName,phone:phone||null,updated_at:new Date().toISOString()}).eq('id',session.user.id).select('id,display_name,phone,photo_path').single();
+  const {data,error}=await client.from('profiles').update({display_name:displayName,phone:phone||null,updated_at:new Date().toISOString()}).eq('id',session.user.id).select('id,display_name,phone,photo_path,ui_preferences').single();
   btn.disabled=false;btn.textContent='Save Account Profile';
   if(error){message(error.message,true);return;}
   accountProfileData=data;
@@ -4712,6 +4844,7 @@ function renderAttention(){
     if(familyMedical.length)items.push({title:`${familyMedical.length} medical clearance${familyMedical.length===1?' needs':'s need'} paperwork`,sub:'Print the required form or upload the provider release.',action:'medical'});
   } else {
     if(upcoming.length) items.push({title:`${upcoming.length} upcoming event${upcoming.length===1?'':'s'}`,sub:'Review schedule and RSVP settings.',action:'schedule'});
+    if(joinRequests.length)items.push({title:`${joinRequests.length} team join request${joinRequests.length===1?'':'s'} awaiting approval`,sub:'Review account claims and new athlete profiles.',action:'join-requests'});
     if(pendingGuardianRequests.length){
       const first=pendingGuardianRequests[0];
       items.push({title:`${pendingGuardianRequests.length} family connection request${pendingGuardianRequests.length===1?'':'s'}`,sub:`Review ${first.guardian_name} for ${first.athlete_name}.`,action:'guardian-request',athleteId:first.athlete_id});
@@ -4728,6 +4861,7 @@ function renderAttention(){
   $('attentionList').querySelectorAll('[data-attention-index]').forEach(btn=>btn.onclick=()=>{
     const item=items[Number(btn.dataset.attentionIndex)]; if(!item)return;
     if(item.action==='roster'){ openSheet('rosterSheet'); return; }
+    if(item.action==='join-requests'){ openJoinRequests(); return; }
     if(item.action==='guardian-request'){ openAthleteAccess(item.athleteId); return; }
     if(item.action==='agreements'){ openAgreements(); return; }
     if(item.action==='medical'){ openMedicalClearances(); return; }
@@ -5565,12 +5699,14 @@ $('bootstrapTeamBtn').onclick=async()=>{
 $('newEventBtn').onclick=prepareEventForm; $('saveEventBtn').onclick=saveEvent; $('attendanceBtn').onclick=openAttendance; $('deleteEventBtn').onclick=deleteEvent; $('addEventCalendarBtn').onclick=addActiveEventToCalendar;
 $('subscribeAppleCalendarBtn').onclick=subscribeAppleCalendar; $('exportCalendarBtn').onclick=exportTeamCalendar; $('schedulePrevBtn').onclick=()=>moveScheduleFocus(-1); $('scheduleNextBtn').onclick=()=>moveScheduleFocus(1); $('scheduleTodayBtn').onclick=()=>{scheduleFocusDate=new Date();renderSchedule();}; document.querySelectorAll('[data-schedule-view]').forEach(b=>b.onclick=()=>setScheduleView(b.dataset.scheduleView));
 $('saveExcuseBtn').onclick=saveExcuse; $('createAthleteInviteBtn').onclick=createAthleteInvite; $('saveGuardianBtn').onclick=saveGuardianContact; $('createGuardianInviteBtn').onclick=createGuardianInvite;
-$('joinAsAthleteBtn').onclick=()=>setJoinRole('athlete'); $('joinAsParentBtn').onclick=async()=>{setJoinRole('parent_guardian');await loadJoinGuardianDefaults();}; $('claimExistingAthleteBtn').onclick=()=>setParentJoinPath('claim'); $('createAthleteProfileBtn').onclick=()=>setParentJoinPath('create'); $('joinBirthDate').onchange=updateJoinSensitiveControls; $('submitJoinRequestBtn').onclick=submitJoinRequest; $('joinRequestsBtn').onclick=openJoinRequests; $('agreementsBtn').onclick=openAgreements; $('editAgreementBtn').onclick=openAgreementEditor; $('saveAgreementDraftBtn').onclick=()=>saveAgreementDraft(false); $('previewAgreementBtn').onclick=openAgreementPreview; $('backToAgreementEditorBtn').onclick=backToAgreementEditor; $('publishAgreementBtn').onclick=publishAgreementDraft; $('agreementAthleteSelect').onchange=e=>loadFamilyAgreement(e.target.value); $('medicalClearanceBtn').onclick=openMedicalClearances; $('newMedicalCaseBtn').onclick=openNewMedicalCase; $('medicalNewType').onchange=updateMedicalNewType; $('createMedicalCaseBtn').onclick=createMedicalCase; $('saveAthleteProfileBtn').onclick=saveAthleteProfile; $('profilePhotoInput').onchange=beginProfilePhotoCrop; $('profileManageGuardiansBtn').onclick=()=>{if(profileAthleteId)openAthleteAccess(profileAthleteId);}; $('memberProfilesBtn').onclick=openMemberProfiles; $('familyBtn').onclick=openFamily; $('familyCreateGuardianInviteBtn').onclick=familyCreateGuardianInvite; $('familyRequestGuardianBtn').onclick=familyRequestGuardianConnection; $('parentAddChildBtn').onclick=()=>startJoinFlow(null,activeTeam.id,true);
+$('joinAsAthleteBtn').onclick=()=>setJoinRole('athlete'); $('joinAsParentBtn').onclick=async()=>{setJoinRole('parent_guardian');await loadJoinGuardianDefaults();}; $('claimExistingAthleteBtn').onclick=()=>setParentJoinPath('claim'); $('createAthleteProfileBtn').onclick=()=>setParentJoinPath('create'); $('findClaimableProfileBtn').onclick=findClaimableProfile; $('continueNewProfileBtn').onclick=continueWithNewProfile; $('joinBirthDate').onchange=()=>{joinMatchSearchCompleted=false;selectedClaimAthleteId=null;updateJoinSensitiveControls();}; $('submitJoinRequestBtn').onclick=submitJoinRequest; $('joinRequestsBtn').onclick=openJoinRequests; $('agreementsBtn').onclick=openAgreements; $('editAgreementBtn').onclick=openAgreementEditor; $('saveAgreementDraftBtn').onclick=()=>saveAgreementDraft(false); $('previewAgreementBtn').onclick=openAgreementPreview; $('backToAgreementEditorBtn').onclick=backToAgreementEditor; $('publishAgreementBtn').onclick=publishAgreementDraft; $('agreementAthleteSelect').onchange=e=>loadFamilyAgreement(e.target.value); $('medicalClearanceBtn').onclick=openMedicalClearances; $('newMedicalCaseBtn').onclick=openNewMedicalCase; $('medicalNewType').onchange=updateMedicalNewType; $('createMedicalCaseBtn').onclick=createMedicalCase; $('saveAthleteProfileBtn').onclick=saveAthleteProfile; $('profilePhotoInput').onchange=beginProfilePhotoCrop; $('profileManageGuardiansBtn').onclick=()=>{if(profileAthleteId)openAthleteAccess(profileAthleteId);}; $('memberProfilesBtn').onclick=openMemberProfiles; $('familyBtn').onclick=openFamily; $('familyCreateGuardianInviteBtn').onclick=familyCreateGuardianInvite; $('familyRequestGuardianBtn').onclick=familyRequestGuardianConnection; $('parentAddChildBtn').onclick=()=>startJoinFlow(null,activeTeam.id,true);
 $('viewAthleteTrendBtn').onclick=()=>{if(viewAthleteId)openWeightTrend(viewAthleteId);};
 $('viewAthleteEditBtn').onclick=()=>{if(viewAthleteId)openAthleteProfile(viewAthleteId);};
 $('viewAthleteGuardiansBtn').onclick=()=>{if(viewAthleteId)openAthleteAccess(viewAthleteId);};
 $('viewAthleteTeamsBtn').onclick=()=>{if(viewAthleteId)openAthleteTeams(viewAthleteId);};
 $('rosterBtn').onclick=()=>openSheet('rosterSheet'); $('addAthleteBtn').onclick=openAddAthlete; $('saveAthleteBtn').onclick=saveAthlete; $('joinBtn').onclick=showTeamJoin; $('accountBtn').onclick=openAccountSheet; $('profileBtn').onclick=openAccountSheet; $('accountPhotoInput').onchange=beginAccountPhotoCrop; $('saveAccountProfileBtn').onclick=saveAccountProfile; $('staffDirectoryBtn').onclick=openStaffDirectory; $('editStaffProfileBtn').onclick=openStaffProfile; $('saveStaffProfileBtn').onclick=saveStaffProfile; $('staffPhotoInput').onchange=beginStaffPhotoCrop; $('teamSwitcherBtn').onclick=openTeamSwitcher; $('createTeamBtn').onclick=openCreateTeam; $('saveNewTeamBtn').onclick=createTeam; $('editTeamBtn').onclick=openEditTeam; $('saveEditTeamBtn').onclick=saveEditTeam; $('communicationBtn').onclick=openCommunicationSettings; $('saveCommunicationBtn').onclick=saveCommunicationSettings; $('sendTestEmailBtn').onclick=sendTestTeamEmail;
+$('customizeLayoutBtn').onclick=openLayoutEditor;$('saveLayoutBtn').onclick=saveUiLayout;
+['joinFirstName','joinLastName'].forEach(id=>$(id).addEventListener('input',()=>{joinMatchSearchCompleted=false;selectedClaimAthleteId=null;$('joinClaimMatches').innerHTML='';show('continueNewProfileBtn',false);}));
 bindColorPair('newTeamPrimaryColor','newTeamPrimaryHex',updateNewTeamBrandPreview);
 bindColorPair('newTeamSecondaryColor','newTeamSecondaryHex',updateNewTeamBrandPreview);
 bindColorPair('newTeamAccentColor','newTeamAccentHex',updateNewTeamBrandPreview);
@@ -5714,6 +5850,7 @@ $('joinCodeBtn').onclick=showTeamJoin;
 
 setupPhoneFormatting();
 client.auth.onAuthStateChange(()=>setTimeout(refresh,0));
+setupGearSelects();
 refresh();
 
 </script>
