@@ -1404,7 +1404,7 @@ button{touch-action:manipulation}
     <button id="customizeLayoutBtn" class="wide secondary" type="button">↕ Customize App Layout</button>
     <button id="securityBtn" class="wide secondary" type="button">🔒 Sign-In & App Security</button>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.15.3</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.15.4</p>
   </section>
 
   <section id="layoutEditorSheet" class="sheet hidden" aria-modal="true">
@@ -1778,6 +1778,7 @@ let communicationRealtimeChannels = [];
 let communicationReceiptRefreshTimer = null;
 let communicationReceiptPollTimer = null;
 let communicationReceiptRefreshInFlight = false;
+let communicationThreadRefreshTimer = null;
 let communicationReceiptSignature = '';
 let communicationSearchTimer = null;
 let communicationLoadSequence = 0;
@@ -3357,13 +3358,25 @@ function renderCommunicationSafetySummary(){
   $('openCommunicationSafetyBtn').onclick=openCommunicationSafetyReview;
 }
 
+function scheduleActiveCommunicationThreadRefresh(threadId,delay=120){
+  if(!activeCommunicationThread||String(activeCommunicationThread.thread_id)!==String(threadId))return;
+  clearTimeout(communicationThreadRefreshTimer);
+  communicationThreadRefreshTimer=setTimeout(()=>{
+    if(!activeCommunicationThread||String(activeCommunicationThread.thread_id)!==String(threadId)||$('communicationThreadSheet')?.classList.contains('hidden'))return;
+    openCommunicationThread(threadId,{keepOpen:true,preserveScroll:true});
+  },delay);
+}
+
 function subscribeCommunicationRealtime(){
   if(!activeTeam||communicationRealtimeChannels.length)return;
   const messageChannel=client.channel(`wm-communication-${activeTeam.id}`)
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'communication_messages',filter:`team_id=eq.${activeTeam.id}`},payload=>{
-      if(activeCommunicationThread?.thread_id===payload.new.thread_id)openCommunicationThread(payload.new.thread_id,{keepOpen:true});
+      scheduleActiveCommunicationThreadRefresh(payload.new.thread_id,160);
       loadCommunications(false);
       if(document.hidden&&'Notification' in window&&Notification.permission==='granted'&&payload.new.sender_user_id!==session?.user?.id)new Notification('New Wrestling Manager message',{body:'Open the app to read your team message.'});
+    })
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'communication_attachments',filter:`team_id=eq.${activeTeam.id}`},payload=>{
+      scheduleActiveCommunicationThreadRefresh(payload.new.thread_id,80);
     }).subscribe();
   const notificationChannel=client.channel(`wm-notifications-${session.user.id}`)
     .on('postgres_changes',{event:'*',schema:'public',table:'communication_notifications',filter:`user_id=eq.${session.user.id}`},()=>loadCommunications(false)).subscribe();
@@ -3529,7 +3542,8 @@ function renderCommunicationMessages(rows,{preserveScroll=false,distanceFromBott
     }
     const safetyLevel=String(m.safety_level||'none').toLowerCase();
     const safetyBubbleClass=!removed&&['high','medium','low'].includes(safetyLevel)?` safety-${safetyLevel}`:'';
-    const safetyFlag=!removed&&safetyLevel!=='none'?`<div class="message-safety-flag ${esc(safetyLevel)}">${safetyTest?'🧪 Test flag detected':'⚠️ Safety review required'} · ${esc(safetyLevel)} priority</div>`:'';
+    const safetyLabel=safetyLevel==='high'?'⚠️ Safety review required':safetyLevel==='medium'?'🟡 Safeguard noted':'🔵 Safeguard notice';
+    const safetyFlag=!removed&&safetyLevel!=='none'?`<div class="message-safety-flag ${esc(safetyLevel)}">${safetyTest?'🧪 Test flag detected':safetyLabel} · ${esc(safetyLevel)} priority</div>`:'';
     const bubble=hasAttachment
       ?(safetyFlag?`<div class="message-media-shell${safetyBubbleClass}">${media}${safetyFlag}</div>`:media)
       :`<div class="message-bubble ${m.message_kind==='announcement'?'announcement':''}${safetyBubbleClass}">${safetyTest?'<b>🧪 TEST MESSAGE</b><br>':''}${m.message_kind==='announcement'?'<b>📣 Important</b><br>':''}${removed?'<i>Message removed</i>':esc(m.body)}${safetyFlag}</div>`;
@@ -3553,6 +3567,15 @@ async function sendPendingCommunicationMedia(caption){
   if(upload.error)return upload;
   const sendOutcome=await settleWithin(client.rpc('send_communication_attachment',{p_thread_id:activeCommunicationThread.thread_id,p_storage_path:path,p_mime_type:mimeType,p_file_name:file.name||null,p_size_bytes:file.size,p_caption:caption||null}),15000,'Photo or video message');
   const result=sendOutcome.ok?sendOutcome.value:{data:null,error:sendOutcome.error};
+  if(sendOutcome.timedOut){
+    for(const delay of [700,1800]){
+      await new Promise(resolve=>setTimeout(resolve,delay));
+      const confirmation=await settleWithin(client.from('communication_attachments').select('message_id').eq('storage_path',path).maybeSingle(),5000,'Photo confirmation');
+      if(confirmation.ok&&!confirmation.value.error&&confirmation.value.data?.message_id){
+        return {data:confirmation.value.data.message_id,error:null};
+      }
+    }
+  }
   if(result.error&&!sendOutcome.timedOut)client.storage.from('communication-media').remove([path]);
   return result;
 }
