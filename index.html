@@ -1021,6 +1021,7 @@ button{touch-action:manipulation}
     <div class="sheet-head"><div><div class="eyebrow">EDIT ATHLETE PROFILE</div><h2 id="profileAthleteName">Athlete</h2><p class="muted">Edit profile, family contacts, gear sizing, privacy and age divisions</p></div><button class="icon-close" data-close-sheet>×</button></div>
     <div class="profile-photo-row"><div id="profilePhotoBox" class="profile-photo-placeholder">👤</div><div><label style="margin-top:0">Profile photo</label><input id="profilePhotoInput" type="file" accept="image/*"><div class="tiny">Athlete, parent or authorized team staff can update the picture.</div></div></div>
     <div id="profileAgeDivisions" class="join-summary"></div>
+    <div id="profileWeightSnapshot" class="join-summary"><b>Latest team weight</b><small>Loading weight history…</small></div>
     <button id="profileWeightTrendBtn" class="wide secondary" type="button">📈 Weight Trend</button>
     <div class="profile-grid"><div><label>First name</label><input id="profileFirstName"></div><div><label>Last name</label><input id="profileLastName"></div></div>
     <div class="profile-grid"><div><label>Birthday</label><input id="profileBirthDate" type="date"></div><div><label>School level</label><select id="profileSchoolLevel"><option value="">Choose…</option><option value="elementary">Elementary</option><option value="middle_school">Middle School</option><option value="high_school">High School</option><option value="college">College</option><option value="adult">Adult / Open</option><option value="other">Other</option></select></div></div>
@@ -5196,7 +5197,10 @@ async function openAthleteOverview(athleteId){
 
 async function openAthleteProfile(athleteId){
   if(!activeTeam)return;
-  const {data,error}=await client.rpc('get_athlete_profile_for_team_v2',{p_athlete_id:athleteId,p_team_id:activeTeam.id,p_view_as_parent:viewMode==='parent'});
+  const [{data,error},weightResult]=await Promise.all([
+    client.rpc('get_athlete_profile_for_team_v2',{p_athlete_id:athleteId,p_team_id:activeTeam.id,p_view_as_parent:viewMode==='parent'}),
+    activeSeason?client.rpc('get_athlete_weight_trend',{p_athlete_id:athleteId,p_season_id:activeSeason.id,p_days:0}):Promise.resolve({data:null,error:null})
+  ]);
   if(error){message(error.message,true);return;}
   profileAthleteId=athleteId; profileData=data;
   $('profileAthleteName').textContent=`${data.first_name} ${data.last_name}`;
@@ -5208,6 +5212,12 @@ async function openAthleteProfile(athleteId){
   const shoe=parseStoredSize(data.shoe_size);$('profileShoeCategory').value=shoe.category;fillSelect($('profileShoe'),shoe.category==='Adult'?ADULT_SHOE_SIZES:YOUTH_SHOE_SIZES,'Select size…');$('profileShoe').value=shoe.size;
   document.querySelectorAll('.profile-med').forEach(x=>x.checked=(data.medical_conditions||[]).includes(x.value)); $('profileMedicalNote').value=data.medical_notes||''; $('profileRescueLocation').value=data.rescue_item_location||''; $('profileMedicalShare').checked=!!data.disclose_medical_to_coaches;
   $('profileAgeDivisions').innerHTML=formatAgeDivisions(data.age_divisions);
+  const profileWeightPoints=weightResult.error?[]:(weightResult.data?.points||[]);
+  const profileLatestWeight=profileWeightPoints.at(-1);
+  if(weightResult.error)console.warn('Athlete profile weight:',weightResult.error.message);
+  $('profileWeightSnapshot').innerHTML=profileLatestWeight
+    ? `<b>Latest team weight</b><div style="font-size:28px;font-weight:950;margin-top:5px">${Number(profileLatestWeight.weight_lbs).toFixed(1)} lb</div><small>${esc(fmtDateTime(profileLatestWeight.captured_at))} · ${esc(profileLatestWeight.source==='scale'?'Team scale':'Team weight record')}</small>`
+    : '<b>Latest team weight</b><small>No weigh-ins recorded for this season.</small>';
   $('profileGuardianList').innerHTML=guardianCardsHtml(data.guardians,!!(data.viewer?.staff||data.viewer?.admin));
   const viewer=data.viewer||{}; const adult=data.birth_date?new Date(data.birth_date+'T12:00:00')<=new Date(new Date().setFullYear(new Date().getFullYear()-18)):false; const control=viewer.guardian||viewer.admin||(viewer.self&&adult);
   show('profileManageGuardiansBtn',!!viewer.staff);
