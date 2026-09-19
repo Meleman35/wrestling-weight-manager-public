@@ -57,7 +57,7 @@ button.wide{width:100%;margin-top:16px}.stack-actions{display:grid;gap:9px;margi
 .event-card{width:100%;display:flex;align-items:center;gap:13px;text-align:left;background:#fff;color:var(--ink);border:1px solid var(--line);padding:12px;border-radius:18px}.event-date{width:52px;flex:0 0 52px;border-radius:14px;background:#edf3f9;padding:8px 4px;text-align:center}.event-date b{display:block;font-size:20px}.event-date small{font-weight:900;color:#56728f}.event-info{min-width:0;flex:1}.event-info b{display:block;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.event-info small{display:block;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.event-side{text-align:right}.event-side span{display:block;font-size:11px;font-weight:900;color:#42627f}.event-side small{display:block;color:var(--muted);margin-top:4px}
 .feature-card{padding:17px;margin-top:12px}.feature-card h3{margin:0 0 8px}.feature-card p{color:var(--muted);line-height:1.45}.mini-row{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid var(--line)}.mini-row b{color:#5d6875}
 .menu-card{overflow:hidden}.menu-row{width:100%;display:grid;grid-template-columns:32px 1fr 20px;align-items:center;gap:10px;text-align:left;background:#fff;color:var(--ink);border-radius:0;padding:16px;border-bottom:1px solid var(--line)}.menu-row:last-child{border-bottom:0}.menu-row span{font-size:20px}.menu-row b,.menu-row small{display:block}.menu-row small{color:var(--muted);margin-top:3px}.menu-row i{font-size:25px;font-style:normal;color:#7a8490}.menu-row.disabled{opacity:.56}
-.bottom-nav{position:fixed;z-index:30;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(5,1fr);background:var(--team-primary);border-top:2px solid var(--team-secondary);padding:0 0 env(safe-area-inset-bottom);box-shadow:0 -4px 18px rgba(0,0,0,.08)}.nav-btn{background:var(--team-primary);color:var(--team-primary-text);padding:9px 2px 8px;border-radius:0;min-height:62px;border-right:1px solid var(--team-nav-line);opacity:.76}.nav-btn:last-child{border-right:0}.nav-btn span{display:block;font-size:20px;line-height:1}.nav-btn small{display:block;font-size:10px;font-weight:900;margin-top:5px}.nav-btn.active{background:var(--team-secondary);color:var(--team-secondary-text);opacity:1;box-shadow:inset 0 4px 0 var(--team-accent)}
+.bottom-nav{position:fixed;z-index:30;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(5,1fr);background:var(--team-primary);border-top:2px solid var(--team-secondary);padding:0 0 env(safe-area-inset-bottom);box-shadow:0 -4px 18px rgba(0,0,0,.08)}.nav-btn{position:relative;background:var(--team-primary);color:var(--team-primary-text);padding:9px 2px 8px;border-radius:0;min-height:62px;border-right:1px solid var(--team-nav-line);opacity:.76}.nav-btn:last-child{border-right:0}.nav-btn span{display:block;font-size:20px;line-height:1}.nav-btn small{display:block;font-size:10px;font-weight:900;margin-top:5px}.nav-btn.active{background:var(--team-secondary);color:var(--team-secondary-text);opacity:1;box-shadow:inset 0 4px 0 var(--team-accent)}.nav-count-badge{position:absolute;top:4px;right:clamp(5px,12%,18px);display:none;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:#ff3b30;color:#fff;border:2px solid var(--team-primary);box-shadow:0 2px 5px rgba(0,0,0,.28);font-size:11px!important;line-height:1!important;font-weight:950;z-index:2}.nav-btn.active .nav-count-badge{border-color:var(--team-secondary)}.nav-count-badge.show{display:grid}
 .layout-block{min-width:0}.layout-editor-list{display:grid;gap:8px;margin-top:10px}.layout-editor-row{display:grid;grid-template-columns:34px 1fr 42px 42px;align-items:center;gap:8px;background:#f6f8fa;border:1px solid var(--line);border-radius:15px;padding:9px}.layout-editor-row>span:first-child{font-size:20px;text-align:center}.layout-editor-row b{display:block}.layout-editor-row small{display:block;color:var(--muted);margin-top:2px}.layout-move{padding:9px 4px;background:#e7edf4;color:#294766;min-height:38px}.layout-note{background:#eef5fc;border:1px solid #d4e4f5;border-radius:15px;padding:12px;color:#355d87;line-height:1.4}.claim-match-list{display:grid;gap:8px;margin-top:10px}.claim-match-card{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;background:#f7f9fb;color:var(--ink);border:1px solid var(--line);padding:13px}.claim-match-card.active{border:2px solid var(--team-secondary);background:#edf5ff}.claim-match-card b,.claim-match-card small{display:block}.claim-match-card small{color:var(--muted);margin-top:4px}.size-category{margin-bottom:8px}.gear-size-note{font-size:12px;color:var(--muted);margin:5px 0 10px}
 .backdrop{position:fixed;inset:0;z-index:50;background:rgba(15,22,30,.46);backdrop-filter:blur(2px)}
 .sheet{position:fixed;z-index:60;left:50%;transform:translateX(-50%);bottom:0;width:min(760px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:26px 26px 0 0;padding:12px 18px calc(24px + env(safe-area-inset-bottom));box-shadow:0 -12px 45px rgba(0,0,0,.18)}
@@ -615,9 +615,9 @@ button{touch-action:manipulation}
     </main>
 
     <nav class="bottom-nav">
-      <button class="nav-btn active" data-tab="home" data-layout-key="home"><span>⌂</span><small>Home</small></button>
-      <button class="nav-btn" data-tab="schedule" data-layout-key="schedule"><span>▣</span><small>Schedule</small></button>
-      <button class="nav-btn" data-tab="messages" data-layout-key="messages"><span>◯</span><small>Messages</small></button>
+      <button class="nav-btn active" data-tab="home" data-layout-key="home"><span>⌂</span><small>Home</small><i class="nav-count-badge" data-nav-badge="home" aria-label="0 unseen home alerts">0</i></button>
+      <button class="nav-btn" data-tab="schedule" data-layout-key="schedule"><span>▣</span><small>Schedule</small><i class="nav-count-badge" data-nav-badge="schedule" aria-label="0 unseen schedule changes">0</i></button>
+      <button class="nav-btn" data-tab="messages" data-layout-key="messages"><span>◯</span><small>Messages</small><i class="nav-count-badge" data-nav-badge="messages" aria-label="0 unread messages">0</i></button>
       <button class="nav-btn" data-tab="weight" data-layout-key="weight"><span>⚖</span><small>Weight Room</small></button>
       <button class="nav-btn" data-tab="more" data-layout-key="more"><span>☰</span><small>More</small></button>
     </nav>
@@ -2292,11 +2292,42 @@ async function deleteTestWeighIn(weighInId){
   message('Test weigh-in deleted.');
 }
 
+function navSeenKey(name){
+  const userId=session?.user?.id||'signed-out',teamId=activeTeam?.id||'no-team';
+  return `wm_nav_seen_${name}_${userId}_${teamId}`;
+}
+function navSeenAt(name){
+  const value=Number(localStorage.getItem(navSeenKey(name))||0);
+  return Number.isFinite(value)?value:0;
+}
+function markNavSeen(name){
+  if(!session?.user?.id||!activeTeam?.id)return;
+  localStorage.setItem(navSeenKey(name),String(Date.now()));
+}
+function setNavBadge(name,count,label){
+  const badge=document.querySelector(`[data-nav-badge="${name}"]`);if(!badge)return;
+  const amount=Math.max(0,Number(count)||0),display=amount>99?'99+':String(amount);
+  badge.textContent=display;badge.classList.toggle('show',amount>0);
+  badge.setAttribute('aria-label',`${display} ${label}`);
+}
+function updateBottomNavBadges(){
+  const messageCount=(communicationThreads||[]).reduce((sum,row)=>sum+Math.max(0,Number(row.unread_count)||0),0)+Math.max(0,Number(smsUnreadReplies)||0);
+  const homeSeen=navSeenAt('home');
+  const homeCount=(communicationNotifications||[]).filter(row=>!row.read_at&&!row.thread_id&&new Date(row.created_at||0).getTime()>homeSeen).length;
+  const scheduleSeen=navSeenAt('schedule');
+  const scheduleCount=(scheduleRows||[]).filter(row=>new Date(row.updated_at||row.created_at||0).getTime()>scheduleSeen).length;
+  setNavBadge('messages',messageCount,'unread messages');
+  setNavBadge('home',homeCount,'unseen home alerts');
+  setNavBadge('schedule',scheduleCount,'unseen schedule changes');
+}
+
 function setTab(name){
   document.activeElement?.blur?.();
   recoverInteractionLayer();
   ['home','schedule','messages','weight','more'].forEach(tab => show(tab+'Tab', tab===name));
   document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab===name));
+  if(name==='home'||name==='schedule')markNavSeen(name);
+  updateBottomNavBadges();
   window.scrollTo(0,0);
   if (name==='schedule') loadSchedule();
   if (name==='messages') loadCommunications();
@@ -3423,6 +3454,7 @@ async function loadCommunications(showErrors=true){
     subscribeCommunicationRealtime();
     dispatchCommunicationNotifications();
     syncNativeNotificationBadge();
+    updateBottomNavBadges();
   })();
   communicationLoadPromise=request;
   communicationLoadKey=requestKey;
@@ -3439,6 +3471,7 @@ function renderCommunicationInbox(){
   const list=$('communicationThreadList');if(!list)return;
   const unread=communicationNotifications.filter(n=>!n.read_at).length;
   $('communicationUnreadCount').textContent=unread>99?'99+':String(unread);
+  updateBottomNavBadges();
   if(!communicationThreads.length){list.innerHTML='<div class="empty-card">No conversations yet. Tap New to start one.</div>';return;}
   const pins=pinnedThreadIds();
   const pinOrder=new Map(pins.map((id,index)=>[id,index]));
@@ -5970,7 +6003,7 @@ async function loadSchedule(){
   const { data, error } = await client.from('team_events').select('*').eq('team_id',activeTeam.id).order('starts_at',{ascending:true});
   if (error){ message(error.message,true); return; }
   scheduleRows=data||[];
-  renderSchedule(); renderUpcomingHome(); renderAttention();
+  renderSchedule(); renderUpcomingHome(); renderAttention(); updateBottomNavBadges();
 }
 
 function dateKeyLocal(value){
