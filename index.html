@@ -324,6 +324,12 @@ button:focus-visible,.pressable:focus-visible{outline:3px solid color-mix(in srg
 #communicationSafetyTestRoleWrap.hidden{display:none!important}#communicationSafetyTestRoleWrap label{margin:0;font-size:12px;white-space:nowrap;color:#6e6e73}#communicationSafetyTestRoleWrap select{padding:8px 34px 8px 11px;border-radius:13px;font-size:13px}
 .message-safety-flag{margin:7px -5px -3px;padding:6px 8px;border-radius:10px;font-size:10px;font-weight:850;line-height:1.25;background:#fff1ce;color:#7a5000}.message-safety-flag.high{background:#ffe0e0;color:#982a2a}.message-safety-flag.medium{background:#fff1ce;color:#805c10}.message-safety-flag.low{background:#e8eef5;color:#35506d}.message-row.mine .message-safety-flag{background:rgba(255,255,255,.9);color:#7d2424}
 .safety-test-chip{display:inline-block;margin:0 0 7px 6px;border-radius:999px;padding:4px 8px;background:#eee8ff;color:#5c3f9f;font-size:10px;font-weight:950;text-transform:uppercase}
+/* v0.14.5: readable alerts, durable mobile taps, and clearer safety actions. */
+.notification-card{display:block;width:100%;color:var(--ink);text-align:left}
+button{touch-action:manipulation}
+.thread-open,.chat-thread-identity{-webkit-touch-callout:none;user-select:none}
+.safety-review-guide{display:grid;gap:5px;background:#f4f7fb;border:1px solid var(--line);border-radius:15px;padding:11px 12px;margin:8px 0 12px;color:var(--ink)}
+.safety-review-guide span{font-size:12px;line-height:1.35}.safety-review-guide small{color:var(--muted);line-height:1.35;margin-top:2px}
 @media(max-width:680px){#communicationThreadSheet{padding-left:10px;padding-right:10px}.chat-thread-header{padding-top:5px;padding-bottom:5px}.chat-thread-avatar,.chat-thread-avatar-placeholder{width:42px;height:42px;margin-bottom:2px}.chat-thread-identity h2{font-size:15px!important}#communicationThreadSheet .guardian-mirror-note,#communicationThreadSheet .sms-safety-note{margin-top:5px}#communicationSafetyTestBanner{padding:7px 9px!important}.message-date-separator{margin-top:10px}.message-bubble{font-size:15px}}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -537,6 +543,7 @@ button:focus-visible,.pressable:focus-visible{outline:3px solid color-mix(in srg
         <div class="communication-search-wrap"><span class="communication-search-icon">⌕</span><input id="communicationSearchInput" type="search" placeholder="Search conversations and messages" autocomplete="off"></div>
         <div id="communicationSearchResults" class="communication-search-results hidden"></div>
         <div class="section-head"><h3>Conversations</h3><button id="communicationPreferencesBtn" class="link-btn" type="button">Notification settings</button></div>
+        <p class="fine" style="margin-top:-6px">Press and hold a conversation to mute it, remove it from your list, or block a member.</p>
         <div id="communicationThreadList" class="thread-list"><div class="empty-card">Loading conversations…</div></div>
       </section>
 
@@ -709,7 +716,15 @@ button:focus-visible,.pressable:focus-visible{outline:3px solid color-mix(in srg
     <div id="communicationMediaPreview" class="communication-media-preview hidden"></div>
     <div id="communicationComposer" class="message-composer"><button id="addCommunicationMediaBtn" class="composer-media-btn" type="button" aria-label="Add photo or video">＋</button><input id="communicationMediaInput" class="hidden" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,video/mp4,video/quicktime"><textarea id="communicationMessageBody" rows="1" aria-label="Message" placeholder="Message"></textarea><button id="sendCommunicationMessageBtn" type="button" aria-label="Send message">↑</button></div>
     <button id="scheduleCommunicationMessageBtn" type="button" class="wide secondary">🕒 Send Later</button>
-    <div class="inline-actions"><button id="muteCommunicationThreadBtn" type="button" class="secondary">Mute conversation</button><button id="hideCommunicationThreadBtn" type="button" class="danger-outline">Remove from My Chats</button><button id="blockCommunicationUserBtn" type="button" class="danger-outline hidden">Block member</button><button id="endGuardianSafetyTestBtn" type="button" class="danger-outline hidden">End Test</button></div>
+    <div class="inline-actions"><button id="endGuardianSafetyTestBtn" type="button" class="danger-outline hidden">End Test</button></div>
+  </section>
+
+  <section id="conversationActionsSheet" class="sheet hidden" aria-modal="true">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><div><div class="eyebrow">CONVERSATION OPTIONS</div><h2 id="conversationActionsTitle">Conversation</h2><p class="muted">These options affect only this conversation.</p></div><button class="icon-close" data-close-sheet>×</button></div>
+    <button id="muteCommunicationThreadBtn" type="button" class="wide secondary">Mute conversation</button>
+    <button id="hideCommunicationThreadBtn" type="button" class="wide danger-outline">Remove from My Chats</button>
+    <button id="blockCommunicationUserBtn" type="button" class="wide danger-outline hidden">Block member</button>
   </section>
 
   <section id="communicationMuteSheet" class="sheet hidden" aria-modal="true">
@@ -825,6 +840,7 @@ button:focus-visible,.pressable:focus-visible{outline:3px solid color-mix(in srg
   <section id="communicationSafetySheet" class="sheet hidden" aria-modal="true">
     <div class="sheet-handle"></div>
     <div class="sheet-head"><div><div class="eyebrow">HUMAN REVIEW</div><h2>Safety Review</h2><p class="muted">Automatic flags help a coach or administrator find concerning language. They do not replace human judgment or emergency procedures.</p></div><button class="icon-close" data-close-sheet>×</button></div>
+    <div class="safety-review-guide"><b>What should I choose?</b><span><strong>Reviewed</strong> — checked; no further action is needed.</span><span><strong>Dismiss</strong> — a false alert or a test.</span><span><strong>Escalate</strong> — a real concern needing follow-up.</span><small>Ending a Guardian Safety Test clears its test-only alerts automatically while preserving the audit history.</small></div>
     <div id="communicationSafetyList"><div class="empty-card">No open safety flags.</div></div>
   </section>
 
@@ -1373,7 +1389,7 @@ button:focus-visible,.pressable:focus-visible{outline:3px solid color-mix(in srg
     <button id="customizeLayoutBtn" class="wide secondary" type="button">↕ Customize App Layout</button>
     <button id="securityBtn" class="wide secondary" type="button">🔒 Sign-In & App Security</button>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.14.4</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.14.5</p>
   </section>
 
   <section id="layoutEditorSheet" class="sheet hidden" aria-modal="true">
@@ -1748,6 +1764,12 @@ let communicationReceiptRefreshTimer = null;
 let communicationReceiptPollTimer = null;
 let communicationReceiptSignature = '';
 let communicationSearchTimer = null;
+let communicationLoadSequence = 0;
+let communicationInboxRenderSignature = '';
+let communicationNotificationRenderSignature = '';
+let communicationLongPressTimer = null;
+let communicationLongPressStart = null;
+let suppressCommunicationClickUntil = 0;
 let smsReplyOwners = [];
 let smsReplies = [];
 let smsUnreadReplies = 0;
@@ -2057,6 +2079,8 @@ async function deleteTestWeighIn(weighInId){
 }
 
 function setTab(name){
+  document.activeElement?.blur?.();
+  recoverInteractionLayer();
   ['home','schedule','messages','weight','more'].forEach(tab => show(tab+'Tab', tab===name));
   document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab===name));
   if (name==='schedule') loadSchedule();
@@ -2065,14 +2089,26 @@ function setTab(name){
 }
 
 function openSheet(id){
+  const panel=$(id);
+  $('sheetBackdrop').style.pointerEvents='auto';
   show('sheetBackdrop', true); show(id, true); document.body.style.overflow='hidden';
+  requestAnimationFrame(()=>{if(panel)panel.scrollTop=0;});
 }
 function closeSheets(){
   if(document.body.classList.contains('kiosk-locked')) return;
+  document.activeElement?.blur?.();
   stopCommunicationReceiptLiveRefresh();
   clearPendingCommunicationMedia();
-  ['eventSheet','eventDetailSheet','attendanceSheet','announcementSheet','communicationThreadSheet','communicationMuteSheet','newCommunicationSheet','guardianSafetyTestSheet','athleteChatPermissionsSheet','scheduleMessageSheet','communicationPreferencesSheet','communicationNotificationsSheet','massTextSheet','textRepliesSheet','communicationSafetySheet','rosterSheet','athleteTeamsSheet','addAthleteSheet','joinSheet','joinRequestSheet','coachJoinRequestsSheet','athleteViewSheet','athleteProfileSheet','weightTrendSheet','photoCropSheet','communicationSheet','staffProfileSheet','staffDirectorySheet','familySheet','agreementsSheet','agreementEditorSheet','agreementPreviewSheet','calendarSubscriptionSheet','medicalClearanceSheet','medicalCaseSheet','excuseSheet','athleteAccessSheet','staffAccessSheet','weighedTodaySheet','weighInStartSheet','weighInConsoleSheet','importRosterSheet','teamSwitcherSheet','createTeamSheet','editTeamSheet','lineupClassSheet','accountSheet','layoutEditorSheet','forgotPasswordSheet','resetPasswordSheet','securitySheet'].forEach(id=>show(id,false));
-  show('sheetBackdrop', false); document.body.style.overflow='';
+  ['eventSheet','eventDetailSheet','attendanceSheet','announcementSheet','communicationThreadSheet','conversationActionsSheet','communicationMuteSheet','newCommunicationSheet','guardianSafetyTestSheet','athleteChatPermissionsSheet','scheduleMessageSheet','communicationPreferencesSheet','communicationNotificationsSheet','massTextSheet','textRepliesSheet','communicationSafetySheet','rosterSheet','athleteTeamsSheet','addAthleteSheet','joinSheet','joinRequestSheet','coachJoinRequestsSheet','athleteViewSheet','athleteProfileSheet','weightTrendSheet','photoCropSheet','communicationSheet','staffProfileSheet','staffDirectorySheet','familySheet','agreementsSheet','agreementEditorSheet','agreementPreviewSheet','calendarSubscriptionSheet','medicalClearanceSheet','medicalCaseSheet','excuseSheet','athleteAccessSheet','staffAccessSheet','weighedTodaySheet','weighInStartSheet','weighInConsoleSheet','importRosterSheet','teamSwitcherSheet','createTeamSheet','editTeamSheet','lineupClassSheet','accountSheet','layoutEditorSheet','forgotPasswordSheet','resetPasswordSheet','securitySheet'].forEach(id=>show(id,false));
+  show('sheetBackdrop', false); $('sheetBackdrop').style.pointerEvents='none'; document.body.style.overflow='';
+}
+function recoverInteractionLayer(){
+  const visibleSheet=[...document.querySelectorAll('.sheet')].some(panel=>!panel.classList.contains('hidden'));
+  if(!visibleSheet&&!document.body.classList.contains('kiosk-locked')){
+    show('sheetBackdrop',false);
+    $('sheetBackdrop').style.pointerEvents='none';
+    document.body.style.overflow='';
+  }
 }
 
 async function refresh(){
@@ -2672,7 +2708,7 @@ async function activateTeam(teamId,{persist=true}={}){
 
   $('headerTeamName').textContent=team.name;
 
-  rosterRows=[]; rosterManagementRows=[]; scheduleRows=[]; joinRequests=[]; pendingGuardianRequests=[]; agreementStatusRows=[]; agreementPublishedTemplate=null; agreementEditorData=null; agreementPreviewDraftId=null; agreementCurrentData=null; agreementAthleteId=null; calendarSubscriptionUrl=null; adultAccessRows=[]; selectedAdultAccessUserId=null; medicalClearanceCases=[]; medicalCurrentCaseId=null; weighInSessions=[]; memberAthletes=[]; importantAnnouncements=[]; communicationThreads=[]; communicationDirectory=[]; communicationNotifications=[]; communicationSafetyFlags=[]; activeCommunicationThread=null; activeCommunicationMessages=[]; activeCommunicationReceipts=new Map(); activeCommunicationParticipants=new Map(); smsReplyOwners=[]; smsReplies=[]; smsUnreadReplies=0; dashboardCounts=null; certificationPlansByAthlete=new Map();
+  rosterRows=[]; rosterManagementRows=[]; scheduleRows=[]; joinRequests=[]; pendingGuardianRequests=[]; agreementStatusRows=[]; agreementPublishedTemplate=null; agreementEditorData=null; agreementPreviewDraftId=null; agreementCurrentData=null; agreementAthleteId=null; calendarSubscriptionUrl=null; adultAccessRows=[]; selectedAdultAccessUserId=null; medicalClearanceCases=[]; medicalCurrentCaseId=null; weighInSessions=[]; memberAthletes=[]; importantAnnouncements=[]; communicationThreads=[]; communicationDirectory=[]; communicationNotifications=[]; communicationSafetyFlags=[]; communicationInboxRenderSignature=''; communicationNotificationRenderSignature=''; activeCommunicationThread=null; activeCommunicationMessages=[]; activeCommunicationReceipts=new Map(); activeCommunicationParticipants=new Map(); smsReplyOwners=[]; smsReplies=[]; smsUnreadReplies=0; dashboardCounts=null; certificationPlansByAthlete=new Map();
   teamWeightClasses=[];
 
   const {data:seasons,error:seasonErr}=await client.from('seasons').select('*').eq('team_id',team.id).eq('active',true).order('created_at',{ascending:false}).limit(1);
@@ -3027,20 +3063,27 @@ async function togglePinnedThread(threadId){
 
 async function loadCommunications(showErrors=true){
   if(!activeTeam||!activeSeason)return;
+  const loadId=++communicationLoadSequence;
   const [inboxResult,notificationResult,smsAccessResult,safetyResult]=await Promise.all([
     client.rpc('get_communication_inbox_v3',{p_team_id:activeTeam.id,p_season_id:activeSeason.id}),
     client.rpc('get_communication_notifications',{p_team_id:activeTeam.id,p_limit:40}),
     client.rpc('get_team_sms_access',{p_team_id:activeTeam.id}),
     isStaff?client.rpc('get_communication_safety_queue',{p_team_id:activeTeam.id}):Promise.resolve({data:[],error:null})
   ]);
-  if(inboxResult.error){if(showErrors)message(inboxResult.error.message,true);communicationThreads=[];}else communicationThreads=inboxResult.data||[];
-  if(notificationResult.error)communicationNotifications=[];else communicationNotifications=notificationResult.data||[];
+  if(loadId!==communicationLoadSequence)return;
+  const nextThreads=inboxResult.error?[]:(inboxResult.data||[]);
+  const nextNotifications=notificationResult.error?[]:(notificationResult.data||[]);
+  const nextInboxSignature=JSON.stringify(nextThreads);
+  const nextNotificationSignature=JSON.stringify(nextNotifications);
+  if(inboxResult.error&&showErrors)message(inboxResult.error.message,true);
+  communicationThreads=nextThreads;
+  communicationNotifications=nextNotifications;
   if(!smsAccessResult.error){actualCanMassText=!!smsAccessResult.data?.can_send;canMassText=viewMode==='parent'?false:actualCanMassText;smsUnreadReplies=Number(smsAccessResult.data?.unread_replies||0);}
   communicationSafetyFlags=isStaff&&!safetyResult?.error?(safetyResult?.data||[]):[];
   $('smsReplyCount').textContent=smsUnreadReplies>99?'99+':String(smsUnreadReplies);
   show('smsActionRow',canMassText||smsUnreadReplies>0);show('massTextBtn',canMassText);show('textRepliesBtn',canMassText||smsUnreadReplies>0);
-  renderCommunicationInbox();
-  renderCommunicationNotifications();
+  if(nextInboxSignature!==communicationInboxRenderSignature){communicationInboxRenderSignature=nextInboxSignature;renderCommunicationInbox();}
+  if(nextNotificationSignature!==communicationNotificationRenderSignature){communicationNotificationRenderSignature=nextNotificationSignature;renderCommunicationNotifications();}
   renderCommunicationSafetySummary();
   subscribeCommunicationRealtime();
   dispatchCommunicationNotifications();
@@ -3063,8 +3106,6 @@ function renderCommunicationInbox(){
     <button type="button" class="thread-pin" data-thread-pin="${t.thread_id}" aria-label="${isPinned?'Unpin':'Pin'} ${esc(t.title||'conversation')}">${isPinned?'★':'☆'}</button>
   </article>`;};
   list.innerHTML=(pinned.length?`<div class="thread-section-label">PINNED CHATS</div>${pinned.map(threadMarkup).join('')}`:'')+(regular.length?`<div class="thread-section-label">${pinned.length?'ALL CONVERSATIONS':'CONVERSATIONS'}</div>${regular.map(threadMarkup).join('')}`:'');
-  list.querySelectorAll('[data-communication-thread]').forEach(b=>b.onclick=()=>openCommunicationThread(b.dataset.communicationThread));
-  list.querySelectorAll('[data-thread-pin]').forEach(b=>b.onclick=e=>{e.stopPropagation();togglePinnedThread(b.dataset.threadPin);});
 }
 
 async function searchCommunicationMessages(){
@@ -3270,10 +3311,10 @@ async function startGuardianSafetyTest(athleteId,button){
 }
 
 async function endGuardianSafetyTest(){
-  if(!activeCommunicationThread||!confirm('End this Guardian Safety Test? It will leave everyone’s inbox but remain in the protected audit history.'))return;
+  if(!activeCommunicationThread||!confirm('End this Guardian Safety Test? It will leave everyone’s inbox, clear its test-only alerts, and remain in the protected audit history.'))return;
   const {error}=await client.rpc('end_guardian_safety_test',{p_thread_id:activeCommunicationThread.thread_id});
   if(error){message(error.message,true);return;}
-  closeSheets();activeCommunicationThread=null;await loadCommunications(false);message('Guardian safety test ended.');
+  closeSheets();activeCommunicationThread=null;await loadCommunications(false);setTab('messages');message('Guardian safety test ended. Test alerts were cleared and the audit record was preserved.');
 }
 
 async function editCommunicationMessage(id,current){
@@ -3377,6 +3418,46 @@ async function confirmScheduleMessage(){
   $('communicationMessageBody').value='';closeSheets();message(`Message scheduled for ${fmtDateTime(when.toISOString())}. It will send automatically even if you are offline.`);
 }
 
+function cancelCommunicationLongPress(){
+  clearTimeout(communicationLongPressTimer);communicationLongPressTimer=null;communicationLongPressStart=null;
+}
+function beginCommunicationLongPress(event,threadId){
+  if(event.pointerType==='mouse'&&event.button!==0)return;
+  cancelCommunicationLongPress();
+  communicationLongPressStart={x:event.clientX,y:event.clientY,threadId};
+  communicationLongPressTimer=setTimeout(()=>{
+    communicationLongPressTimer=null;suppressCommunicationClickUntil=Date.now()+700;
+    navigator.vibrate?.(18);openCommunicationActions(threadId);
+  },550);
+}
+function moveCommunicationLongPress(event){
+  if(!communicationLongPressStart)return;
+  if(Math.hypot(event.clientX-communicationLongPressStart.x,event.clientY-communicationLongPressStart.y)>12)cancelCommunicationLongPress();
+}
+
+async function openCommunicationActions(threadId=null){
+  const selected=threadId?communicationThreads.find(row=>String(row.thread_id)===String(threadId)):activeCommunicationThread;
+  if(!selected)return;
+  if(String(selected.title||'').startsWith('🧪 TEST:')){message('Use End Test inside the safety-test conversation.',true);return;}
+  activeCommunicationThread=selected;
+  $('conversationActionsTitle').textContent=selected.title||'Conversation';
+  const mutedUntil=selected.muted_until&&new Date(selected.muted_until)>new Date()?selected.muted_until:null;
+  $('muteCommunicationThreadBtn').textContent=mutedUntil?`Muted until ${fmtTime(mutedUntil)} · Change`:'Mute conversation';
+  show('muteCommunicationThreadBtn',true);show('hideCommunicationThreadBtn',true);
+  show('blockCommunicationUserBtn',false);
+  closeSheets();openSheet('conversationActionsSheet');
+  if(selected.kind!=='direct')return;
+  const {data,error}=await client.rpc('get_communication_thread_participants_v2',{p_thread_id:selected.thread_id});
+  if(error||activeCommunicationThread?.thread_id!==selected.thread_id)return;
+  const other=(data||[]).find(row=>!row.is_self&&row.member_role!=='guardian_mirror');
+  if(!other)return;
+  const button=$('blockCommunicationUserBtn');
+  button.dataset.userId=other.user_id;
+  button.dataset.blocked=other.is_blocked?'true':'false';
+  button.textContent=other.is_blocked?`Unblock ${other.display_name}`:`Block ${other.display_name}`;
+  show('blockCommunicationUserBtn',true);
+}
+
 function openCommunicationMuteOptions(){
   if(!activeCommunicationThread)return;
   const muted=activeCommunicationThread.muted_until&&new Date(activeCommunicationThread.muted_until)>new Date();
@@ -3410,7 +3491,7 @@ async function toggleCommunicationBlock(){
   const blocked=btn.dataset.blocked==='true';
   if(!blocked&&!confirm(`Block this member from starting or continuing direct conversations with you? You can unblock them here later.`))return;
   const {error}=await client.rpc('set_communication_block',{p_team_id:activeTeam.id,p_blocked_user_id:userId,p_blocked:!blocked});if(error){message(error.message,true);return;}
-  btn.dataset.blocked=blocked?'false':'true';await openCommunicationThread(activeCommunicationThread.thread_id,{keepOpen:true});message(blocked?'Member unblocked.':'Member blocked.');
+  btn.dataset.blocked=blocked?'false':'true';closeSheets();await loadCommunications(false);message(blocked?'Member unblocked.':'Member blocked.');
 }
 
 async function openCommunicationPreferences(){
@@ -3435,7 +3516,6 @@ async function enableBrowserNotifications(){
 function renderCommunicationNotifications(){
   const list=$('communicationNotificationList');if(!list)return;
   list.innerHTML=communicationNotifications.length?communicationNotifications.map(n=>`<button class="notification-card ${n.read_at?'':'unread'}" type="button" data-notification-thread="${n.thread_id||''}" data-notification-category="${esc(n.category||'')}"><b>${esc(n.title)}</b><p>${esc(n.body)}</p><small>${esc(fmtDateTime(n.created_at))}</small></button>`).join(''):'<div class="empty-card">No notifications yet.</div>';
-  list.querySelectorAll('[data-notification-thread]').forEach(b=>b.onclick=()=>{if(b.dataset.notificationCategory==='sms_reply'){openTextReplies();return;}const id=b.dataset.notificationThread;if(id){closeSheets();setTab('messages');setTimeout(()=>openCommunicationThread(id),30);}});
 }
 async function openCommunicationNotifications(){await loadCommunications(false);closeSheets();openSheet('communicationNotificationsSheet');}
 async function markCommunicationNotificationsRead(){const {error}=await client.rpc('mark_communication_notifications_read',{p_notification_ids:null});if(error){message(error.message,true);return;}await loadCommunications(false);message('Notifications marked read.');}
@@ -3526,9 +3606,15 @@ function renderCommunicationSafetyList(){
   list.querySelectorAll('[data-safety-review]').forEach(b=>b.onclick=()=>reviewCommunicationSafetyFlag(b.dataset.safetyReview,b.dataset.status));
 }
 async function reviewCommunicationSafetyFlag(id,status){
-  const note=prompt(status==='escalated'?'Add the escalation or follow-up note:':'Optional review note:');if(note===null)return;
+  let note=null;
+  if(status==='reviewed'&&!confirm('Mark this alert reviewed? It will leave the active queue but remain in the audit history.'))return;
+  if(status==='dismissed'&&!confirm('Dismiss this alert as a false alarm or test? It will leave the active queue but remain in the audit history.'))return;
+  if(status==='escalated'){
+    note=prompt('Add the escalation or follow-up note:');if(note===null)return;
+    if(!note.trim()){message('Add a follow-up note before escalating.',true);return;}
+  }
   const {error}=await client.rpc('review_communication_safety_flag',{p_flag_id:id,p_status:status,p_note:note||null});if(error){message(error.message,true);return;}
-  await openCommunicationSafetyReview();message(`Safety flag ${status}.`);
+  await loadCommunications(false);await openCommunicationSafetyReview();message(`Safety flag ${status}.`);
 }
 
 async function dispatchCommunicationNotifications(){
@@ -6383,6 +6469,28 @@ $('kioskExitTab').onclick=exitKiosk;
 
 $('newAnnouncementBtn').onclick=openAnnouncementComposer;
 $('saveAnnouncementBtn').onclick=saveImportantAnnouncement;
+$('communicationThreadList').addEventListener('click',event=>{
+  if(Date.now()<suppressCommunicationClickUntil){event.preventDefault();event.stopPropagation();return;}
+  const pin=event.target.closest('[data-thread-pin]');
+  if(pin){event.preventDefault();event.stopPropagation();togglePinnedThread(pin.dataset.threadPin);return;}
+  const thread=event.target.closest('[data-communication-thread]');
+  if(thread){event.preventDefault();openCommunicationThread(thread.dataset.communicationThread);}
+});
+$('communicationThreadList').addEventListener('pointerdown',event=>{const thread=event.target.closest('[data-communication-thread]');if(thread)beginCommunicationLongPress(event,thread.dataset.communicationThread);});
+$('communicationThreadList').addEventListener('pointermove',moveCommunicationLongPress);
+['pointerup','pointercancel','pointerleave'].forEach(type=>$('communicationThreadList').addEventListener(type,cancelCommunicationLongPress));
+$('communicationThreadList').addEventListener('contextmenu',event=>{const thread=event.target.closest('[data-communication-thread]');if(!thread)return;event.preventDefault();suppressCommunicationClickUntil=Date.now()+700;openCommunicationActions(thread.dataset.communicationThread);});
+$('.chat-thread-identity').addEventListener('pointerdown',event=>beginCommunicationLongPress(event,null));
+$('.chat-thread-identity').addEventListener('pointermove',moveCommunicationLongPress);
+['pointerup','pointercancel','pointerleave'].forEach(type=>$('.chat-thread-identity').addEventListener(type,cancelCommunicationLongPress));
+$('.chat-thread-identity').addEventListener('contextmenu',event=>{event.preventDefault();openCommunicationActions();});
+$('communicationNotificationList').addEventListener('click',event=>{
+  const card=event.target.closest('[data-notification-thread]');if(!card)return;
+  event.preventDefault();
+  if(card.dataset.notificationCategory==='sms_reply'){openTextReplies();return;}
+  const id=card.dataset.notificationThread;
+  if(id){closeSheets();setTab('messages');setTimeout(()=>openCommunicationThread(id),30);}
+});
 $('newCommunicationBtn').onclick=openNewCommunication;
 $('guardianSafetyTestBtn').onclick=openGuardianSafetyTest;
 $('endGuardianSafetyTestBtn').onclick=endGuardianSafetyTest;
@@ -6423,7 +6531,8 @@ $('saveAthleteChatPermissionsBtn').onclick=saveAthleteChatPermissions;
 $('joinCodeBtn').onclick=showTeamJoin;
 
 setupPhoneFormatting();
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshActiveCommunicationReceipts(true);});
+window.addEventListener('pageshow',recoverInteractionLayer);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){recoverInteractionLayer();refreshActiveCommunicationReceipts(true);}});
 setRememberSession(shouldRememberSession());
 client.auth.onAuthStateChange((event)=>setTimeout(async()=>{
   await refresh();
