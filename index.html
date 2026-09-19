@@ -1410,7 +1410,7 @@ button{touch-action:manipulation}
     <button id="customizeLayoutBtn" class="wide secondary" type="button">↕ Customize App Layout</button>
     <button id="securityBtn" class="wide secondary" type="button">🔒 Sign-In & App Security</button>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.15.8</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.15.9</p>
   </section>
 
   <section id="layoutEditorSheet" class="sheet hidden" aria-modal="true">
@@ -1785,11 +1785,15 @@ let communicationReceiptRefreshTimer = null;
 let communicationReceiptPollTimer = null;
 let communicationReceiptRefreshInFlight = false;
 let communicationThreadRefreshTimer = null;
+let communicationLiveRefreshPromise = null;
+let communicationLiveRefreshQueued = false;
+const communicationAttachmentUrlCache = new Map();
 let communicationReceiptSignature = '';
 let communicationSearchTimer = null;
 let communicationLoadSequence = 0;
 let communicationLoadPromise = null;
 let communicationLoadKey = '';
+let communicationLoadQueued = false;
 let communicationThreadOpenSequence = 0;
 let communicationThreadOpenPromise = null;
 let communicationThreadOpenKey = '';
@@ -1839,6 +1843,7 @@ let shouldLockWhenVisible=false;
 let nativeNotificationState={native:false,authorizationStatus:'unknown',token:null,environment:'production',bundleId:'',appVersion:''};
 let pendingNativeNotificationPayload=null;
 let nativeWakeSessionPromise=null;
+let nativeNotificationRoutePromise=null;
 
 async function ensureNativeWakeSession(forceRefresh=false){
   if(nativeWakeSessionPromise)return nativeWakeSessionPromise;
@@ -1922,7 +1927,7 @@ async function syncNativeNotificationBadge(){
   const {data,error}=await client.rpc('get_notification_badge_count');
   if(!error)postNativeNotification('setBadge',{count:Number(data)||0});
 }
-async function routeNativeNotification(rawPayload={}){
+async function performNativeNotificationRoute(rawPayload={}){
   const payload=rawPayload?.wm||rawPayload||{};
   pendingNativeNotificationPayload=payload;
   if(!session?.user)return;
@@ -1952,6 +1957,16 @@ async function routeNativeNotification(rawPayload={}){
   }
   await syncNativeNotificationBadge();
 }
+async function routeNativeNotification(rawPayload={}){
+  if(rawPayload&&Object.keys(rawPayload).length)pendingNativeNotificationPayload=rawPayload?.wm||rawPayload;
+  if(nativeNotificationRoutePromise)return nativeNotificationRoutePromise;
+  const payload=pendingNativeNotificationPayload;
+  if(!payload)return;
+  const task=performNativeNotificationRoute(payload);
+  nativeNotificationRoutePromise=task;
+  try{return await task;}
+  finally{if(nativeNotificationRoutePromise===task)nativeNotificationRoutePromise=null;}
+}
 window.wrestlingManagerNotificationResponse=function(payload={}){
   if(payload.type==='status'){
     nativeNotificationState={...nativeNotificationState,...payload,native:true};
@@ -1962,7 +1977,7 @@ window.wrestlingManagerNotificationResponse=function(payload={}){
   }else if(payload.type==='received'){
     const notificationPayload=payload.payload?.wm||payload.payload||{};
     if(notificationPayload.thread_id){
-      scheduleActiveCommunicationThreadRefresh(notificationPayload.thread_id,120,[500,1200,2400]);
+      scheduleActiveCommunicationThreadRefresh(notificationPayload.thread_id,80,[450]);
     }
     loadCommunications(false);syncNativeNotificationBadge();
   }else if(payload.type==='registrationError'||payload.type==='permissionError'){
@@ -3212,8 +3227,12 @@ function communicationDateLabel(value){
 async function hydrateCommunicationAttachments(rows){
   return Promise.all((rows||[]).map(async row=>{
     if(!row.attachment_path||!row.attachment_can_view)return {...row,attachment_url:null,attachment_loading:false};
+    const cached=communicationAttachmentUrlCache.get(row.attachment_path);
+    if(cached&&cached.expiresAt>Date.now())return {...row,attachment_url:cached.url,attachment_loading:false};
     const {data,error}=await client.storage.from('communication-media').createSignedUrl(row.attachment_path,1800);
-    return {...row,attachment_url:error?null:(data?.signedUrl||null),attachment_loading:false};
+    const url=error?null:(data?.signedUrl||null);
+    if(url)communicationAttachmentUrlCache.set(row.attachment_path,{url,expiresAt:Date.now()+25*60*1000});
+    return {...row,attachment_url:url,attachment_loading:false};
   }));
 }
 
@@ -3339,7 +3358,7 @@ async function loadCommunications(showErrors=true){
   // Every caller for the same team awaits the same refresh. Previously each
   // realtime update started a new load and cancelled the refresh a tap was
   // waiting for, which caused the second-tap behavior.
-  if(communicationLoadPromise&&communicationLoadKey===requestKey)return communicationLoadPromise;
+  if(communicationLoadPromise&&communicationLoadKey===requestKey){communicationLoadQueued=true;return communicationLoadPromise;}
   const loadId=++communicationLoadSequence;
   const request=(async()=>{
     const [inboxResult,notificationResult,smsAccessResult,safetyResult]=await Promise.all([
@@ -3371,7 +3390,10 @@ async function loadCommunications(showErrors=true){
   communicationLoadKey=requestKey;
   try{return await request;}
   finally{
-    if(communicationLoadPromise===request){communicationLoadPromise=null;communicationLoadKey='';}
+    if(communicationLoadPromise===request){
+      communicationLoadPromise=null;communicationLoadKey='';
+      if(communicationLoadQueued){communicationLoadQueued=false;setTimeout(()=>loadCommunications(false),40);}
+    }
   }
 }
 
@@ -3434,10 +3456,42 @@ function scheduleActiveCommunicationThreadRefresh(threadId,delay=120,retryDelays
   clearTimeout(communicationThreadRefreshTimer);
   communicationThreadRefreshTimer=setTimeout(async()=>{
     if(!activeCommunicationThread||String(activeCommunicationThread.thread_id)!==String(threadId)||$('communicationThreadSheet')?.classList.contains('hidden'))return;
-    await openCommunicationThread(threadId,{keepOpen:true,preserveScroll:true});
+    await refreshActiveCommunicationMessages(threadId);
     const [nextDelay,...remainingDelays]=retryDelays;
     if(Number.isFinite(nextDelay))scheduleActiveCommunicationThreadRefresh(threadId,nextDelay,remainingDelays);
   },delay);
+}
+
+async function refreshActiveCommunicationMessages(threadId,{stickToBottom=false,markRead=true}={}){
+  if(!activeCommunicationThread||String(activeCommunicationThread.thread_id)!==String(threadId)||$('communicationThreadSheet')?.classList.contains('hidden'))return;
+  if(communicationLiveRefreshPromise){communicationLiveRefreshQueued=true;return communicationLiveRefreshPromise;}
+  const task=(async()=>{
+    const list=$('communicationMessageList');
+    const savedScrollTop=list?.scrollTop||0;
+    const distanceFromBottom=list?list.scrollHeight-list.scrollTop-list.clientHeight:0;
+    const shouldStick=stickToBottom||distanceFromBottom<140;
+    const outcome=await settleWithin(client.rpc('get_communication_messages_v4',{p_thread_id:threadId,p_before:null,p_limit:80}),10000,'New messages');
+    if(!outcome.ok||outcome.value?.error||String(activeCommunicationThread?.thread_id)!==String(threadId)||$('communicationThreadSheet')?.classList.contains('hidden'))return;
+    const existingById=new Map(activeCommunicationMessages.map(row=>[String(row.message_id),row]));
+    const rows=(outcome.value.data||[]).reverse().map(row=>{
+      const existing=existingById.get(String(row.message_id));
+      return {...row,attachment_url:existing?.attachment_path===row.attachment_path?existing.attachment_url:null,attachment_loading:!!row.attachment_path&&!!row.attachment_can_view&&!existing?.attachment_url};
+    });
+    activeCommunicationMessages=rows;
+    renderCommunicationMessages(rows,{preserveScroll:!shouldStick,distanceFromBottom,scrollTop:savedScrollTop,stickToBottom:shouldStick});
+    const hydrated=await settleWithin(hydrateCommunicationAttachments(rows),12000,'New message media');
+    if(hydrated.ok&&String(activeCommunicationThread?.thread_id)===String(threadId)&&!$('communicationThreadSheet')?.classList.contains('hidden')){
+      activeCommunicationMessages=hydrated.value;
+      renderCommunicationMessages(activeCommunicationMessages,{preserveScroll:!shouldStick,distanceFromBottom,scrollTop:savedScrollTop,stickToBottom:shouldStick});
+    }
+    if(markRead)settleWithin(client.rpc('mark_communication_thread_read',{p_thread_id:threadId}),6000,'Read status').then(()=>loadCommunications(false));
+  })();
+  communicationLiveRefreshPromise=task;
+  try{return await task;}
+  finally{
+    if(communicationLiveRefreshPromise===task)communicationLiveRefreshPromise=null;
+    if(communicationLiveRefreshQueued){communicationLiveRefreshQueued=false;setTimeout(()=>refreshActiveCommunicationMessages(threadId,{stickToBottom}),40);}
+  }
 }
 
 function subscribeCommunicationRealtime(){
@@ -3445,12 +3499,12 @@ function subscribeCommunicationRealtime(){
   const messageChannel=client.channel(`wm-communication-${activeTeam.id}`)
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'communication_messages',filter:`team_id=eq.${activeTeam.id}`},payload=>{
       const isMediaMessage=/^\[(Photo|Video)\]$/i.test(String(payload.new.body||''));
-      scheduleActiveCommunicationThreadRefresh(payload.new.thread_id,160,isMediaMessage?[500,1200,2400]:[]);
+      scheduleActiveCommunicationThreadRefresh(payload.new.thread_id,100,isMediaMessage?[450]:[]);
       loadCommunications(false);
       if(document.hidden&&'Notification' in window&&Notification.permission==='granted'&&payload.new.sender_user_id!==session?.user?.id)new Notification('New Wrestling Manager message',{body:'Open the app to read your team message.'});
     })
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'communication_attachments',filter:`team_id=eq.${activeTeam.id}`},payload=>{
-      scheduleActiveCommunicationThreadRefresh(payload.new.thread_id,80,[500,1200]);
+      scheduleActiveCommunicationThreadRefresh(payload.new.thread_id,60,[400]);
     }).subscribe();
   const notificationChannel=client.channel(`wm-notifications-${session.user.id}`)
     .on('postgres_changes',{event:'*',schema:'public',table:'communication_notifications',filter:`user_id=eq.${session.user.id}`},()=>loadCommunications(false)).subscribe();
@@ -3677,7 +3731,7 @@ async function performOpenCommunicationThread(threadId,{keepOpen=false,preserveS
   loadCommunications(false);
 }
 
-function renderCommunicationMessages(rows,{preserveScroll=false,distanceFromBottom=0}={}){
+function renderCommunicationMessages(rows,{preserveScroll=false,distanceFromBottom=0,scrollTop=null,stickToBottom=false}={}){
   const list=$('communicationMessageList');
   if(!rows.length){list.innerHTML='<div class="empty-inline">No messages yet. Start the conversation below.</div>';return;}
   list.innerHTML=rows.map((m,index)=>{
@@ -3721,7 +3775,16 @@ function renderCommunicationMessages(rows,{preserveScroll=false,distanceFromBott
   list.querySelectorAll('[data-remove-message]').forEach(b=>b.onclick=()=>removeCommunicationMessage(b.dataset.removeMessage));
   list.querySelectorAll('[data-report-message]').forEach(b=>b.onclick=()=>reportCommunicationMessage(b.dataset.reportMessage));
   list.querySelectorAll('[data-preview-communication-image]').forEach(b=>b.onclick=()=>openCommunicationMediaLightbox(b.dataset.previewCommunicationImage));
-  list.scrollTop=preserveScroll?Math.max(0,list.scrollHeight-list.clientHeight-distanceFromBottom):list.scrollHeight;
+  const restoreScroll=()=>{
+    if(stickToBottom||!preserveScroll)list.scrollTop=list.scrollHeight;
+    else if(Number.isFinite(scrollTop))list.scrollTop=scrollTop;
+    else list.scrollTop=Math.max(0,list.scrollHeight-list.clientHeight-distanceFromBottom);
+  };
+  restoreScroll();
+  requestAnimationFrame(restoreScroll);
+  list.querySelectorAll('.message-media img').forEach(image=>{
+    if(!image.complete)image.addEventListener('load',restoreScroll,{once:true});
+  });
 }
 
 async function sendPendingCommunicationMedia(caption){
@@ -3764,7 +3827,8 @@ async function sendCommunicationMessage(){
   const {data,error}=result||{data:null,error:new Error('The message could not be sent.')};
   btn.disabled=false;btn.textContent='↑';btn.setAttribute('aria-label','Send message');
   if(error){message(`${error.message||'The message could not be sent.'} Tap send to try again.`,true);return;}
-  $('communicationMessageBody').value='';$('communicationMessageBody').style.height='38px';clearPendingCommunicationMedia();if(!safetyTest)dispatchCommunicationNotifications();await openCommunicationThread(activeCommunicationThread.thread_id,{keepOpen:true});
+  const sentThreadId=activeCommunicationThread.thread_id;
+  $('communicationMessageBody').value='';$('communicationMessageBody').style.height='38px';clearPendingCommunicationMedia();if(!safetyTest)dispatchCommunicationNotifications();await refreshActiveCommunicationMessages(sentThreadId,{stickToBottom:true,markRead:false});
   if(sendingMedia&&!safetyTest)message('Photo or video sent.');
   if(safetyTest){
     const sent=activeCommunicationMessages.find(m=>String(m.message_id)===String(data));
