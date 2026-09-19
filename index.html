@@ -324,7 +324,7 @@ button:focus-visible,.pressable:focus-visible{outline:3px solid color-mix(in srg
 #communicationSafetyTestRoleWrap.hidden{display:none!important}#communicationSafetyTestRoleWrap label{margin:0;font-size:12px;white-space:nowrap;color:#6e6e73}#communicationSafetyTestRoleWrap select{padding:8px 34px 8px 11px;border-radius:13px;font-size:13px}
 .message-safety-flag{margin:7px -5px -3px;padding:6px 8px;border-radius:10px;font-size:10px;font-weight:850;line-height:1.25;background:#fff1ce;color:#7a5000}.message-safety-flag.high{background:#ffe0e0;color:#982a2a}.message-safety-flag.medium{background:#fff1ce;color:#805c10}.message-safety-flag.low{background:#e8eef5;color:#35506d}.message-row.mine .message-safety-flag{background:rgba(255,255,255,.9);color:#7d2424}
 .safety-test-chip{display:inline-block;margin:0 0 7px 6px;border-radius:999px;padding:4px 8px;background:#eee8ff;color:#5c3f9f;font-size:10px;font-weight:950;text-transform:uppercase}
-/* v0.14.7: reliable chat gestures and automatic native app re-locking. */
+/* v0.14.8: restore message controls and show the app lock before optional device authentication. */
 .notification-card{display:block;width:100%;color:var(--ink);text-align:left}
 button{touch-action:manipulation}
 .thread-card,.thread-card *,.chat-thread-identity,.chat-thread-identity *,#conversationActionsSheet .sheet-head,#conversationActionsSheet .sheet-head *{-webkit-touch-callout:none!important;-webkit-user-select:none!important;user-select:none!important}
@@ -1389,7 +1389,7 @@ button{touch-action:manipulation}
     <button id="customizeLayoutBtn" class="wide secondary" type="button">↕ Customize App Layout</button>
     <button id="securityBtn" class="wide secondary" type="button">🔒 Sign-In & App Security</button>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.14.7</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.14.8</p>
   </section>
 
   <section id="layoutEditorSheet" class="sheet hidden" aria-modal="true">
@@ -1796,7 +1796,6 @@ const esc = value => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;',
 let securityState={native:false,appLockEnabled:false,pinEnabled:false,biometricLabel:'Device Security'};
 let securityUnlockedThisLaunch=false;
 let shouldLockWhenVisible=false;
-let automaticDeviceUnlockAttempted=false;
 
 function nativeSecurityAvailable(){return !!window.webkit?.messageHandlers?.security;}
 function postNativeSecurity(command,payload={}){
@@ -1842,15 +1841,11 @@ function lockApp(){
   renderAppLockIdentity();
   show('appLockOverlay',true);document.body.style.overflow='hidden';
   if($('appLockPin'))$('appLockPin').value='';
-  if(!automaticDeviceUnlockAttempted&&nativeSecurityAvailable()){
-    automaticDeviceUnlockAttempted=true;
-    setTimeout(()=>postNativeSecurity('authenticate',{reason:'Unlock Wrestling Manager'}),120);
-  }
 }
-function unlockApp(){securityUnlockedThisLaunch=true;shouldLockWhenVisible=false;automaticDeviceUnlockAttempted=false;show('appLockOverlay',false);document.body.style.overflow='';}
+function unlockApp(){securityUnlockedThisLaunch=true;shouldLockWhenVisible=false;show('appLockOverlay',false);document.body.style.overflow='';}
 function prepareAppLockForBackground(){
   if(!session||!securityState.appLockEnabled)return;
-  shouldLockWhenVisible=true;securityUnlockedThisLaunch=false;automaticDeviceUnlockAttempted=false;
+  shouldLockWhenVisible=true;securityUnlockedThisLaunch=false;
 }
 window.wrestlingManagerAppDidEnterBackground=prepareAppLockForBackground;
 window.wrestlingManagerAppDidBecomeActive=function(){
@@ -6542,11 +6537,14 @@ $('communicationThreadList').addEventListener('pointerup',finishCommunicationLon
 ['pointercancel','pointerleave'].forEach(type=>$('communicationThreadList').addEventListener(type,cancelCommunicationLongPress));
 $('communicationThreadList').addEventListener('selectstart',event=>{if(event.target.closest('[data-communication-thread]'))event.preventDefault();});
 $('communicationThreadList').addEventListener('contextmenu',event=>{const thread=event.target.closest('[data-communication-thread]');if(!thread)return;event.preventDefault();clearCommunicationTextSelection();suppressedCommunicationThreadId=String(thread.dataset.communicationThread);suppressCommunicationClickUntil=Date.now()+450;openCommunicationActions(thread.dataset.communicationThread);});
-$('.chat-thread-identity').addEventListener('pointerdown',event=>beginCommunicationLongPress(event,null));
-$('.chat-thread-identity').addEventListener('pointermove',moveCommunicationLongPress);
-['pointerup','pointercancel','pointerleave'].forEach(type=>$('.chat-thread-identity').addEventListener(type,cancelCommunicationLongPress));
-$('.chat-thread-identity').addEventListener('selectstart',event=>event.preventDefault());
-$('.chat-thread-identity').addEventListener('contextmenu',event=>{event.preventDefault();clearCommunicationTextSelection();openCommunicationActions();});
+const chatThreadIdentity=document.querySelector('.chat-thread-identity');
+if(chatThreadIdentity){
+  chatThreadIdentity.addEventListener('pointerdown',event=>beginCommunicationLongPress(event,null));
+  chatThreadIdentity.addEventListener('pointermove',moveCommunicationLongPress);
+  ['pointerup','pointercancel','pointerleave'].forEach(type=>chatThreadIdentity.addEventListener(type,cancelCommunicationLongPress));
+  chatThreadIdentity.addEventListener('selectstart',event=>event.preventDefault());
+  chatThreadIdentity.addEventListener('contextmenu',event=>{event.preventDefault();clearCommunicationTextSelection();openCommunicationActions();});
+}
 $('communicationNotificationList').addEventListener('click',event=>{
   const card=event.target.closest('[data-notification-thread]');if(!card)return;
   event.preventDefault();
