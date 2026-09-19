@@ -58,6 +58,7 @@ button.wide{width:100%;margin-top:16px}.stack-actions{display:grid;gap:9px;margi
 .feature-card{padding:17px;margin-top:12px}.feature-card h3{margin:0 0 8px}.feature-card p{color:var(--muted);line-height:1.45}.mini-row{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid var(--line)}.mini-row b{color:#5d6875}
 .menu-card{overflow:hidden}.menu-row{width:100%;display:grid;grid-template-columns:32px 1fr 20px;align-items:center;gap:10px;text-align:left;background:#fff;color:var(--ink);border-radius:0;padding:16px;border-bottom:1px solid var(--line)}.menu-row:last-child{border-bottom:0}.menu-row span{font-size:20px}.menu-row b,.menu-row small{display:block}.menu-row small{color:var(--muted);margin-top:3px}.menu-row i{font-size:25px;font-style:normal;color:#7a8490}.menu-row.disabled{opacity:.56}
 .bottom-nav{position:fixed;z-index:30;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(5,1fr);background:var(--team-primary);border-top:2px solid var(--team-secondary);padding:0 0 env(safe-area-inset-bottom);box-shadow:0 -4px 18px rgba(0,0,0,.08)}.nav-btn{position:relative;background:var(--team-primary);color:var(--team-primary-text);padding:9px 2px 8px;border-radius:0;min-height:62px;border-right:1px solid var(--team-nav-line);opacity:.76}.nav-btn:last-child{border-right:0}.nav-btn span{display:block;font-size:20px;line-height:1}.nav-btn small{display:block;font-size:10px;font-weight:900;margin-top:5px}.nav-btn.active{background:var(--team-secondary);color:var(--team-secondary-text);opacity:1;box-shadow:inset 0 4px 0 var(--team-accent)}.nav-count-badge{position:absolute;top:4px;right:clamp(5px,12%,18px);display:none;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:#ff3b30;color:#fff;border:2px solid var(--team-primary);box-shadow:0 2px 5px rgba(0,0,0,.28);font-size:11px!important;line-height:1!important;font-weight:950;z-index:2}.nav-btn.active .nav-count-badge{border-color:var(--team-secondary)}.nav-count-badge.show{display:grid}
+.pull-refresh{position:fixed;z-index:19;top:calc(66px + env(safe-area-inset-top));left:50%;display:flex;align-items:center;gap:8px;min-height:38px;padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.97);color:#244d78;border:1px solid #d7e2ed;box-shadow:0 5px 18px rgba(24,45,69,.18);font-size:13px;font-weight:900;opacity:0;pointer-events:none;transform:translate(-50%,-58px);transition:opacity .16s ease,transform .16s ease}.pull-refresh.visible{opacity:1}.pull-refresh.refreshing{opacity:1;transform:translate(-50%,8px)}.pull-refresh-spinner{width:17px;height:17px;border:3px solid #cbd9e7;border-top-color:#1677ee;border-radius:50%;transform:rotate(0deg)}.pull-refresh.ready .pull-refresh-spinner{border-color:#1b8755}.pull-refresh.refreshing .pull-refresh-spinner{animation:pull-refresh-spin .75s linear infinite}@keyframes pull-refresh-spin{to{transform:rotate(360deg)}}
 .layout-block{min-width:0}.layout-editor-list{display:grid;gap:8px;margin-top:10px}.layout-editor-row{display:grid;grid-template-columns:34px 1fr 42px 42px;align-items:center;gap:8px;background:#f6f8fa;border:1px solid var(--line);border-radius:15px;padding:9px}.layout-editor-row>span:first-child{font-size:20px;text-align:center}.layout-editor-row b{display:block}.layout-editor-row small{display:block;color:var(--muted);margin-top:2px}.layout-move{padding:9px 4px;background:#e7edf4;color:#294766;min-height:38px}.layout-note{background:#eef5fc;border:1px solid #d4e4f5;border-radius:15px;padding:12px;color:#355d87;line-height:1.4}.claim-match-list{display:grid;gap:8px;margin-top:10px}.claim-match-card{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;background:#f7f9fb;color:var(--ink);border:1px solid var(--line);padding:13px}.claim-match-card.active{border:2px solid var(--team-secondary);background:#edf5ff}.claim-match-card b,.claim-match-card small{display:block}.claim-match-card small{color:var(--muted);margin-top:4px}.size-category{margin-bottom:8px}.gear-size-note{font-size:12px;color:var(--muted);margin:5px 0 10px}
 .backdrop{position:fixed;inset:0;z-index:50;background:rgba(15,22,30,.46);backdrop-filter:blur(2px)}
 .sheet{position:fixed;z-index:60;left:50%;transform:translateX(-50%);bottom:0;width:min(760px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:26px 26px 0 0;padding:12px 18px calc(24px + env(safe-area-inset-bottom));box-shadow:0 -12px 45px rgba(0,0,0,.18)}
@@ -451,6 +452,7 @@ button{touch-action:manipulation}
       </button>
       <button id="profileBtn" class="round-btn" aria-label="Account">👤</button>
     </header>
+    <div id="pullRefreshIndicator" class="pull-refresh" aria-live="polite"><span class="pull-refresh-spinner"></span><span id="pullRefreshText">Pull to refresh</span></div>
 
     <main class="content">
       <section id="homeTab" class="tabview">
@@ -1784,6 +1786,13 @@ let activeCommunicationMediaAccess = {can_view:false,can_send:false,reason:''};
 let pendingCommunicationMediaFile = null;
 let pendingCommunicationMediaObjectUrl = null;
 let communicationRealtimeChannels = [];
+let announcementRealtimeChannel = null;
+let announcementRealtimeReconnectTimer = null;
+let teamRefreshPromise = null;
+let lastAutomaticTeamRefreshAt = 0;
+let pullRefreshStartY = null;
+let pullRefreshDistance = 0;
+let pullRefreshTracking = false;
 let communicationReceiptRefreshTimer = null;
 let communicationReceiptPollTimer = null;
 let communicationReceiptRefreshInFlight = false;
@@ -2039,7 +2048,7 @@ function lockApp(){
   if($('appLockPin'))$('appLockPin').value='';
   if(!automaticUnlockRequested){automaticUnlockRequested=true;setTimeout(()=>postNativeSecurity('authenticate',{reason:'Unlock Wrestling Manager'}),180);}
 }
-function unlockApp(){securityUnlockedThisLaunch=true;shouldLockWhenVisible=false;automaticUnlockRequested=false;show('appLockOverlay',false);document.body.style.overflow='';if(pendingNativeNotificationPayload)routeNativeNotification(pendingNativeNotificationPayload);}
+function unlockApp(){securityUnlockedThisLaunch=true;shouldLockWhenVisible=false;automaticUnlockRequested=false;show('appLockOverlay',false);document.body.style.overflow='';refreshTeamData({force:true});if(pendingNativeNotificationPayload)routeNativeNotification(pendingNativeNotificationPayload);}
 function prepareAppLockForBackground(){
   if(!session||!securityState.appLockEnabled)return;
   shouldLockWhenVisible=true;securityUnlockedThisLaunch=false;automaticUnlockRequested=false;
@@ -2052,6 +2061,7 @@ window.wrestlingManagerAppDidBecomeActive=function(){
   if(shouldLockWhenVisible)return;
   ensureNativeWakeSession(false).then(ready=>{
     if(!ready)return;
+    refreshTeamData();
     refreshActiveCommunicationReceipts(true);
     if(pendingNativeNotificationPayload)routeNativeNotification(pendingNativeNotificationPayload);
     else if(activeTeam&&activeSeason&&!$('messagesTab').classList.contains('hidden'))loadCommunications(false);
@@ -2334,6 +2344,7 @@ function setTab(name){
   if(name==='home'||name==='schedule')markNavSeen(name);
   updateBottomNavBadges();
   window.scrollTo(0,0);
+  if (name==='home') loadImportantAnnouncements();
   if (name==='schedule') loadSchedule();
   if (name==='messages') loadCommunications();
   if (name==='weight' && canWeighIn) loadWeighInSessions();
@@ -2942,6 +2953,9 @@ async function activateTeam(teamId,{persist=true}={}){
   activeTeam=team;
   communicationRealtimeChannels.forEach(ch=>client.removeChannel(ch));
   communicationRealtimeChannels=[];
+  if(announcementRealtimeChannel)client.removeChannel(announcementRealtimeChannel);
+  announcementRealtimeChannel=null;
+  clearTimeout(announcementRealtimeReconnectTimer);
   if(persist) localStorage.setItem('wm_active_team_id',team.id);
   await applyTeamBranding(team);
 
@@ -3000,6 +3014,8 @@ async function activateTeam(teamId,{persist=true}={}){
     await Promise.all([loadMemberAthletes(),loadSchedule(),loadImportantAnnouncements()]);
   }
   if(!isManager) await loadMedicalClearanceCases(false);
+  subscribeAnnouncementRealtime();
+  loadCommunications(false);
   await renderFamilyAthletes();
   renderAttention();
   await refreshHeaderAvatar();
@@ -3141,6 +3157,99 @@ async function loadImportantAnnouncements(){
   }));
   renderImportantAnnouncements();
 }
+
+function subscribeAnnouncementRealtime(){
+  if(!activeTeam||!session?.user?.id)return;
+  if(announcementRealtimeChannel)client.removeChannel(announcementRealtimeChannel);
+  clearTimeout(announcementRealtimeReconnectTimer);
+  const teamId=activeTeam.id;
+  announcementRealtimeChannel=client.channel(`wm-home-announcements-live-${teamId}-${session.user.id}`)
+    .on('postgres_changes',{event:'*',schema:'public',table:'team_posts',filter:`team_id=eq.${teamId}`},payload=>{
+      if(activeTeam?.id!==teamId)return;
+      if(payload.new?.audience&&payload.new.audience!=='team'&&payload.old?.audience!=='team')return;
+      loadImportantAnnouncements();
+      loadCommunications(false);
+    })
+    .subscribe(status=>{
+      if(activeTeam?.id!==teamId)return;
+      if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){
+        clearTimeout(announcementRealtimeReconnectTimer);
+        announcementRealtimeReconnectTimer=setTimeout(subscribeAnnouncementRealtime,1800);
+      }
+    });
+}
+
+function activeMainTab(){
+  return ['home','schedule','messages','weight','more'].find(name=>!$(name+'Tab')?.classList.contains('hidden'))||'home';
+}
+
+async function refreshTeamData({manual=false,force=false}={}){
+  if(!session||!activeTeam||!activeSeason||document.body.classList.contains('kiosk-locked'))return;
+  const now=Date.now();
+  if(!manual&&!force&&now-lastAutomaticTeamRefreshAt<4000)return teamRefreshPromise;
+  if(teamRefreshPromise)return teamRefreshPromise;
+  if(!manual)lastAutomaticTeamRefreshAt=now;
+  const indicator=$('pullRefreshIndicator'),label=$('pullRefreshText');
+  if(manual&&indicator){indicator.style.transform='translate(-50%,8px)';indicator.classList.add('visible','refreshing');indicator.classList.remove('ready');if(label)label.textContent='Refreshing…';}
+  const teamId=activeTeam.id,seasonId=activeSeason.id;
+  const request=(async()=>{
+    const jobs=[loadImportantAnnouncements(),loadSchedule(),loadCommunications(false)];
+    if(isStaff)jobs.push(loadDashboard(),loadRoster(),loadJoinRequests(),loadGuardianConnectionRequests(),loadAgreementCoachStatus(false),loadWeighInSessions());
+    else if(isManager)jobs.push(loadOperationalRoster(),loadWeighInSessions());
+    else jobs.push(loadMemberAthletes());
+    if(!isManager)jobs.push(loadMedicalClearanceCases(false));
+    await Promise.allSettled(jobs);
+    if(activeTeam?.id!==teamId||activeSeason?.id!==seasonId)return;
+    await renderFamilyAthletes();
+    renderAttention();
+    updateBottomNavBadges();
+    subscribeAnnouncementRealtime();
+    if(manual)message('Team information refreshed.');
+  })();
+  teamRefreshPromise=request;
+  try{return await request;}
+  finally{
+    if(teamRefreshPromise===request)teamRefreshPromise=null;
+    if(manual&&indicator){indicator.classList.remove('refreshing','ready');if(label)label.textContent='Updated';setTimeout(()=>{indicator.classList.remove('visible');indicator.style.transform='translate(-50%,-58px)';if(label)label.textContent='Pull to refresh';},500);}
+  }
+}
+
+function atTopOfMainPage(){
+  return Math.max(window.scrollY||0,document.documentElement.scrollTop||0,document.body.scrollTop||0)<=1;
+}
+function mainSheetIsOpen(){return [...document.querySelectorAll('.sheet')].some(panel=>!panel.classList.contains('hidden'));}
+function resetPullRefresh(){
+  pullRefreshStartY=null;pullRefreshDistance=0;pullRefreshTracking=false;
+  const indicator=$('pullRefreshIndicator');if(!indicator||indicator.classList.contains('refreshing'))return;
+  indicator.classList.remove('visible','ready');indicator.style.transform='translate(-50%,-58px)';
+  if($('pullRefreshText'))$('pullRefreshText').textContent='Pull to refresh';
+}
+document.addEventListener('touchstart',event=>{
+  if(teamRefreshPromise||!session||!activeTeam||!atTopOfMainPage()||mainSheetIsOpen()||document.body.classList.contains('kiosk-locked'))return;
+  const touch=event.touches?.[0];if(!touch)return;
+  pullRefreshStartY=touch.clientY;pullRefreshDistance=0;pullRefreshTracking=true;
+},{passive:true});
+document.addEventListener('touchmove',event=>{
+  if(!pullRefreshTracking||pullRefreshStartY===null)return;
+  const touch=event.touches?.[0];if(!touch)return;
+  const raw=touch.clientY-pullRefreshStartY;
+  if(raw<=0){resetPullRefresh();return;}
+  if(!atTopOfMainPage()){resetPullRefresh();return;}
+  pullRefreshDistance=Math.min(110,raw*.58);
+  if(pullRefreshDistance<8)return;
+  event.preventDefault();
+  const indicator=$('pullRefreshIndicator'),label=$('pullRefreshText');if(!indicator)return;
+  indicator.classList.add('visible');indicator.classList.toggle('ready',pullRefreshDistance>=68);
+  indicator.style.transform=`translate(-50%,${Math.max(-42,pullRefreshDistance-50)}px)`;
+  if(label)label.textContent=pullRefreshDistance>=68?'Release to refresh':'Pull to refresh';
+},{passive:false});
+document.addEventListener('touchend',()=>{
+  if(!pullRefreshTracking)return;
+  const shouldRefresh=pullRefreshDistance>=68;
+  pullRefreshStartY=null;pullRefreshTracking=false;
+  if(shouldRefresh)refreshTeamData({manual:true,force:true});else resetPullRefresh();
+},{passive:true});
+document.addEventListener('touchcancel',resetPullRefresh,{passive:true});
 
 function openAnnouncementComposer(){
   if(!isStaff)return;
@@ -3592,7 +3701,7 @@ async function refreshActiveCommunicationMessages(threadId,{stickToBottom=false,
 }
 
 function subscribeCommunicationRealtime(){
-  if(!activeTeam||communicationRealtimeChannels.length)return;
+  if(!activeTeam||communicationRealtimeChannels.some(ch=>String(ch?.topic||'').includes(`wm-communication-${activeTeam.id}`)))return;
   const messageChannel=client.channel(`wm-communication-${activeTeam.id}`)
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'communication_messages',filter:`team_id=eq.${activeTeam.id}`},payload=>{
       const isMediaMessage=/^\[(Photo|Video)\]$/i.test(String(payload.new.body||''));
@@ -3605,11 +3714,6 @@ function subscribeCommunicationRealtime(){
     }).subscribe();
   const notificationChannel=client.channel(`wm-notifications-${session.user.id}`)
     .on('postgres_changes',{event:'*',schema:'public',table:'communication_notifications',filter:`user_id=eq.${session.user.id}`},()=>loadCommunications(false)).subscribe();
-  const announcementChannel=client.channel(`wm-home-announcements-${activeTeam.id}`)
-    .on('postgres_changes',{event:'*',schema:'public',table:'team_posts',filter:`team_id=eq.${activeTeam.id}`},payload=>{
-      if(payload.new?.audience&&payload.new.audience!=='team'&&payload.old?.audience!=='team')return;
-      loadImportantAnnouncements();
-    }).subscribe();
   const threadChannel=client.channel(`wm-thread-state-${activeTeam.id}`)
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'communication_threads',filter:`team_id=eq.${activeTeam.id}`},payload=>{
       if(!payload.new?.archived_at)return;
@@ -3627,7 +3731,7 @@ function subscribeCommunicationRealtime(){
       clearTimeout(communicationReceiptRefreshTimer);
       communicationReceiptRefreshTimer=setTimeout(()=>refreshActiveCommunicationReceipts(false),140);
     }).subscribe();
-  communicationRealtimeChannels=[messageChannel,notificationChannel,announcementChannel,threadChannel,safetyChannel,receiptChannel];
+  communicationRealtimeChannels.push(messageChannel,notificationChannel,threadChannel,safetyChannel,receiptChannel);
 }
 
 function syncCommunicationMediaButton(){
@@ -7295,7 +7399,8 @@ $('saveAthleteChatPermissionsBtn').onclick=saveAthleteChatPermissions;
 $('joinCodeBtn').onclick=showTeamJoin;
 
 setupPhoneFormatting();
-window.addEventListener('pageshow',recoverInteractionLayer);
+window.addEventListener('pageshow',()=>{recoverInteractionLayer();refreshTeamData();});
+window.addEventListener('online',()=>refreshTeamData({force:true}));
 setRememberSession(shouldRememberSession());
 client.auth.onAuthStateChange((event,nextSession)=>{
   session=nextSession||null;
