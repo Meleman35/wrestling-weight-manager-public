@@ -324,10 +324,10 @@ button:focus-visible,.pressable:focus-visible{outline:3px solid color-mix(in srg
 #communicationSafetyTestRoleWrap.hidden{display:none!important}#communicationSafetyTestRoleWrap label{margin:0;font-size:12px;white-space:nowrap;color:#6e6e73}#communicationSafetyTestRoleWrap select{padding:8px 34px 8px 11px;border-radius:13px;font-size:13px}
 .message-safety-flag{margin:7px -5px -3px;padding:6px 8px;border-radius:10px;font-size:10px;font-weight:850;line-height:1.25;background:#fff1ce;color:#7a5000}.message-safety-flag.high{background:#ffe0e0;color:#982a2a}.message-safety-flag.medium{background:#fff1ce;color:#805c10}.message-safety-flag.low{background:#e8eef5;color:#35506d}.message-row.mine .message-safety-flag{background:rgba(255,255,255,.9);color:#7d2424}
 .safety-test-chip{display:inline-block;margin:0 0 7px 6px;border-radius:999px;padding:4px 8px;background:#eee8ff;color:#5c3f9f;font-size:10px;font-weight:950;text-transform:uppercase}
-/* v0.14.5: readable alerts, durable mobile taps, and clearer safety actions. */
+/* v0.14.7: reliable chat gestures and automatic native app re-locking. */
 .notification-card{display:block;width:100%;color:var(--ink);text-align:left}
 button{touch-action:manipulation}
-.thread-open,.chat-thread-identity{-webkit-touch-callout:none;user-select:none}
+.thread-card,.thread-card *,.chat-thread-identity,.chat-thread-identity *,#conversationActionsSheet .sheet-head,#conversationActionsSheet .sheet-head *{-webkit-touch-callout:none!important;-webkit-user-select:none!important;user-select:none!important}
 .safety-review-guide{display:grid;gap:5px;background:#f4f7fb;border:1px solid var(--line);border-radius:15px;padding:11px 12px;margin:8px 0 12px;color:var(--ink)}
 .safety-review-guide span{font-size:12px;line-height:1.35}.safety-review-guide small{color:var(--muted);line-height:1.35;margin-top:2px}
 @media(max-width:680px){#communicationThreadSheet{padding-left:10px;padding-right:10px}.chat-thread-header{padding-top:5px;padding-bottom:5px}.chat-thread-avatar,.chat-thread-avatar-placeholder{width:42px;height:42px;margin-bottom:2px}.chat-thread-identity h2{font-size:15px!important}#communicationThreadSheet .guardian-mirror-note,#communicationThreadSheet .sms-safety-note{margin-top:5px}#communicationSafetyTestBanner{padding:7px 9px!important}.message-date-separator{margin-top:10px}.message-bubble{font-size:15px}}
@@ -1389,7 +1389,7 @@ button{touch-action:manipulation}
     <button id="customizeLayoutBtn" class="wide secondary" type="button">↕ Customize App Layout</button>
     <button id="securityBtn" class="wide secondary" type="button">🔒 Sign-In & App Security</button>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.14.5</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.14.7</p>
   </section>
 
   <section id="layoutEditorSheet" class="sheet hidden" aria-modal="true">
@@ -1770,6 +1770,7 @@ let communicationNotificationRenderSignature = '';
 let communicationLongPressTimer = null;
 let communicationLongPressStart = null;
 let suppressCommunicationClickUntil = 0;
+let suppressedCommunicationThreadId = null;
 let smsReplyOwners = [];
 let smsReplies = [];
 let smsUnreadReplies = 0;
@@ -1795,6 +1796,7 @@ const esc = value => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;',
 let securityState={native:false,appLockEnabled:false,pinEnabled:false,biometricLabel:'Device Security'};
 let securityUnlockedThisLaunch=false;
 let shouldLockWhenVisible=false;
+let automaticDeviceUnlockAttempted=false;
 
 function nativeSecurityAvailable(){return !!window.webkit?.messageHandlers?.security;}
 function postNativeSecurity(command,payload={}){
@@ -1840,8 +1842,22 @@ function lockApp(){
   renderAppLockIdentity();
   show('appLockOverlay',true);document.body.style.overflow='hidden';
   if($('appLockPin'))$('appLockPin').value='';
+  if(!automaticDeviceUnlockAttempted&&nativeSecurityAvailable()){
+    automaticDeviceUnlockAttempted=true;
+    setTimeout(()=>postNativeSecurity('authenticate',{reason:'Unlock Wrestling Manager'}),120);
+  }
 }
-function unlockApp(){securityUnlockedThisLaunch=true;shouldLockWhenVisible=false;show('appLockOverlay',false);document.body.style.overflow='';}
+function unlockApp(){securityUnlockedThisLaunch=true;shouldLockWhenVisible=false;automaticDeviceUnlockAttempted=false;show('appLockOverlay',false);document.body.style.overflow='';}
+function prepareAppLockForBackground(){
+  if(!session||!securityState.appLockEnabled)return;
+  shouldLockWhenVisible=true;securityUnlockedThisLaunch=false;automaticDeviceUnlockAttempted=false;
+}
+window.wrestlingManagerAppDidEnterBackground=prepareAppLockForBackground;
+window.wrestlingManagerAppDidBecomeActive=function(){
+  recoverInteractionLayer();
+  if(shouldLockWhenVisible)lockApp();
+  refreshActiveCommunicationReceipts(true);
+};
 window.wrestlingManagerSecurityResponse=function(payload={}){
   if(payload.state)securityState={...securityState,...payload.state,native:true};
   if(payload.action==='status'){
@@ -2083,6 +2099,7 @@ function setTab(name){
   recoverInteractionLayer();
   ['home','schedule','messages','weight','more'].forEach(tab => show(tab+'Tab', tab===name));
   document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab===name));
+  window.scrollTo(0,0);
   if (name==='schedule') loadSchedule();
   if (name==='messages') loadCommunications();
   if (name==='weight' && canWeighIn) loadWeighInSessions();
@@ -3163,8 +3180,13 @@ function subscribeCommunicationRealtime(){
 }
 
 async function openCommunicationThread(threadId,{keepOpen=false,preserveScroll=false}={}){
-  activeCommunicationThread=communicationThreads.find(x=>x.thread_id===threadId)||activeCommunicationThread;
-  if(!activeCommunicationThread)return;
+  const requestedThread=communicationThreads.find(x=>String(x.thread_id)===String(threadId));
+  if(requestedThread)activeCommunicationThread=requestedThread;
+  else if(!activeCommunicationThread||String(activeCommunicationThread.thread_id)!==String(threadId)){
+    message('That conversation is refreshing. Tap it again in a moment.');
+    loadCommunications(false);
+    return;
+  }
   if(!keepOpen)clearPendingCommunicationMedia();
   const messageList=$('communicationMessageList');
   const distanceFromBottom=messageList?messageList.scrollHeight-messageList.scrollTop-messageList.clientHeight:0;
@@ -3421,18 +3443,55 @@ async function confirmScheduleMessage(){
 function cancelCommunicationLongPress(){
   clearTimeout(communicationLongPressTimer);communicationLongPressTimer=null;communicationLongPressStart=null;
 }
+function clearCommunicationTextSelection(){
+  const selection=window.getSelection?.();
+  if(selection?.rangeCount)selection.removeAllRanges();
+}
 function beginCommunicationLongPress(event,threadId){
   if(event.pointerType==='mouse'&&event.button!==0)return;
   cancelCommunicationLongPress();
-  communicationLongPressStart={x:event.clientX,y:event.clientY,threadId};
+  communicationLongPressStart={x:event.clientX,y:event.clientY,threadId,pointerType:event.pointerType||'touch'};
   communicationLongPressTimer=setTimeout(()=>{
-    communicationLongPressTimer=null;suppressCommunicationClickUntil=Date.now()+700;
+    communicationLongPressTimer=null;suppressCommunicationClickUntil=Date.now()+450;suppressedCommunicationThreadId=String(threadId||activeCommunicationThread?.thread_id||'');
+    clearCommunicationTextSelection();
     navigator.vibrate?.(18);openCommunicationActions(threadId);
   },550);
 }
 function moveCommunicationLongPress(event){
   if(!communicationLongPressStart)return;
   if(Math.hypot(event.clientX-communicationLongPressStart.x,event.clientY-communicationLongPressStart.y)>12)cancelCommunicationLongPress();
+}
+function finishCommunicationLongPress(event){
+  const gesture=communicationLongPressStart;
+  const wasQuickTap=!!gesture&&!!communicationLongPressTimer&&Math.hypot(event.clientX-gesture.x,event.clientY-gesture.y)<=12;
+  cancelCommunicationLongPress();
+  if(!wasQuickTap||gesture.pointerType==='mouse'||!gesture.threadId)return;
+  suppressedCommunicationThreadId=String(gesture.threadId);suppressCommunicationClickUntil=Date.now()+450;
+  clearCommunicationTextSelection();
+  openCommunicationThread(gesture.threadId);
+}
+
+function bindReliableMessageTap(id,handler){
+  const element=$(id);if(!element)return;
+  let gesture=null,lastPointerTap=0;
+  element.addEventListener('pointerdown',event=>{
+    if(!event.isPrimary)return;
+    gesture={id:event.pointerId,x:event.clientX,y:event.clientY,type:event.pointerType||'touch'};
+  });
+  element.addEventListener('pointermove',event=>{
+    if(!gesture||gesture.id!==event.pointerId)return;
+    if(Math.hypot(event.clientX-gesture.x,event.clientY-gesture.y)>12)gesture=null;
+  });
+  element.addEventListener('pointerup',event=>{
+    const current=gesture;gesture=null;
+    if(!current||current.id!==event.pointerId||current.type==='mouse')return;
+    lastPointerTap=Date.now();event.preventDefault();handler(event);
+  });
+  element.addEventListener('pointercancel',()=>{gesture=null;});
+  element.addEventListener('click',event=>{
+    if(Date.now()-lastPointerTap<650){event.preventDefault();event.stopPropagation();return;}
+    handler(event);
+  });
 }
 
 async function openCommunicationActions(threadId=null){
@@ -6341,7 +6400,7 @@ $('saveSecurityPinBtn').onclick=()=>{const pin=$('securityPin').value,confirm=$(
 $('removeSecurityPinBtn').onclick=()=>{if(confirm('Remove the separate Wrestling Manager PIN from this device?'))postNativeSecurity('removePin');};
 $('securityPasswordResetBtn').onclick=()=>{$('recoveryEmail').value=session?.user?.email||'';closeSheets();openSheet('forgotPasswordSheet');};
 $('lockedSignOutBtn').onclick=async()=>{await client.auth.signOut();show('appLockOverlay',false);location.reload();};
-document.addEventListener('visibilitychange',()=>{if(document.hidden&&session&&securityState.appLockEnabled){shouldLockWhenVisible=true;securityUnlockedThisLaunch=false;}else if(!document.hidden&&shouldLockWhenVisible)lockApp();});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)prepareAppLockForBackground();else window.wrestlingManagerAppDidBecomeActive();});
 $('staffViewModeBtn').onclick=()=>setViewMode('staff'); $('parentViewModeBtn').onclick=()=>setViewMode('parent');
 $('acceptInviteBtn').onclick=acceptInvite;
 $('setupJoinBtn').onclick=()=>startJoinFlow($('setupJoinCode').value.trim());
@@ -6470,20 +6529,24 @@ $('kioskExitTab').onclick=exitKiosk;
 $('newAnnouncementBtn').onclick=openAnnouncementComposer;
 $('saveAnnouncementBtn').onclick=saveImportantAnnouncement;
 $('communicationThreadList').addEventListener('click',event=>{
-  if(Date.now()<suppressCommunicationClickUntil){event.preventDefault();event.stopPropagation();return;}
   const pin=event.target.closest('[data-thread-pin]');
   if(pin){event.preventDefault();event.stopPropagation();togglePinnedThread(pin.dataset.threadPin);return;}
   const thread=event.target.closest('[data-communication-thread]');
-  if(thread){event.preventDefault();openCommunicationThread(thread.dataset.communicationThread);}
+  if(!thread)return;
+  if(Date.now()<suppressCommunicationClickUntil&&String(thread.dataset.communicationThread)===suppressedCommunicationThreadId){event.preventDefault();event.stopPropagation();return;}
+  event.preventDefault();openCommunicationThread(thread.dataset.communicationThread);
 });
 $('communicationThreadList').addEventListener('pointerdown',event=>{const thread=event.target.closest('[data-communication-thread]');if(thread)beginCommunicationLongPress(event,thread.dataset.communicationThread);});
 $('communicationThreadList').addEventListener('pointermove',moveCommunicationLongPress);
-['pointerup','pointercancel','pointerleave'].forEach(type=>$('communicationThreadList').addEventListener(type,cancelCommunicationLongPress));
-$('communicationThreadList').addEventListener('contextmenu',event=>{const thread=event.target.closest('[data-communication-thread]');if(!thread)return;event.preventDefault();suppressCommunicationClickUntil=Date.now()+700;openCommunicationActions(thread.dataset.communicationThread);});
+$('communicationThreadList').addEventListener('pointerup',finishCommunicationLongPress);
+['pointercancel','pointerleave'].forEach(type=>$('communicationThreadList').addEventListener(type,cancelCommunicationLongPress));
+$('communicationThreadList').addEventListener('selectstart',event=>{if(event.target.closest('[data-communication-thread]'))event.preventDefault();});
+$('communicationThreadList').addEventListener('contextmenu',event=>{const thread=event.target.closest('[data-communication-thread]');if(!thread)return;event.preventDefault();clearCommunicationTextSelection();suppressedCommunicationThreadId=String(thread.dataset.communicationThread);suppressCommunicationClickUntil=Date.now()+450;openCommunicationActions(thread.dataset.communicationThread);});
 $('.chat-thread-identity').addEventListener('pointerdown',event=>beginCommunicationLongPress(event,null));
 $('.chat-thread-identity').addEventListener('pointermove',moveCommunicationLongPress);
 ['pointerup','pointercancel','pointerleave'].forEach(type=>$('.chat-thread-identity').addEventListener(type,cancelCommunicationLongPress));
-$('.chat-thread-identity').addEventListener('contextmenu',event=>{event.preventDefault();openCommunicationActions();});
+$('.chat-thread-identity').addEventListener('selectstart',event=>event.preventDefault());
+$('.chat-thread-identity').addEventListener('contextmenu',event=>{event.preventDefault();clearCommunicationTextSelection();openCommunicationActions();});
 $('communicationNotificationList').addEventListener('click',event=>{
   const card=event.target.closest('[data-notification-thread]');if(!card)return;
   event.preventDefault();
@@ -6491,8 +6554,8 @@ $('communicationNotificationList').addEventListener('click',event=>{
   const id=card.dataset.notificationThread;
   if(id){closeSheets();setTab('messages');setTimeout(()=>openCommunicationThread(id),30);}
 });
-$('newCommunicationBtn').onclick=openNewCommunication;
-$('guardianSafetyTestBtn').onclick=openGuardianSafetyTest;
+bindReliableMessageTap('newCommunicationBtn',openNewCommunication);
+bindReliableMessageTap('guardianSafetyTestBtn',openGuardianSafetyTest);
 $('endGuardianSafetyTestBtn').onclick=endGuardianSafetyTest;
 $('createCommunicationThreadBtn').onclick=createCommunicationThread;
 $('newCommunicationType').onchange=()=>{$('newCommunicationRecipientCount').textContent='0';renderCommunicationDirectory();};
@@ -6509,14 +6572,14 @@ $('muteCommunicationUntilMidnightBtn').onclick=muteCommunicationUntilMidnight;
 $('unmuteCommunicationThreadBtn').onclick=()=>setCommunicationThreadMute(null,'');
 document.querySelectorAll('[data-mute-minutes]').forEach(b=>b.onclick=()=>muteCommunicationForMinutes(b.dataset.muteMinutes));
 $('blockCommunicationUserBtn').onclick=toggleCommunicationBlock;
-$('communicationPreferencesBtn').onclick=openCommunicationPreferences;
+bindReliableMessageTap('communicationPreferencesBtn',openCommunicationPreferences);
 $('saveCommunicationPreferencesBtn').onclick=saveCommunicationPreferences;
 $('enableBrowserNotificationsBtn').onclick=enableBrowserNotifications;
-$('openNotificationsBtn').onclick=openCommunicationNotifications;
+bindReliableMessageTap('openNotificationsBtn',openCommunicationNotifications);
 $('communicationSearchInput').addEventListener('input',queueCommunicationSearch);
 $('markCommunicationNotificationsReadBtn').onclick=markCommunicationNotificationsRead;
-$('massTextBtn').onclick=openMassText;
-$('textRepliesBtn').onclick=openTextReplies;
+bindReliableMessageTap('massTextBtn',openMassText);
+bindReliableMessageTap('textRepliesBtn',openTextReplies);
 $('sendMassTextBtn').onclick=sendMassText;
 $('markSmsRepliesReadBtn').onclick=markSmsRepliesRead;
 $('massTextBody').addEventListener('input',updateMassTextPreview);
@@ -6524,7 +6587,7 @@ $('massTextRepliesEnabled').onchange=updateMassTextPreview;
 $('massTextReplyOwner').onchange=updateMassTextPreview;
 $('massTextSendLater').onchange=()=>{show('massTextScheduledAtWrap',$('massTextSendLater').checked);$('sendMassTextBtn').textContent=$('massTextSendLater').checked?'Schedule Mass Text':'Send Mass Text';};
 document.querySelectorAll('[data-sms-template]').forEach(b=>b.onclick=()=>applyMassTextTemplate(b.dataset.smsTemplate));
-$('athleteChatPermissionsBtn').onclick=openAthleteChatPermissions;
+bindReliableMessageTap('athleteChatPermissionsBtn',openAthleteChatPermissions);
 $('athleteChatPermissionsHomeBtn').onclick=openAthleteChatPermissions;
 $('athleteChatPermissionsAccountBtn').onclick=openAthleteChatPermissions;
 $('saveAthleteChatPermissionsBtn').onclick=saveAthleteChatPermissions;
