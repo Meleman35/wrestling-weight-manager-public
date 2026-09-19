@@ -1281,7 +1281,7 @@ button{touch-action:manipulation}
     <div class="hardware-note"><b>Live scale:</b> the native iPhone/iPad app feeds the connected American Scale directly into this display. Manual entry remains available for browser testing.</div>
 
     <label data-scan-label>Scan NFC / QR / barcode</label>
-    <div id="weighScanRow" class="two-col"><input id="weighScanToken" autocomplete="off" placeholder="Tap or scan credential"><button id="openCredentialScannerBtn" class="scanner-btn" type="button">▣ Scan Code</button><button id="resolveWeighScanBtn">Identify</button></div>
+    <div id="weighScanRow" class="two-col"><input id="weighScanToken" autocomplete="off" placeholder="Tap or scan credential"><button id="openCredentialScannerBtn" class="scanner-btn" type="button">▣ Scan Code</button><button id="resolveWeighScanBtn" type="button">Identify</button></div>
     <small class="scanner-guidance">Use the iPad camera for an athlete QR or barcode. A paired USB/Bluetooth scanner can still type directly into the credential box.</small>
     <label data-roster-label>Or find athlete on event roster</label><input id="weighRosterSearch" placeholder="Search name or team">
     <div id="weighRosterResults" class="search-results"></div>
@@ -1768,6 +1768,7 @@ let teamKioskZeroTimer = null;
 let teamKioskCandidateWeight = null;
 let teamKioskSaved = false;
 let teamKioskSaving = false;
+let weighCredentialResolving = false;
 let pendingWeighMode = 'team_kiosk';
 let importantAnnouncements = [];
 let communicationThreads = [];
@@ -5135,7 +5136,10 @@ function profileField(label,value){
 
 async function openAthleteOverview(athleteId){
   if(!activeTeam||!athleteId)return;
-  const {data,error}=await client.rpc('get_athlete_profile_for_team_v2',{p_athlete_id:athleteId,p_team_id:activeTeam.id,p_view_as_parent:viewMode==='parent'});
+  const [{data,error},weightResult]=await Promise.all([
+    client.rpc('get_athlete_profile_for_team_v2',{p_athlete_id:athleteId,p_team_id:activeTeam.id,p_view_as_parent:viewMode==='parent'}),
+    activeSeason?client.rpc('get_athlete_weight_trend',{p_athlete_id:athleteId,p_season_id:activeSeason.id,p_days:0}):Promise.resolve({data:null,error:null})
+  ]);
   if(error){message(error.message,true);return;}
   viewAthleteId=athleteId;
   const row=rosterRows.find(x=>x.athlete_id===athleteId)||rosterManagementRows.find(x=>x.athlete_id===athleteId)||null;
@@ -5152,8 +5156,13 @@ async function openAthleteOverview(athleteId){
   $('viewAthletePhoto').className=photoUrl?'profile-view-photo':'profile-view-photo-placeholder';
   $('viewAthletePhoto').innerHTML=photoUrl?`<img class="profile-view-photo" src="${esc(photoUrl)}" alt="${esc(fullName)}">`:'👤';
 
-  const lineup=row?.current_lineup_class!==null&&row?.current_lineup_class!==undefined?displayTeamWeightClass(row.current_lineup_class):'—';
-  const latest=row?.latest_weight!==null&&row?.latest_weight!==undefined?`${Number(row.latest_weight).toFixed(1)} lb`:'—';
+  const weightData=weightResult.error?null:weightResult.data;
+  if(weightResult.error)console.warn('Athlete weight snapshot:',weightResult.error.message);
+  const latestPoint=(weightData?.points||[]).at(-1);
+  const lineupValue=row?.current_lineup_class??weightData?.current_lineup_class;
+  const lineup=lineupValue!==null&&lineupValue!==undefined?displayTeamWeightClass(lineupValue):'—';
+  const latestValue=latestPoint?.weight_lbs??row?.latest_weight;
+  const latest=latestValue!==null&&latestValue!==undefined?`${Number(latestValue).toFixed(1)} lb`:'—';
   $('viewAthleteTeamSnapshot').innerHTML=`<h3>Team Snapshot</h3><div class="profile-view-grid">${profileField('Roster',row?rosterStatusLabel(row.roster_status):'Team member')}${profileField('Lineup class',lineup)}${profileField('Latest weight',latest)}${profileField('Eligibility',row?.eligible_weight_class!==null&&row?.eligible_weight_class!==undefined?displayTeamWeightClass(row.eligible_weight_class):'—')}</div>`;
 
   $('viewAthleteAgeDivisions').innerHTML=formatAgeDivisions(data.age_divisions);
@@ -6804,15 +6813,30 @@ window.wrestlingManagerCredentialScannerError=function(reason){
 };
 
 async function resolveWeighCredential(){
-  if(!activeWeighInSession)return;
-  const token=$('weighScanToken').value.trim(); if(!token){message('Scan or enter a credential first.',true);return;}
-  const {data,error}=await client.rpc('resolve_session_credential',{p_session_id:activeWeighInSession.id,p_credential_token:token});
-  if(error){message(error.message,true);return;}
-  if(!data?.length){message('Credential was not found on this event roster.',true);return;}
-  const hit=data[0];
-  let row=weighInRoster.find(x=>x.id===hit.roster_entry_id);
-  if(!row){await loadWeighInRoster();row=weighInRoster.find(x=>x.id===hit.roster_entry_id);}
-  if(row){resetTeamKioskCycle();selectedWeighInEntry=row;selectedIdentificationMethod=hit.credential_type||'nfc';stableTeamWeighInId=null;stableReadingKey=null;$('liveWeightInput').value='';show('stableWeightStatus',false);await renderSelectedWeighInEntry();$('weighScanToken').value='';}
+  if(!activeWeighInSession||weighCredentialResolving)return;
+  const input=$('weighScanToken');
+  const token=String(input?.value||'').trim();
+  if(!token){message('Scan or enter a credential first.',true);input?.focus();return;}
+  const button=$('resolveWeighScanBtn');
+  weighCredentialResolving=true;
+  if(button){button.disabled=true;button.textContent='Identifying…';}
+  input?.blur();
+  try{
+    const {data,error}=await client.rpc('resolve_session_credential',{p_session_id:activeWeighInSession.id,p_credential_token:token});
+    if(error){message(error.message,true);return;}
+    if(!data?.length){message('Credential was not found on this event roster.',true);return;}
+    const hit=data[0];
+    let row=weighInRoster.find(x=>x.id===hit.roster_entry_id);
+    if(!row){await loadWeighInRoster();row=weighInRoster.find(x=>x.id===hit.roster_entry_id);}
+    if(!row){message('The athlete was identified, but the roster is still refreshing. Try once more.',true);return;}
+    resetTeamKioskCycle();selectedWeighInEntry=row;selectedIdentificationMethod=hit.credential_type||'nfc';stableTeamWeighInId=null;stableReadingKey=null;$('liveWeightInput').value='';show('stableWeightStatus',false);await renderSelectedWeighInEntry();input.value='';
+  }catch(error){
+    console.error('Identify athlete:',error);
+    message('The athlete could not be identified. Please try the roster selection.',true);
+  }finally{
+    weighCredentialResolving=false;
+    if(button){button.disabled=false;button.textContent='Identify';}
+  }
 }
 
 function resetTeamKioskCycle(){
