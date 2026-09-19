@@ -15,7 +15,7 @@
   --team-header-muted:rgba(255,255,255,.74);--team-nav-line:rgba(255,255,255,.24);--team-banner-y:50%;
 }
 *{box-sizing:border-box}
-html{background:var(--bg)}
+html{background:var(--bg);-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
 button,input,select,textarea{font:inherit}
 button{cursor:pointer}
@@ -310,6 +310,21 @@ button:focus-visible,.pressable:focus-visible{outline:3px solid color-mix(in srg
 .message-composer{position:relative;bottom:auto;flex:0 0 auto;display:grid;grid-template-columns:minmax(0,1fr) 38px;gap:7px;align-items:end;background:#fff;border-top:1px solid #e5e5ea;padding:9px 0 5px}.message-composer textarea{min-height:38px;max-height:108px;border:1px solid #d1d1d6;border-radius:20px;padding:8px 13px;line-height:20px;resize:none;background:#fff}.message-composer textarea:focus{border-color:#b9b9be;box-shadow:none}.message-composer button{width:36px;height:36px;min-height:36px;padding:0;border-radius:50%;background:#087cff;color:#fff;font-size:22px;line-height:1;box-shadow:none!important}.message-composer button:disabled{opacity:.55}
 #scheduleCommunicationMessageBtn{width:auto;margin:4px auto 0;padding:7px 11px;background:transparent;color:#087cff;box-shadow:none!important;font-size:12px}.recipient-avatar,.recipient-avatar-placeholder{width:42px;height:42px;flex:0 0 42px;border-radius:50%;object-fit:cover;background:#e5e5ea;display:grid;place-items:center;color:#59636f;font-size:11px;font-weight:900}.recipient-option{display:grid;grid-template-columns:24px 42px minmax(0,1fr);align-items:center}.recipient-option input{margin:0}.recipient-option b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media(max-width:680px){#communicationThreadSheet{inset:0;left:0;bottom:0;transform:none;width:100%;height:100dvh;max-height:none;border-radius:0;padding-top:env(safe-area-inset-top)}#communicationThreadSheet>.sheet-handle{display:none}.chat-thread-header{padding-left:2px;padding-right:2px}#communicationThreadSheet .message-list{min-height:0}.message-bubble{max-width:78vw}}
+/* v0.14.3: iMessage-like message spacing, dates, media composer and live receipts. */
+.chat-thread-header{grid-template-columns:50px minmax(0,1fr) 50px;padding:8px 0 7px}.chat-back{width:46px;height:46px;border:1px solid #dedee3;background:#fff;color:#111;font-size:35px}.chat-thread-avatar,.chat-thread-avatar-placeholder{width:52px;height:52px;margin-bottom:3px}.chat-thread-identity h2{font-size:17px!important;font-weight:850}.chat-thread-identity p{font-size:11px;color:#8e8e93}.chat-header-spacer{width:46px}
+#communicationThreadSheet .message-list{padding:10px 0 12px}.message-date-separator{text-align:center;color:#9a9aa1;font-size:11px;font-weight:750;margin:18px 0 10px}.message-row{width:100%}.message-line{max-width:96%}.message-bubble{padding:9px 13px;font-size:16px;white-space:pre-wrap}.message-meta{opacity:.9}.message-row.direct-chat:not(.mine) .message-meta .sender-label{display:none}.message-row.direct-chat:not(.mine) .message-meta .meta-divider{display:none}.message-row.direct-chat:not(.mine) .message-meta{margin-left:5px}.message-receipts{display:flex;flex-direction:column;align-items:flex-end;gap:2px}.message-receipts span{display:block}
+.communication-media-preview{display:grid;grid-template-columns:58px minmax(0,1fr) 36px;align-items:center;gap:9px;border:1px solid #d1d1d6;background:#f4f4f6;border-radius:17px;padding:8px;margin:7px 0 0}.communication-media-preview img,.communication-media-preview video{width:58px;height:58px;border-radius:12px;object-fit:cover;background:#ddd}.communication-media-preview b,.communication-media-preview small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.communication-media-preview small{color:#75757b;margin-top:3px}.communication-media-preview button{width:32px;height:32px;padding:0;border-radius:50%;background:#dedee3;color:#222;box-shadow:none!important}
+.message-composer{grid-template-columns:36px minmax(0,1fr) 38px}.message-composer .composer-media-btn{width:34px;height:34px;min-height:34px;background:#ededf0;color:#52525a;border:1px solid #d1d1d6;font-size:24px;font-weight:400}.message-composer .composer-media-btn:disabled{opacity:.38}.message-media{max-width:min(76vw,520px);overflow:hidden;border-radius:18px;background:#e9e9eb}.message-row.mine .message-media{margin-left:auto}.message-media img,.message-media video{display:block;width:100%;max-height:48vh;object-fit:cover;background:#111}.message-media-caption{padding:9px 12px;white-space:pre-wrap}.message-media-safety{display:flex;gap:5px;align-items:center;padding:6px 10px;background:#f5f5f7;color:#6e6e73;font-size:9px}.message-row.mine .message-media-safety{background:#eaf4ff;color:#35658d}.message-media-hidden{border:1px dashed #c4c5ca;border-radius:16px;padding:14px;color:#6e6e73;background:#f6f6f8;font-size:12px}.message-bubble.media-label-only{display:none}
+.media-permission-group{border-top:1px solid var(--line);margin-top:12px;padding-top:10px}.media-permission-group>h4{margin:0 0 4px}.media-permission-group>p{margin:0 0 8px;color:var(--muted);font-size:12px;line-height:1.4}
+.communication-search-wrap{position:relative;margin:12px 0}.communication-search-wrap input{padding-left:39px;border-radius:18px;background:#f0f0f3;border-color:transparent}.communication-search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#77777d;pointer-events:none}.communication-search-results{display:grid;gap:7px;margin:-4px 0 13px}.communication-search-result{width:100%;display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:9px;text-align:left;background:#fff;color:#111;border:1px solid #dedee3;border-radius:15px;padding:10px;box-shadow:none!important}.communication-search-result>span:first-child{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:#ededf0}.communication-search-result b,.communication-search-result small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.communication-search-result small{color:#77777d;margin-top:3px}.communication-search-result time{color:#999;font-size:10px}.communication-search-note{font-size:11px;color:var(--muted);padding:2px 5px}
+@media(max-width:680px){.chat-thread-header{padding-left:4px;padding-right:4px}.message-media{max-width:78vw}}
+/* v0.14.4: compact safety simulation with visible scanner results. */
+#communicationSafetyTestBanner{padding:8px 11px!important;font-size:11px!important;line-height:1.3!important;border-radius:13px!important}
+#communicationSafetyTestRoleWrap{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:9px;border-top:1px solid #e5e5ea;padding:7px 0 0}
+#communicationSafetyTestRoleWrap.hidden{display:none!important}#communicationSafetyTestRoleWrap label{margin:0;font-size:12px;white-space:nowrap;color:#6e6e73}#communicationSafetyTestRoleWrap select{padding:8px 34px 8px 11px;border-radius:13px;font-size:13px}
+.message-safety-flag{margin:7px -5px -3px;padding:6px 8px;border-radius:10px;font-size:10px;font-weight:850;line-height:1.25;background:#fff1ce;color:#7a5000}.message-safety-flag.high{background:#ffe0e0;color:#982a2a}.message-safety-flag.medium{background:#fff1ce;color:#805c10}.message-safety-flag.low{background:#e8eef5;color:#35506d}.message-row.mine .message-safety-flag{background:rgba(255,255,255,.9);color:#7d2424}
+.safety-test-chip{display:inline-block;margin:0 0 7px 6px;border-radius:999px;padding:4px 8px;background:#eee8ff;color:#5c3f9f;font-size:10px;font-weight:950;text-transform:uppercase}
+@media(max-width:680px){#communicationThreadSheet{padding-left:10px;padding-right:10px}.chat-thread-header{padding-top:5px;padding-bottom:5px}.chat-thread-avatar,.chat-thread-avatar-placeholder{width:42px;height:42px;margin-bottom:2px}.chat-thread-identity h2{font-size:15px!important}#communicationThreadSheet .guardian-mirror-note,#communicationThreadSheet .sms-safety-note{margin-top:5px}#communicationSafetyTestBanner{padding:7px 9px!important}.message-date-separator{margin-top:10px}.message-bubble{font-size:15px}}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
@@ -519,6 +534,8 @@ button:focus-visible,.pressable:focus-visible{outline:3px solid color-mix(in srg
         <button id="guardianSafetyTestBtn" type="button" class="wide secondary hidden">🧪 Run Guardian Safety Test</button>
         <div id="smsActionRow" class="sms-action-row hidden"><button id="massTextBtn" type="button">📱 Send Mass Text</button><button id="textRepliesBtn" type="button" class="secondary">↩ Private Text Replies <span id="smsReplyCount">0</span></button></div>
         <div id="communicationSafetySummary" class="hidden"></div>
+        <div class="communication-search-wrap"><span class="communication-search-icon">⌕</span><input id="communicationSearchInput" type="search" placeholder="Search conversations and messages" autocomplete="off"></div>
+        <div id="communicationSearchResults" class="communication-search-results hidden"></div>
         <div class="section-head"><h3>Conversations</h3><button id="communicationPreferencesBtn" class="link-btn" type="button">Notification settings</button></div>
         <div id="communicationThreadList" class="thread-list"><div class="empty-card">Loading conversations…</div></div>
       </section>
@@ -686,12 +703,13 @@ button:focus-visible,.pressable:focus-visible{outline:3px solid color-mix(in srg
     <div class="sheet-handle"></div>
     <div class="chat-thread-header"><button class="chat-back" type="button" data-close-sheet aria-label="Back to messages">‹</button><div class="chat-thread-identity"><div id="communicationThreadAvatar" class="chat-thread-avatar-placeholder">WM</div><div id="communicationThreadKind" class="eyebrow">CONVERSATION</div><h2 id="communicationThreadTitle">Messages</h2><p id="communicationThreadParticipants" class="muted"></p></div><div class="chat-header-spacer" aria-hidden="true"></div></div>
     <div id="communicationGuardianMirror" class="guardian-mirror-note hidden"><b>🛡️ Guardian mirror is active.</b> Connected parents or legal guardians can read this adult-to-minor conversation without appearing as chat participants.</div>
-    <div id="communicationSafetyTestBanner" class="sms-safety-note hidden"><b>🧪 Guardian Safety Test</b><br>This is a clearly labeled simulation, not a real coach or athlete message. It creates in-app guardian visibility only—no SMS, email or external push is sent.</div>
+    <div id="communicationSafetyTestBanner" class="sms-safety-note hidden"><b>🧪 Guardian Safety Test — simulation only.</b> Connected guardians can read it. SMS, email and external push are disabled.</div>
     <div id="communicationMessageList" class="message-list"><div class="empty-inline">Loading messages…</div></div>
-    <div id="communicationSafetyTestRoleWrap" class="hidden"><label for="communicationSafetyTestRole">Send the next test message as</label><select id="communicationSafetyTestRole"><option value="coach">Wrestling Manager Test Coach</option><option value="athlete">Test Athlete</option></select></div>
-    <div id="communicationComposer" class="message-composer"><textarea id="communicationMessageBody" rows="1" aria-label="Message" placeholder="Message"></textarea><button id="sendCommunicationMessageBtn" type="button" aria-label="Send message">↑</button></div>
+    <div id="communicationSafetyTestRoleWrap" class="hidden"><label for="communicationSafetyTestRole">Send as</label><select id="communicationSafetyTestRole"><option value="coach">Test Coach</option><option value="athlete">Test Athlete</option></select></div>
+    <div id="communicationMediaPreview" class="communication-media-preview hidden"></div>
+    <div id="communicationComposer" class="message-composer"><button id="addCommunicationMediaBtn" class="composer-media-btn" type="button" aria-label="Add photo or video">＋</button><input id="communicationMediaInput" class="hidden" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,video/mp4,video/quicktime"><textarea id="communicationMessageBody" rows="1" aria-label="Message" placeholder="Message"></textarea><button id="sendCommunicationMessageBtn" type="button" aria-label="Send message">↑</button></div>
     <button id="scheduleCommunicationMessageBtn" type="button" class="wide secondary">🕒 Send Later</button>
-    <div class="inline-actions"><button id="muteCommunicationThreadBtn" type="button" class="secondary">Mute conversation</button><button id="blockCommunicationUserBtn" type="button" class="danger-outline hidden">Block member</button><button id="endGuardianSafetyTestBtn" type="button" class="danger-outline hidden">End Test</button></div>
+    <div class="inline-actions"><button id="muteCommunicationThreadBtn" type="button" class="secondary">Mute conversation</button><button id="hideCommunicationThreadBtn" type="button" class="danger-outline">Remove from My Chats</button><button id="blockCommunicationUserBtn" type="button" class="danger-outline hidden">Block member</button><button id="endGuardianSafetyTestBtn" type="button" class="danger-outline hidden">End Test</button></div>
   </section>
 
   <section id="communicationMuteSheet" class="sheet hidden" aria-modal="true">
@@ -1355,7 +1373,7 @@ button:focus-visible,.pressable:focus-visible{outline:3px solid color-mix(in srg
     <button id="customizeLayoutBtn" class="wide secondary" type="button">↕ Customize App Layout</button>
     <button id="securityBtn" class="wide secondary" type="button">🔒 Sign-In & App Security</button>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.14.2</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.14.4</p>
   </section>
 
   <section id="layoutEditorSheet" class="sheet hidden" aria-modal="true">
@@ -1722,8 +1740,14 @@ let activeCommunicationThread = null;
 let activeCommunicationMessages = [];
 let activeCommunicationReceipts = new Map();
 let activeCommunicationParticipants = new Map();
+let activeCommunicationMediaAccess = {can_view:false,can_send:false,reason:''};
+let pendingCommunicationMediaFile = null;
+let pendingCommunicationMediaObjectUrl = null;
 let communicationRealtimeChannels = [];
 let communicationReceiptRefreshTimer = null;
+let communicationReceiptPollTimer = null;
+let communicationReceiptSignature = '';
+let communicationSearchTimer = null;
 let smsReplyOwners = [];
 let smsReplies = [];
 let smsUnreadReplies = 0;
@@ -2045,6 +2069,8 @@ function openSheet(id){
 }
 function closeSheets(){
   if(document.body.classList.contains('kiosk-locked')) return;
+  stopCommunicationReceiptLiveRefresh();
+  clearPendingCommunicationMedia();
   ['eventSheet','eventDetailSheet','attendanceSheet','announcementSheet','communicationThreadSheet','communicationMuteSheet','newCommunicationSheet','guardianSafetyTestSheet','athleteChatPermissionsSheet','scheduleMessageSheet','communicationPreferencesSheet','communicationNotificationsSheet','massTextSheet','textRepliesSheet','communicationSafetySheet','rosterSheet','athleteTeamsSheet','addAthleteSheet','joinSheet','joinRequestSheet','coachJoinRequestsSheet','athleteViewSheet','athleteProfileSheet','weightTrendSheet','photoCropSheet','communicationSheet','staffProfileSheet','staffDirectorySheet','familySheet','agreementsSheet','agreementEditorSheet','agreementPreviewSheet','calendarSubscriptionSheet','medicalClearanceSheet','medicalCaseSheet','excuseSheet','athleteAccessSheet','staffAccessSheet','weighedTodaySheet','weighInStartSheet','weighInConsoleSheet','importRosterSheet','teamSwitcherSheet','createTeamSheet','editTeamSheet','lineupClassSheet','accountSheet','layoutEditorSheet','forgotPasswordSheet','resetPasswordSheet','securitySheet'].forEach(id=>show(id,false));
   show('sheetBackdrop', false); document.body.style.overflow='';
 }
@@ -2860,6 +2886,89 @@ function groupCommunicationReceipts(rows){
   return grouped;
 }
 
+function receiptRowsSignature(rows){
+  return (rows||[]).map(r=>`${r.message_id}:${r.recipient_user_id}:${r.read_at||''}:${r.delivered_at||''}`).sort().join('|');
+}
+
+async function refreshActiveCommunicationReceipts(force=false){
+  if(!activeCommunicationThread||$('communicationThreadSheet')?.classList.contains('hidden')||document.hidden)return;
+  const threadId=activeCommunicationThread.thread_id;
+  const result=await client.rpc('get_communication_message_receipts',{p_thread_id:threadId});
+  if(result.error||activeCommunicationThread?.thread_id!==threadId)return;
+  const signature=receiptRowsSignature(result.data||[]);
+  if(!force&&signature===communicationReceiptSignature)return;
+  communicationReceiptSignature=signature;
+  activeCommunicationReceipts=groupCommunicationReceipts(result.data||[]);
+  const list=$('communicationMessageList');
+  const distance=list.scrollHeight-list.scrollTop-list.clientHeight;
+  renderCommunicationMessages(activeCommunicationMessages,{preserveScroll:true,distanceFromBottom:distance});
+}
+
+function startCommunicationReceiptLiveRefresh(){
+  stopCommunicationReceiptLiveRefresh();
+  communicationReceiptPollTimer=setInterval(()=>refreshActiveCommunicationReceipts(false),2200);
+}
+
+function stopCommunicationReceiptLiveRefresh(){
+  if(communicationReceiptPollTimer){clearInterval(communicationReceiptPollTimer);communicationReceiptPollTimer=null;}
+}
+
+function communicationDateKey(value){
+  const d=new Date(value);return Number.isFinite(d.getTime())?`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`:'';
+}
+
+function communicationDateLabel(value){
+  const d=new Date(value);if(!Number.isFinite(d.getTime()))return '';
+  const today=new Date(),yesterday=new Date();yesterday.setDate(today.getDate()-1);
+  const key=communicationDateKey(value);
+  if(key===communicationDateKey(today))return `Today ${d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}`;
+  if(key===communicationDateKey(yesterday))return `Yesterday ${d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}`;
+  return d.toLocaleDateString([],{month:'short',day:'numeric',year:d.getFullYear()===today.getFullYear()?undefined:'numeric'})+` at ${d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}`;
+}
+
+async function hydrateCommunicationAttachments(rows){
+  return Promise.all((rows||[]).map(async row=>{
+    if(!row.attachment_path||!row.attachment_can_view)return {...row,attachment_url:null};
+    const {data,error}=await client.storage.from('communication-media').createSignedUrl(row.attachment_path,1800);
+    return {...row,attachment_url:error?null:(data?.signedUrl||null)};
+  }));
+}
+
+function clearPendingCommunicationMedia(){
+  pendingCommunicationMediaFile=null;
+  if(pendingCommunicationMediaObjectUrl)URL.revokeObjectURL(pendingCommunicationMediaObjectUrl);
+  pendingCommunicationMediaObjectUrl=null;
+  const input=$('communicationMediaInput');if(input)input.value='';
+  const preview=$('communicationMediaPreview');if(preview){preview.innerHTML='';preview.classList.add('hidden');}
+  const body=$('communicationMessageBody');if(body)body.placeholder='Message';
+}
+
+function communicationMediaMimeType(file){
+  const type=String(file?.type||'').toLowerCase();
+  if(['image/jpeg','image/png','image/webp','image/heic','image/heif','video/mp4','video/quicktime'].includes(type))return type;
+  const extension=String(file?.name||'').split('.').pop().toLowerCase();
+  return ({jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp',heic:'image/heic',heif:'image/heif',mp4:'video/mp4',mov:'video/quicktime'})[extension]||'';
+}
+
+function communicationMediaExtension(file){
+  const type=communicationMediaMimeType(file);
+  if(type==='image/jpeg')return 'jpg';if(type==='image/png')return 'png';if(type==='image/webp')return 'webp';if(type==='image/heic')return 'heic';if(type==='image/heif')return 'heif';if(type==='video/mp4')return 'mp4';if(type==='video/quicktime')return 'mov';return '';
+}
+
+function chooseCommunicationMedia(file){
+  if(!file)return;
+  if(!activeCommunicationMediaAccess?.can_send){message(activeCommunicationMediaAccess?.reason||'A parent or guardian must allow media sending first.',true);return;}
+  const extension=communicationMediaExtension(file),isVideo=communicationMediaMimeType(file).startsWith('video/');
+  if(!extension){message('Choose a JPG, PNG, WebP, HEIC, MP4 or MOV file.',true);return;}
+  const limit=isVideo?50*1024*1024:12*1024*1024;
+  if(file.size>limit){message(isVideo?'Videos must be 50 MB or smaller.':'Photos must be 12 MB or smaller.',true);return;}
+  clearPendingCommunicationMedia();pendingCommunicationMediaFile=file;pendingCommunicationMediaObjectUrl=URL.createObjectURL(file);
+  const preview=$('communicationMediaPreview');preview.classList.remove('hidden');
+  preview.innerHTML=`${isVideo?`<video src="${esc(pendingCommunicationMediaObjectUrl)}" muted playsinline></video>`:`<img src="${esc(pendingCommunicationMediaObjectUrl)}" alt="Selected photo">`}<span><b>${esc(file.name|| (isVideo?'Video':'Photo'))}</b><small>${isVideo?'Video':'Photo'} · ${(file.size/1024/1024).toFixed(1)} MB · retained in safety history</small></span><button id="removePendingCommunicationMediaBtn" type="button" aria-label="Remove selected media">×</button>`;
+  $('removePendingCommunicationMediaBtn').onclick=clearPendingCommunicationMedia;
+  $('communicationMessageBody').placeholder='Add a caption…';
+}
+
 function communicationReceiptNames(rows){
   const names=[...new Set(rows.map(r=>r.recipient_name||'Team member'))];
   if(names.length<=3)return names.join(', ');
@@ -2919,7 +3028,7 @@ async function togglePinnedThread(threadId){
 async function loadCommunications(showErrors=true){
   if(!activeTeam||!activeSeason)return;
   const [inboxResult,notificationResult,smsAccessResult,safetyResult]=await Promise.all([
-    client.rpc('get_communication_inbox_v2',{p_team_id:activeTeam.id,p_season_id:activeSeason.id}),
+    client.rpc('get_communication_inbox_v3',{p_team_id:activeTeam.id,p_season_id:activeSeason.id}),
     client.rpc('get_communication_notifications',{p_team_id:activeTeam.id,p_limit:40}),
     client.rpc('get_team_sms_access',{p_team_id:activeTeam.id}),
     isStaff?client.rpc('get_communication_safety_queue',{p_team_id:activeTeam.id}):Promise.resolve({data:[],error:null})
@@ -2958,6 +3067,32 @@ function renderCommunicationInbox(){
   list.querySelectorAll('[data-thread-pin]').forEach(b=>b.onclick=e=>{e.stopPropagation();togglePinnedThread(b.dataset.threadPin);});
 }
 
+async function searchCommunicationMessages(){
+  const query=$('communicationSearchInput').value.trim(),box=$('communicationSearchResults');
+  if(query.length<2){box.classList.add('hidden');box.innerHTML='';return;}
+  box.classList.remove('hidden');box.innerHTML='<div class="communication-search-note">Searching safeguarded conversations…</div>';
+  const {data,error}=await client.rpc('search_communication_messages',{p_team_id:activeTeam.id,p_query:query,p_limit:40});
+  if($('communicationSearchInput').value.trim()!==query)return;
+  if(error){box.innerHTML='<div class="communication-search-note">Search is temporarily unavailable.</div>';return;}
+  const rows=data||[];
+  box.innerHTML=rows.length?rows.map(r=>`<button type="button" class="communication-search-result" data-search-thread="${r.thread_id}"><span>${communicationKindIcon(r.thread_kind)}</span><span><b>${esc(r.thread_title||'Conversation')}</b><small>${esc(r.sender_name||'Team member')}: ${esc(r.body||'')}</small></span><time>${esc(fmtDateTime(r.created_at))}</time></button>`).join(''):'<div class="communication-search-note">No conversation or message matched that search.</div>';
+  box.querySelectorAll('[data-search-thread]').forEach(b=>b.onclick=()=>openCommunicationThread(b.dataset.searchThread));
+}
+
+function queueCommunicationSearch(){
+  clearTimeout(communicationSearchTimer);
+  communicationSearchTimer=setTimeout(searchCommunicationMessages,260);
+}
+
+async function hideActiveCommunicationThread(){
+  if(!activeCommunicationThread)return;
+  const title=activeCommunicationThread.title||'this conversation';
+  if(!confirm(`Remove ${title} from your chats?\n\nThe protected safety history will remain. If someone sends a new message, the conversation will return to your inbox.`))return;
+  const {error}=await client.rpc('hide_communication_thread',{p_thread_id:activeCommunicationThread.thread_id});
+  if(error){message(error.message,true);return;}
+  closeSheets();activeCommunicationThread=null;await loadCommunications(false);message('Conversation removed from your chats.');
+}
+
 function renderCommunicationSafetySummary(){
   const box=$('communicationSafetySummary');if(!box)return;
   if(!isStaff||!communicationSafetyFlags.length){box.classList.add('hidden');box.innerHTML='';return;}
@@ -2981,7 +3116,7 @@ function subscribeCommunicationRealtime(){
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'communication_message_receipts'},()=>{
       if(!activeCommunicationThread||$('communicationThreadSheet')?.classList.contains('hidden'))return;
       clearTimeout(communicationReceiptRefreshTimer);
-      communicationReceiptRefreshTimer=setTimeout(()=>openCommunicationThread(activeCommunicationThread.thread_id,{keepOpen:true,preserveScroll:true}),180);
+      communicationReceiptRefreshTimer=setTimeout(()=>refreshActiveCommunicationReceipts(false),140);
     }).subscribe();
   communicationRealtimeChannels=[messageChannel,notificationChannel,receiptChannel];
 }
@@ -2989,40 +3124,56 @@ function subscribeCommunicationRealtime(){
 async function openCommunicationThread(threadId,{keepOpen=false,preserveScroll=false}={}){
   activeCommunicationThread=communicationThreads.find(x=>x.thread_id===threadId)||activeCommunicationThread;
   if(!activeCommunicationThread)return;
+  if(!keepOpen)clearPendingCommunicationMedia();
   const messageList=$('communicationMessageList');
   const distanceFromBottom=messageList?messageList.scrollHeight-messageList.scrollTop-messageList.clientHeight:0;
   const safetyTest=String(activeCommunicationThread.title||'').startsWith('🧪 TEST:');
   $('communicationThreadKind').textContent=safetyTest?'GUARDIAN SAFETY TEST':communicationKindLabel(activeCommunicationThread.kind);
-  $('communicationThreadTitle').textContent=activeCommunicationThread.title||'Conversation';
+  $('communicationThreadTitle').textContent=safetyTest
+    ?String(activeCommunicationThread.title||'Safety Test').replace(/^🧪 TEST:\s*Test Coach\s*↔\s*/i,'🧪 Test: Coach ↔ ')
+    :activeCommunicationThread.title||'Conversation';
   $('communicationThreadParticipants').textContent=safetyTest?'Simulation only · External alerts disabled':activeCommunicationThread.participant_names||'';
-  show('communicationGuardianMirror',!!activeCommunicationThread.guardian_mirrored);
+  show('communicationGuardianMirror',!!activeCommunicationThread.guardian_mirrored&&!safetyTest);
   show('communicationSafetyTestBanner',safetyTest);
   show('communicationSafetyTestRoleWrap',safetyTest&&!!activeCommunicationThread.can_post);
   show('communicationComposer',!!activeCommunicationThread.can_post);
   show('scheduleCommunicationMessageBtn',!safetyTest&&!!activeCommunicationThread.can_post&&(isStaff||isTeamAdmin||canMassText));
   show('muteCommunicationThreadBtn',!safetyTest);
+  show('hideCommunicationThreadBtn',!safetyTest);
   show('endGuardianSafetyTestBtn',safetyTest&&!!activeCommunicationThread.can_post);
   const mutedUntil=activeCommunicationThread.muted_until&&new Date(activeCommunicationThread.muted_until)>new Date()?activeCommunicationThread.muted_until:null;
   $('muteCommunicationThreadBtn').textContent=mutedUntil?`Muted until ${fmtTime(mutedUntil)} · Change`:'Mute conversation';
   if(!keepOpen)$('communicationMessageList').innerHTML='<div class="empty-inline">Loading messages…</div>';
   if(!keepOpen){closeSheets();openSheet('communicationThreadSheet');}
   await client.rpc('mark_communication_thread_read',{p_thread_id:threadId});
-  const [messageResult,participantResult,receiptResult]=await Promise.all([
-    client.rpc('get_communication_messages_v2',{p_thread_id:threadId,p_before:null,p_limit:80}),
+  const [messageResult,participantResult,receiptResult,mediaAccessResult]=await Promise.all([
+    client.rpc('get_communication_messages_v4',{p_thread_id:threadId,p_before:null,p_limit:80}),
     client.rpc('get_communication_thread_participants_v2',{p_thread_id:threadId}),
-    client.rpc('get_communication_message_receipts',{p_thread_id:threadId})
+    client.rpc('get_communication_message_receipts',{p_thread_id:threadId}),
+    client.rpc('get_communication_media_access',{p_thread_id:threadId})
   ]);
   if(messageResult.error){message(messageResult.error.message,true);return;}
-  activeCommunicationMessages=(messageResult.data||[]).reverse();
+  activeCommunicationMessages=(await hydrateCommunicationAttachments(messageResult.data||[])).reverse();
   const participantRows=participantResult.error?[]:await hydrateCommunicationPhotos(participantResult.data||[]);
   activeCommunicationParticipants=new Map(participantRows.map(row=>[String(row.user_id),row]));
   activeCommunicationReceipts=receiptResult.error?new Map():groupCommunicationReceipts(receiptResult.data||[]);
+  communicationReceiptSignature=receiptResult.error?'':receiptRowsSignature(receiptResult.data||[]);
+  activeCommunicationMediaAccess=mediaAccessResult.error?{can_view:false,can_send:false,reason:'Media is not available yet.'}:(mediaAccessResult.data||{can_view:false,can_send:false,reason:'Media is unavailable.'});
+  const mediaButton=$('addCommunicationMediaBtn');
+  mediaButton.disabled=!activeCommunicationMediaAccess.can_send||safetyTest;
+  mediaButton.title=safetyTest?'Media is disabled in safety simulations.':(activeCommunicationMediaAccess.can_send?'Add photo or video':activeCommunicationMediaAccess.reason||'Parent approval is required to send media.');
   const other=participantRows.find(x=>!x.is_self&&x.member_role!=='guardian_mirror');
   const headerPerson=activeCommunicationThread.kind==='direct'?other:null;
   const headerAvatar=$('communicationThreadAvatar');
-  headerAvatar.className=headerPerson?.photo_url?'chat-thread-avatar':'chat-thread-avatar-placeholder';
-  headerAvatar.innerHTML=headerPerson?.photo_url?`<img class="chat-thread-avatar" src="${esc(headerPerson.photo_url)}" alt="${esc(headerPerson.display_name||'Conversation')}">`:esc(communicationInitials(headerPerson?.display_name||activeCommunicationThread.title||'WM'));
+  if(safetyTest){
+    headerAvatar.className='chat-thread-avatar-placeholder';
+    headerAvatar.textContent='🧪';
+  }else{
+    headerAvatar.className=headerPerson?.photo_url?'chat-thread-avatar':'chat-thread-avatar-placeholder';
+    headerAvatar.innerHTML=headerPerson?.photo_url?`<img class="chat-thread-avatar" src="${esc(headerPerson.photo_url)}" alt="${esc(headerPerson.display_name||'Conversation')}">`:esc(communicationInitials(headerPerson?.display_name||activeCommunicationThread.title||'WM'));
+  }
   renderCommunicationMessages(activeCommunicationMessages,{preserveScroll,distanceFromBottom});
+  startCommunicationReceiptLiveRefresh();
   show('blockCommunicationUserBtn',!safetyTest&&activeCommunicationThread.kind==='direct'&&!!other);
   if(other){$('blockCommunicationUserBtn').dataset.userId=other.user_id;$('blockCommunicationUserBtn').dataset.blocked=other.is_blocked?'true':'false';$('blockCommunicationUserBtn').textContent=other.is_blocked?`Unblock ${other.display_name}`:`Block ${other.display_name}`;}
   loadCommunications(false);
@@ -3032,16 +3183,35 @@ function renderCommunicationMessages(rows,{preserveScroll=false,distanceFromBott
   const list=$('communicationMessageList');
   if(!rows.length){list.innerHTML='<div class="empty-inline">No messages yet. Start the conversation below.</div>';return;}
   list.innerHTML=rows.map((m,index)=>{
-    const removed=!!m.deleted_at,own=!!m.is_mine;
+    const removed=!!m.deleted_at,own=m.is_simulated?m.simulated_sender_role==='coach':!!m.is_mine;
     const safetyTest=String(activeCommunicationThread?.title||'').startsWith('🧪 TEST:');
+    const direct=activeCommunicationThread?.kind==='direct';
     const person=activeCommunicationParticipants.get(String(m.sender_user_id));
-    const senderName=person?.display_name||m.sender_name||'Team member';
+    const senderName=m.simulated_sender_label||person?.display_name||m.sender_name||'Team member';
     const previous=rows[index-1];
-    const grouped=!!previous&&previous.sender_user_id===m.sender_user_id&&new Date(m.created_at)-new Date(previous.created_at)<5*60000;
-    const avatar=own?'':grouped?'<span class="message-avatar-spacer"></span>':person?.photo_url?`<img class="message-avatar" src="${esc(person.photo_url)}" alt="${esc(senderName)}">`:`<span class="message-avatar-placeholder">${esc(communicationInitials(senderName))}</span>`;
-    const meta=grouped?'':`<div class="message-meta"><span>${esc(senderName)}</span><span>·</span><span>${esc(fmtDateTime(m.created_at))}${m.edited_at?' · edited':''}</span></div>`;
-    const latestOwn=own&&!rows.slice(index+1).some(row=>row.is_mine);
-    return `<div class="message-row ${own?'mine':''} ${grouped?'grouped':''}" data-message-id="${m.message_id}"><div class="message-line">${avatar}<div class="message-bubble ${m.message_kind==='announcement'?'announcement':''}">${safetyTest?'<b>🧪 TEST MESSAGE</b><br>':''}${m.message_kind==='announcement'?'<b>📣 Important</b><br>':''}${removed?'<i>Message removed</i>':esc(m.body)}</div></div>${meta}${latestOwn?communicationReceiptHtml(m):''}${removed||safetyTest?'':`<div class="message-actions">${own?`<button data-edit-message="${m.message_id}">Edit</button><button data-remove-message="${m.message_id}">Remove</button>`:''}<button data-report-message="${m.message_id}">Report</button></div>`}</div>`;
+    const newDate=!previous||communicationDateKey(previous.created_at)!==communicationDateKey(m.created_at)||new Date(m.created_at)-new Date(previous.created_at)>60*60000;
+    const senderKey=m.is_simulated?`simulated:${m.simulated_sender_role}`:String(m.sender_user_id);
+    const previousSenderKey=previous?.is_simulated?`simulated:${previous.simulated_sender_role}`:String(previous?.sender_user_id||'');
+    const grouped=!newDate&&!!previous&&previousSenderKey===senderKey&&new Date(m.created_at)-new Date(previous.created_at)<5*60000;
+    const avatar=own||direct?'':grouped?'<span class="message-avatar-spacer"></span>':m.is_simulated?`<span class="message-avatar-placeholder">${m.simulated_sender_role==='coach'?'C':'A'}</span>`:person?.photo_url?`<img class="message-avatar" src="${esc(person.photo_url)}" alt="${esc(senderName)}">`:`<span class="message-avatar-placeholder">${esc(communicationInitials(senderName))}</span>`;
+    const meta=grouped?'':`<div class="message-meta"><span class="sender-label">${esc(senderName)}</span><span class="meta-divider">·</span><span>${esc(fmtTime(m.created_at))}${m.edited_at?' · edited':''}</span></div>`;
+    const hasAttachment=!!m.has_attachment;
+    const labelOnly=/^\[(Photo|Video)\]$/i.test(String(m.body||''));
+    let media='';
+    if(hasAttachment&&!removed){
+      if(m.attachment_can_view&&m.attachment_url){
+        const content=String(m.attachment_mime_type||'').startsWith('video/')
+          ?`<video src="${esc(m.attachment_url)}" controls playsinline preload="metadata"></video>`
+          :`<img src="${esc(m.attachment_url)}" alt="Shared photo">`;
+        media=`<div class="message-media">${content}${!labelOnly&&m.body?`<div class="message-media-caption">${esc(m.body)}</div>`:''}<div class="message-media-safety">🛡️ Media retained in the safeguarded message history${m.attachment_safety_status==='review'?' · review marked':''}</div></div>`;
+      }else media='<div class="message-media-hidden">🛡️ A parent or guardian has limited media viewing for this account.</div>';
+    }
+    const safetyLevel=String(m.safety_level||'none').toLowerCase();
+    const safetyFlag=!removed&&safetyLevel!=='none'?`<div class="message-safety-flag ${esc(safetyLevel)}">${safetyTest?'🧪 Test flag detected':'⚠️ Safety review required'} · ${esc(safetyLevel)} priority</div>`:'';
+    const bubble=hasAttachment?media:`<div class="message-bubble ${m.message_kind==='announcement'?'announcement':''}">${safetyTest?'<b>🧪 TEST MESSAGE</b><br>':''}${m.message_kind==='announcement'?'<b>📣 Important</b><br>':''}${removed?'<i>Message removed</i>':esc(m.body)}${safetyFlag}</div>`;
+    const latestOwn=own&&!rows.slice(index+1).some(row=>row.is_simulated?row.simulated_sender_role==='coach':!!row.is_mine);
+    const separator=newDate?`<div class="message-date-separator">${esc(communicationDateLabel(m.created_at))}</div>`:'';
+    return `${separator}<div class="message-row ${own?'mine':''} ${direct?'direct-chat':''} ${grouped?'grouped':''}" data-message-id="${m.message_id}"><div class="message-line">${avatar}${bubble}</div>${meta}${latestOwn?communicationReceiptHtml(m):''}${removed||safetyTest?'':`<div class="message-actions">${own?`<button data-edit-message="${m.message_id}">Edit</button><button data-remove-message="${m.message_id}">Remove</button>`:''}<button data-report-message="${m.message_id}">Report</button></div>`}</div>`;
   }).join('');
   list.querySelectorAll('[data-edit-message]').forEach(b=>b.onclick=()=>editCommunicationMessage(b.dataset.editMessage,rows.find(x=>x.message_id===b.dataset.editMessage)?.body||''));
   list.querySelectorAll('[data-remove-message]').forEach(b=>b.onclick=()=>removeCommunicationMessage(b.dataset.removeMessage));
@@ -3049,17 +3219,35 @@ function renderCommunicationMessages(rows,{preserveScroll=false,distanceFromBott
   list.scrollTop=preserveScroll?Math.max(0,list.scrollHeight-list.clientHeight-distanceFromBottom):list.scrollHeight;
 }
 
+async function sendPendingCommunicationMedia(caption){
+  const file=pendingCommunicationMediaFile;if(!file||!activeCommunicationThread||!activeTeam||!session?.user)return {error:new Error('No media selected.')};
+  const extension=communicationMediaExtension(file),mimeType=communicationMediaMimeType(file);
+  const id=globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const path=`${activeTeam.id}/${activeCommunicationThread.thread_id}/${session.user.id}/${id}.${extension}`;
+  const upload=await client.storage.from('communication-media').upload(path,file,{upsert:false,contentType:mimeType,cacheControl:'3600'});
+  if(upload.error)return upload;
+  const result=await client.rpc('send_communication_attachment',{p_thread_id:activeCommunicationThread.thread_id,p_storage_path:path,p_mime_type:mimeType,p_file_name:file.name||null,p_size_bytes:file.size,p_caption:caption||null});
+  if(result.error)await client.storage.from('communication-media').remove([path]);
+  return result;
+}
+
 async function sendCommunicationMessage(){
   if(!activeCommunicationThread)return;
-  const body=$('communicationMessageBody').value.trim();if(!body){message('Write a message first.',true);return;}
+  const body=$('communicationMessageBody').value.trim();if(!body&&!pendingCommunicationMediaFile){message('Write a message or choose a photo or video first.',true);return;}
   const btn=$('sendCommunicationMessageBtn');btn.disabled=true;btn.textContent='…';
   const safetyTest=String(activeCommunicationThread.title||'').startsWith('🧪 TEST:');
-  const request=safetyTest
+  const request=pendingCommunicationMediaFile&&!safetyTest
+    ?sendPendingCommunicationMedia(body)
+    :safetyTest
     ?client.rpc('send_guardian_safety_test_message',{p_thread_id:activeCommunicationThread.thread_id,p_as_role:$('communicationSafetyTestRole').value,p_body:body})
     :client.rpc('send_communication_message',{p_thread_id:activeCommunicationThread.thread_id,p_body:body});
-  const {error}=await request;
+  const {data,error}=await request;
   btn.disabled=false;btn.textContent='↑';if(error){message(error.message,true);return;}
-  $('communicationMessageBody').value='';$('communicationMessageBody').style.height='38px';if(!safetyTest)await dispatchCommunicationNotifications();await openCommunicationThread(activeCommunicationThread.thread_id,{keepOpen:true});
+  $('communicationMessageBody').value='';$('communicationMessageBody').style.height='38px';clearPendingCommunicationMedia();if(!safetyTest)await dispatchCommunicationNotifications();await openCommunicationThread(activeCommunicationThread.thread_id,{keepOpen:true});
+  if(safetyTest){
+    const sent=activeCommunicationMessages.find(m=>String(m.message_id)===String(data));
+    if(sent&&String(sent.safety_level||'none')!=='none')message(`Safety test worked: ${sent.safety_level}-priority phrase flagged for human review.`);
+  }
 }
 
 async function openGuardianSafetyTest(){
@@ -3149,10 +3337,10 @@ async function createCommunicationThread(){
 async function openAthleteChatPermissions(){
   if(!activeTeam)return;
   closeSheets();openSheet('athleteChatPermissionsSheet');$('athleteChatPermissionList').innerHTML='<div class="empty-card">Loading athletes…</div>';
-  const {data,error}=await client.rpc('get_my_athlete_chat_permissions',{p_team_id:activeTeam.id});
+  const {data,error}=await client.rpc('get_my_athlete_chat_permissions_v2',{p_team_id:activeTeam.id});
   if(error){message(error.message,true);return;}
   const rows=data||[];
-  $('athleteChatPermissionList').innerHTML=rows.length?rows.map(a=>`<article class="feature-card" data-chat-athlete="${a.athlete_id}"><h3>${esc(a.athlete_name)}</h3>${a.is_minor?`<label class="toggle-row"><span><b>Team chat</b><small>The main whole-team conversation.</small></span><input type="checkbox" data-chat-setting="team_chat" ${a.team_chat?'checked':''}></label><label class="toggle-row"><span><b>Coach-created group chats</b><small>Travel groups, captains, training groups and other named chats.</small></span><input type="checkbox" data-chat-setting="group_chat" ${a.group_chat?'checked':''}></label><label class="toggle-row"><span><b>Athlete-to-athlete direct chat</b><small>Private peer conversation with permanent safety audit history.</small></span><input type="checkbox" data-chat-setting="peer_to_peer" ${a.peer_to_peer?'checked':''}></label><label class="toggle-row"><span><b>Coach / team leader direct chat</b><small>Your connected guardian receives silent read access automatically.</small></span><input type="checkbox" data-chat-setting="coach_to_athlete" ${a.coach_to_athlete?'checked':''}></label>`:'<div class="privacy-note">This athlete is 18 or older and manages their own communication access.</div>'}</article>`).join(''):'<div class="empty-card">No active athletes are linked to this parent/guardian account.</div>';
+  $('athleteChatPermissionList').innerHTML=rows.length?rows.map(a=>`<article class="feature-card" data-chat-athlete="${a.athlete_id}"><h3>${esc(a.athlete_name)}</h3>${a.is_minor?`<label class="toggle-row"><span><b>Team chat</b><small>The main whole-team conversation.</small></span><input type="checkbox" data-chat-setting="team_chat" ${a.team_chat?'checked':''}></label><label class="toggle-row"><span><b>Coach-created group chats</b><small>Travel groups, captains, training groups and other named chats.</small></span><input type="checkbox" data-chat-setting="group_chat" ${a.group_chat?'checked':''}></label><label class="toggle-row"><span><b>Athlete-to-athlete direct chat</b><small>Private peer conversation with permanent safety audit history.</small></span><input type="checkbox" data-chat-setting="peer_to_peer" ${a.peer_to_peer?'checked':''}></label><label class="toggle-row"><span><b>Coach / team leader direct chat</b><small>Your connected guardian receives silent read access automatically.</small></span><input type="checkbox" data-chat-setting="coach_to_athlete" ${a.coach_to_athlete?'checked':''}></label><div class="media-permission-group"><h4>Photo & Video Permissions</h4><p>Media stays private to the conversation, is retained in the safety history and remains available to guardian mirrors.</p><label class="toggle-row"><span><b>View photos and videos</b><small>May view media shared in approved team, group and direct chats.</small></span><input type="checkbox" data-chat-setting="media_view" ${a.media_view?'checked':''}></label><label class="toggle-row"><span><b>Send media in group chats</b><small>May send photos or videos in team and group conversations.</small></span><input type="checkbox" data-chat-setting="media_send_group" ${a.media_send_group?'checked':''}></label><label class="toggle-row"><span><b>Send media in private chats</b><small>May send photos or videos in direct conversations. Guardian mirroring remains active when required.</small></span><input type="checkbox" data-chat-setting="media_send_direct" ${a.media_send_direct?'checked':''}></label></div>`:'<div class="privacy-note">This athlete is 18 or older and manages their own communication access.</div>'}</article>`).join(''):'<div class="empty-card">No active athletes are linked to this parent/guardian account.</div>';
   $('saveAthleteChatPermissionsBtn').disabled=!rows.some(x=>x.is_minor);
 }
 
@@ -3161,7 +3349,7 @@ async function saveAthleteChatPermissions(){
   const btn=$('saveAthleteChatPermissionsBtn');btn.disabled=true;btn.textContent='Saving…';
   for(const card of cards){
     const get=key=>!!card.querySelector(`[data-chat-setting="${key}"]`)?.checked;
-    const {error}=await client.rpc('set_athlete_chat_permissions',{p_team_id:activeTeam.id,p_athlete_id:card.dataset.chatAthlete,p_team_chat:get('team_chat'),p_group_chat:get('group_chat'),p_peer_to_peer:get('peer_to_peer'),p_coach_to_athlete:get('coach_to_athlete')});
+    const {error}=await client.rpc('set_athlete_chat_permissions_v2',{p_team_id:activeTeam.id,p_athlete_id:card.dataset.chatAthlete,p_team_chat:get('team_chat'),p_group_chat:get('group_chat'),p_peer_to_peer:get('peer_to_peer'),p_coach_to_athlete:get('coach_to_athlete'),p_media_view:get('media_view'),p_media_send_group:get('media_send_group'),p_media_send_direct:get('media_send_direct')});
     if(error){btn.disabled=false;btn.textContent='Save Chat Permissions';message(error.message,true);return;}
   }
   btn.disabled=false;btn.textContent='Save Chat Permissions';closeSheets();await loadCommunications(false);message('Athlete chat permissions saved. Changes apply immediately.');
@@ -3334,7 +3522,7 @@ async function openCommunicationSafetyReview(){
 }
 function renderCommunicationSafetyList(){
   const list=$('communicationSafetyList');
-  list.innerHTML=communicationSafetyFlags.length?communicationSafetyFlags.map(f=>`<article class="safety-card"><span class="safety-severity ${f.severity}">${esc(f.severity)}</span><b style="margin-top:7px">${esc(f.thread_title)} · ${esc(f.sender_name)}</b><p>${esc(f.message_body)}</p><small>${esc(f.source==='user_report'?'Reported by a user':String(f.rule_code).replaceAll('_',' '))} · ${esc(fmtDateTime(f.created_at))}</small>${f.report_note?`<p class="fine"><b>Report note:</b> ${esc(f.report_note)}</p>`:''}<div class="safety-actions"><button data-safety-review="${f.flag_id}" data-status="reviewed">Reviewed</button><button class="secondary" data-safety-review="${f.flag_id}" data-status="dismissed">Dismiss</button><button class="danger-outline" data-safety-review="${f.flag_id}" data-status="escalated">Escalate</button></div></article>`).join(''):'<div class="empty-card">No open safety flags.</div>';
+  list.innerHTML=communicationSafetyFlags.length?communicationSafetyFlags.map(f=>{const test=String(f.thread_title||'').startsWith('🧪 TEST:');return `<article class="safety-card">${test?'<span class="safety-test-chip">🧪 Test simulation</span>':''}<span class="safety-severity ${f.severity}">${esc(f.severity)}</span><b style="margin-top:7px">${esc(f.thread_title)} · ${esc(f.sender_name)}</b><p>${esc(f.message_body)}</p><small>${esc(f.source==='user_report'?'Reported by a user':String(f.rule_code).replaceAll('_',' '))} · ${esc(fmtDateTime(f.created_at))}</small>${f.report_note?`<p class="fine"><b>Report note:</b> ${esc(f.report_note)}</p>`:''}<div class="safety-actions"><button data-safety-review="${f.flag_id}" data-status="reviewed">Reviewed</button><button class="secondary" data-safety-review="${f.flag_id}" data-status="dismissed">Dismiss</button><button class="danger-outline" data-safety-review="${f.flag_id}" data-status="escalated">Escalate</button></div></article>`}).join(''):'<div class="empty-card">No open safety flags.</div>';
   list.querySelectorAll('[data-safety-review]').forEach(b=>b.onclick=()=>reviewCommunicationSafetyFlag(b.dataset.safetyReview,b.dataset.status));
 }
 async function reviewCommunicationSafetyFlag(id,status){
@@ -6201,11 +6389,14 @@ $('endGuardianSafetyTestBtn').onclick=endGuardianSafetyTest;
 $('createCommunicationThreadBtn').onclick=createCommunicationThread;
 $('newCommunicationType').onchange=()=>{$('newCommunicationRecipientCount').textContent='0';renderCommunicationDirectory();};
 $('sendCommunicationMessageBtn').onclick=sendCommunicationMessage;
+$('addCommunicationMediaBtn').onclick=()=>{if(activeCommunicationMediaAccess?.can_send)$('communicationMediaInput').click();else message(activeCommunicationMediaAccess?.reason||'Parent approval is required to send photos or videos.',true);};
+$('communicationMediaInput').onchange=e=>chooseCommunicationMedia(e.target.files?.[0]);
 $('scheduleCommunicationMessageBtn').onclick=openScheduleMessage;
 $('confirmScheduleMessageBtn').onclick=confirmScheduleMessage;
 $('communicationMessageBody').addEventListener('input',e=>{e.currentTarget.style.height='38px';e.currentTarget.style.height=`${Math.min(e.currentTarget.scrollHeight,108)}px`;});
 $('communicationMessageBody').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendCommunicationMessage();}});
 $('muteCommunicationThreadBtn').onclick=openCommunicationMuteOptions;
+$('hideCommunicationThreadBtn').onclick=hideActiveCommunicationThread;
 $('muteCommunicationUntilMidnightBtn').onclick=muteCommunicationUntilMidnight;
 $('unmuteCommunicationThreadBtn').onclick=()=>setCommunicationThreadMute(null,'');
 document.querySelectorAll('[data-mute-minutes]').forEach(b=>b.onclick=()=>muteCommunicationForMinutes(b.dataset.muteMinutes));
@@ -6214,6 +6405,7 @@ $('communicationPreferencesBtn').onclick=openCommunicationPreferences;
 $('saveCommunicationPreferencesBtn').onclick=saveCommunicationPreferences;
 $('enableBrowserNotificationsBtn').onclick=enableBrowserNotifications;
 $('openNotificationsBtn').onclick=openCommunicationNotifications;
+$('communicationSearchInput').addEventListener('input',queueCommunicationSearch);
 $('markCommunicationNotificationsReadBtn').onclick=markCommunicationNotificationsRead;
 $('massTextBtn').onclick=openMassText;
 $('textRepliesBtn').onclick=openTextReplies;
@@ -6231,6 +6423,7 @@ $('saveAthleteChatPermissionsBtn').onclick=saveAthleteChatPermissions;
 $('joinCodeBtn').onclick=showTeamJoin;
 
 setupPhoneFormatting();
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshActiveCommunicationReceipts(true);});
 setRememberSession(shouldRememberSession());
 client.auth.onAuthStateChange((event)=>setTimeout(async()=>{
   await refresh();
