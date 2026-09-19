@@ -1404,7 +1404,7 @@ button{touch-action:manipulation}
     <button id="customizeLayoutBtn" class="wide secondary" type="button">↕ Customize App Layout</button>
     <button id="securityBtn" class="wide secondary" type="button">🔒 Sign-In & App Security</button>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.15.4</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.15.5</p>
   </section>
 
   <section id="layoutEditorSheet" class="sheet hidden" aria-modal="true">
@@ -3487,10 +3487,24 @@ async function openCommunicationThread(threadId,{keepOpen=false,preserveScroll=f
     if(openId!==communicationThreadOpenSequence||String(activeCommunicationThread?.thread_id)!==String(threadId))return;
     if(photoOutcome.ok)participantRows=photoOutcome.value;
   }
-  activeCommunicationParticipants=new Map(participantRows.map(row=>[String(row.user_id),row]));
-  activeCommunicationReceipts=receiptResult.error?new Map():groupCommunicationReceipts(receiptResult.data||[]);
-  communicationReceiptSignature=receiptResult.error?'':receiptRowsSignature(receiptResult.data||[]);
-  activeCommunicationMediaAccess=mediaAccessResult.error?{can_view:false,can_send:false,reason:'Media is not available yet.'}:(mediaAccessResult.data||{can_view:false,can_send:false,reason:'Media is unavailable.'});
+  if(!participantResult.error){
+    activeCommunicationParticipants=new Map(participantRows.map(row=>[String(row.user_id),row]));
+  }else if(!keepOpen){
+    activeCommunicationParticipants=new Map();
+  }
+  participantRows=[...activeCommunicationParticipants.values()];
+  if(!receiptResult.error){
+    activeCommunicationReceipts=groupCommunicationReceipts(receiptResult.data||[]);
+    communicationReceiptSignature=receiptRowsSignature(receiptResult.data||[]);
+  }else if(!keepOpen){
+    activeCommunicationReceipts=new Map();
+    communicationReceiptSignature='';
+  }
+  if(!mediaAccessResult.error&&mediaAccessResult.data){
+    activeCommunicationMediaAccess=mediaAccessResult.data;
+  }else if(!keepOpen){
+    activeCommunicationMediaAccess={can_view:false,can_send:false,reason:'Media is not available yet.'};
+  }
   if(attachmentOutcome.ok)activeCommunicationMessages=attachmentOutcome.value.reverse();
   else activeCommunicationMessages=activeCommunicationMessages.map(row=>({...row,attachment_loading:false}));
   const mediaButton=$('addCommunicationMediaBtn');
