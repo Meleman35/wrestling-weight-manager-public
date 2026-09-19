@@ -322,9 +322,12 @@ button:focus-visible,.pressable:focus-visible{outline:3px solid color-mix(in srg
 #communicationSafetyTestBanner{padding:8px 11px!important;font-size:11px!important;line-height:1.3!important;border-radius:13px!important}
 #communicationSafetyTestRoleWrap{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:9px;border-top:1px solid #e5e5ea;padding:7px 0 0}
 #communicationSafetyTestRoleWrap.hidden{display:none!important}#communicationSafetyTestRoleWrap label{margin:0;font-size:12px;white-space:nowrap;color:#6e6e73}#communicationSafetyTestRoleWrap select{padding:8px 34px 8px 11px;border-radius:13px;font-size:13px}
-.message-safety-flag{margin:7px -5px -3px;padding:6px 8px;border-radius:10px;font-size:10px;font-weight:850;line-height:1.25;background:#fff1ce;color:#7a5000}.message-safety-flag.high{background:#ffe0e0;color:#982a2a}.message-safety-flag.medium{background:#fff1ce;color:#805c10}.message-safety-flag.low{background:#e8eef5;color:#35506d}.message-row.mine .message-safety-flag{background:rgba(255,255,255,.9);color:#7d2424}
+.message-bubble.safety-high,.message-row.mine .message-bubble.safety-high{background:#c93434;color:#fff;border:2px solid #a31f1f;box-shadow:0 3px 0 #861919,0 7px 15px rgba(163,31,31,.22)}
+.message-bubble.safety-medium,.message-row.mine .message-bubble.safety-medium{background:#f6c94f;color:#3b2b00;border:2px solid #d2a527;box-shadow:0 3px 0 #ad8418,0 7px 15px rgba(173,132,24,.20)}
+.message-bubble.safety-low,.message-row.mine .message-bubble.safety-low{background:#527a9f;color:#fff;border:2px solid #355d82;box-shadow:0 3px 0 #294d6d,0 7px 15px rgba(41,77,109,.20)}
+.message-safety-flag{margin:7px -5px -3px;padding:6px 8px;border-radius:10px;font-size:10px;font-weight:900;line-height:1.25;background:rgba(255,255,255,.88);color:#3b2b00}.message-safety-flag.high,.message-safety-flag.medium,.message-safety-flag.low,.message-row.mine .message-safety-flag{background:rgba(255,255,255,.9);color:#242424}.message-media-shell{max-width:min(76vw,520px);border-radius:20px;padding:3px;overflow:hidden}.message-media-shell .message-media,.message-media-shell .message-media-hidden{max-width:100%;border-radius:16px}.message-media-shell>.message-safety-flag{margin:3px 2px 2px}.message-media-shell.safety-high{background:#c93434;box-shadow:0 3px 0 #861919,0 7px 15px rgba(163,31,31,.22)}.message-media-shell.safety-medium{background:#f6c94f;box-shadow:0 3px 0 #ad8418,0 7px 15px rgba(173,132,24,.20)}.message-media-shell.safety-low{background:#527a9f;box-shadow:0 3px 0 #294d6d,0 7px 15px rgba(41,77,109,.20)}
 .safety-test-chip{display:inline-block;margin:0 0 7px 6px;border-radius:999px;padding:4px 8px;background:#eee8ff;color:#5c3f9f;font-size:10px;font-weight:950;text-transform:uppercase}
-/* v0.14.8: restore message controls and show the app lock before optional device authentication. */
+/* v0.14.9: severity-colored safety bubbles, immediate test cleanup and reusable direct chats. */
 .notification-card{display:block;width:100%;color:var(--ink);text-align:left}
 button{touch-action:manipulation}
 .thread-card,.thread-card *,.chat-thread-identity,.chat-thread-identity *,#conversationActionsSheet .sheet-head,#conversationActionsSheet .sheet-head *{-webkit-touch-callout:none!important;-webkit-user-select:none!important;user-select:none!important}
@@ -1389,7 +1392,7 @@ button{touch-action:manipulation}
     <button id="customizeLayoutBtn" class="wide secondary" type="button">↕ Customize App Layout</button>
     <button id="securityBtn" class="wide secondary" type="button">🔒 Sign-In & App Security</button>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.14.8</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.14.9</p>
   </section>
 
   <section id="layoutEditorSheet" class="sheet hidden" aria-modal="true">
@@ -3164,14 +3167,25 @@ function subscribeCommunicationRealtime(){
       if(document.hidden&&'Notification' in window&&Notification.permission==='granted'&&payload.new.sender_user_id!==session?.user?.id)new Notification('New Wrestling Manager message',{body:'Open the app to read your team message.'});
     }).subscribe();
   const notificationChannel=client.channel(`wm-notifications-${session.user.id}`)
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'communication_notifications',filter:`user_id=eq.${session.user.id}`},()=>loadCommunications(false)).subscribe();
+    .on('postgres_changes',{event:'*',schema:'public',table:'communication_notifications',filter:`user_id=eq.${session.user.id}`},()=>loadCommunications(false)).subscribe();
+  const threadChannel=client.channel(`wm-thread-state-${activeTeam.id}`)
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'communication_threads',filter:`team_id=eq.${activeTeam.id}`},payload=>{
+      if(!payload.new?.archived_at)return;
+      const archivedId=String(payload.new.id||'');
+      if(activeCommunicationThread&&String(activeCommunicationThread.thread_id)===archivedId){
+        closeSheets();activeCommunicationThread=null;activeCommunicationMessages=[];
+      }
+      loadCommunications(false);
+    }).subscribe();
+  const safetyChannel=client.channel(`wm-safety-state-${activeTeam.id}`)
+    .on('postgres_changes',{event:'*',schema:'public',table:'communication_safety_flags',filter:`team_id=eq.${activeTeam.id}`},()=>loadCommunications(false)).subscribe();
   const receiptChannel=client.channel(`wm-message-receipts-${session.user.id}`)
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'communication_message_receipts'},()=>{
       if(!activeCommunicationThread||$('communicationThreadSheet')?.classList.contains('hidden'))return;
       clearTimeout(communicationReceiptRefreshTimer);
       communicationReceiptRefreshTimer=setTimeout(()=>refreshActiveCommunicationReceipts(false),140);
     }).subscribe();
-  communicationRealtimeChannels=[messageChannel,notificationChannel,receiptChannel];
+  communicationRealtimeChannels=[messageChannel,notificationChannel,threadChannel,safetyChannel,receiptChannel];
 }
 
 async function openCommunicationThread(threadId,{keepOpen=false,preserveScroll=false}={}){
@@ -3265,8 +3279,11 @@ function renderCommunicationMessages(rows,{preserveScroll=false,distanceFromBott
       }else media='<div class="message-media-hidden">🛡️ A parent or guardian has limited media viewing for this account.</div>';
     }
     const safetyLevel=String(m.safety_level||'none').toLowerCase();
+    const safetyBubbleClass=!removed&&['high','medium','low'].includes(safetyLevel)?` safety-${safetyLevel}`:'';
     const safetyFlag=!removed&&safetyLevel!=='none'?`<div class="message-safety-flag ${esc(safetyLevel)}">${safetyTest?'🧪 Test flag detected':'⚠️ Safety review required'} · ${esc(safetyLevel)} priority</div>`:'';
-    const bubble=hasAttachment?media:`<div class="message-bubble ${m.message_kind==='announcement'?'announcement':''}">${safetyTest?'<b>🧪 TEST MESSAGE</b><br>':''}${m.message_kind==='announcement'?'<b>📣 Important</b><br>':''}${removed?'<i>Message removed</i>':esc(m.body)}${safetyFlag}</div>`;
+    const bubble=hasAttachment
+      ?(safetyFlag?`<div class="message-media-shell${safetyBubbleClass}">${media}${safetyFlag}</div>`:media)
+      :`<div class="message-bubble ${m.message_kind==='announcement'?'announcement':''}${safetyBubbleClass}">${safetyTest?'<b>🧪 TEST MESSAGE</b><br>':''}${m.message_kind==='announcement'?'<b>📣 Important</b><br>':''}${removed?'<i>Message removed</i>':esc(m.body)}${safetyFlag}</div>`;
     const latestOwn=own&&!rows.slice(index+1).some(row=>row.is_simulated?row.simulated_sender_role==='coach':!!row.is_mine);
     const separator=newDate?`<div class="message-date-separator">${esc(communicationDateLabel(m.created_at))}</div>`:'';
     return `${separator}<div class="message-row ${own?'mine':''} ${direct?'direct-chat':''} ${grouped?'grouped':''}" data-message-id="${m.message_id}"><div class="message-line">${avatar}${bubble}</div>${meta}${latestOwn?communicationReceiptHtml(m):''}${removed||safetyTest?'':`<div class="message-actions">${own?`<button data-edit-message="${m.message_id}">Edit</button><button data-remove-message="${m.message_id}">Remove</button>`:''}<button data-report-message="${m.message_id}">Report</button></div>`}</div>`;
@@ -3329,9 +3346,25 @@ async function startGuardianSafetyTest(athleteId,button){
 
 async function endGuardianSafetyTest(){
   if(!activeCommunicationThread||!confirm('End this Guardian Safety Test? It will leave everyone’s inbox, clear its test-only alerts, and remain in the protected audit history.'))return;
-  const {error}=await client.rpc('end_guardian_safety_test',{p_thread_id:activeCommunicationThread.thread_id});
-  if(error){message(error.message,true);return;}
-  closeSheets();activeCommunicationThread=null;await loadCommunications(false);setTab('messages');message('Guardian safety test ended. Test alerts were cleared and the audit record was preserved.');
+  const threadId=String(activeCommunicationThread.thread_id);
+  const testMessageIds=new Set(activeCommunicationMessages.map(row=>String(row.message_id)));
+  const btn=$('endGuardianSafetyTestBtn');btn.disabled=true;btn.textContent='Ending Test…';
+  const {error}=await client.rpc('end_guardian_safety_test',{p_thread_id:threadId});
+  if(error){btn.disabled=false;btn.textContent='End Test';message(error.message,true);return;}
+
+  // Remove the completed simulation immediately instead of waiting for a full
+  // network reload or requiring the user to change tabs. Realtime performs the
+  // same refresh on the connected guardian/athlete devices.
+  communicationLoadSequence++;
+  communicationThreads=communicationThreads.filter(row=>String(row.thread_id)!==threadId);
+  communicationNotifications=communicationNotifications.filter(row=>String(row.thread_id||'')!==threadId);
+  communicationSafetyFlags=communicationSafetyFlags.filter(row=>!testMessageIds.has(String(row.message_id||'')));
+  communicationInboxRenderSignature=JSON.stringify(communicationThreads);
+  communicationNotificationRenderSignature=JSON.stringify(communicationNotifications);
+  closeSheets();activeCommunicationThread=null;activeCommunicationMessages=[];
+  renderCommunicationInbox();renderCommunicationNotifications();renderCommunicationSafetySummary();
+  setTab('messages');
+  message('Guardian safety test ended. Test alerts were cleared and the audit record was preserved.');
 }
 
 async function editCommunicationMessage(id,current){
@@ -3389,7 +3422,7 @@ async function createCommunicationThread(){
   const btn=$('createCommunicationThreadBtn');btn.disabled=true;btn.textContent='Starting…';
   const {data,error}=await client.rpc('create_communication_thread',{p_team_id:activeTeam.id,p_season_id:activeSeason?.id||null,p_title:$('newCommunicationTitle').value.trim()||defaultTitle,p_participant_ids:ids});
   btn.disabled=false;btn.textContent='Start Conversation';if(error){message(error.message,true);return;}
-  closeSheets();await loadCommunications(false);await openCommunicationThread(data);message('Safeguarded conversation started.');
+  closeSheets();await loadCommunications(false);await openCommunicationThread(data);message('Safeguarded conversation opened. Existing direct-message history is reused automatically.');
 }
 
 async function openAthleteChatPermissions(){
@@ -6593,7 +6626,7 @@ $('joinCodeBtn').onclick=showTeamJoin;
 
 setupPhoneFormatting();
 window.addEventListener('pageshow',recoverInteractionLayer);
-document.addEventListener('visibilitychange',()=>{if(!document.hidden){recoverInteractionLayer();refreshActiveCommunicationReceipts(true);}});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){recoverInteractionLayer();refreshActiveCommunicationReceipts(true);if(activeTeam&&activeSeason&&!$('messagesTab').classList.contains('hidden'))loadCommunications(false);}});
 setRememberSession(shouldRememberSession());
 client.auth.onAuthStateChange((event)=>setTimeout(async()=>{
   await refresh();
