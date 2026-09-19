@@ -315,7 +315,7 @@ button:focus-visible,.pressable:focus-visible{outline:3px solid color-mix(in srg
 #communicationThreadSheet .message-list{padding:10px 0 12px}.message-date-separator{text-align:center;color:#9a9aa1;font-size:11px;font-weight:750;margin:18px 0 10px}.message-row{width:100%}.message-line{max-width:96%}.message-bubble{padding:9px 13px;font-size:16px;white-space:pre-wrap}.message-meta{opacity:.9}.message-row.direct-chat:not(.mine) .message-meta .sender-label{display:none}.message-row.direct-chat:not(.mine) .message-meta .meta-divider{display:none}.message-row.direct-chat:not(.mine) .message-meta{margin-left:5px}.message-receipts{display:flex;flex-direction:column;align-items:flex-end;gap:2px}.message-receipts span{display:block}
 .communication-media-preview{display:grid;grid-template-columns:58px minmax(0,1fr) 36px;align-items:center;gap:9px;border:1px solid #d1d1d6;background:#f4f4f6;border-radius:17px;padding:8px;margin:7px 0 0}.communication-media-preview img,.communication-media-preview video{width:58px;height:58px;border-radius:12px;object-fit:cover;background:#ddd}.communication-media-preview b,.communication-media-preview small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.communication-media-preview small{color:#75757b;margin-top:3px}.communication-media-preview button{width:32px;height:32px;padding:0;border-radius:50%;background:#dedee3;color:#222;box-shadow:none!important}
 .message-composer{grid-template-columns:36px minmax(0,1fr) 38px}.message-composer .composer-media-btn{width:34px;height:34px;min-height:34px;background:#ededf0;color:#52525a;border:1px solid #d1d1d6;font-size:24px;font-weight:400}.message-composer .composer-media-btn:disabled{opacity:.38}.message-media{max-width:min(76vw,520px);overflow:hidden;border-radius:18px;background:#e9e9eb}.message-row.mine .message-media{margin-left:auto}.message-media img,.message-media video{display:block;width:100%;max-height:48vh;object-fit:cover;background:#111}.message-media-open{display:block;width:100%;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none!important;overflow:hidden}.message-media-open:active{transform:none}.message-media-caption{padding:9px 12px;white-space:pre-wrap}.message-media-safety{display:flex;gap:5px;align-items:center;padding:6px 10px;background:#f5f5f7;color:#6e6e73;font-size:9px}.message-row.mine .message-media-safety{background:#eaf4ff;color:#35658d}.message-media-hidden{border:1px dashed #c4c5ca;border-radius:16px;padding:14px;color:#6e6e73;background:#f6f6f8;font-size:12px}.message-bubble.media-label-only{display:none}
-.communication-media-lightbox{position:fixed;inset:0;z-index:15000;display:flex;align-items:center;justify-content:center;padding:max(64px,env(safe-area-inset-top)) 16px max(42px,env(safe-area-inset-bottom));background:rgba(0,0,0,.94);overscroll-behavior:contain}.communication-media-lightbox.hidden{display:none}.communication-media-lightbox img{display:block;max-width:100%;max-height:100%;object-fit:contain;border-radius:10px}.communication-media-lightbox-close{position:absolute;top:max(14px,env(safe-area-inset-top));right:16px;width:46px;height:46px;min-height:46px;padding:0;border-radius:50%;background:rgba(60,60,67,.82);color:#fff;font-size:31px;line-height:1;box-shadow:none!important}.communication-media-lightbox-close:active{transform:none}
+.communication-media-lightbox{position:fixed;inset:0;z-index:15000;display:flex;align-items:center;justify-content:center;padding:max(64px,env(safe-area-inset-top)) 16px max(42px,env(safe-area-inset-bottom));background:rgba(0,0,0,.94);overscroll-behavior:contain;touch-action:none;overflow:hidden}.communication-media-lightbox.hidden{display:none}.communication-media-lightbox img{display:block;max-width:100%;max-height:100%;object-fit:contain;border-radius:10px;transform-origin:center center;will-change:transform;user-select:none;-webkit-user-drag:none}.communication-media-lightbox-close{position:absolute;z-index:2;top:max(14px,env(safe-area-inset-top));right:16px;width:46px;height:46px;min-height:46px;padding:0;border-radius:50%;background:rgba(60,60,67,.82);color:#fff;font-size:31px;line-height:1;box-shadow:none!important}.communication-media-lightbox-close:active{transform:none}
 .media-permission-group{border-top:1px solid var(--line);margin-top:12px;padding-top:10px}.media-permission-group>h4{margin:0 0 4px}.media-permission-group>p{margin:0 0 8px;color:var(--muted);font-size:12px;line-height:1.4}
 .communication-search-wrap{position:relative;margin:12px 0}.communication-search-wrap input{padding-left:39px;border-radius:18px;background:#f0f0f3;border-color:transparent}.communication-search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#77777d;pointer-events:none}.communication-search-results{display:grid;gap:7px;margin:-4px 0 13px}.communication-search-result{width:100%;display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:9px;text-align:left;background:#fff;color:#111;border:1px solid #dedee3;border-radius:15px;padding:10px;box-shadow:none!important}.communication-search-result>span:first-child{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:#ededf0}.communication-search-result b,.communication-search-result small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.communication-search-result small{color:#77777d;margin-top:3px}.communication-search-result time{color:#999;font-size:10px}.communication-search-note{font-size:11px;color:var(--muted);padding:2px 5px}
 @media(max-width:680px){.chat-thread-header{padding-left:4px;padding-right:4px}.message-media{max-width:78vw}}
@@ -1410,7 +1410,7 @@ button{touch-action:manipulation}
     <button id="customizeLayoutBtn" class="wide secondary" type="button">↕ Customize App Layout</button>
     <button id="securityBtn" class="wide secondary" type="button">🔒 Sign-In & App Security</button>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.15.9</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.15.10</p>
   </section>
 
   <section id="layoutEditorSheet" class="sheet hidden" aria-modal="true">
@@ -1841,9 +1841,10 @@ let nativeSecurityStatusReady=false;
 let securityUnlockedThisLaunch=false;
 let shouldLockWhenVisible=false;
 let nativeNotificationState={native:false,authorizationStatus:'unknown',token:null,environment:'production',bundleId:'',appVersion:''};
-let pendingNativeNotificationPayload=null;
+let pendingNativeNotificationPayload=(()=>{try{return JSON.parse(sessionStorage.getItem('wm_pending_native_notification')||'null');}catch{return null;}})();
 let nativeWakeSessionPromise=null;
 let nativeNotificationRoutePromise=null;
+let automaticUnlockRequested=false;
 
 async function ensureNativeWakeSession(forceRefresh=false){
   if(nativeWakeSessionPromise)return nativeWakeSessionPromise;
@@ -1930,6 +1931,7 @@ async function syncNativeNotificationBadge(){
 async function performNativeNotificationRoute(rawPayload={}){
   const payload=rawPayload?.wm||rawPayload||{};
   pendingNativeNotificationPayload=payload;
+  try{sessionStorage.setItem('wm_pending_native_notification',JSON.stringify(payload));}catch{}
   if(!session?.user)return;
   if(nativeSecurityAvailable()&&!nativeSecurityStatusReady)return;
   if(securityState.appLockEnabled&&!securityUnlockedThisLaunch)return;
@@ -1941,6 +1943,7 @@ async function performNativeNotificationRoute(rawPayload={}){
   if(!$('appLockOverlay')?.classList.contains('hidden'))return;
   if(!activeTeam||!activeSeason)return;
   pendingNativeNotificationPayload=null;
+  try{sessionStorage.removeItem('wm_pending_native_notification');}catch{}
   if(payload.notification_id){
     await client.rpc('mark_communication_notifications_read',{p_notification_ids:[payload.notification_id]});
   }
@@ -2031,11 +2034,12 @@ function lockApp(){
   renderAppLockIdentity();
   show('appLockOverlay',true);document.body.style.overflow='hidden';
   if($('appLockPin'))$('appLockPin').value='';
+  if(!automaticUnlockRequested){automaticUnlockRequested=true;setTimeout(()=>postNativeSecurity('authenticate',{reason:'Unlock Wrestling Manager'}),180);}
 }
-function unlockApp(){securityUnlockedThisLaunch=true;shouldLockWhenVisible=false;show('appLockOverlay',false);document.body.style.overflow='';if(pendingNativeNotificationPayload)routeNativeNotification(pendingNativeNotificationPayload);}
+function unlockApp(){securityUnlockedThisLaunch=true;shouldLockWhenVisible=false;automaticUnlockRequested=false;show('appLockOverlay',false);document.body.style.overflow='';if(pendingNativeNotificationPayload)routeNativeNotification(pendingNativeNotificationPayload);}
 function prepareAppLockForBackground(){
   if(!session||!securityState.appLockEnabled)return;
-  shouldLockWhenVisible=true;securityUnlockedThisLaunch=false;
+  shouldLockWhenVisible=true;securityUnlockedThisLaunch=false;automaticUnlockRequested=false;
 }
 window.wrestlingManagerAppDidEnterBackground=prepareAppLockForBackground;
 window.wrestlingManagerAppDidBecomeActive=function(){
@@ -3240,6 +3244,7 @@ function openCommunicationMediaLightbox(url){
   if(!url)return;
   const lightbox=$('communicationMediaLightbox'),image=$('communicationMediaLightboxImage');
   image.src=url;
+  resetCommunicationMediaZoom();
   lightbox.classList.remove('hidden');
   document.body.style.overflow='hidden';
 }
@@ -3248,8 +3253,41 @@ function closeCommunicationMediaLightbox(){
   const lightbox=$('communicationMediaLightbox'),image=$('communicationMediaLightboxImage');
   lightbox.classList.add('hidden');
   image.removeAttribute('src');
+  resetCommunicationMediaZoom();
   if(!$('communicationThreadSheet')?.classList.contains('hidden'))document.body.style.overflow='hidden';
   else document.body.style.overflow='';
+}
+
+let communicationMediaZoom={scale:1,x:0,y:0,pointers:new Map(),startDistance:0,startScale:1,startX:0,startY:0,lastTap:0};
+function applyCommunicationMediaZoom(){
+  $('communicationMediaLightboxImage').style.transform=`translate3d(${communicationMediaZoom.x}px,${communicationMediaZoom.y}px,0) scale(${communicationMediaZoom.scale})`;
+}
+function resetCommunicationMediaZoom(){
+  communicationMediaZoom.scale=1;communicationMediaZoom.x=0;communicationMediaZoom.y=0;communicationMediaZoom.pointers.clear();communicationMediaZoom.startDistance=0;communicationMediaZoom.lastTap=0;applyCommunicationMediaZoom();
+}
+function clampCommunicationMediaZoom(){
+  if(communicationMediaZoom.scale<=1){communicationMediaZoom.scale=1;communicationMediaZoom.x=0;communicationMediaZoom.y=0;return;}
+  const image=$('communicationMediaLightboxImage');
+  const maxX=Math.max(0,(image.clientWidth*(communicationMediaZoom.scale-1))/2),maxY=Math.max(0,(image.clientHeight*(communicationMediaZoom.scale-1))/2);
+  communicationMediaZoom.x=Math.max(-maxX,Math.min(maxX,communicationMediaZoom.x));communicationMediaZoom.y=Math.max(-maxY,Math.min(maxY,communicationMediaZoom.y));
+}
+function communicationMediaPointerDown(event){
+  if(event.target===$('closeCommunicationMediaLightboxBtn'))return;
+  event.preventDefault();$('communicationMediaLightbox').setPointerCapture?.(event.pointerId);communicationMediaZoom.pointers.set(event.pointerId,{x:event.clientX,y:event.clientY});
+  if(communicationMediaZoom.pointers.size===1){communicationMediaZoom.startX=event.clientX-communicationMediaZoom.x;communicationMediaZoom.startY=event.clientY-communicationMediaZoom.y;}
+  if(communicationMediaZoom.pointers.size===2){const [a,b]=[...communicationMediaZoom.pointers.values()];communicationMediaZoom.startDistance=Math.hypot(a.x-b.x,a.y-b.y)||1;communicationMediaZoom.startScale=communicationMediaZoom.scale;}
+}
+function communicationMediaPointerMove(event){
+  if(!communicationMediaZoom.pointers.has(event.pointerId))return;
+  event.preventDefault();communicationMediaZoom.pointers.set(event.pointerId,{x:event.clientX,y:event.clientY});
+  if(communicationMediaZoom.pointers.size===2){const [a,b]=[...communicationMediaZoom.pointers.values()];communicationMediaZoom.scale=Math.max(1,Math.min(5,communicationMediaZoom.startScale*Math.hypot(a.x-b.x,a.y-b.y)/communicationMediaZoom.startDistance));}
+  else if(communicationMediaZoom.scale>1){communicationMediaZoom.x=event.clientX-communicationMediaZoom.startX;communicationMediaZoom.y=event.clientY-communicationMediaZoom.startY;}
+  clampCommunicationMediaZoom();applyCommunicationMediaZoom();
+}
+function communicationMediaPointerUp(event){
+  const wasSingle=communicationMediaZoom.pointers.size===1;communicationMediaZoom.pointers.delete(event.pointerId);
+  if(wasSingle){const now=Date.now();if(now-communicationMediaZoom.lastTap<320){communicationMediaZoom.scale=communicationMediaZoom.scale>1?1:2.5;communicationMediaZoom.x=0;communicationMediaZoom.y=0;clampCommunicationMediaZoom();applyCommunicationMediaZoom();communicationMediaZoom.lastTap=0;}else communicationMediaZoom.lastTap=now;}
+  if(communicationMediaZoom.pointers.size===1){const p=[...communicationMediaZoom.pointers.values()][0];communicationMediaZoom.startX=p.x-communicationMediaZoom.x;communicationMediaZoom.startY=p.y-communicationMediaZoom.y;}
 }
 
 function clearPendingCommunicationMedia(){
@@ -7020,8 +7058,8 @@ const cropCanvas=$('photoCropCanvas');
 cropCanvas.addEventListener('pointerdown',e=>{if(!photoCropImage)return;photoCropDragging=true;photoCropLastX=e.clientX;photoCropLastY=e.clientY;cropCanvas.setPointerCapture?.(e.pointerId);});
 cropCanvas.addEventListener('pointermove',e=>{if(!photoCropDragging||!photoCropImage)return;const rect=cropCanvas.getBoundingClientRect();const factor=cropCanvas.width/Math.max(1,rect.width);photoCropOffsetX+=(e.clientX-photoCropLastX)*factor;photoCropOffsetY+=(e.clientY-photoCropLastY)*factor;photoCropLastX=e.clientX;photoCropLastY=e.clientY;drawPhotoCrop();});
 ['pointerup','pointercancel','pointerleave'].forEach(type=>cropCanvas.addEventListener(type,()=>{photoCropDragging=false;}));
-document.addEventListener('gesturestart',e=>e.preventDefault(),{passive:false});
-document.addEventListener('gesturechange',e=>e.preventDefault(),{passive:false});
+document.addEventListener('gesturestart',e=>{if(!e.target.closest?.('#communicationMediaLightbox'))e.preventDefault();},{passive:false});
+document.addEventListener('gesturechange',e=>{if(!e.target.closest?.('#communicationMediaLightbox'))e.preventDefault();},{passive:false});
 $('repeatPractice').addEventListener('change',()=>{updatePracticeOptionVisibility();if($('repeatPractice').checked)syncRepeatDatesFromEventStart(true);});
 $('practiceWeightTracking').addEventListener('change',updatePracticeOptionVisibility);
 document.querySelectorAll('[data-repeat-day]').forEach(btn=>btn.onclick=()=>btn.classList.toggle('active'));
@@ -7127,6 +7165,7 @@ $('addCommunicationMediaBtn').onclick=()=>{if(activeCommunicationMediaAccess?.ca
 $('communicationMediaInput').onchange=e=>chooseCommunicationMedia(e.target.files?.[0]);
 $('closeCommunicationMediaLightboxBtn').onclick=closeCommunicationMediaLightbox;
 $('communicationMediaLightbox').onclick=event=>{if(event.target===$('communicationMediaLightbox'))closeCommunicationMediaLightbox();};
+['pointerdown','pointermove','pointerup','pointercancel'].forEach(type=>$('communicationMediaLightbox').addEventListener(type,type==='pointerdown'?communicationMediaPointerDown:type==='pointermove'?communicationMediaPointerMove:communicationMediaPointerUp,{passive:false}));
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('communicationMediaLightbox').classList.contains('hidden'))closeCommunicationMediaLightbox();});
 $('scheduleCommunicationMessageBtn').onclick=openScheduleMessage;
 $('confirmScheduleMessageBtn').onclick=confirmScheduleMessage;
