@@ -457,8 +457,9 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
       <section id="messagesTab" class="tabview hidden">
         <button type="button" class="tab-back-btn" data-back-home><span>←</span> Back to Home</button>
         <div class="communication-head top-space"><div><div class="eyebrow">SAFEGUARDED COMMUNICATION</div><h2 style="margin:3px 0 0">Messages</h2></div><div class="communication-actions"><button id="openNotificationsBtn" type="button" class="secondary">🔔 <span id="communicationUnreadCount">0</span></button><button id="newCommunicationBtn" type="button">+ New</button></div></div>
-        <div class="safesport-banner"><span>🛡️</span><div><b>Guardian-safe by design</b><small>Adults cannot privately message a minor without the athlete’s connected parent or guardian receiving silent read access. Messages remain in the audit history even after edits or removal.</small></div></div>
+        <div class="safesport-banner"><span>🛡️</span><div><b>Guardian-safe by design</b><small>Adults cannot privately message a minor without a connected parent or guardian receiving silent read access. Messages remain in the audit history after edits or removal. Automated checks flag secrecy, sexual-image requests, threats, off-app contact attempts and adult-to-minor phone-number sharing for human review.</small></div></div>
         <button id="athleteChatPermissionsBtn" type="button" class="wide secondary hidden">👨‍👩‍👧 Manage My Athlete’s Chat Access</button>
+        <button id="guardianSafetyTestBtn" type="button" class="wide secondary hidden">🧪 Run Guardian Safety Test</button>
         <div id="smsActionRow" class="sms-action-row hidden"><button id="massTextBtn" type="button">📱 Send Mass Text</button><button id="textRepliesBtn" type="button" class="secondary">↩ Private Text Replies <span id="smsReplyCount">0</span></button></div>
         <div id="communicationSafetySummary" class="hidden"></div>
         <div class="section-head"><h3>Conversations</h3><button id="communicationPreferencesBtn" class="link-btn" type="button">Notification settings</button></div>
@@ -628,10 +629,12 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     <div class="sheet-handle"></div>
     <div class="sheet-head"><div><div id="communicationThreadKind" class="eyebrow">CONVERSATION</div><h2 id="communicationThreadTitle">Messages</h2><p id="communicationThreadParticipants" class="muted"></p></div><button class="icon-close" data-close-sheet>×</button></div>
     <div id="communicationGuardianMirror" class="guardian-mirror-note hidden"><b>🛡️ Guardian mirror is active.</b> Connected parents or legal guardians can read this adult-to-minor conversation without appearing as chat participants.</div>
+    <div id="communicationSafetyTestBanner" class="sms-safety-note hidden"><b>🧪 Guardian Safety Test</b><br>This is a clearly labeled simulation, not a real coach or athlete message. It creates in-app guardian visibility only—no SMS, email or external push is sent.</div>
     <div id="communicationMessageList" class="message-list"><div class="empty-inline">Loading messages…</div></div>
+    <div id="communicationSafetyTestRoleWrap" class="hidden"><label for="communicationSafetyTestRole">Send the next test message as</label><select id="communicationSafetyTestRole"><option value="coach">Wrestling Manager Test Coach</option><option value="athlete">Test Athlete</option></select></div>
     <div id="communicationComposer" class="message-composer"><textarea id="communicationMessageBody" aria-label="Message" placeholder="Write a message…"></textarea><button id="sendCommunicationMessageBtn" type="button">Send</button></div>
     <button id="scheduleCommunicationMessageBtn" type="button" class="wide secondary">🕒 Send Later</button>
-    <div class="inline-actions"><button id="muteCommunicationThreadBtn" type="button" class="secondary">Mute conversation</button><button id="blockCommunicationUserBtn" type="button" class="danger-outline hidden">Block member</button></div>
+    <div class="inline-actions"><button id="muteCommunicationThreadBtn" type="button" class="secondary">Mute conversation</button><button id="blockCommunicationUserBtn" type="button" class="danger-outline hidden">Block member</button><button id="endGuardianSafetyTestBtn" type="button" class="danger-outline hidden">End Test</button></div>
   </section>
 
   <section id="communicationMuteSheet" class="sheet hidden" aria-modal="true">
@@ -655,12 +658,21 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     <div class="sheet-handle"></div>
     <div class="sheet-head"><div><div class="eyebrow">NEW CONVERSATION</div><h2>Message Teammates</h2><p class="muted">Athlete-to-athlete messages are allowed. If any adult messages a minor, guardian read access is added automatically.</p></div><button class="icon-close" data-close-sheet>×</button></div>
     <label for="newCommunicationType">Conversation type</label>
-    <select id="newCommunicationType"><option value="custom">Custom group / individual</option><option value="staff">Coaches & team leaders</option><option value="captains">Captains group</option><option value="parents">Parents / guardians</option><option value="individual">Individual chat</option></select>
+    <select id="newCommunicationType"><option value="custom">Custom group / individual</option><option value="staff">Coaches / team leaders group</option><option value="captains">Captains group</option><option value="parents">Parents / guardians group</option><option value="individual">Individual chat</option></select>
     <label for="newCommunicationTitle">Conversation name <span class="optional-label">optional for direct messages</span></label>
     <input id="newCommunicationTitle" maxlength="120" placeholder="Tournament travel group">
     <div class="section-head"><h3>Choose people</h3><span id="newCommunicationRecipientCount" class="count-pill">0</span></div>
     <div id="communicationRecipientList" class="recipient-list"><div class="empty-card">Loading team directory…</div></div>
     <button id="createCommunicationThreadBtn" class="wide" type="button">Start Conversation</button>
+  </section>
+
+  <section id="guardianSafetyTestSheet" class="sheet hidden" aria-modal="true">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><div><div class="eyebrow">ADMIN TEST LAB</div><h2>Guardian Safety Test</h2><p class="muted">Preview exactly what a connected parent or guardian sees when an adult messages a minor athlete.</p></div><button class="icon-close" data-close-sheet>×</button></div>
+    <div class="sms-safety-note"><b>No impersonation and no external delivery.</b><br>The conversation is marked TEST everywhere. The audit history records which administrator started it, and the test never sends SMS, email or external push alerts.</div>
+    <div class="guardian-mirror-note"><b>How to test with your family</b><br>Choose Mandi below. You control both the Test Coach and Mandi sides from your phone. Hadley signs into her account and sees the same conversation as a read-only guardian mirror.</div>
+    <div class="section-head"><h3>Choose a minor athlete</h3></div>
+    <div id="guardianSafetyTestAthleteList"><div class="empty-card">Loading eligible athletes…</div></div>
   </section>
 
   <section id="athleteChatPermissionsSheet" class="sheet hidden" aria-modal="true">
@@ -1272,7 +1284,7 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     <button id="editTeamBtn" class="wide admin-only" type="button">Edit Team</button>
     <button id="communicationBtn" class="wide admin-only" type="button">Communication Settings</button>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.13.1</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.13.3</p>
   </section>
 
 
@@ -1722,7 +1734,7 @@ function openSheet(id){
 }
 function closeSheets(){
   if(document.body.classList.contains('kiosk-locked')) return;
-  ['eventSheet','eventDetailSheet','attendanceSheet','announcementSheet','communicationThreadSheet','communicationMuteSheet','newCommunicationSheet','athleteChatPermissionsSheet','scheduleMessageSheet','communicationPreferencesSheet','communicationNotificationsSheet','massTextSheet','textRepliesSheet','communicationSafetySheet','rosterSheet','athleteTeamsSheet','addAthleteSheet','joinSheet','joinRequestSheet','coachJoinRequestsSheet','athleteViewSheet','athleteProfileSheet','weightTrendSheet','photoCropSheet','communicationSheet','staffProfileSheet','staffDirectorySheet','familySheet','agreementsSheet','agreementEditorSheet','agreementPreviewSheet','calendarSubscriptionSheet','medicalClearanceSheet','medicalCaseSheet','excuseSheet','athleteAccessSheet','staffAccessSheet','weighedTodaySheet','weighInStartSheet','weighInConsoleSheet','importRosterSheet','teamSwitcherSheet','createTeamSheet','editTeamSheet','lineupClassSheet','accountSheet'].forEach(id=>show(id,false));
+  ['eventSheet','eventDetailSheet','attendanceSheet','announcementSheet','communicationThreadSheet','communicationMuteSheet','newCommunicationSheet','guardianSafetyTestSheet','athleteChatPermissionsSheet','scheduleMessageSheet','communicationPreferencesSheet','communicationNotificationsSheet','massTextSheet','textRepliesSheet','communicationSafetySheet','rosterSheet','athleteTeamsSheet','addAthleteSheet','joinSheet','joinRequestSheet','coachJoinRequestsSheet','athleteViewSheet','athleteProfileSheet','weightTrendSheet','photoCropSheet','communicationSheet','staffProfileSheet','staffDirectorySheet','familySheet','agreementsSheet','agreementEditorSheet','agreementPreviewSheet','calendarSubscriptionSheet','medicalClearanceSheet','medicalCaseSheet','excuseSheet','athleteAccessSheet','staffAccessSheet','weighedTodaySheet','weighInStartSheet','weighInConsoleSheet','importRosterSheet','teamSwitcherSheet','createTeamSheet','editTeamSheet','lineupClassSheet','accountSheet'].forEach(id=>show(id,false));
   show('sheetBackdrop', false); document.body.style.overflow='';
 }
 
@@ -2433,6 +2445,7 @@ function applyRoleUI(){
   show('massTextBtn',canMassText);
   show('textRepliesBtn',canMassText||smsUnreadReplies>0);
   show('athleteChatPermissionsBtn',familyAthletes.length>0);
+  show('guardianSafetyTestBtn',actualIsTeamAdmin&&viewMode!=='parent');
 }
 
 async function loadMemberAthletes(){
@@ -2501,9 +2514,9 @@ async function resolveImportantAnnouncement(postId){
 }
 
 function communicationKindLabel(kind){
-  return kind==='announcements'?'ANNOUNCEMENTS':kind==='staff'?'COACHES & TEAM LEADERS':kind==='parents'?'PARENTS & COACHES':kind==='team'?'TEAM CHAT':kind==='direct'?'DIRECT MESSAGE':'GROUP MESSAGE';
+  return kind==='announcements'?'ANNOUNCEMENTS':kind==='staff'?'COACHES ONLY':kind==='parents'?'PARENTS / GUARDIANS':kind==='all_members'?'ALL MEMBERS':kind==='team'?'ATHLETES & TEAM LEADERS':kind==='direct'?'DIRECT MESSAGE':'GROUP MESSAGE';
 }
-function communicationKindIcon(kind){return kind==='announcements'?'📣':kind==='staff'?'🧑‍🏫':kind==='parents'?'👨‍👩‍👧':kind==='team'?'🤼':kind==='direct'?'💬':'👥';}
+function communicationKindIcon(kind){return kind==='announcements'?'📣':kind==='staff'?'🧑‍🏫':kind==='parents'?'👨‍👩‍👧':kind==='all_members'?'🌐':kind==='team'?'🤼':kind==='direct'?'💬':'👥';}
 
 async function loadCommunications(showErrors=true){
   if(!activeTeam||!activeSeason)return;
@@ -2563,12 +2576,17 @@ function subscribeCommunicationRealtime(){
 async function openCommunicationThread(threadId,{keepOpen=false}={}){
   activeCommunicationThread=communicationThreads.find(x=>x.thread_id===threadId)||activeCommunicationThread;
   if(!activeCommunicationThread)return;
-  $('communicationThreadKind').textContent=communicationKindLabel(activeCommunicationThread.kind);
+  const safetyTest=String(activeCommunicationThread.title||'').startsWith('🧪 TEST:');
+  $('communicationThreadKind').textContent=safetyTest?'GUARDIAN SAFETY TEST':communicationKindLabel(activeCommunicationThread.kind);
   $('communicationThreadTitle').textContent=activeCommunicationThread.title||'Conversation';
-  $('communicationThreadParticipants').textContent=activeCommunicationThread.participant_names||'';
+  $('communicationThreadParticipants').textContent=safetyTest?'Simulation only · External alerts disabled':activeCommunicationThread.participant_names||'';
   show('communicationGuardianMirror',!!activeCommunicationThread.guardian_mirrored);
+  show('communicationSafetyTestBanner',safetyTest);
+  show('communicationSafetyTestRoleWrap',safetyTest&&!!activeCommunicationThread.can_post);
   show('communicationComposer',!!activeCommunicationThread.can_post);
-  show('scheduleCommunicationMessageBtn',!!activeCommunicationThread.can_post&&(isStaff||isTeamAdmin||canMassText));
+  show('scheduleCommunicationMessageBtn',!safetyTest&&!!activeCommunicationThread.can_post&&(isStaff||isTeamAdmin||canMassText));
+  show('muteCommunicationThreadBtn',!safetyTest);
+  show('endGuardianSafetyTestBtn',safetyTest&&!!activeCommunicationThread.can_post);
   const mutedUntil=activeCommunicationThread.muted_until&&new Date(activeCommunicationThread.muted_until)>new Date()?activeCommunicationThread.muted_until:null;
   $('muteCommunicationThreadBtn').textContent=mutedUntil?`Muted until ${fmtTime(mutedUntil)} · Change`:'Mute conversation';
   $('communicationMessageList').innerHTML='<div class="empty-inline">Loading messages…</div>';
@@ -2580,7 +2598,7 @@ async function openCommunicationThread(threadId,{keepOpen=false}={}){
   if(messageResult.error){message(messageResult.error.message,true);return;}
   renderCommunicationMessages((messageResult.data||[]).reverse());
   const other=(participantResult.data||[]).find(x=>!x.is_self&&x.member_role!=='guardian_mirror');
-  show('blockCommunicationUserBtn',activeCommunicationThread.kind==='direct'&&!!other);
+  show('blockCommunicationUserBtn',!safetyTest&&activeCommunicationThread.kind==='direct'&&!!other);
   if(other){$('blockCommunicationUserBtn').dataset.userId=other.user_id;$('blockCommunicationUserBtn').dataset.blocked=other.is_blocked?'true':'false';$('blockCommunicationUserBtn').textContent=other.is_blocked?`Unblock ${other.display_name}`:`Block ${other.display_name}`;}
   await client.rpc('mark_communication_thread_read',{p_thread_id:threadId});
   loadCommunications(false);
@@ -2591,7 +2609,8 @@ function renderCommunicationMessages(rows){
   if(!rows.length){list.innerHTML='<div class="empty-inline">No messages yet. Start the conversation below.</div>';return;}
   list.innerHTML=rows.map(m=>{
     const removed=!!m.deleted_at,own=!!m.is_mine;
-    return `<div class="message-row ${own?'mine':''}" data-message-id="${m.message_id}"><div class="message-bubble ${m.message_kind==='announcement'?'announcement':''}">${m.message_kind==='announcement'?'<b>📣 Important</b><br>':''}${removed?'<i>Message removed</i>':esc(m.body)}</div><div class="message-meta"><span>${esc(m.sender_name)}</span><span>·</span><span>${esc(fmtDateTime(m.created_at))}${m.edited_at?' · edited':''}</span></div>${removed?'':`<div class="message-actions">${own?`<button data-edit-message="${m.message_id}">Edit</button><button data-remove-message="${m.message_id}">Remove</button>`:''}<button data-report-message="${m.message_id}">Report</button></div>`}</div>`;
+    const safetyTest=String(activeCommunicationThread?.title||'').startsWith('🧪 TEST:');
+    return `<div class="message-row ${own?'mine':''}" data-message-id="${m.message_id}"><div class="message-bubble ${m.message_kind==='announcement'?'announcement':''}">${safetyTest?'<b>🧪 TEST MESSAGE</b><br>':''}${m.message_kind==='announcement'?'<b>📣 Important</b><br>':''}${removed?'<i>Message removed</i>':esc(m.body)}</div><div class="message-meta"><span>${esc(m.sender_name)}</span><span>·</span><span>${esc(fmtDateTime(m.created_at))}${m.edited_at?' · edited':''}</span></div>${removed||safetyTest?'':`<div class="message-actions">${own?`<button data-edit-message="${m.message_id}">Edit</button><button data-remove-message="${m.message_id}">Remove</button>`:''}<button data-report-message="${m.message_id}">Report</button></div>`}</div>`;
   }).join('');
   list.querySelectorAll('[data-edit-message]').forEach(b=>b.onclick=()=>editCommunicationMessage(b.dataset.editMessage,rows.find(x=>x.message_id===b.dataset.editMessage)?.body||''));
   list.querySelectorAll('[data-remove-message]').forEach(b=>b.onclick=()=>removeCommunicationMessage(b.dataset.removeMessage));
@@ -2603,9 +2622,39 @@ async function sendCommunicationMessage(){
   if(!activeCommunicationThread)return;
   const body=$('communicationMessageBody').value.trim();if(!body){message('Write a message first.',true);return;}
   const btn=$('sendCommunicationMessageBtn');btn.disabled=true;btn.textContent='Sending…';
-  const {error}=await client.rpc('send_communication_message',{p_thread_id:activeCommunicationThread.thread_id,p_body:body});
+  const safetyTest=String(activeCommunicationThread.title||'').startsWith('🧪 TEST:');
+  const request=safetyTest
+    ?client.rpc('send_guardian_safety_test_message',{p_thread_id:activeCommunicationThread.thread_id,p_as_role:$('communicationSafetyTestRole').value,p_body:body})
+    :client.rpc('send_communication_message',{p_thread_id:activeCommunicationThread.thread_id,p_body:body});
+  const {error}=await request;
   btn.disabled=false;btn.textContent='Send';if(error){message(error.message,true);return;}
-  $('communicationMessageBody').value='';await dispatchCommunicationNotifications();await openCommunicationThread(activeCommunicationThread.thread_id,{keepOpen:true});
+  $('communicationMessageBody').value='';if(!safetyTest)await dispatchCommunicationNotifications();await openCommunicationThread(activeCommunicationThread.thread_id,{keepOpen:true});
+}
+
+async function openGuardianSafetyTest(){
+  if(!activeTeam||!actualIsTeamAdmin)return;
+  closeSheets();openSheet('guardianSafetyTestSheet');
+  const list=$('guardianSafetyTestAthleteList');list.innerHTML='<div class="empty-card">Loading eligible athletes…</div>';
+  const {data,error}=await client.rpc('get_guardian_safety_test_athletes',{p_team_id:activeTeam.id});
+  if(error){list.innerHTML='<div class="empty-card">Unable to load the test list.</div>';message(error.message,true);return;}
+  const rows=data||[];
+  list.innerHTML=rows.length?rows.map(a=>`<article class="feature-card"><div class="section-head" style="margin-top:0"><div><h3>${esc(a.athlete_name)}</h3><span class="section-sub">${Number(a.guardian_count)} connected guardian${Number(a.guardian_count)===1?'':'s'}${a.guardian_names?' · '+esc(a.guardian_names):''}</span></div></div><button type="button" class="wide" data-start-guardian-test="${a.athlete_id}">Start Test with ${esc(a.athlete_name.split(' ')[0])}</button></article>`).join(''):'<div class="empty-card">No active minor athletes with a connected guardian account are available for testing.</div>';
+  list.querySelectorAll('[data-start-guardian-test]').forEach(b=>b.onclick=()=>startGuardianSafetyTest(b.dataset.startGuardianTest,b));
+}
+
+async function startGuardianSafetyTest(athleteId,button){
+  if(!activeTeam||!activeSeason)return;
+  button.disabled=true;button.textContent='Starting test…';
+  const {data,error}=await client.rpc('start_guardian_safety_test',{p_team_id:activeTeam.id,p_season_id:activeSeason.id,p_athlete_id:athleteId});
+  button.disabled=false;if(error){button.textContent='Try Again';message(error.message,true);return;}
+  closeSheets();await loadCommunications(false);await openCommunicationThread(data);message('Guardian safety test started. Have the connected guardian open Messages on their account.');
+}
+
+async function endGuardianSafetyTest(){
+  if(!activeCommunicationThread||!confirm('End this Guardian Safety Test? It will leave everyone’s inbox but remain in the protected audit history.'))return;
+  const {error}=await client.rpc('end_guardian_safety_test',{p_thread_id:activeCommunicationThread.thread_id});
+  if(error){message(error.message,true);return;}
+  closeSheets();activeCommunicationThread=null;await loadCommunications(false);message('Guardian safety test ended.');
 }
 
 async function editCommunicationMessage(id,current){
@@ -2626,7 +2675,12 @@ async function reportCommunicationMessage(id){
 
 async function openNewCommunication(){
   if(!activeTeam)return;
-  closeSheets();openSheet('newCommunicationSheet');$('newCommunicationTitle').value='';$('newCommunicationType').value='custom';$('newCommunicationRecipientCount').textContent='0';
+  const athleteViewer=viewerRole==='athlete'&&!actualIsStaff&&!actualIsManager;
+  const typeSelect=$('newCommunicationType');
+  typeSelect.innerHTML=athleteViewer
+    ?'<option value="athletes">Athlete group chat</option><option value="individual">Athlete-to-athlete chat</option>'
+    :'<option value="custom">Custom group / individual</option><option value="staff">Coaches / team leaders group</option><option value="captains">Captains group</option><option value="parents">Parents / guardians group</option><option value="individual">Individual chat</option>';
+  closeSheets();openSheet('newCommunicationSheet');$('newCommunicationTitle').value='';typeSelect.value=athleteViewer?'athletes':'custom';$('newCommunicationRecipientCount').textContent='0';
   $('communicationRecipientList').innerHTML='<div class="empty-card">Loading team directory…</div>';
   const {data,error}=await client.rpc('get_team_communication_directory_v2',{p_team_id:activeTeam.id});
   if(error){message(error.message,true);return;}communicationDirectory=data||[];renderCommunicationDirectory();
@@ -2635,10 +2689,12 @@ async function openNewCommunication(){
 function renderCommunicationDirectory(){
   const type=$('newCommunicationType').value;
   let rows=communicationDirectory;
+  const athleteViewer=viewerRole==='athlete'&&!actualIsStaff&&!actualIsManager;
+  if(athleteViewer||type==='athletes')rows=rows.filter(r=>r.role==='athlete');
   if(type==='staff')rows=rows.filter(r=>['head_coach','assistant_coach','manager'].includes(r.role));
   if(type==='captains')rows=rows.filter(r=>r.role==='athlete');
   if(type==='parents')rows=rows.filter(r=>r.role==='parent_guardian'||r.is_guardian);
-  const viewerMinor=viewerRole==='athlete'&&currentTeamMemberships.some(x=>x.role==='athlete'&&x.athlete_id);
+  const viewerMinor=athleteViewer&&currentTeamMemberships.some(x=>x.role==='athlete'&&x.athlete_id);
   $('communicationRecipientList').innerHTML=rows.length?rows.map(r=>{
     const permissionNeeded=r.is_minor&&(type==='individual'?(viewerMinor?!r.peer_to_peer_allowed:!r.coach_to_athlete_allowed):!r.group_chat_allowed);
     const detail=(r.athlete_name?`${r.athlete_name} · `:'')+String(r.role||'member').replaceAll('_',' ')+(r.is_minor?' · minor safeguards active':'');
@@ -2650,7 +2706,7 @@ function renderCommunicationDirectory(){
 async function createCommunicationThread(){
   const ids=[...document.querySelectorAll('[data-communication-recipient]:checked')].map(x=>x.value);if(!ids.length){message('Choose at least one person.',true);return;}
   const type=$('newCommunicationType').value;if(type==='individual'&&ids.length!==1){message('Choose exactly one person for an individual chat.',true);return;}
-  const defaultTitle=type==='staff'?'Coaches & Team Leaders':type==='captains'?'Team Captains':type==='parents'?'Parents Group':null;
+  const defaultTitle=type==='staff'?'Coaches & Team Leaders Group':type==='captains'?'Team Captains':type==='parents'?'Parents Group':type==='athletes'?'Athlete Group':null;
   const btn=$('createCommunicationThreadBtn');btn.disabled=true;btn.textContent='Starting…';
   const {data,error}=await client.rpc('create_communication_thread',{p_team_id:activeTeam.id,p_season_id:activeSeason?.id||null,p_title:$('newCommunicationTitle').value.trim()||defaultTitle,p_participant_ids:ids});
   btn.disabled=false;btn.textContent='Start Conversation';if(error){message(error.message,true);return;}
@@ -5623,6 +5679,8 @@ $('kioskExitTab').onclick=exitKiosk;
 $('newAnnouncementBtn').onclick=openAnnouncementComposer;
 $('saveAnnouncementBtn').onclick=saveImportantAnnouncement;
 $('newCommunicationBtn').onclick=openNewCommunication;
+$('guardianSafetyTestBtn').onclick=openGuardianSafetyTest;
+$('endGuardianSafetyTestBtn').onclick=endGuardianSafetyTest;
 $('createCommunicationThreadBtn').onclick=createCommunicationThread;
 $('newCommunicationType').onchange=()=>{$('newCommunicationRecipientCount').textContent='0';renderCommunicationDirectory();};
 $('sendCommunicationMessageBtn').onclick=sendCommunicationMessage;
