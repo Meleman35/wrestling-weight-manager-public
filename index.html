@@ -327,7 +327,7 @@ button:focus-visible,.pressable:focus-visible{outline:3px solid color-mix(in srg
 .message-bubble.safety-low,.message-row.mine .message-bubble.safety-low{background:#527a9f;color:#fff;border:2px solid #355d82;box-shadow:0 3px 0 #294d6d,0 7px 15px rgba(41,77,109,.20)}
 .message-safety-flag{margin:7px -5px -3px;padding:6px 8px;border-radius:10px;font-size:10px;font-weight:900;line-height:1.25;background:rgba(255,255,255,.88);color:#3b2b00}.message-safety-flag.high,.message-safety-flag.medium,.message-safety-flag.low,.message-row.mine .message-safety-flag{background:rgba(255,255,255,.9);color:#242424}.message-media-shell{max-width:min(76vw,520px);border-radius:20px;padding:3px;overflow:hidden}.message-media-shell .message-media,.message-media-shell .message-media-hidden{max-width:100%;border-radius:16px}.message-media-shell>.message-safety-flag{margin:3px 2px 2px}.message-media-shell.safety-high{background:#c93434;box-shadow:0 3px 0 #861919,0 7px 15px rgba(163,31,31,.22)}.message-media-shell.safety-medium{background:#f6c94f;box-shadow:0 3px 0 #ad8418,0 7px 15px rgba(173,132,24,.20)}.message-media-shell.safety-low{background:#527a9f;box-shadow:0 3px 0 #294d6d,0 7px 15px rgba(41,77,109,.20)}
 .safety-test-chip{display:inline-block;margin:0 0 7px 6px;border-radius:999px;padding:4px 8px;background:#eee8ff;color:#5c3f9f;font-size:10px;font-weight:950;text-transform:uppercase}
-/* v0.14.10: persistent profile photos and readable direct-message identities. */
+/* v0.15.0: native Apple push notifications, notification routing and app-icon badges. */
 .notification-card{display:block;width:100%;color:var(--ink);text-align:left}
 button{touch-action:manipulation}
 .thread-card,.thread-card *,.chat-thread-identity,.chat-thread-identity *,#conversationActionsSheet .sheet-head,#conversationActionsSheet .sheet-head *{-webkit-touch-callout:none!important;-webkit-user-select:none!important;user-select:none!important}
@@ -813,7 +813,8 @@ button{touch-action:manipulation}
     <h3 class="subhead">Quiet hours</h3>
     <p class="fine">Ordinary alerts wait during quiet hours. Important announcements and safety alerts can still arrive immediately.</p>
     <div class="two-col"><div><label for="prefQuietStart">Start</label><input id="prefQuietStart" type="time" value="20:00"></div><div><label for="prefQuietEnd">End</label><input id="prefQuietEnd" type="time" value="08:00"></div></div>
-    <button id="enableBrowserNotificationsBtn" class="wide secondary" type="button">Enable Alerts on This Browser</button>
+    <div id="nativeNotificationStatus" class="sms-safety-note"><b>iPhone/iPad alerts not checked yet.</b><br>Tap below to check this device.</div>
+    <button id="enableBrowserNotificationsBtn" class="wide secondary" type="button">Enable iPhone/iPad Notifications</button>
     <button id="saveCommunicationPreferencesBtn" class="wide" type="button">Save Notification Preferences</button>
   </section>
 
@@ -1403,7 +1404,7 @@ button{touch-action:manipulation}
     <button id="customizeLayoutBtn" class="wide secondary" type="button">↕ Customize App Layout</button>
     <button id="securityBtn" class="wide secondary" type="button">🔒 Sign-In & App Security</button>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.14.10</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.15.0</p>
   </section>
 
   <section id="layoutEditorSheet" class="sheet hidden" aria-modal="true">
@@ -1810,6 +1811,106 @@ const esc = value => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;',
 let securityState={native:false,appLockEnabled:false,pinEnabled:false,biometricLabel:'Device Security'};
 let securityUnlockedThisLaunch=false;
 let shouldLockWhenVisible=false;
+let nativeNotificationState={native:false,authorizationStatus:'unknown',token:null,environment:'production',bundleId:'',appVersion:''};
+let pendingNativeNotificationPayload=null;
+
+function nativeNotificationHandler(){
+  return window.webkit?.messageHandlers?.wrestlingManagerNotifications
+    ||window.webkit?.messageHandlers?.notifications
+    ||null;
+}
+function nativeNotificationsAvailable(){return !!nativeNotificationHandler();}
+function postNativeNotification(command,payload={}){
+  const handler=nativeNotificationHandler();
+  if(!handler)return false;
+  handler.postMessage({command,...payload});
+  return true;
+}
+function nativeNotificationDeviceId(){
+  let id=localStorage.getItem('wm_native_notification_device_id');
+  if(!id){id=crypto.randomUUID?.()||`wm-${Date.now()}-${Math.random().toString(16).slice(2)}`;localStorage.setItem('wm_native_notification_device_id',id);}
+  return id;
+}
+function renderNativeNotificationStatus(){
+  const box=$('nativeNotificationStatus'),button=$('enableBrowserNotificationsBtn');if(!box||!button)return;
+  if(nativeNotificationsAvailable()){
+    const status=nativeNotificationState.authorizationStatus;
+    if(status==='authorized'||status==='provisional'){
+      box.innerHTML=`<b>✅ App notifications are allowed.</b><br>${nativeNotificationState.token?'This device is registered for secure alerts and badge counts.':'Finishing Apple device registration…'}`;
+      button.textContent=nativeNotificationState.token?'Notifications Enabled':'Finish Device Registration';
+    }else if(status==='denied'){
+      box.innerHTML='<b>Notifications are turned off in iPhone/iPad Settings.</b><br>Tap below to open Settings, then allow alerts, sounds and badges.';
+      button.textContent='Open Apple Notification Settings';
+    }else{
+      box.innerHTML='<b>Get alerts when Wrestling Manager is closed.</b><br>Message previews stay private. Alerts tell you to open the safeguarded app conversation.';
+      button.textContent='Enable iPhone/iPad Notifications';
+    }
+    return;
+  }
+  const granted='Notification' in window&&Notification.permission==='granted';
+  box.innerHTML=granted?'<b>✅ Browser alerts are enabled.</b><br>Native badge and background delivery require the iPhone/iPad app.':'<b>Browser alerts are available.</b><br>Install the iPhone/iPad app for background alerts and app-icon badges.';
+  button.textContent=granted?'Browser Alerts Enabled':'Enable Alerts on This Browser';
+}
+async function registerNativePushDevice(){
+  if(!session?.user||!nativeNotificationState.token)return;
+  const {error}=await client.rpc('register_native_push_device',{
+    p_push_token:nativeNotificationState.token,
+    p_environment:nativeNotificationState.environment||'production',
+    p_device_identifier:nativeNotificationDeviceId(),
+    p_bundle_id:nativeNotificationState.bundleId||null,
+    p_app_version:nativeNotificationState.appVersion||null
+  });
+  if(error){console.warn('Native push registration:',error.message);return;}
+  renderNativeNotificationStatus();
+  syncNativeNotificationBadge();
+}
+async function disableNativePushDeviceBeforeSignOut(){
+  if(!session?.user||!nativeNotificationState.token)return;
+  await client.rpc('disable_native_push_device',{p_push_token:nativeNotificationState.token});
+  postNativeNotification('setBadge',{count:0});
+}
+async function syncNativeNotificationBadge(){
+  if(!session?.user||!nativeNotificationsAvailable())return;
+  const {data,error}=await client.rpc('get_notification_badge_count');
+  if(!error)postNativeNotification('setBadge',{count:Number(data)||0});
+}
+async function routeNativeNotification(rawPayload={}){
+  const payload=rawPayload?.wm||rawPayload||{};
+  pendingNativeNotificationPayload=payload;
+  if(!session?.user)return;
+  if(!$('appLockOverlay')?.classList.contains('hidden'))return;
+  if(!activeTeam||!activeSeason)return;
+  pendingNativeNotificationPayload=null;
+  if(payload.notification_id){
+    await client.rpc('mark_communication_notifications_read',{p_notification_ids:[payload.notification_id]});
+  }
+  if(payload.team_id&&activeTeam?.id!==payload.team_id&&availableTeams.some(team=>team.id===payload.team_id)){
+    await activateTeam(payload.team_id);
+  }
+  setTab('messages');
+  await loadCommunications(false);
+  closeSheets();
+  if(payload.thread_id&&communicationThreads.some(thread=>String(thread.thread_id)===String(payload.thread_id))){
+    await openCommunicationThread(payload.thread_id);
+  }else{
+    await openCommunicationNotifications();
+  }
+  await syncNativeNotificationBadge();
+}
+window.wrestlingManagerNotificationResponse=function(payload={}){
+  if(payload.type==='status'){
+    nativeNotificationState={...nativeNotificationState,...payload,native:true};
+    renderNativeNotificationStatus();
+    if(payload.token)registerNativePushDevice();
+  }else if(payload.type==='opened'){
+    routeNativeNotification(payload.payload||{});
+  }else if(payload.type==='received'){
+    loadCommunications(false);syncNativeNotificationBadge();
+  }else if(payload.type==='registrationError'||payload.type==='permissionError'){
+    message(payload.message||'This device could not register for notifications.',true);
+    renderNativeNotificationStatus();
+  }
+};
 
 function nativeSecurityAvailable(){return !!window.webkit?.messageHandlers?.security;}
 function postNativeSecurity(command,payload={}){
@@ -1856,7 +1957,7 @@ function lockApp(){
   show('appLockOverlay',true);document.body.style.overflow='hidden';
   if($('appLockPin'))$('appLockPin').value='';
 }
-function unlockApp(){securityUnlockedThisLaunch=true;shouldLockWhenVisible=false;show('appLockOverlay',false);document.body.style.overflow='';}
+function unlockApp(){securityUnlockedThisLaunch=true;shouldLockWhenVisible=false;show('appLockOverlay',false);document.body.style.overflow='';if(pendingNativeNotificationPayload)routeNativeNotification(pendingNativeNotificationPayload);}
 function prepareAppLockForBackground(){
   if(!session||!securityState.appLockEnabled)return;
   shouldLockWhenVisible=true;securityUnlockedThisLaunch=false;
@@ -2150,6 +2251,7 @@ async function refresh(){
   }
 
   requestSecurityStatus();
+  if(nativeNotificationsAvailable())postNativeNotification('status');
 
   $('accountEmail').textContent = session.user.email || session.user.id;
   await loadAccountProfile();
@@ -2197,6 +2299,9 @@ async function refresh(){
   const savedTeamId=localStorage.getItem('wm_active_team_id');
   const initialTeam=availableTeams.find(t=>t.id===savedTeamId) || availableTeams[0];
   await activateTeam(initialTeam.id,{persist:false});
+
+  if(nativeNotificationState.token)await registerNativePushDevice();
+  if(pendingNativeNotificationPayload)await routeNativeNotification(pendingNativeNotificationPayload);
 
   if(pendingJoinCode){ const code=pendingJoinCode; pendingJoinCode=''; setTimeout(()=>startJoinFlow(code),120); }
   if(pendingInviteToken){ const token=pendingInviteToken; pendingInviteToken=''; $('inviteToken').value=token; setTimeout(()=>acceptInvite(),120); }
@@ -3163,6 +3268,7 @@ async function loadCommunications(showErrors=true){
   renderCommunicationSafetySummary();
   subscribeCommunicationRealtime();
   dispatchCommunicationNotifications();
+  syncNativeNotificationBadge();
 }
 
 function renderCommunicationInbox(){
@@ -3648,7 +3754,8 @@ async function openCommunicationPreferences(){
   $('prefPushMessages').checked=data?.push_messages!==false;$('prefSmsMessages').checked=data?.sms_message_fallback!==false;$('prefEmailMessages').checked=!!data?.email_messages;
   $('prefPushAnnouncements').checked=data?.push_announcements!==false;$('prefSmsAnnouncements').checked=data?.sms_announcements!==false;$('prefEmailAnnouncements').checked=data?.email_announcements!==false;
   $('prefQuietStart').value=String(data?.quiet_start||'20:00').slice(0,5);$('prefQuietEnd').value=String(data?.quiet_end||'08:00').slice(0,5);
-  $('enableBrowserNotificationsBtn').textContent=('Notification' in window&&Notification.permission==='granted')?'Alerts Enabled on This Browser':'Enable Alerts on This Browser';
+  renderNativeNotificationStatus();
+  if(nativeNotificationsAvailable())postNativeNotification('status');
 }
 async function saveCommunicationPreferences(){
   const btn=$('saveCommunicationPreferencesBtn');btn.disabled=true;btn.textContent='Saving…';
@@ -3657,8 +3764,20 @@ async function saveCommunicationPreferences(){
   btn.disabled=false;btn.textContent='Save Notification Preferences';if(error){message(error.message,true);return;}message('Communication preferences saved.');
 }
 async function enableBrowserNotifications(){
-  if(!('Notification' in window)){message('This browser does not support notification alerts.',true);return;}
-  const result=await Notification.requestPermission();$('enableBrowserNotificationsBtn').textContent=result==='granted'?'Alerts Enabled on This Browser':'Enable Alerts on This Browser';message(result==='granted'?'Browser alerts enabled while Wrestling Manager is running.':'Notification permission was not granted.',result!=='granted');
+  if(nativeNotificationsAvailable()){
+    if(nativeNotificationState.authorizationStatus==='denied')postNativeNotification('openSettings');
+    else if(nativeNotificationState.authorizationStatus==='authorized'||nativeNotificationState.authorizationStatus==='provisional')postNativeNotification('register');
+    else postNativeNotification('requestPermission');
+    return;
+  }
+  if(!('Notification' in window)){
+    const shell=window.wrestlingManagerNativeShellVersion;
+    message(shell
+      ?`The native notification bridge did not load (app shell ${shell}). Close and reopen the app, then try again.`
+      :'This browser does not support notification alerts.',true);
+    return;
+  }
+  const result=await Notification.requestPermission();renderNativeNotificationStatus();message(result==='granted'?'Browser alerts enabled while Wrestling Manager is running.':'Notification permission was not granted.',result!=='granted');
 }
 
 function renderCommunicationNotifications(){
@@ -3666,7 +3785,7 @@ function renderCommunicationNotifications(){
   list.innerHTML=communicationNotifications.length?communicationNotifications.map(n=>`<button class="notification-card ${n.read_at?'':'unread'}" type="button" data-notification-thread="${n.thread_id||''}" data-notification-category="${esc(n.category||'')}"><b>${esc(n.title)}</b><p>${esc(n.body)}</p><small>${esc(fmtDateTime(n.created_at))}</small></button>`).join(''):'<div class="empty-card">No notifications yet.</div>';
 }
 async function openCommunicationNotifications(){await loadCommunications(false);closeSheets();openSheet('communicationNotificationsSheet');}
-async function markCommunicationNotificationsRead(){const {error}=await client.rpc('mark_communication_notifications_read',{p_notification_ids:null});if(error){message(error.message,true);return;}await loadCommunications(false);message('Notifications marked read.');}
+async function markCommunicationNotificationsRead(){const {error}=await client.rpc('mark_communication_notifications_read',{p_notification_ids:null});if(error){message(error.message,true);return;}await loadCommunications(false);await syncNativeNotificationBadge();message('Notifications marked read.');}
 
 const SMS_TEMPLATES={
   leaving_event:{category:'leaving_event',body:'We are leaving the event now. Our estimated arrival home is [time].'},
@@ -6474,7 +6593,7 @@ $('signUpBtn').onclick=async()=>{
   message(data.session?'Account created and signed in.':'Account created. Check your email if confirmation is required.'); await refresh();
 };
 $('signInBtn').onclick=async()=>{message('');setRememberSession($('staySignedIn').checked);const {error}=await client.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){message(error.message,true);return;}securityUnlockedThisLaunch=false;await refresh();};
-$('signOutBtn').onclick=async()=>{await client.auth.signOut();location.reload();};
+$('signOutBtn').onclick=async()=>{await disableNativePushDeviceBeforeSignOut();await client.auth.signOut();location.reload();};
 $('forgotPasswordBtn').onclick=()=>{$('recoveryEmail').value=$('email').value.trim();closeSheets();openSheet('forgotPasswordSheet');};
 $('sendRecoveryEmailBtn').onclick=()=>requestPasswordReset($('recoveryEmail').value);
 $('saveRecoveryPasswordBtn').onclick=saveRecoveryPassword;
@@ -6491,7 +6610,7 @@ $('appLockPin').addEventListener('keydown',e=>{if(e.key==='Enter')$('unlockWithP
 $('saveSecurityPinBtn').onclick=()=>{const pin=$('securityPin').value,confirm=$('securityPinConfirm').value;if(!/^\d{4,8}$/.test(pin)){message('Use a 4–8 digit numeric PIN.',true);return;}if(pin!==confirm){message('The PIN entries do not match.',true);return;}postNativeSecurity('setPin',{pin});};
 $('removeSecurityPinBtn').onclick=()=>{if(confirm('Remove the separate Wrestling Manager PIN from this device?'))postNativeSecurity('removePin');};
 $('securityPasswordResetBtn').onclick=()=>{$('recoveryEmail').value=session?.user?.email||'';closeSheets();openSheet('forgotPasswordSheet');};
-$('lockedSignOutBtn').onclick=async()=>{await client.auth.signOut();show('appLockOverlay',false);location.reload();};
+$('lockedSignOutBtn').onclick=async()=>{await disableNativePushDeviceBeforeSignOut();await client.auth.signOut();show('appLockOverlay',false);location.reload();};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)prepareAppLockForBackground();else window.wrestlingManagerAppDidBecomeActive();});
 $('staffViewModeBtn').onclick=()=>setViewMode('staff'); $('parentViewModeBtn').onclick=()=>setViewMode('parent');
 $('acceptInviteBtn').onclick=acceptInvite;
