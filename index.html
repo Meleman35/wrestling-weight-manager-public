@@ -1746,6 +1746,14 @@ let accessAthleteRecord = null;
 let accessGuardianRecord = null;
 let pendingJoinCode = new URLSearchParams(location.search).get('join') || '';
 let pendingInviteToken = new URLSearchParams(location.search).get('invite') || '';
+const nativeBuild = new URLSearchParams(location.search).get('nativeBuild') || '';
+if(!nativeBuild && (pendingJoinCode||pendingInviteToken) && !sessionStorage.getItem('wm-app-open-attempt')){
+  sessionStorage.setItem('wm-app-open-attempt','1');
+  const nativeUrl=pendingJoinCode
+    ?`wrestlingmanager://join?code=${encodeURIComponent(pendingJoinCode)}`
+    :`wrestlingmanager://invite?token=${encodeURIComponent(pendingInviteToken)}`;
+  setTimeout(()=>{location.href=nativeUrl;},250);
+}
 let joinRequesterRole = 'athlete';
 let joinParentPath = null;
 let joinMatchSearchCompleted = false;
@@ -2137,6 +2145,22 @@ async function saveRecoveryPassword(){
 window.wrestlingManagerHandleAuthURL=async function(urlString){
   try{
     const url=new URL(urlString);const query=url.searchParams;const hash=new URLSearchParams(url.hash.replace(/^#/,''));
+    const action=(url.hostname||url.pathname.replace(/^\//,'')).toLowerCase();
+    const joinCode=query.get('code')||query.get('join');
+    const inviteToken=query.get('token')||query.get('invite');
+    if(action==='join'&&joinCode){
+      pendingJoinCode=joinCode;
+      if(session){const code=pendingJoinCode;pendingJoinCode='';setTimeout(()=>startJoinFlow(code),120);}
+      else{$('setupJoinCode').value=joinCode;message('Sign in or create your account to request team access.');}
+      return;
+    }
+    if(action==='invite'&&inviteToken){
+      pendingInviteToken=inviteToken;
+      $('inviteToken').value=inviteToken;
+      if(session){const token=pendingInviteToken;pendingInviteToken='';$('inviteToken').value=token;setTimeout(()=>acceptInvite(),120);}
+      else message('Sign in or create your account to accept this invitation.');
+      return;
+    }
     const code=query.get('code');const accessToken=query.get('access_token')||hash.get('access_token');const refreshToken=query.get('refresh_token')||hash.get('refresh_token');
     if(code){const {error}=await client.auth.exchangeCodeForSession(code);if(error)throw error;}
     else if(accessToken&&refreshToken){const {error}=await client.auth.setSession({access_token:accessToken,refresh_token:refreshToken});if(error)throw error;}
