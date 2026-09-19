@@ -1404,7 +1404,7 @@ button{touch-action:manipulation}
     <button id="customizeLayoutBtn" class="wide secondary" type="button">↕ Customize App Layout</button>
     <button id="securityBtn" class="wide secondary" type="button">🔒 Sign-In & App Security</button>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.15.5</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.15.6</p>
   </section>
 
   <section id="layoutEditorSheet" class="sheet hidden" aria-modal="true">
@@ -1785,6 +1785,10 @@ let communicationLoadSequence = 0;
 let communicationLoadPromise = null;
 let communicationLoadKey = '';
 let communicationThreadOpenSequence = 0;
+let communicationThreadOpenPromise = null;
+let communicationThreadOpenKey = '';
+let communicationThreadQueuedRefresh = false;
+let communicationThreadQueuedPreserveScroll = false;
 let communicationInboxRenderSignature = '';
 let communicationNotificationRenderSignature = '';
 let communicationLongPressTimer = null;
@@ -1823,6 +1827,7 @@ function settleWithin(promise,timeoutMs=10000,label='Request'){
   });
 }
 let securityState={native:false,appLockEnabled:false,pinEnabled:false,biometricLabel:'Device Security'};
+let nativeSecurityStatusReady=false;
 let securityUnlockedThisLaunch=false;
 let shouldLockWhenVisible=false;
 let nativeNotificationState={native:false,authorizationStatus:'unknown',token:null,environment:'production',bundleId:'',appVersion:''};
@@ -1892,6 +1897,8 @@ async function routeNativeNotification(rawPayload={}){
   const payload=rawPayload?.wm||rawPayload||{};
   pendingNativeNotificationPayload=payload;
   if(!session?.user)return;
+  if(nativeSecurityAvailable()&&!nativeSecurityStatusReady)return;
+  if(securityState.appLockEnabled&&!securityUnlockedThisLaunch)return;
   if(!$('appLockOverlay')?.classList.contains('hidden'))return;
   if(!activeTeam||!activeSeason)return;
   pendingNativeNotificationPayload=null;
@@ -1947,7 +1954,8 @@ function updateSecurityUi(){
   if($('unlockWithDeviceBtn'))$('unlockWithDeviceBtn').textContent=`Unlock with ${securityState.biometricLabel||'Device Security'}`;
 }
 function requestSecurityStatus(){
-  if(!postNativeSecurity('status')){securityState={native:false,appLockEnabled:false,pinEnabled:false,biometricLabel:'Device Security'};updateSecurityUi();}
+  nativeSecurityStatusReady=false;
+  if(!postNativeSecurity('status')){nativeSecurityStatusReady=true;securityState={native:false,appLockEnabled:false,pinEnabled:false,biometricLabel:'Device Security'};updateSecurityUi();}
 }
 async function renderAppLockIdentity(){
   const expectedUserId=session?.user?.id;
@@ -1985,8 +1993,10 @@ window.wrestlingManagerAppDidBecomeActive=function(){
 window.wrestlingManagerSecurityResponse=function(payload={}){
   if(payload.state)securityState={...securityState,...payload.state,native:true};
   if(payload.action==='status'){
+    nativeSecurityStatusReady=true;
     securityState={...securityState,...payload,native:true};updateSecurityUi();
     if(session&&securityState.appLockEnabled&&!securityUnlockedThisLaunch)lockApp();
+    else if(pendingNativeNotificationPayload)routeNativeNotification(pendingNativeNotificationPayload);
   }else if(payload.action==='configured'){
     securityState={...securityState,...payload,native:true};updateSecurityUi();
     message(payload.error|| (securityState.appLockEnabled?'App lock is on.':'App lock is off.'),!!payload.error);
@@ -3400,7 +3410,74 @@ function subscribeCommunicationRealtime(){
   communicationRealtimeChannels=[messageChannel,notificationChannel,threadChannel,safetyChannel,receiptChannel];
 }
 
-async function openCommunicationThread(threadId,{keepOpen=false,preserveScroll=false}={}){
+function syncCommunicationMediaButton(){
+  const mediaButton=$('addCommunicationMediaBtn');if(!mediaButton)return;
+  const safetyTest=String(activeCommunicationThread?.title||'').startsWith('🧪 TEST:');
+  mediaButton.disabled=!activeCommunicationMediaAccess?.can_send||safetyTest;
+  mediaButton.title=safetyTest?'Media is disabled in safety simulations.':(activeCommunicationMediaAccess?.can_send?'Add photo or video':activeCommunicationMediaAccess?.reason||'Parent approval is required to send media.');
+}
+
+async function retryActiveCommunicationMediaAccess(threadId,attempt=0){
+  if(!activeCommunicationThread||String(activeCommunicationThread.thread_id)!==String(threadId)||$('communicationThreadSheet')?.classList.contains('hidden'))return;
+  const outcome=await settleWithin(client.rpc('get_communication_media_access',{p_thread_id:threadId}),10000,'Media permissions');
+  if(activeCommunicationThread&&String(activeCommunicationThread.thread_id)===String(threadId)&&!$('communicationThreadSheet')?.classList.contains('hidden')){
+    if(outcome.ok&&!outcome.value?.error&&outcome.value?.data){
+      activeCommunicationMediaAccess=outcome.value.data;
+      syncCommunicationMediaButton();
+    }else if(attempt<1){
+      setTimeout(()=>retryActiveCommunicationMediaAccess(threadId,attempt+1),700);
+    }
+  }
+}
+
+async function retryActiveCommunicationAttachments(threadId,attempt=0){
+  if(!activeCommunicationThread||String(activeCommunicationThread.thread_id)!==String(threadId)||$('communicationThreadSheet')?.classList.contains('hidden'))return;
+  const outcome=await settleWithin(hydrateCommunicationAttachments(activeCommunicationMessages),12000,'Message media');
+  if(!activeCommunicationThread||String(activeCommunicationThread.thread_id)!==String(threadId)||$('communicationThreadSheet')?.classList.contains('hidden'))return;
+  if(outcome.ok){
+    activeCommunicationMessages=outcome.value;
+    const list=$('communicationMessageList');
+    const distance=list.scrollHeight-list.scrollTop-list.clientHeight;
+    renderCommunicationMessages(activeCommunicationMessages,{preserveScroll:true,distanceFromBottom:distance});
+  }else if(attempt<1){
+    setTimeout(()=>retryActiveCommunicationAttachments(threadId,attempt+1),700);
+  }else{
+    activeCommunicationMessages=activeCommunicationMessages.map(row=>({...row,attachment_loading:false}));
+    renderCommunicationMessages(activeCommunicationMessages,{preserveScroll:true,distanceFromBottom:0});
+  }
+}
+
+async function openCommunicationThread(threadId,options={}){
+  const key=String(threadId||'');if(!key)return;
+  if(communicationThreadOpenPromise&&communicationThreadOpenKey===key){
+    communicationThreadQueuedRefresh=true;
+    communicationThreadQueuedPreserveScroll=communicationThreadQueuedPreserveScroll||!!options.preserveScroll;
+    return communicationThreadOpenPromise;
+  }
+  if(communicationThreadOpenPromise&&communicationThreadOpenKey!==key){
+    communicationThreadQueuedRefresh=false;
+    communicationThreadQueuedPreserveScroll=false;
+  }
+  const task=performOpenCommunicationThread(threadId,options);
+  communicationThreadOpenPromise=task;
+  communicationThreadOpenKey=key;
+  try{return await task;}
+  finally{
+    if(communicationThreadOpenPromise===task){
+      communicationThreadOpenPromise=null;
+      communicationThreadOpenKey='';
+      const shouldRefresh=communicationThreadQueuedRefresh;
+      const preserveScroll=communicationThreadQueuedPreserveScroll;
+      communicationThreadQueuedRefresh=false;
+      communicationThreadQueuedPreserveScroll=false;
+      if(shouldRefresh&&activeCommunicationThread&&String(activeCommunicationThread.thread_id)===key&&!$('communicationThreadSheet')?.classList.contains('hidden')){
+        setTimeout(()=>openCommunicationThread(key,{keepOpen:true,preserveScroll}),0);
+      }
+    }
+  }
+}
+
+async function performOpenCommunicationThread(threadId,{keepOpen=false,preserveScroll=false}={}){
   const openId=++communicationThreadOpenSequence;
   let requestedThread=communicationThreads.find(x=>String(x.thread_id)===String(threadId));
   if(!requestedThread){
@@ -3448,12 +3525,17 @@ async function openCommunicationThread(threadId,{keepOpen=false,preserveScroll=f
     activeCommunicationReceipts=new Map();
     communicationReceiptSignature='';
     activeCommunicationMediaAccess={can_view:false,can_send:false,reason:'Checking media permissions…'};
-    const mediaButton=$('addCommunicationMediaBtn');
-    mediaButton.disabled=true;
-    mediaButton.title=safetyTest?'Media is disabled in safety simulations.':'Checking media permissions…';
+    syncCommunicationMediaButton();
+    const sendButton=$('sendCommunicationMessageBtn');
+    sendButton.disabled=false;
+    sendButton.textContent='↑';
+    sendButton.setAttribute('aria-label','Send message');
   }
   if(!keepOpen)$('communicationMessageList').innerHTML='<div class="empty-inline">Loading messages…</div>';
   if(!keepOpen){closeSheets();openSheet('communicationThreadSheet');}
+  const participantRequest=settleWithin(client.rpc('get_communication_thread_participants_v2',{p_thread_id:threadId}),8000,'Participants');
+  const receiptRequest=settleWithin(client.rpc('get_communication_message_receipts',{p_thread_id:threadId}),8000,'Read receipts');
+  const mediaAccessRequest=settleWithin(client.rpc('get_communication_media_access',{p_thread_id:threadId}),8000,'Media permissions');
   const messageOutcome=await settleWithin(client.rpc('get_communication_messages_v4',{p_thread_id:threadId,p_before:null,p_limit:80}),12000,'Messages');
   if(openId!==communicationThreadOpenSequence||String(activeCommunicationThread?.thread_id)!==String(threadId))return;
   const messageResult=(messageOutcome.ok?messageOutcome.value:{data:null,error:messageOutcome.error})||{data:null,error:new Error('Messages did not return a response.')};
@@ -3467,20 +3549,29 @@ async function openCommunicationThread(threadId,{keepOpen=false,preserveScroll=f
   activeCommunicationMessages=originalRows.map(row=>({...row,attachment_loading:!!row.attachment_path&&!!row.attachment_can_view,attachment_url:null})).reverse();
   renderCommunicationMessages(activeCommunicationMessages,{preserveScroll,distanceFromBottom});
   startCommunicationReceiptLiveRefresh();
+  const attachmentRequest=settleWithin(hydrateCommunicationAttachments(originalRows),12000,'Message media');
 
   settleWithin(client.rpc('mark_communication_thread_read',{p_thread_id:threadId}),6000,'Read status')
     .then(()=>loadCommunications(false));
 
-  const [participantOutcome,receiptOutcome,mediaAccessOutcome,attachmentOutcome]=await Promise.all([
-    settleWithin(client.rpc('get_communication_thread_participants_v2',{p_thread_id:threadId}),8000,'Participants'),
-    settleWithin(client.rpc('get_communication_message_receipts',{p_thread_id:threadId}),8000,'Read receipts'),
-    settleWithin(client.rpc('get_communication_media_access',{p_thread_id:threadId}),8000,'Media permissions'),
-    settleWithin(hydrateCommunicationAttachments(originalRows),8000,'Message media')
+  const mediaAccessOutcome=await mediaAccessRequest;
+  if(openId!==communicationThreadOpenSequence||String(activeCommunicationThread?.thread_id)!==String(threadId))return;
+  const mediaAccessResult=mediaAccessOutcome.ok?mediaAccessOutcome.value:{data:null,error:mediaAccessOutcome.error};
+  if(!mediaAccessResult.error&&mediaAccessResult.data){
+    activeCommunicationMediaAccess=mediaAccessResult.data;
+  }else if(!keepOpen){
+    activeCommunicationMediaAccess={can_view:false,can_send:false,reason:'Media is still connecting…'};
+    setTimeout(()=>retryActiveCommunicationMediaAccess(threadId),600);
+  }
+  syncCommunicationMediaButton();
+  const [participantOutcome,receiptOutcome,attachmentOutcome]=await Promise.all([
+    participantRequest,
+    receiptRequest,
+    attachmentRequest
   ]);
   if(openId!==communicationThreadOpenSequence||String(activeCommunicationThread?.thread_id)!==String(threadId))return;
   const participantResult=participantOutcome.ok?participantOutcome.value:{data:[],error:participantOutcome.error};
   const receiptResult=receiptOutcome.ok?receiptOutcome.value:{data:[],error:receiptOutcome.error};
-  const mediaAccessResult=mediaAccessOutcome.ok?mediaAccessOutcome.value:{data:null,error:mediaAccessOutcome.error};
   let participantRows=participantResult.error?[]:(participantResult.data||[]);
   if(participantRows.length){
     const photoOutcome=await settleWithin(hydrateCommunicationPhotos(participantRows),6000,'Profile photos');
@@ -3500,16 +3591,8 @@ async function openCommunicationThread(threadId,{keepOpen=false,preserveScroll=f
     activeCommunicationReceipts=new Map();
     communicationReceiptSignature='';
   }
-  if(!mediaAccessResult.error&&mediaAccessResult.data){
-    activeCommunicationMediaAccess=mediaAccessResult.data;
-  }else if(!keepOpen){
-    activeCommunicationMediaAccess={can_view:false,can_send:false,reason:'Media is not available yet.'};
-  }
   if(attachmentOutcome.ok)activeCommunicationMessages=attachmentOutcome.value.reverse();
-  else activeCommunicationMessages=activeCommunicationMessages.map(row=>({...row,attachment_loading:false}));
-  const mediaButton=$('addCommunicationMediaBtn');
-  mediaButton.disabled=!activeCommunicationMediaAccess.can_send||safetyTest;
-  mediaButton.title=safetyTest?'Media is disabled in safety simulations.':(activeCommunicationMediaAccess.can_send?'Add photo or video':activeCommunicationMediaAccess.reason||'Parent approval is required to send media.');
+  else setTimeout(()=>retryActiveCommunicationAttachments(threadId),600);
   const other=participantRows.find(x=>!x.is_self&&x.member_role!=='guardian_mirror');
   const headerPerson=activeCommunicationThread.kind==='direct'?other:null;
   if(safetyTest){
