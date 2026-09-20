@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.15.31: one Team Login with independent Team Device / Test Athlete profile selection on each phone. -->
+<!-- Wrestling Manager v0.15.32: shared Team Login profile photos and team logos. -->
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -1208,7 +1208,7 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
 
   <section id="photoCropSheet" class="sheet hidden" aria-modal="true">
     <div class="sheet-handle"></div>
-    <div class="sheet-head"><div><div class="eyebrow">PROFILE PHOTO</div><h2>Position Photo</h2><p class="muted">Drag the picture so the face is centered inside the circle.</p></div><button class="icon-close" id="cancelPhotoCropBtn">×</button></div>
+    <div class="sheet-head"><div><div class="eyebrow">PROFILE PHOTO</div><h2>Position Photo</h2><p id="photoCropInstructions" class="muted">Drag the picture to center it inside the circle.</p></div><button class="icon-close" id="cancelPhotoCropBtn">×</button></div>
     <div class="photo-crop-frame"><canvas id="photoCropCanvas" width="640" height="640"></canvas></div>
     <div class="photo-crop-slider"><span>−</span><input id="photoCropZoom" type="range" min="1" max="3" value="1" step="0.01"><span>＋</span></div>
     <p class="photo-crop-help">Drag to reposition · use the slider to zoom. The saved photo will stay square and display as a circle throughout Wrestling Manager.</p>
@@ -1560,7 +1560,7 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
     </div>
     <div id="accountMyAthletes" class="feature-card hidden"><b>My Athletes</b><p class="muted">Your children are always available here, even when you also serve as a coach, administrator or team leader.</p><div id="accountMyAthletesList" class="family-athlete-list"></div><button id="athleteChatPermissionsAccountBtn" type="button" class="wide secondary">👨‍👩‍👧 Choose My Athlete’s Chat Access</button></div>
     <button id="editStaffProfileBtn" class="wide hidden" type="button">Edit My Coach / Staff Profile</button>
-    <div id="managedAccountNote" class="feature-card hidden"><b id="managedProfileLabel">Team Login</b><p class="muted">Your team admin manages this login’s name, password and access in Account &amp; Team → Team Logins. The Weight Check PIN is separate from your login password.</p></div>
+    <div id="managedAccountNote" class="feature-card hidden"><div class="staff-profile-head"><div id="managedProfilePhotoBox" class="staff-profile-photo-placeholder">👤</div><div class="staff-profile-copy"><b id="managedProfileLabel">Team Login</b><p class="muted">Your team admin manages this login’s photo, name, password and access in Account &amp; Team → Team Logins. The Weight Check PIN is separate from your login password.</p></div></div></div>
     <button id="switchTeamProfileBtn" class="wide secondary hidden" type="button">Switch Profile</button>
     <button id="teamLoginsBtn" class="wide secondary hidden" type="button">Team Logins</button>
     <button id="editTeamBtn" class="wide admin-only" type="button">Edit Team</button>
@@ -1573,7 +1573,7 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
     <button id="weightPinSettingsBtn" class="wide secondary hidden" type="button">Weight Check PIN</button>
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.15.31</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.15.32</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -1588,6 +1588,11 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
         <h3 id="teamLoginEditorTitle">Create Team Login</h3>
         <input id="teamLoginKind" type="hidden" value="shared">
         <p id="teamLoginTypeHelp" class="fine"></p>
+        <div class="staff-profile-head">
+          <div id="teamLoginPhotoBox" class="staff-profile-photo-placeholder">👤</div>
+          <div class="staff-profile-copy"><label for="teamLoginPhotoInput">Profile photo / team logo</label><p id="teamLoginPhotoHelp" class="fine">Create the login first, then add its photo.</p><input id="teamLoginPhotoInput" type="file" accept="image/*" disabled><button id="removeTeamLoginPhotoBtn" type="button" class="secondary hidden" style="margin-top:8px">Remove Photo</button></div>
+        </div>
+        <p id="teamLoginPhotoStatus" class="fine" role="status" aria-live="polite"></p>
         <div id="teamLoginAthleteRow"><label for="teamLoginAthlete">Test Athlete profile</label><select id="teamLoginAthlete"></select><p id="teamLoginNoTest" class="fine hidden">No designated Test Athlete is active on this team’s roster. A regular athlete cannot be used as a test account.</p></div>
         <label for="teamLoginName">Display name</label><input id="teamLoginName" maxlength="60" placeholder="Bruins Team Login">
         <label for="teamLoginUsername">Username</label><input id="teamLoginUsername" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="32" placeholder="bruins-team">
@@ -2673,6 +2678,7 @@ function recoverInteractionLayer(){
 let managedLogin=null, teamLoginAdminData=null, teamLoginEditingId=null, teamLoginOperationId=null;
 let teamLoginAdminBusy=false, teamLoginAdminVersion=0, teamLoginPollBusy=false, teamLoginEnding=false;
 let teamProfileChoice=null, teamProfileSelecting=false, teamProfileReadyUserId=null, teamLoginSigningOut=false;
+let teamLoginPhotoContext=null, teamLoginPhotoBusy=false;
 function teamProfileLabel(kind){return kind==='test_athlete'?'Test Athlete':'Team Device';}
 function showTeamProfileChoice(choice){
   teamProfileChoice=choice;
@@ -2785,8 +2791,15 @@ async function pollManagedLogin(){
   if(!managedLogin||!session?.user?.id||teamLoginPollBusy||teamProfileSelecting||teamLoginSigningOut||document.hidden)return;
   const userId=session.user.id;teamLoginPollBusy=true;
   try{
-    const {error}=await client.rpc('get_my_team_login');
-    if(session?.user?.id===userId&&!teamProfileSelecting&&!teamLoginSigningOut&&error?.message?.includes('TEAM_LOGIN_REVOKED'))await endManagedLoginSession();
+    const {data,error}=await client.rpc('get_my_team_login');
+    if(session?.user?.id!==userId||teamProfileSelecting||teamLoginSigningOut)return;
+    if(error?.message?.includes('TEAM_LOGIN_REVOKED')){await endManagedLoginSession();return;}
+    if(!error&&data&&managedLogin&&(managedLogin.photo_path||null)!==(data.photo_path||null)){
+      managedLogin.photo_path=data.photo_path||null;
+      if(accountProfileData?.id===userId)accountProfileData={...accountProfileData,photo_path:data.photo_path||null};
+      await refreshHeaderAvatar();
+      if(session?.user?.id===userId&&!$('appLockOverlay').classList.contains('hidden'))await renderAppLockIdentity();
+    }
   }finally{teamLoginPollBusy=false;}
 }
 function resetTeamLoginEditor(account=null){
@@ -2808,6 +2821,7 @@ function resetTeamLoginEditor(account=null){
   $('teamLoginResetBtn').textContent='Set New Password';
   show('teamLoginEditNotice',!!account);$('teamLoginEditNotice').textContent=account?.state==='resetting'?'Password reset is pending. If the last attempt failed, wait 10 minutes, then set a new password.':'Saving changes or resetting the password signs this login out on its devices.';
   updateTeamLoginKind();show('teamLoginEditor',true);
+  $('teamLoginPhotoStatus').textContent='';renderTeamLoginPhoto(account);
 }
 function updateTeamLoginKind(){
   const kind=$('teamLoginKind').value,test=kind!=='team_device';
@@ -2819,6 +2833,78 @@ function renderTeamLoginAccounts(){
   const accounts=teamLoginAdminData?.accounts||[];$('teamLoginCode').value=teamLoginAdminData?.login_code||'';
   $('teamLoginAccountList').innerHTML=accounts.length?accounts.map(a=>`<button class="wide secondary" type="button" data-edit-team-login="${esc(a.id)}"><span><b>${esc(a.display_name)}</b><br><small>${esc(a.username)} · ${a.kind==='shared'?'Team Device + Test Athlete':teamProfileLabel(a.kind)} · ${a.state==='ready'?(a.active?'Enabled':'Disabled'):(a.state==='provisioning'?'Finish setup':'Reset pending')}</small></span></button>`).join(''):'<div class="empty-card">No team logins yet. Create one below.</div>';
   $('teamLoginAccountList').querySelectorAll('[data-edit-team-login]').forEach(b=>b.onclick=()=>{if(!teamLoginAdminBusy){resetTeamLoginEditor(accounts.find(a=>a.id===b.dataset.editTeamLogin));$('teamLoginEditor').scrollIntoView({block:'start',behavior:'smooth'});}});
+}
+async function renderTeamLoginPhoto(account){
+  const id=account?.id,version=teamLoginAdminVersion;
+  const ready=!!id&&account.state==='ready';
+  $('teamLoginPhotoInput').disabled=!ready||teamLoginPhotoBusy;
+  $('teamLoginPhotoInput').value='';
+  $('teamLoginPhotoHelp').textContent=ready?'Choose a photo, then position it and tap Use Photo. It appears on both profiles and saves separately without signing phones out.':'Create or finish setting up the login first, then add its photo.';
+  show('removeTeamLoginPhotoBtn',ready&&!!account?.photo_path);
+  $('teamLoginPhotoBox').innerHTML='👤';
+  const url=await accountPhotoUrl(account?.photo_path);
+  if(teamLoginEditingId!==id||version!==teamLoginAdminVersion)return;
+  if(url)$('teamLoginPhotoBox').innerHTML=`<img class="staff-profile-photo" src="${esc(url)}" alt="Team login profile photo">`;
+}
+function validTeamLoginPhotoContext(context){
+  return context&&session?.user?.id===context.userId&&activeTeam?.id===context.teamId&&!managedLogin&&actualIsTeamAdmin&&teamLoginEditingId===context.loginId&&teamLoginAdminVersion===context.version;
+}
+function beginTeamLoginPhotoCrop(){
+  const file=$('teamLoginPhotoInput').files?.[0];
+  const account=teamLoginAdminData?.accounts.find(a=>a.id===teamLoginEditingId);
+  if(!file||!account||account.state!=='ready'||teamLoginAdminBusy||teamLoginPhotoBusy||managedLogin||!actualIsTeamAdmin)return;
+  if(!file.type.startsWith('image/')){message('Choose an image file.',true);$('teamLoginPhotoInput').value='';return;}
+  if(file.size>20*1024*1024){message('Choose a photo smaller than 20 MB.',true);$('teamLoginPhotoInput').value='';return;}
+  const context={userId:session.user.id,teamId:activeTeam.id,loginId:account.id,version:teamLoginAdminVersion};
+  const reader=new FileReader();
+  reader.onerror=()=>message('That photo could not be opened.',true);
+  reader.onload=()=>{
+    const img=new Image();
+    img.onerror=()=>message('That photo could not be opened.',true);
+    img.onload=()=>{
+      if(!validTeamLoginPhotoContext(context))return;
+      photoCropTarget='team_login';photoCropSourceFile=file;photoCropImage=img;resetPhotoCrop();
+      closeSheets();context.version=teamLoginAdminVersion;teamLoginPhotoContext=context;
+      openSheet('photoCropSheet');requestAnimationFrame(drawPhotoCrop);
+    };
+    img.src=reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+function returnToTeamLoginPhoto(context){
+  if(!validTeamLoginPhotoContext(context))return;
+  photoCropImage=null;photoCropSourceFile=null;teamLoginPhotoContext=null;
+  $('teamLoginPhotoInput').value='';closeSheets();openSheet('teamLoginsSheet');
+  renderTeamLoginPhoto(teamLoginAdminData.accounts.find(a=>a.id===context.loginId));
+}
+async function saveTeamLoginPhoto(blob=null,context=teamLoginPhotoContext){
+  if(teamLoginPhotoBusy||teamLoginAdminBusy||!validTeamLoginPhotoContext(context))return;
+  teamLoginPhotoBusy=true;teamLoginAdminBusy=true;
+  $('teamLoginAdminControls').querySelectorAll('button').forEach(b=>b.disabled=true);
+  $('teamLoginPhotoInput').disabled=true;$('cancelPhotoCropBtn').disabled=true;
+  const button=$('savePhotoCropBtn');button.disabled=true;button.textContent='Saving…';
+  $('teamLoginPhotoStatus').textContent=blob?'Saving photo…':'Removing photo…';
+  try{
+    let path=null;
+    if(blob){
+      path=`${context.teamId}/team-logins/${context.loginId}/${crypto.randomUUID()}.jpg`;
+      const {error}=await client.storage.from('team-media').upload(path,blob,{contentType:'image/jpeg'});
+      if(error)throw error;
+      if(!validTeamLoginPhotoContext(context))throw new Error('The account changed. Open Team Logins and try again.');
+    }
+    const data=await callTeamLogin('set_photo',{team_id:context.teamId,id:context.loginId,photo_path:path},true);
+    if(!validTeamLoginPhotoContext(context))return;
+    teamLoginAdminData=data;renderTeamLoginAccounts();
+    const status=blob?'Profile photo saved for Team Device and Test Athlete.':'Profile photo removed.';
+    returnToTeamLoginPhoto(context);$('teamLoginPhotoStatus').textContent=status;message(status);
+  }catch(error){
+    if(validTeamLoginPhotoContext(context)){$('teamLoginPhotoStatus').textContent=error.message||'Could not save the photo.';message(error.message||'Could not save the photo. Try again.',true);}
+  }finally{
+    teamLoginPhotoBusy=false;teamLoginAdminBusy=false;button.disabled=false;button.textContent='Use Photo';
+    $('cancelPhotoCropBtn').disabled=false;
+    $('teamLoginAdminControls').querySelectorAll('button').forEach(b=>b.disabled=false);
+    $('teamLoginPhotoInput').disabled=teamLoginAdminData?.accounts.find(a=>a.id===teamLoginEditingId)?.state!=='ready';
+  }
 }
 async function openTeamLogins(){
   if(teamLoginAdminBusy)return;
@@ -6613,6 +6699,8 @@ function drawPhotoCrop(){
 }
 
 function cancelPhotoCrop(){
+  if(teamLoginPhotoBusy)return;
+  if(photoCropTarget==='team_login'){returnToTeamLoginPhoto(teamLoginPhotoContext);return;}
   photoCropImage=null;photoCropSourceFile=null;
   if($('profilePhotoInput'))$('profilePhotoInput').value='';
   if($('staffPhotoInput'))$('staffPhotoInput').value='';
@@ -6682,12 +6770,15 @@ function staffProfilePayload(photoPathOverride=undefined){
 }
 
 async function saveCroppedProfilePhoto(){
-  if(!photoCropImage||!session?.user)return;
+  if(!photoCropImage||!session?.user||teamLoginPhotoBusy||$('savePhotoCropBtn').disabled)return;
+  const cropTarget=photoCropTarget,loginPhotoContext=teamLoginPhotoContext;
   const btn=$('savePhotoCropBtn');btn.disabled=true;btn.textContent='Saving…';
   drawPhotoCrop();
   const canvas=$('photoCropCanvas');
   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',0.9));
   if(!blob){btn.disabled=false;btn.textContent='Use Photo';message('Could not prepare the cropped photo.',true);return;}
+
+  if(cropTarget==='team_login'){btn.disabled=false;btn.textContent='Use Photo';await saveTeamLoginPhoto(blob,loginPhotoContext);return;}
 
   if(photoCropTarget==='account'){
     const path=`${session.user.id}/${Date.now()}-profile.jpg`;
@@ -6763,8 +6854,10 @@ async function resolveSignedInPhotoUrl(profile=accountProfileData){
 }
 
 async function loadAccountProfile(){
-  if(!session?.user)return null;
-  const {data,error}=await client.from('profiles').select('id,display_name,phone,photo_path,ui_preferences').eq('id',session.user.id).maybeSingle();
+  const userId=session?.user?.id;
+  if(!userId)return null;
+  const {data,error}=await client.from('profiles').select('id,display_name,phone,photo_path,ui_preferences').eq('id',userId).maybeSingle();
+  if(session?.user?.id!==userId)return null;
   if(error){message(error.message,true);return null;}
   accountProfileData=data||{};
   return accountProfileData;
@@ -6786,11 +6879,14 @@ function setHeaderAvatar(url=null){
 }
 
 async function refreshHeaderAvatar(){
-  setHeaderAvatar(null);
-  if(!session?.user)return;
-  const profile=accountProfileData||await loadAccountProfile();
+  const userId=session?.user?.id;
+  setHeaderAvatar(null);$('managedProfilePhotoBox').innerHTML='👤';
+  if(!userId)return;
+  const profile=accountProfileData?.id===userId?accountProfileData:await loadAccountProfile();
   const url=await resolveSignedInPhotoUrl(profile);
+  if(session?.user?.id!==userId)return;
   if(url)setHeaderAvatar(url);
+  if(managedLogin&&url)$('managedProfilePhotoBox').innerHTML=`<img class="staff-profile-photo" src="${esc(url)}" alt="Team login profile photo">`;
 }
 
 async function openStaffProfile(){
@@ -6852,6 +6948,7 @@ async function openAccountSheet(){
   const profile=await loadAccountProfile();
   $('accountDisplayName').value=profile?.display_name||'';
   setPhoneValue('accountPhone',profile?.phone||'');
+  if(managedLogin)await refreshHeaderAvatar();
   const url=await accountPhotoUrl(profile?.photo_path);
   $('accountProfilePhotoBox').innerHTML=url?`<img class="staff-profile-photo" src="${esc(url)}" alt="Account profile photo">`:'👤';
   show('editStaffProfileBtn',!!activeTeam&&(isStaff||isTeamAdmin));
@@ -8430,6 +8527,8 @@ $('cancelTeamProfileChoiceBtn').onclick=cancelTeamProfileChoice;
 $('saveTeamLoginCodeBtn').onclick=()=>saveTeamLogin('set_code');
 $('teamLoginSaveBtn').onclick=()=>saveTeamLogin('save');
 $('teamLoginResetBtn').onclick=()=>saveTeamLogin('reset_password');
+$('teamLoginPhotoInput').onchange=beginTeamLoginPhotoCrop;
+$('removeTeamLoginPhotoBtn').onclick=()=>saveTeamLoginPhoto(null,{userId:session?.user?.id,teamId:activeTeam?.id,loginId:teamLoginEditingId,version:teamLoginAdminVersion});
 setInterval(pollManagedLogin,5000);
 window.addEventListener('online',pollManagedLogin);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)pollManagedLogin();});
