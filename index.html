@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.15.29: coach/admin test-athlete claims; includes v0.15.28 scanner and kiosk fixes. -->
+<!-- Wrestling Manager v0.15.30: admin-managed Team Login accounts; preserves v0.15.28 scanner and kiosk fixes. -->
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -428,19 +428,28 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
     </div>
     <div class="card auth-card">
       <h2>Sign In</h2>
-      <label>Email</label>
+      <div class="view-mode-switch" style="margin-bottom:18px"><button id="personalSignInTab" type="button" aria-pressed="true">Personal Login</button><button id="teamSignInTab" class="secondary" type="button" aria-pressed="false">Team Login</button></div>
+      <div id="personalSignInFields">
+      <label for="email">Email</label>
       <input id="email" type="email" autocomplete="email" placeholder="you@example.com">
       <label>Password</label>
       <input id="password" type="password" autocomplete="current-password" placeholder="Password">
+      </div>
+      <div id="teamSignInFields" class="hidden">
+        <label for="teamSignInCode">Team code</label><input id="teamSignInCode" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="24" placeholder="Your team’s login code">
+        <label for="teamSignInUsername">Username</label><input id="teamSignInUsername" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="32" placeholder="test-athlete or team-phone">
+        <label for="teamSignInPassword">Password</label><input id="teamSignInPassword" type="password" autocomplete="current-password" placeholder="Account password">
+      </div>
       <div class="auth-options">
         <label class="toggle-row"><span><b>Stay signed in</b></span><input id="staySignedIn" type="checkbox" checked></label>
         <button id="forgotPasswordBtn" class="link-button" type="button">Forgot password?</button>
       </div>
       <div class="stack-actions">
+        <button id="teamSignInBtn" class="hidden" type="button">Sign In to Team</button>
         <button id="signInBtn">Sign In</button>
         <button id="signUpBtn" class="secondary">Create Account</button>
       </div>
-      <p class="fine">Coaches, athletes, parents and limited staff use the same Wrestling Manager sign-in.</p>
+      <p id="signInHelp" class="fine">Coaches, athletes, parents and limited staff can sign in with their personal account.</p>
     </div>
   </section>
 
@@ -1507,7 +1516,7 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
     <div class="sheet-head"><div><div class="eyebrow">YOU</div><h2>Account & Team</h2></div><button class="icon-close" data-close-sheet>×</button></div>
     <div class="feature-card"><b id="accountEmail">—</b><p id="accountTeamInfo" class="muted"></p><span id="accountRole" class="role-pill">—</span><div id="accountTeamLevels" class="team-level-summary"></div></div>
 
-    <div class="feature-card">
+    <div id="personalAccountProfileCard" class="feature-card">
       <div class="staff-profile-head">
         <div id="accountProfilePhotoBox" class="staff-profile-photo-placeholder">👤</div>
         <div class="staff-profile-copy">
@@ -1531,6 +1540,8 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
     </div>
     <div id="accountMyAthletes" class="feature-card hidden"><b>My Athletes</b><p class="muted">Your children are always available here, even when you also serve as a coach, administrator or team leader.</p><div id="accountMyAthletesList" class="family-athlete-list"></div><button id="athleteChatPermissionsAccountBtn" type="button" class="wide secondary">👨‍👩‍👧 Choose My Athlete’s Chat Access</button></div>
     <button id="editStaffProfileBtn" class="wide hidden" type="button">Edit My Coach / Staff Profile</button>
+    <div id="managedAccountNote" class="feature-card hidden"><b>Team Login</b><p class="muted">Your team admin manages this login’s name, password and access in Account &amp; Team → Team Logins. The Weight Check PIN is separate from your login password.</p></div>
+    <button id="teamLoginsBtn" class="wide secondary hidden" type="button">Team Logins</button>
     <button id="editTeamBtn" class="wide admin-only" type="button">Edit Team</button>
     <button id="communicationBtn" class="wide admin-only" type="button">Communication Settings</button>
     <button id="communicationPreferencesBtn" class="wide secondary" type="button">Notification Settings</button>
@@ -1541,7 +1552,37 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
     <button id="weightPinSettingsBtn" class="wide secondary hidden" type="button">Weight Check PIN</button>
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.15.29</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.15.30</p>
+  </section>
+
+  <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
+    <div class="sheet-handle"></div><div class="sheet-head"><div><div class="eyebrow" id="teamLoginTeamName">YOUR TEAM</div><h2>Team Logins</h2></div><button class="icon-close" data-close-sheet>×</button></div>
+    <p class="muted">Create a Test Athlete or shared Team Device login. No email address is needed on the sign-in screen.</p>
+    <p id="teamLoginLoadStatus" role="status" aria-live="polite"></p>
+    <div id="teamLoginAdminControls" class="hidden">
+      <div class="feature-card"><label for="teamLoginCode">Team login code</label><input id="teamLoginCode" maxlength="24" autocapitalize="characters" spellcheck="false"><p class="fine">4–24 letters, numbers or hyphens. This is separate from your roster join code. Everyone using Team Login enters this code.</p><button id="saveTeamLoginCodeBtn" type="button" class="wide secondary">Save Team Code</button></div>
+      <div id="teamLoginAccountList" class="stack-actions"></div>
+      <button id="newTeamLoginBtn" class="wide" type="button">Create Team Login</button>
+      <div id="teamLoginEditor" class="feature-card hidden">
+        <h3 id="teamLoginEditorTitle">Create Team Login</h3>
+        <label for="teamLoginKind">Account type</label><select id="teamLoginKind"><option value="test_athlete">Test Athlete</option><option value="team_device">Team Device / Manager</option></select>
+        <p id="teamLoginTypeHelp" class="fine"></p>
+        <div id="teamLoginAthleteRow"><label for="teamLoginAthlete">Test Athlete profile</label><select id="teamLoginAthlete"></select><p id="teamLoginNoTest" class="fine hidden">No designated Test Athlete is active on this team’s roster. A regular athlete cannot be used as a test account.</p></div>
+        <label for="teamLoginName">Display name</label><input id="teamLoginName" maxlength="60" placeholder="Bruins Test Athlete or Bruins Team Phone">
+        <label for="teamLoginUsername">Username</label><input id="teamLoginUsername" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="32" placeholder="test-athlete">
+        <div id="teamLoginPermissionFields" class="hidden"><h3>Allowed tools</h3>
+          <label class="toggle-row"><span><b>Weigh-ins and scale kiosk</b></span><input id="teamLoginAllowWeighIn" type="checkbox"></label>
+          <label class="toggle-row"><span><b>Attendance</b></span><input id="teamLoginAllowAttendance" type="checkbox"></label>
+          <label class="toggle-row"><span><b>Team messages</b></span><input id="teamLoginAllowMessages" type="checkbox"></label>
+          <p class="fine">Team devices do not have coach administration, mass texting, or private weight-history access.</p>
+        </div>
+        <label id="teamLoginActiveRow" class="toggle-row hidden"><span><b>Login enabled</b></span><input id="teamLoginActive" type="checkbox" checked></label>
+        <div id="teamLoginPasswordFields"><label for="teamLoginPassword">Password</label><input id="teamLoginPassword" type="password" autocomplete="new-password"><label for="teamLoginPasswordConfirm">Confirm password</label><input id="teamLoginPasswordConfirm" type="password" autocomplete="new-password"><p class="fine">Use at least 12 characters, such as several memorable words. This is separate from the athlete’s four-digit Weight Check PIN. Passwords cannot be viewed after saving.</p></div>
+        <p id="teamLoginEditNotice" class="fine hidden"></p>
+        <button id="teamLoginSaveBtn" class="wide" type="button">Create Login</button>
+        <button id="teamLoginResetBtn" class="wide secondary hidden" type="button">Set New Password</button>
+      </div>
+    </div>
   </section>
 
   <section id="weightTestAthleteSheet" class="sheet hidden" aria-modal="true">
@@ -2561,6 +2602,7 @@ function updateBottomNavBadges(){
 }
 
 function setTab(name){
+  if(name==='messages'&&!managedMessagesEnabled())name='home';
   document.activeElement?.blur?.();
   recoverInteractionLayer();
   ['home','schedule','messages','weight','more'].forEach(tab => show(tab+'Tab', tab===name));
@@ -2587,6 +2629,7 @@ function openSheet(id){
 }
 function closeSheets(){
   if(document.body.classList.contains('kiosk-locked')) return;
+  ++teamLoginAdminVersion;show('teamLoginsSheet',false);$('teamLoginPassword').value='';$('teamLoginPasswordConfirm').value='';
   ++weightTrendRequestVersion;
   ++weightTestVersion;weightTestAthletes=[];weightTestContext=null;weightTestBusy=false;
   if(myWeightCheckActive)resetMyWeightCheck();
@@ -2606,11 +2649,140 @@ function recoverInteractionLayer(){
   }
 }
 
+let managedLogin=null, teamLoginAdminData=null, teamLoginEditingId=null, teamLoginOperationId=null;
+let teamLoginAdminBusy=false, teamLoginAdminVersion=0, teamLoginPollBusy=false, teamLoginEnding=false;
+function managedMessagesEnabled(){return !managedLogin||(managedLogin.kind==='team_device'&&managedLogin.permissions?.messages===true);}
+function chooseSignInMode(team){
+  show('personalSignInFields',!team);show('teamSignInFields',team);
+  show('signInBtn',!team);show('signUpBtn',!team);show('teamSignInBtn',team);show('forgotPasswordBtn',!team);
+  $('personalSignInTab').classList.toggle('secondary',team);$('teamSignInTab').classList.toggle('secondary',!team);
+  $('personalSignInTab').setAttribute('aria-pressed',String(!team));$('teamSignInTab').setAttribute('aria-pressed',String(team));
+  $('password').value='';$('teamSignInPassword').value='';
+  $('signInHelp').textContent=team?'Use the team code, username and password your team admin created. Ask that admin to reset a forgotten password.':'Coaches, athletes, parents and limited staff can sign in with their personal account.';
+}
+async function callTeamLogin(action,fields={},adminAction=false){
+  const token=adminAction?(await client.auth.getSession()).data.session?.access_token:SUPABASE_KEY;
+  if(!token)throw new Error('Sign in with your personal team administrator account.');
+  const response=await fetch(`${SUPABASE_URL}/functions/v1/team-logins`,{method:'POST',headers:{'Content-Type':'application/json',apikey:SUPABASE_KEY,Authorization:`Bearer ${token}`},body:JSON.stringify({action,...fields})});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok||data.error)throw new Error(data.error||'Team Login is unavailable. Please try again.');
+  return data;
+}
+async function signInWithTeamLogin(){
+  const button=$('teamSignInBtn');if(button.disabled)return;
+  const fields={team_code:$('teamSignInCode').value.trim(),username:$('teamSignInUsername').value.trim(),password:$('teamSignInPassword').value};
+  if(!fields.team_code||!fields.username||!fields.password){message('Enter your team code, username and password.',true);return;}
+  button.disabled=true;button.textContent='Signing in…';message('');
+  try{
+    setRememberSession($('staySignedIn').checked);
+    const data=await callTeamLogin('login',fields);
+    securityUnlockedThisLaunch=false;
+    const {error}=await client.auth.setSession(data.session);if(error)throw error;
+    $('teamSignInPassword').value='';
+    // onAuthStateChange owns refresh, avoiding competing team loads.
+  }catch(error){message(error.message||'Could not sign in. Please try again.',true);}
+  finally{button.disabled=false;button.textContent='Sign In to Team';}
+}
+async function endManagedLoginSession(){
+  if(teamLoginEnding)return;teamLoginEnding=true;
+  try{
+    document.body.classList.remove('kiosk-locked');notifyNativeKioskState(false);clearWeighConsole(false);closeSheets();
+    activeWeighInSession=null;managedLogin=null;show('appView',false);show('setupView',false);show('appLockOverlay',false);
+    await client.auth.signOut({scope:'local'});session=null;show('authView',true);chooseSignInMode(true);
+    message('This team login changed or was disabled. Sign in again or ask your team admin.',true);
+  }finally{teamLoginEnding=false;}
+}
+async function pollManagedLogin(){
+  if(!managedLogin||!session?.user?.id||teamLoginPollBusy||document.hidden)return;
+  const userId=session.user.id;teamLoginPollBusy=true;
+  try{
+    const {error}=await client.rpc('get_my_team_login');
+    if(session?.user?.id===userId&&error?.message?.includes('TEAM_LOGIN_REVOKED'))await endManagedLoginSession();
+  }finally{teamLoginPollBusy=false;}
+}
+function resetTeamLoginEditor(account=null){
+  teamLoginEditingId=account?.id||null;teamLoginOperationId=account?.operation_id||crypto.randomUUID();
+  $('teamLoginEditorTitle').textContent=account?(account.state==='provisioning'?'Finish Login Setup':'Edit Team Login'):'Create Team Login';
+  $('teamLoginKind').value=account?.kind||'test_athlete';$('teamLoginKind').disabled=!!account;
+  $('teamLoginName').value=account?.display_name||'';$('teamLoginUsername').value=account?.username||'';
+  $('teamLoginPassword').value='';$('teamLoginPasswordConfirm').value='';$('teamLoginActive').checked=account?.active!==false;
+  const choices=teamLoginAdminData?.test_athletes||[];
+  $('teamLoginAthlete').innerHTML=choices.map(a=>`<option value="${esc(a.athlete_id)}">${esc(a.first_name)} ${esc(a.last_name)}</option>`).join('');
+  if(account?.athlete_id)$('teamLoginAthlete').value=account.athlete_id;
+  $('teamLoginAthlete').disabled=!!account;
+  ['WeighIn','Attendance','Messages'].forEach((part,i)=>$('teamLoginAllow'+part).checked=account?account.permissions?.[['weigh_in','attendance','messages'][i]]===true:part==='WeighIn');
+  show('teamLoginActiveRow',!!account&&account.state==='ready');
+  show('teamLoginPasswordFields',!account||account.state==='provisioning'||account.state==='resetting');
+  show('teamLoginResetBtn',!!account&&account.state!=='provisioning');
+  show('teamLoginSaveBtn',!account||account.state==='ready'||account.state==='provisioning');
+  $('teamLoginSaveBtn').textContent=account?(account.state==='provisioning'?'Finish Setup':'Save Changes'):'Create Login';
+  $('teamLoginResetBtn').textContent='Set New Password';
+  show('teamLoginEditNotice',!!account);$('teamLoginEditNotice').textContent=account?.state==='resetting'?'Password reset is pending. If the last attempt failed, wait 10 minutes, then set a new password.':'Saving changes or resetting the password signs this login out on its devices.';
+  updateTeamLoginKind();show('teamLoginEditor',true);
+}
+function updateTeamLoginKind(){
+  const test=$('teamLoginKind').value==='test_athlete';show('teamLoginAthleteRow',test);show('teamLoginPermissionFields',!test);
+  $('teamLoginTypeHelp').textContent=test?'Opens the designated Test Athlete’s weight check, PIN, scan card and weight history. Test logins cannot message team members.':'A shared manager account for the enabled tools on this team. Messages carry a Team Device label and follow the team’s existing chat rules.';
+  show('teamLoginNoTest',test&&!(teamLoginAdminData?.test_athletes||[]).length);
+}
+function renderTeamLoginAccounts(){
+  const accounts=teamLoginAdminData?.accounts||[];$('teamLoginCode').value=teamLoginAdminData?.login_code||'';
+  $('teamLoginAccountList').innerHTML=accounts.length?accounts.map(a=>`<button class="wide secondary" type="button" data-edit-team-login="${esc(a.id)}"><span><b>${esc(a.display_name)}</b><br><small>${esc(a.username)} · ${a.kind==='test_athlete'?'Test Athlete':'Team Device'} · ${a.state==='ready'?(a.active?'Enabled':'Disabled'):(a.state==='provisioning'?'Finish setup':'Reset pending')}</small></span></button>`).join(''):'<div class="empty-card">No team logins yet. Create one below.</div>';
+  $('teamLoginAccountList').querySelectorAll('[data-edit-team-login]').forEach(b=>b.onclick=()=>{if(!teamLoginAdminBusy){resetTeamLoginEditor(accounts.find(a=>a.id===b.dataset.editTeamLogin));$('teamLoginEditor').scrollIntoView({block:'start',behavior:'smooth'});}});
+}
+async function openTeamLogins(){
+  if(teamLoginAdminBusy)return;
+  if(managedLogin||!actualIsTeamAdmin||!activeTeam)return;
+  closeSheets();openSheet('teamLoginsSheet');const version=++teamLoginAdminVersion,teamId=activeTeam.id;
+  teamLoginAdminData=null;show('teamLoginAdminControls',false);$('teamLoginLoadStatus').textContent='Loading team logins…';
+  $('teamLoginTeamName').textContent=activeTeam.name;
+  try{
+    const data=await callTeamLogin('list',{team_id:teamId},true);
+    if(version!==teamLoginAdminVersion||activeTeam?.id!==teamId)return;
+    teamLoginAdminData=data;renderTeamLoginAccounts();show('teamLoginEditor',false);show('teamLoginAdminControls',true);$('teamLoginLoadStatus').textContent='';
+  }catch(error){if(version===teamLoginAdminVersion)$('teamLoginLoadStatus').textContent=error.message;}
+}
+function readTeamLoginPassword(){
+  const password=$('teamLoginPassword').value;
+  if(password.length<12||new TextEncoder().encode(password).length>72)throw new Error('Use a password with at least 12 characters and no more than 72 bytes.');
+  if(password!==$('teamLoginPasswordConfirm').value)throw new Error('The two passwords do not match.');
+  return password;
+}
+async function saveTeamLogin(action){
+  if(teamLoginAdminBusy||!activeTeam||managedLogin||!actualIsTeamAdmin||!teamLoginAdminData)return;
+  let fields={team_id:activeTeam.id},account=teamLoginAdminData.accounts.find(a=>a.id===teamLoginEditingId);
+  try{
+    if(action==='set_code')fields.login_code=$('teamLoginCode').value.trim();
+    else if(action==='reset_password'){
+      if($('teamLoginPasswordFields').classList.contains('hidden')){show('teamLoginPasswordFields',true);$('teamLoginPassword').focus();$('teamLoginResetBtn').textContent='Save New Password';return;}
+      fields={...fields,id:account.id,password:readTeamLoginPassword(),operation_id:crypto.randomUUID()};
+    }else{
+      action=account&&account.state!=='provisioning'?'update':'create';
+      fields={...fields,id:account?.id,display_name:$('teamLoginName').value.trim(),username:$('teamLoginUsername').value.trim(),kind:$('teamLoginKind').value,athlete_id:$('teamLoginKind').value==='test_athlete'?$('teamLoginAthlete').value:null,active:$('teamLoginActive').checked,
+        permissions:{weigh_in:$('teamLoginAllowWeighIn').checked,attendance:$('teamLoginAllowAttendance').checked,messages:$('teamLoginAllowMessages').checked},operation_id:teamLoginOperationId};
+      if(fields.display_name.length<2||fields.display_name.length>60)throw new Error('Enter a display name with 2–60 characters.');
+      if(!/^[a-z0-9][a-z0-9._-]{2,31}$/i.test(fields.username))throw new Error('Use a username with 3–32 letters, numbers, dots, hyphens or underscores.');
+      if(fields.kind==='test_athlete'&&!fields.athlete_id)throw new Error('An active, designated Test Athlete is required.');
+      if(action==='create')fields.password=readTeamLoginPassword();
+    }
+    teamLoginAdminBusy=true;$('teamLoginAdminControls').querySelectorAll('button').forEach(b=>b.disabled=true);
+    $('teamLoginLoadStatus').textContent='Saving…';const version=teamLoginAdminVersion;
+    const data=await callTeamLogin(action,fields,true);
+    if(version!==teamLoginAdminVersion||activeTeam?.id!==fields.team_id)return;
+    teamLoginAdminData=data;renderTeamLoginAccounts();show('teamLoginEditor',false);$('teamLoginPassword').value='';$('teamLoginPasswordConfirm').value='';
+    $('teamLoginLoadStatus').textContent=action==='create'?'Login created. On the other phone, choose Team Login and enter the team code, username and password.':action==='reset_password'?'New password saved. Sign in again on the team phone.':'Changes saved.';
+  }catch(error){$('teamLoginLoadStatus').textContent=error.message||'The account could not be updated.';}
+  finally{teamLoginAdminBusy=false;$('teamLoginAdminControls').querySelectorAll('button').forEach(b=>b.disabled=false);}
+}
+
 async function refresh(){
   const res = await client.auth.getSession();
   session = res.data.session;
   show('authView', !session);
   if (!session){
+    managedLogin=null;
+    document.body.classList.remove('kiosk-locked');notifyNativeKioskState(false);closeSheets();
+    if(activeWeighInSession){clearWeighConsole(false);activeWeighInSession=null;}
     show('appLockOverlay',false);securityUnlockedThisLaunch=false;
     show('setupView', false); show('appView', false);
     if(pendingJoinCode) $('setupJoinCode').value=pendingJoinCode;
@@ -2618,17 +2790,28 @@ async function refresh(){
     return;
   }
 
+  const loginUserId=session.user.id;
+  const loginContext=await client.rpc('get_my_team_login');
+  if(session?.user?.id!==loginUserId)return;
+  if(loginContext.error){
+    if(loginContext.error.message?.includes('TEAM_LOGIN_REVOKED'))await endManagedLoginSession();
+    else{show('appView',false);message('Could not verify account access. Check your connection and reopen the app.',true);}
+    return;
+  }
+  managedLogin=loginContext.data||null;
+  show('personalAccountProfileCard',!managedLogin);show('managedAccountNote',!!managedLogin);
+  show('securityPasswordResetBtn',!managedLogin);
   requestSecurityStatus();
   subscribeAccountMemberships();
   if(nativeNotificationsAvailable())postNativeNotification('status');
 
-  $('accountEmail').textContent = session.user.email || session.user.id;
+  $('accountEmail').textContent = managedLogin?`${managedLogin.display_name} · @${managedLogin.username}`:(session.user.email || session.user.id);
   await loadAccountProfile();
   applyUiPreferences();
 
   // If a signed-in adult has a pending guardian invite sent to this same verified email,
   // link it automatically so dual-role adults can immediately see their child.
-  await client.rpc('accept_matching_guardian_invitations');
+  if(!managedLogin)await client.rpc('accept_matching_guardian_invitations');
 
   const [{ data: orgMemberships, error: orgErr }, { data: tm, error: tmErr }] = await Promise.all([
     client.from('organization_memberships').select('organization_id,role').limit(50),
@@ -2672,8 +2855,8 @@ async function refresh(){
   if(nativeNotificationState.token)await registerNativePushDevice();
   if(pendingNativeNotificationPayload)await routeNativeNotification(pendingNativeNotificationPayload);
 
-  if(pendingJoinCode){ const code=pendingJoinCode; pendingJoinCode=''; setTimeout(()=>startJoinFlow(code),120); }
-  if(pendingInviteToken){ const token=pendingInviteToken; pendingInviteToken=''; $('inviteToken').value=token; setTimeout(()=>acceptInvite(),120); }
+  if(!managedLogin&&pendingJoinCode){ const code=pendingJoinCode; pendingJoinCode=''; setTimeout(()=>startJoinFlow(code),120); }
+  if(!managedLogin&&pendingInviteToken){ const token=pendingInviteToken; pendingInviteToken=''; $('inviteToken').value=token; setTimeout(()=>acceptInvite(),120); }
 }
 
 
@@ -3256,7 +3439,7 @@ async function activateTeam(teamId,{persist=true}={}){
 
   applyCurrentTeamAccess(team);
 
-  const familyResult=await client.rpc('get_my_family_athletes',{p_team_id:team.id});
+  const familyResult=managedLogin?{data:[],error:null}:await client.rpc('get_my_family_athletes',{p_team_id:team.id});
   familyAthletes=familyResult.error?[]:[...new Map((familyResult.data||[]).map(a=>[a.athlete_id,a])).values()];
   const savedView=localStorage.getItem(`wm_view_mode_${team.id}`);
   viewMode=(familyAthletes.length && savedView==='parent')?'parent':'staff';
@@ -3301,7 +3484,7 @@ async function activateTeam(teamId,{persist=true}={}){
     await Promise.all([loadMemberAthletes(),loadSchedule(),loadImportantAnnouncements()]);
   }
   await loadPersonalWeightSnapshots();
-  if(!isManager) await loadMedicalClearanceCases(false);
+  if(!isManager&&!managedLogin) await loadMedicalClearanceCases(false);
   subscribeAnnouncementRealtime();
   loadCommunications(false);
   await renderFamilyAthletes();
@@ -3365,14 +3548,15 @@ async function renderFamilyAthletes(){
 }
 
 function applyRoleUI(){
+  show('teamLoginsBtn',!managedLogin&&actualIsTeamAdmin&&viewMode!=='parent');
   show('newEventBtn', isStaff);
   show('weightTestsRoomBtn',actualIsStaff&&viewMode!=='parent');
   show('weightTestsSettingsBtn',actualIsStaff&&viewMode!=='parent');
   show('rosterBtn', isStaff);
   show('joinBtn', isStaff);
   show('joinRequestsBtn', isStaff);
-  show('agreementsBtn', isStaff || (!isManager && agreementAthleteChoices().length>0));
-  show('medicalClearanceBtn', isStaff || (!isManager && agreementAthleteChoices().length>0));
+  show('agreementsBtn', !managedLogin&&(isStaff || (!isManager && agreementAthleteChoices().length>0)));
+  show('medicalClearanceBtn', !managedLogin&&(isStaff || (!isManager && agreementAthleteChoices().length>0)));
   show('staffAccessBtn', isTeamAdmin);
   show('editStaffProfileBtn', actualIsStaff && viewMode!=='parent');
   show('communicationBtn', actualIsTeamAdmin && viewMode!=='parent');
@@ -3396,7 +3580,8 @@ function applyRoleUI(){
   renderCoachWeightSnapshots();
   show('weighInModeArea',canWeighIn);
   const messagesNav=document.querySelector('.nav-btn[data-tab="messages"]');
-  if(messagesNav) messagesNav.classList.remove('hidden');
+  if(messagesNav) messagesNav.classList.toggle('hidden',!managedMessagesEnabled());
+  document.querySelectorAll('[data-go="messages"]').forEach(el=>el.classList.toggle('hidden',!managedMessagesEnabled()));
   show('smsActionRow',canMassText||smsUnreadReplies>0);
   show('massTextBtn',canMassText);
   show('textRepliesBtn',canMassText||smsUnreadReplies>0);
@@ -3847,6 +4032,7 @@ async function openImportantAnnouncementThread(){
 }
 
 async function loadImportantAnnouncements(){
+  if(!managedMessagesEnabled()){importantAnnouncements=[];renderImportantAnnouncements();return;}
   if(!activeTeam||!activeSeason){importantAnnouncements=[];renderImportantAnnouncements();return;}
   const [postsResult,staffResult]=await Promise.all([
     client.from('team_posts').select('id,body,pinned,created_at,author_user_id').eq('team_id',activeTeam.id).eq('season_id',activeSeason.id).eq('pinned',true).eq('audience','team').order('created_at',{ascending:false}).limit(5),
@@ -3896,7 +4082,7 @@ async function refreshCurrentTeamConnections(){
     const [orgResult,membershipResult,familyResult]=await Promise.all([
       client.from('organization_memberships').select('organization_id,role').limit(50).abortSignal(controller.signal),
       client.from('team_memberships').select('team_id,user_id,role,athlete_id,permissions,active,notifications_paused').eq('user_id',userId).limit(200).abortSignal(controller.signal),
-      client.rpc('get_my_family_athletes',{p_team_id:teamId}).abortSignal(controller.signal)
+      managedLogin?Promise.resolve({data:[],error:null}):client.rpc('get_my_family_athletes',{p_team_id:teamId}).abortSignal(controller.signal)
     ]);
     for(const result of [orgResult,membershipResult,familyResult])if(result.error)throw result.error;
     const orgs=orgResult.data||[],memberships=membershipResult.data||[];
@@ -3912,6 +4098,7 @@ async function refreshCurrentTeamConnections(){
     organizationMemberships=orgs;teamMemberships=memberships;
     availableTeams=[...teams.values()].sort((a,b)=>String(a.name).localeCompare(String(b.name)));
     if(!teams.has(teamId)){
+      if(managedLogin){await endManagedLoginSession();return false;}
       closeSheets();
       if(availableTeams.length)await activateTeam(availableTeams[0].id,{persist:false});
       else{
@@ -3955,7 +4142,7 @@ async function refreshTeamData({manual=false,force=false}={}){
     const jobs=[loadImportantAnnouncements(),loadSchedule(),loadCommunications(false),loadPersonalWeightSnapshots()];
     if(isStaff)jobs.push(loadDashboard(),loadRoster(),loadJoinRequests(),loadGuardianConnectionRequests(),loadAgreementCoachStatus(false),loadWeighInSessions());
     else if(isManager)jobs.push(loadOperationalRoster(),loadWeighInSessions());
-    if(!isManager)jobs.push(loadMedicalClearanceCases(false));
+    if(!isManager&&!managedLogin)jobs.push(loadMedicalClearanceCases(false));
     const results=await Promise.allSettled(jobs);
     if(results.some(result=>result.status==='rejected'))throw new Error('Some team information could not be refreshed.');
     if(activeTeam?.id!==teamId||activeSeason?.id!==seasonId)return;
@@ -4341,6 +4528,7 @@ async function fetchUnreadCommunicationNotifications(teamId,userId){
 }
 
 async function loadCommunications(showErrors=true){
+  if(!managedMessagesEnabled()){communicationThreads=[];communicationNotifications=[];renderCommunicationNotifications();return;}
   if(!activeTeam||!activeSeason||!session?.user?.id)return;
   const teamId=activeTeam.id,seasonId=activeSeason.id,userId=session?.user?.id;
   const requestKey=`${userId}:${teamId}:${seasonId}`;
@@ -8133,6 +8321,19 @@ async function lockKiosk(){
 async function unlockKiosk(){if(!(await verifyKioskPin('Enter the weigh-in kiosk PIN to unlock admin navigation:')))return;document.body.classList.remove('kiosk-locked');document.body.style.overflow='';renderWeighInRosterResults();applyWeighInConsolePrivacy();notifyNativeKioskState(false);message('Admin navigation unlocked.');}
 async function exitKiosk(){if(!(await verifyKioskPin('Enter the weigh-in kiosk PIN to exit kiosk mode:')))return;document.body.classList.remove('kiosk-locked');document.body.style.overflow='';notifyNativeKioskState(false);closeSheets();setTab('weight');message('Exited kiosk mode.');}
 
+$('personalSignInTab').onclick=()=>chooseSignInMode(false);
+$('teamSignInTab').onclick=()=>chooseSignInMode(true);
+$('teamSignInBtn').onclick=signInWithTeamLogin;
+$('teamSignInPassword').addEventListener('keydown',e=>{if(e.key==='Enter')signInWithTeamLogin();});
+$('teamLoginsBtn').onclick=openTeamLogins;
+$('newTeamLoginBtn').onclick=()=>resetTeamLoginEditor();
+$('teamLoginKind').onchange=updateTeamLoginKind;
+$('saveTeamLoginCodeBtn').onclick=()=>saveTeamLogin('set_code');
+$('teamLoginSaveBtn').onclick=()=>saveTeamLogin('save');
+$('teamLoginResetBtn').onclick=()=>saveTeamLogin('reset_password');
+setInterval(pollManagedLogin,5000);
+window.addEventListener('online',pollManagedLogin);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)pollManagedLogin();});
 $('signUpBtn').onclick=async()=>{
   message(''); const email=$('email').value.trim(); const password=$('password').value;
   if(!email||password.length<8){message('Enter an email and a password of at least 8 characters.',true);return;}
@@ -8157,7 +8358,7 @@ $('unlockWithPinBtn').onclick=()=>{const pin=$('appLockPin').value;if(!/^\d{4,8}
 $('appLockPin').addEventListener('keydown',e=>{if(e.key==='Enter')$('unlockWithPinBtn').click();});
 $('saveSecurityPinBtn').onclick=()=>{const pin=$('securityPin').value,confirm=$('securityPinConfirm').value;if(!/^\d{4,8}$/.test(pin)){message('Use a 4–8 digit numeric PIN.',true);return;}if(pin!==confirm){message('The PIN entries do not match.',true);return;}postNativeSecurity('setPin',{pin});};
 $('removeSecurityPinBtn').onclick=()=>{if(confirm('Remove the separate Wrestling Manager PIN from this device?'))postNativeSecurity('removePin');};
-$('securityPasswordResetBtn').onclick=()=>{$('recoveryEmail').value=session?.user?.email||'';closeSheets();openSheet('forgotPasswordSheet');};
+$('securityPasswordResetBtn').onclick=()=>{if(managedLogin){message('Ask your team admin to reset this login’s password.');return;}$('recoveryEmail').value=session?.user?.email||'';closeSheets();openSheet('forgotPasswordSheet');};
 $('lockedSignOutBtn').onclick=async()=>{await disableNativePushDeviceBeforeSignOut();await client.auth.signOut();show('appLockOverlay',false);location.reload();};
 document.addEventListener('visibilitychange',()=>{
   // A native camera or share sheet hides WKWebView without backgrounding the app.
