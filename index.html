@@ -418,7 +418,20 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
 <style>
 .wm-doc{color:#182d43;font:16px/1.65 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow-wrap:anywhere}.wm-doc *{box-sizing:border-box}.wm-doc h1{font-size:clamp(28px,5vw,42px);line-height:1.15;margin:8px 0 18px;color:#102c4b;letter-spacing:-.025em}.wm-doc h2{font-size:21px;line-height:1.3;margin:30px 0 10px;color:#102c4b}.wm-doc p{margin:0 0 14px}.wm-doc a{color:#1559a0;text-decoration:underline;text-underline-offset:3px}.wm-doc a:focus-visible,.wm-info-links a:focus-visible,.wm-info-close:focus-visible{outline:3px solid #b45f00;outline-offset:4px}.wm-doc-kicker{font-size:11px;font-weight:800;letter-spacing:.12em;color:#436886}.wm-doc-lead{font-size:18px;color:#526779}.wm-doc-contact,.wm-doc-note{background:#eef5fc;border:1px solid #c5d9ed;border-radius:18px;padding:20px;margin:24px 0}.wm-doc-contact h2{margin-top:0}.wm-doc-contact p:last-child,.wm-doc-note p:last-child{margin-bottom:0}.wm-doc-email{font-weight:700}.wm-doc-note{background:#fff9e9;border-color:#e7d6a5;font-size:14px}.wm-doc-note p{margin-top:8px}.wm-doc ul{padding-left:22px}.wm-doc li{margin-bottom:10px}.wm-info-links{display:flex;justify-content:center;gap:8px 22px;flex-wrap:wrap;margin:16px 0}.wm-info-links a{color:#1559a0;font-size:14px;font-weight:700;padding:8px 4px;text-decoration:underline;text-underline-offset:3px}.wm-info-overlay{position:fixed;z-index:1500;inset:0;display:grid;place-items:center;background:rgba(8,24,44,.7);padding:16px}.wm-info-overlay[hidden]{display:none!important}.wm-info-panel{position:relative;background:white;width:min(100%,780px);max-height:calc(100dvh - 32px);border-radius:22px;overflow:auto;overscroll-behavior:contain;box-shadow:0 20px 80px #08182c55;padding:0 26px 30px}.wm-info-bar{position:sticky;top:0;display:flex;justify-content:flex-end;padding:12px 0;background:white;z-index:1}.wm-info-close{width:auto;min-width:44px;min-height:44px;background:#eaf0f6;color:#14314e;border:0;border-radius:12px;padding:10px 16px;font:700 15px system-ui;cursor:pointer}.wm-info-open{overflow:hidden!important}.wm-info-panel .wm-doc h1:focus{outline:none}.wm-doc-footer{border-top:1px solid #d7e1eb;padding-top:22px;margin-top:36px;font-size:13px;color:#526779}@media(max-width:480px){.wm-info-overlay{padding:8px}.wm-info-panel{max-height:calc(100dvh - 16px);padding:0 18px 24px;border-radius:18px}.wm-doc-contact,.wm-doc-note{padding:16px}.wm-doc-email{font-size:15px}}
 </style>
-</head>
+<style>
+#organizationHeading{position:relative;text-align:left;margin:0;padding:14px 42px 14px 18px;border:0;border-radius:0;background:#f2f6fb;color:#142e4c;box-shadow:none}
+#organizationHeading small{display:block;font-size:10px;letter-spacing:.1em;color:#53687f}
+#organizationHeading strong{display:block;font-size:18px;line-height:1.3;white-space:normal;overflow-wrap:anywhere}
+#organizationHeading>span{position:absolute;right:18px;top:24px}
+#homeOrganizationPanel{margin:0 0 16px;order:-1}
+#homeOrganizationNotice:empty{display:none}
+.org-home-actions{display:flex;flex-wrap:wrap;gap:6px}.org-home-actions button{font-size:12px;padding:9px 12px;box-shadow:none}
+.org-home-teams{display:flex;gap:6px;overflow-x:auto;margin-top:8px}.org-home-teams button{flex:0 0 auto;max-width:240px;text-align:left;font-size:12px;padding:10px;white-space:normal;box-shadow:none}.org-home-teams small{display:block;font-size:10px;font-weight:normal;margin-top:3px}
+#homeTab{display:flex;flex-direction:column}#homeTab.hidden{display:none}
+.home-feed-heading h2{font-size:23px}.home-feed-heading p,.feed-live-chip{display:none}
+.organization-only .app-header,.organization-only #homeLayoutBlocks,.organization-only .home-feed-heading,.organization-only #teamBanner{display:none!important}
+#organizationHomeBtn{display:none!important}
+</style></head>
 <body>
   <div id="message"></div>
   <section id="appLockOverlay" class="app-lock-overlay hidden" aria-modal="true" aria-label="Wrestling Manager is locked">
@@ -538,7 +551,7 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
 </section>
 
   <section id="appView" class="app hidden">
-    <button id="organizationHeading" class="wide secondary" style="text-align:left;margin:8px 0 0" type="button">Organization</button>
+    <button id="organizationHeading" class="wide secondary" type="button">Organization</button>
     <header class="app-header">
       <button id="teamSwitcherBtn" class="team-switcher" type="button">
         <span>
@@ -558,9 +571,8 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
           <div><div class="eyebrow">YOUR TEAM</div><h2>Team Feed</h2><p>Updates, athletes and the next things that matter.</p></div>
           <span class="feed-live-chip"><span class="feed-live-dot"></span> LIVE</span>
         </div>
-        <button id="organizationHomeBtn" type="button" class="organization-home-entry">
-          <span aria-hidden="true">🏛️</span><span><b>Organization Hub</b><small>Organization calendar, divisions and wrestling teams</small></span><span aria-hidden="true">›</span>
-        </button>
+        <section id="homeOrganizationPanel" aria-label="Organization tools"><p id="homeOrganizationNotice" class="fine"></p><div id="homeOrganizationTools"></div></section>
+        <button id="organizationHomeBtn" class="hidden" type="button">Organization tools</button>
         <div id="homeLayoutBlocks">
         <section id="importantAnnouncementsSection" class="important-announcements home-feed-block layout-block" data-layout-key="important">
           <div class="section-head"><div class="feed-author"><span class="feed-author-icon">📣</span><span><h3>Important Announcements</h3><small>Coaches & team leaders</small></span></div><button id="newAnnouncementBtn" class="link-btn coach-only">＋ Post</button></div>
@@ -1641,7 +1653,7 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.16.5</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.16.6</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -2696,6 +2708,7 @@ function updateBottomNavBadges(){
 }
 
 function setTab(name){
+  if(!managedLogin&&selectedHomeOrganization()&&activeTeam?.organization_id!==selectedHomeOrganization()&&name!=='home'){message('Choose a team in this organization first.');name='home';}
   if(name==='messages'&&!managedMessagesEnabled())name='home';
   document.activeElement?.blur?.();
   recoverInteractionLayer();
@@ -3046,7 +3059,7 @@ async function refresh(){
     return;
   }
   managedLogin=loginContext.data||null;teamProfileReadyUserId=null;$('switchTeamProfileBtn').disabled=true;
-  show('organizationHomeBtn',!managedLogin);
+  show('homeOrganizationPanel',!managedLogin);
   show('personalAccountProfileCard',!managedLogin);show('managedAccountNote',!!managedLogin);
   show('switchTeamProfileBtn',!!managedLogin?.shared_login_id);
   $('managedProfileLabel').textContent=managedLogin?`Using ${teamProfileLabel(managedLogin.kind)}`:'Team Login';
@@ -3230,20 +3243,52 @@ function canAdminTeam(team){
   return teamMemberships.some(x=>x.team_id===team.id && x.active!==false && (x.role==='head_coach' || (['assistant_coach','manager'].includes(x.role) && x.permissions?.team_admin===true)));
 }
 
-let organizationHeadingRows=[];
-async function refreshOrganizationHeading(){
- const id=activeTeam?.organization_id,uid=session?.user?.id;if(!id)return;
- const {data,error}=await client.from('organizations').select('id,name').in('id',[...new Set(availableTeams.map(t=>t.organization_id))]);
- if(activeTeam?.organization_id!==id||session?.user?.id!==uid)return;
- organizationHeadingRows=error?[]:data||[];
- $('organizationHeading').textContent=(organizationHeadingRows.find(o=>o.id===id)?.name||'Organization')+' ›';
+let organizationHeadingRows=[],homeOrganizationId=null,homeOrganizationUser=null,homeOrganizationGeneration=0;
+const homeOrgKey=()=> 'wm-home-organization:'+session?.user?.id;
+function selectedHomeOrganization(){return homeOrganizationUser===session?.user?.id?homeOrganizationId:null;}
+function paintOrganizationHeading(){
+ const id=selectedHomeOrganization(),row=organizationHeadingRows.find(o=>o.id===id);
+ $('organizationHeading').innerHTML='<small>ORGANIZATION</small><strong>'+esc(row?.name||'Choose organization')+'</strong><span aria-hidden="true">⌄</span>';
  $('organizationHeading').disabled=!!managedLogin;
+ const matches=!id||activeTeam?.organization_id===id;
+ document.getElementById('appView').classList.toggle('organization-only',!matches&&!managedLogin);
+ if(!matches&&!managedLogin){['home','schedule','messages','weight','more'].forEach(t=>show(t+'Tab',t==='home'));document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab==='home'));}
+ $('homeOrganizationNotice').textContent=matches?'':'Choose a managed team below to open its feed. Affiliated clubs keep their own team administration.';
  renderTeamSwitcher();
 }
-document.getElementById('organizationHeading').onclick=()=>WMOperations.open(activeTeam?.organization_id);
+function acceptHomeOrganization(data){
+ if(managedLogin)return;
+ homeOrganizationUser=session?.user?.id;homeOrganizationId=data.organization_id;
+ organizationHeadingRows=data.organizations||[];
+ try{localStorage.setItem(homeOrgKey(),homeOrganizationId);}catch{}
+ paintOrganizationHeading();
+ const divs=data.divisions||[],teams=data.teams||[];
+ $('homeOrganizationTools').innerHTML='<div class="org-home-actions"><button id="homeOrgTeams" class="secondary">Divisions & teams</button><button id="homeOrgCalendar" class="secondary">Calendar</button>'+(data.admin?'<button id="homeOrgAccess" class="secondary">Manage access</button>':'')+'</div><div class="org-home-teams">'+teams.filter(t=>!t.external&&availableTeams.some(a=>a.id===t.id)).map(t=>'<button class="secondary" data-home-team="'+esc(t.id)+'">'+esc(t.name)+'<small>'+esc(divs.find(d=>d.id===t.division_id)?.name||'Organization team')+'</small></button>').join('')+'</div>';
+ for(const [id,tab] of [['homeOrgTeams','teams'],['homeOrgCalendar','event'],['homeOrgAccess','settings']])$(id)?.addEventListener('click',()=>WMOperations.open(homeOrganizationId,null,tab));
+ $('homeOrganizationTools').querySelectorAll('[data-home-team]').forEach(b=>b.onclick=async()=>{await activateTeam(b.dataset.homeTeam);setTab('home');});
+}
+async function refreshOrganizationHeading(){
+ const uid=session?.user?.id,ticket=++homeOrganizationGeneration;if(!uid)return;
+ $('homeOrganizationTools').replaceChildren();
+ if(managedLogin){homeOrganizationUser=uid;homeOrganizationId=activeTeam?.organization_id;paintOrganizationHeading();return;}
+ let saved=null;try{saved=localStorage.getItem(homeOrgKey());}catch{}
+ const {data:rows,error}=await client.rpc('get_operations',{p_request:{action:'context'}});
+ if(uid!==session?.user?.id||ticket!==homeOrganizationGeneration)return;
+ if(error){$('homeOrganizationNotice').textContent='Organization could not load. Tap the organization heading to retry.';return;}
+ organizationHeadingRows=rows||[];
+ const wanted=selectedHomeOrganization()||saved||activeTeam?.organization_id;
+ const id=organizationHeadingRows.some(o=>o.id===wanted)?wanted:organizationHeadingRows[0]?.id;
+ homeOrganizationUser=uid;homeOrganizationId=id||null;paintOrganizationHeading();
+ if(!id)return;
+ const {data,error:hubError}=await client.rpc('get_operations',{p_request:{action:'hub',organization_id:id}});
+ if(uid!==session?.user?.id||ticket!==homeOrganizationGeneration||homeOrganizationId!==id)return;
+ if(hubError){$('homeOrganizationNotice').textContent='Organization tools could not load. Tap the organization heading to retry.';return;}
+ acceptHomeOrganization(data);
+}
+document.getElementById('organizationHeading').onclick=()=>WMOperations.open(selectedHomeOrganization());
 function renderTeamSwitcher(){
   if(!$('teamChoiceList')) return;
-  $('teamChoiceList').innerHTML=availableTeams.length?[...availableTeams].sort((a,b)=>String(a.organization_id).localeCompare(String(b.organization_id))||a.name.localeCompare(b.name)).map((t,i,rows)=>`${i===0||rows[i-1].organization_id!==t.organization_id?'<h3>'+esc(organizationHeadingRows.find(o=>o.id===t.organization_id)?.name||'Organization')+'</h3>':''}
+  $('teamChoiceList').innerHTML=availableTeams.length?[...availableTeams].filter(t=>managedLogin||!selectedHomeOrganization()||t.organization_id===selectedHomeOrganization()).sort((a,b)=>String(a.organization_id).localeCompare(String(b.organization_id))||a.name.localeCompare(b.name)).map((t,i,rows)=>`${i===0||rows[i-1].organization_id!==t.organization_id?'<h3>'+esc(organizationHeadingRows.find(o=>o.id===t.organization_id)?.name||'Organization')+'</h3>':''}
     <button class="team-choice ${activeTeam?.id===t.id?'active':''}" type="button" data-switch-team="${t.id}">
       <span><b>${esc(t.name)}</b><small>${esc(roleLabelForTeam(t))}${(t.service_levels||[]).length?` · ${(t.service_levels||[]).map(teamLevelLabel).join(', ')}`:''}</small></span>
       <span class="check">${activeTeam?.id===t.id?'✓':'›'}</span>
@@ -9205,7 +9250,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -->
 <script>
-/* v0.16.5 organization operations. All authorization is enforced again by the RPC. */
+/* v0.16.6 organization operations. All authorization is enforced again by the RPC. */
 window.WMOperations=(()=>{
  let hub=null,org=null,division='',tab='home',generation=0,editor=null,feedbackId=null,dialogResolve=null;
  const $o=id=>document.getElementById(id),e=v=>esc(String(v??'')),list=v=>Array.isArray(v)?v:[];
@@ -9245,7 +9290,8 @@ window.WMOperations=(()=>{
 
  function can(kind,div=division||null){if(!hub)return false;if(kind==='contract')return hub.president;return !!hub.capabilities?.find(c=>c.division_id===(div||null))?.[kind==='event'?'event':'records'];}
  function inDivision(id){if(!division)return true;let d=id,seen=new Set();while(d&&!seen.has(d)){if(d===division)return true;seen.add(d);d=hub.divisions.find(x=>x.id===d)?.parent_id;}return false;}
- async function open(wantedOrg=null,wantedRecord=null){
+ async function open(wantedOrg=null,wantedRecord=null,wantedTab='home'){
+  wantedOrg=wantedOrg||selectedHomeOrganization();
   if(document.body.classList.contains('kiosk-locked'))return;
   if(managedLogin){message('Use your personal account for organization tools.',true);return;}
   closeSheets();tab='home';$o('opsHubTitle').textContent='Organization Hub';$o('opsTabs').innerHTML='';openSheet('opsHubSheet');note('opsStatus','Loading organization…');$o('opsContent').innerHTML='';
@@ -9254,10 +9300,10 @@ window.WMOperations=(()=>{
    $o('opsOrg').innerHTML=opts(organizations.map(o=>[o.id,o.name]),wantedOrg||org);
    if(!organizations.length){hub=null;org=null;$o('opsTabs').innerHTML='';$o('opsContent').innerHTML='<div class="empty-card">Your organization will appear here when you join a team or receive a leadership role.</div><div class="ops-card"><h3>Your account code</h3><p>Give this code to your organization administrator so they can assign your role.</p><p class="ops-code">'+e(session?.user?.id)+'</p></div>';note('opsStatus','');return;}
    org=organizations.some(o=>o.id===(wantedOrg||org))?(wantedOrg||org):organizations[0].id;$o('opsOrg').value=org;
-   await reload();if(wantedRecord&&hub){const r=hub.records.find(r=>r.id===wantedRecord);if(r){tab=r.kind;render();view(r);}}
+   await reload();if(hub&&wantedTab!=='home'){tab=wantedTab;render();}if(wantedRecord&&hub){const r=hub.records.find(r=>r.id===wantedRecord);if(r){tab=r.kind;render();view(r);}}
   }catch(err){note('opsStatus',err.message,true);}
  }
- async function reload(){const ticket=++generation;const data=await rpc(false,{action:'hub',organization_id:org});if(ticket!==generation)return;hub=data;
+ async function reload(){const ticket=++generation;const data=await rpc(false,{action:'hub',organization_id:org});if(ticket!==generation)return;hub=data;homeOrganizationGeneration++;acceptHomeOrganization(data);
   if(!hub.divisions.some(d=>d.id===division))division='';if(!division&&!hub.capabilities?.find(c=>c.division_id===null&&(c.event||c.records)))division=hub.capabilities?.find(c=>c.division_id&&(c.event||c.records))?.division_id||'';$o('opsDivision').innerHTML=opts([['','All divisions'],...hub.divisions.map(d=>[d.id,d.name])],division);note('opsStatus','');render();}
  function render(){if(!hub)return;
   $o('opsHubTitle').textContent=hub.organizations?.find(o=>o.id===org)?.name||'Organization Hub';
@@ -9313,7 +9359,7 @@ window.WMOperations=(()=>{
   $o('opsContent').querySelectorAll('[data-ops-members]').forEach(b=>b.onclick=()=>members(b.dataset.opsMembers));
   $o('opsContent').querySelectorAll('[data-ops-unlink]').forEach(b=>b.onclick=async()=>{const source=org;if(!await confirmAction('Remove this affiliation and its membership access?'))return;if(org!==source)return;try{await toolsRpc({action:'unlink',organization_id:source,team_id:b.dataset.opsUnlink});await reload();}catch(err){note('opsStatus',err.message,true)}});
   $o('opsCreateTeam')?.addEventListener('click',()=>openCreateTeam(org));
-  $o('opsContent').querySelectorAll('[data-ops-open-team]').forEach(b=>b.onclick=async()=>{const id=b.dataset.opsOpenTeam;if(!availableTeams.some(t=>t.id===id))return;closeSheets();if(activeTeam?.id!==id)await activateTeam(id);else setTab('home');});
+  $o('opsContent').querySelectorAll('[data-ops-open-team]').forEach(b=>b.onclick=async()=>{const id=b.dataset.opsOpenTeam;if(!availableTeams.some(t=>t.id===id))return;closeSheets();homeOrganizationId=availableTeams.find(t=>t.id===id).organization_id;homeOrganizationUser=session?.user?.id;try{localStorage.setItem(homeOrgKey(),homeOrganizationId);}catch{}if(activeTeam?.id!==id)await activateTeam(id);else setTab('home');});
   $o('opsContent').querySelectorAll('[data-ops-team-roster]').forEach(b=>b.onclick=()=>{const id=b.dataset.opsTeamRoster;tab='squad';render();if([...$o('opsRosterTeam').options].some(o=>o.value===id)){$o('opsRosterTeam').value=id;$o('opsLoadRoster').click();}});
  }
  function credentialStatus(p){
@@ -9337,7 +9383,7 @@ window.WMOperations=(()=>{
  function settings(){
   const admin=hub.admin;$o('opsContent').innerHTML=`${admin?'<button id="opsEditProfile" class="wide secondary">Edit organization name & type</button>':''}<div id="opsTeamRequests"></div><div class="ops-card"><h3>Your account code</h3><p class="ops-sheet-note">Share this code with an organization administrator when they need to add you as a leader.</p><p class="ops-code">${e(hub.user_id)}</p></div>
    ${admin?`<div class="ops-card"><h3>Divisions & subteams</h3>${hub.divisions.map(d=>`<p>${e(d.name)}${d.parent_id?' · within '+e(divName(d.parent_id)):''} <button class="secondary" data-div-edit="${d.id}">Edit</button></p>`).join('')}<button class="wide secondary" id="opsNewDivision">＋ Add division</button></div>
-   <div class="ops-card"><h3>Leadership assignments</h3><p class="ops-sheet-note">Add multiple assignments when a leader belongs to several divisions. Board members edit organization calendar events; division directors manage their assigned division and its subteams.</p>${hub.roles.map(r=>`<p>${e(r.name)} · ${e(roles[r.role])} · ${e(divName(r.division_id))} <button class="secondary" data-role-remove="${r.id}">Remove</button></p>`).join('')}<button class="wide secondary" id="opsNewRole">＋ Assign leader</button></div>
+   <div class="ops-card"><h3>Admin-assigned access</h3><p class="ops-sheet-note">Add multiple assignments when a leader belongs to several divisions. Board members edit organization calendar events; division directors manage their assigned division and its subteams.</p>${hub.roles.map(r=>`<p>${e(r.name)} · ${e(roles[r.role])} · ${e(divName(r.division_id))} <button class="secondary" data-role-remove="${r.id}">Remove</button></p>`).join('')}<button class="wide secondary" id="opsNewRole">＋ Grant access</button></div>
    <div class="ops-card"><h3>Teams & affiliated clubs</h3>${hub.teams.map(t=>`<p>${e(t.name)} · ${t.approved?e(divName(t.division_id)):t.external?'Approval needed':'Division not assigned'} <button class="secondary" data-team-link="${t.id}">${t.external&&!t.approved?'Review affiliation':'Assign division'}</button></p>`).join('')}
    <p class="ops-sheet-note">Affiliated clubs share membership support and published club events / budgets. Their rosters, parent contacts, weights and team settings stay with the club. Directors can access operational rosters only for teams managed by this organization.</p><p class="ops-code">${e(hub.invite_code||'No club affiliation code yet.')}</p><button id="opsInvite" class="wide secondary">${hub.invite_code?'Replace':'Create'} club affiliation code</button></div>`:'<div class="ops-card"><h3>Your leadership assignments</h3>'+hub.roles.map(r=>'<p>'+e(roles[r.role])+' · '+e(divName(r.division_id))+'</p>').join('')+'</div>'}
    ${actualIsTeamAdmin?`<div class="ops-card"><h3>Affiliate your current team</h3>${input('opsJoinCode','Organization code','','text','required')}<button id="opsJoinOrg" class="wide secondary">Request affiliation for ${e(activeTeam?.name||'this team')}</button><p class="ops-sheet-note">An organization administrator must approve this request.</p></div>`:''}`;
@@ -9424,7 +9470,7 @@ window.WMOperations=(()=>{
  async function calendar(team){try{return await rpc(false,{action:'calendar',team_id:team});}catch(err){console.warn('Organization calendar unavailable:',err.message);return [];}}
  async function feedback(){if(document.body.classList.contains('kiosk-locked'))return;closeSheets();feedbackId=crypto.randomUUID();note('feedbackStatus','');openSheet('feedbackSheet');await feedbackHistory();}
  async function feedbackHistory(){const target=$o('feedbackHistory');target.textContent='Loading…';try{const rows=await rpc(false,{action:'feedback',team_id:activeTeam?.id||null});target.innerHTML=list(rows).map(r=>`<article class="ops-card"><b>${e(r.category)}</b> ${badge(r.status)}<p>${e(r.body)}</p><small>${e(fmtDateTime(r.created_at))} · ${e(r.build)}</small>${r.response?'<p>Response: '+e(r.response)+'</p>':''}${actualIsTeamAdmin&&!managedLogin&&r.team_id===activeTeam?.id?`<div class="ops-actions"><button class="secondary" data-feedback-review="${r.id}">Review</button></div>`:''}</article>`).join('')||'<p>No feedback yet.</p>';target.querySelectorAll('[data-feedback-review]').forEach(b=>b.onclick=async()=>{const row=rows.find(r=>r.id===b.dataset.feedbackReview),result=await dialog({title:'Review feedback',fields:[{id:'status',label:'Status',options:['new','reviewing','planned','resolved'].map(s=>[s,s]),value:row.status},{id:'response',label:'Response',type:'textarea',value:row.response||''}],submit:'Save review'});if(!result)return;const {status,response}=result;try{await rpc(true,{action:'feedback_status',id:row.id,status,response});await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}});}catch(err){target.textContent=err.message;}}
- async function sendFeedback(ev){ev.preventDefault();if(!session?.user)return;$o('feedbackSend').disabled=true;try{await rpc(true,{action:'feedback',id:feedbackId||crypto.randomUUID(),team_id:activeTeam?.id||null,category:value('feedbackCategory'),body:value('feedbackBody'),build:'v0.16.5'});$o('feedbackBody').value='';feedbackId=crypto.randomUUID();note('feedbackStatus','Thanks—your feedback was saved.');await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}finally{$o('feedbackSend').disabled=false}}
+ async function sendFeedback(ev){ev.preventDefault();if(!session?.user)return;$o('feedbackSend').disabled=true;try{await rpc(true,{action:'feedback',id:feedbackId||crypto.randomUUID(),team_id:activeTeam?.id||null,category:value('feedbackCategory'),body:value('feedbackBody'),build:'v0.16.6'});$o('feedbackBody').value='';feedbackId=crypto.randomUUID();note('feedbackStatus','Thanks—your feedback was saved.');await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}finally{$o('feedbackSend').disabled=false}}
  function close(){finishDialog(null);generation++;editor=null;$o('opsRosterContacts')?.replaceChildren();$o('opsFields').replaceChildren();hub=null;['opsHubSheet','opsEditorSheet','feedbackSheet'].forEach(id=>show(id,false));}
  $o('opsDialogCancel').onclick=()=>finishDialog(null);
  $o('opsOrg').onchange=async()=>{org=value('opsOrg');division='';tab='home';hub=null;$o('opsContent').replaceChildren();$o('opsTabs').replaceChildren();$o('opsHubTitle').textContent='Organization Hub';note('opsStatus','Loading organization…');try{await reload()}catch(err){note('opsStatus',err.message,true)}};
@@ -9707,7 +9753,7 @@ window.WMScaleIdle = (() => {
   return { connection, reading, activity, check };
 })();
 
-document.getElementById('organizationHomeBtn').onclick=()=>WMOperations.open(activeTeam?.organization_id);
+document.getElementById('organizationHomeBtn').onclick=()=>WMOperations.open(selectedHomeOrganization());
 </script>
 <template id="wmSupportTemplate"><p class="wm-doc-kicker">THE TEAM MANAGER · WRESTLING</p>
 <h1>Help &amp; Support</h1>
