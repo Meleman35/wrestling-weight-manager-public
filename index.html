@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.15.26: athlete/parent four-digit PINs and private teammate scale checks. -->
+<!-- Wrestling Manager v0.15.27: athlete/parent four-digit PINs and private teammate scale checks. -->
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -366,9 +366,29 @@ button{touch-action:manipulation}
 .message-row.direct-chat:not(.mine) .message-meta{margin-left:37px}
 .message-row.direct-chat:not(.mine) .message-meta .sender-label,.message-row.direct-chat:not(.mine) .message-meta .meta-divider{display:inline}
 @media(max-width:520px){.thread-open{grid-template-columns:46px minmax(0,1fr)!important;padding:11px}.thread-open .thread-icon{width:46px;height:46px}}
+
+/* v0.15.27: match My Athletes horizontal card flow. */
+.weight-swipe-list{scroll-snap-type:x proximity;overscroll-behavior-x:contain;max-width:100%}
+.weight-swipe-card{scroll-snap-align:start;min-width:230px;flex:0 0 88%;margin-bottom:4px;grid-template-columns:54px minmax(0,1fr) 12px}
+.weight-swipe-copy{min-width:0}.weight-swipe-copy b{overflow-wrap:anywhere}.weight-swipe-copy strong{display:block;color:var(--primary);font-size:24px;margin-top:8px}.weight-swipe-copy small{font-size:12px}
+.coach-weight-snapshot,.personal-weight-list{min-width:0;max-width:100%}
+.athlete-scan-card{background:#fff;color:#10151c;border:1px solid #dce2e8;border-radius:22px;padding:20px 12px;text-align:center;margin:14px 0}
+.athlete-scan-card h3{font-size:24px;margin:10px 0 4px;overflow-wrap:anywhere}.athlete-scan-card p{font-size:13px;color:#4b5563}
+.athlete-card-qr{background:#fff;padding:20px;width:max-content;max-width:100%;margin:12px auto}
+.athlete-card-qr img,.athlete-card-qr canvas{max-width:100%;height:auto!important;image-rendering:pixelated}
+.athlete-card-barcode{background:#fff;max-width:100%}.athlete-card-barcode svg{width:100%;height:auto;display:block}
+#missingWeightChecksList .family-athlete-card{grid-template-columns:1fr auto;min-width:0}
+#weightScheduleSettingsBlock{scroll-margin-top:20px}
+
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script>/* QRCode.js 1.0.0, MIT, David Shim — bundled for athlete cards. */
+var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this.parsedData=[];for(var b=[],d=0,e=this.data.length;e>d;d++){var f=this.data.charCodeAt(d);f>65536?(b[0]=240|(1835008&f)>>>18,b[1]=128|(258048&f)>>>12,b[2]=128|(4032&f)>>>6,b[3]=128|63&f):f>2048?(b[0]=224|(61440&f)>>>12,b[1]=128|(4032&f)>>>6,b[2]=128|63&f):f>128?(b[0]=192|(1984&f)>>>6,b[1]=128|63&f):b[0]=f,this.parsedData=this.parsedData.concat(b)}this.parsedData.length!=this.data.length&&(this.parsedData.unshift(191),this.parsedData.unshift(187),this.parsedData.unshift(239))}function b(a,b){this.typeNumber=a,this.errorCorrectLevel=b,this.modules=null,this.moduleCount=0,this.dataCache=null,this.dataList=[]}function i(a,b){if(void 0==a.length)throw new Error(a.length+"/"+b);for(var c=0;c<a.length&&0==a[c];)c++;this.num=new Array(a.length-c+b);for(var d=0;d<a.length-c;d++)this.num[d]=a[d+c]}function j(a,b){this.totalCount=a,this.dataCount=b}function k(){this.buffer=[],this.length=0}function m(){return"undefined"!=typeof CanvasRenderingContext2D}function n(){var a=!1,b=navigator.userAgent;return/android/i.test(b)&&(a=!0,aMat=b.toString().match(/android ([0-9]\.[0-9])/i),aMat&&aMat[1]&&(a=parseFloat(aMat[1]))),a}function r(a,b){for(var c=1,e=s(a),f=0,g=l.length;g>=f;f++){var h=0;switch(b){case d.L:h=l[f][0];break;case d.M:h=l[f][1];break;case d.Q:h=l[f][2];break;case d.H:h=l[f][3]}if(h>=e)break;c++}if(c>l.length)throw new Error("Too long data");return c}function s(a){var b=encodeURI(a).toString().replace(/\%[0-9a-fA-F]{2}/g,"a");return b.length+(b.length!=a?3:0)}a.prototype={getLength:function(){return this.parsedData.length},write:function(a){for(var b=0,c=this.parsedData.length;c>b;b++)a.put(this.parsedData[b],8)}},b.prototype={addData:function(b){var c=new a(b);this.dataList.push(c),this.dataCache=null},isDark:function(a,b){if(0>a||this.moduleCount<=a||0>b||this.moduleCount<=b)throw new Error(a+","+b);return this.modules[a][b]},getModuleCount:function(){return this.moduleCount},make:function(){this.makeImpl(!1,this.getBestMaskPattern())},makeImpl:function(a,c){this.moduleCount=4*this.typeNumber+17,this.modules=new Array(this.moduleCount);for(var d=0;d<this.moduleCount;d++){this.modules[d]=new Array(this.moduleCount);for(var e=0;e<this.moduleCount;e++)this.modules[d][e]=null}this.setupPositionProbePattern(0,0),this.setupPositionProbePattern(this.moduleCount-7,0),this.setupPositionProbePattern(0,this.moduleCount-7),this.setupPositionAdjustPattern(),this.setupTimingPattern(),this.setupTypeInfo(a,c),this.typeNumber>=7&&this.setupTypeNumber(a),null==this.dataCache&&(this.dataCache=b.createData(this.typeNumber,this.errorCorrectLevel,this.dataList)),this.mapData(this.dataCache,c)},setupPositionProbePattern:function(a,b){for(var c=-1;7>=c;c++)if(!(-1>=a+c||this.moduleCount<=a+c))for(var d=-1;7>=d;d++)-1>=b+d||this.moduleCount<=b+d||(this.modules[a+c][b+d]=c>=0&&6>=c&&(0==d||6==d)||d>=0&&6>=d&&(0==c||6==c)||c>=2&&4>=c&&d>=2&&4>=d?!0:!1)},getBestMaskPattern:function(){for(var a=0,b=0,c=0;8>c;c++){this.makeImpl(!0,c);var d=f.getLostPoint(this);(0==c||a>d)&&(a=d,b=c)}return b},createMovieClip:function(a,b,c){var d=a.createEmptyMovieClip(b,c),e=1;this.make();for(var f=0;f<this.modules.length;f++)for(var g=f*e,h=0;h<this.modules[f].length;h++){var i=h*e,j=this.modules[f][h];j&&(d.beginFill(0,100),d.moveTo(i,g),d.lineTo(i+e,g),d.lineTo(i+e,g+e),d.lineTo(i,g+e),d.endFill())}return d},setupTimingPattern:function(){for(var a=8;a<this.moduleCount-8;a++)null==this.modules[a][6]&&(this.modules[a][6]=0==a%2);for(var b=8;b<this.moduleCount-8;b++)null==this.modules[6][b]&&(this.modules[6][b]=0==b%2)},setupPositionAdjustPattern:function(){for(var a=f.getPatternPosition(this.typeNumber),b=0;b<a.length;b++)for(var c=0;c<a.length;c++){var d=a[b],e=a[c];if(null==this.modules[d][e])for(var g=-2;2>=g;g++)for(var h=-2;2>=h;h++)this.modules[d+g][e+h]=-2==g||2==g||-2==h||2==h||0==g&&0==h?!0:!1}},setupTypeNumber:function(a){for(var b=f.getBCHTypeNumber(this.typeNumber),c=0;18>c;c++){var d=!a&&1==(1&b>>c);this.modules[Math.floor(c/3)][c%3+this.moduleCount-8-3]=d}for(var c=0;18>c;c++){var d=!a&&1==(1&b>>c);this.modules[c%3+this.moduleCount-8-3][Math.floor(c/3)]=d}},setupTypeInfo:function(a,b){for(var c=this.errorCorrectLevel<<3|b,d=f.getBCHTypeInfo(c),e=0;15>e;e++){var g=!a&&1==(1&d>>e);6>e?this.modules[e][8]=g:8>e?this.modules[e+1][8]=g:this.modules[this.moduleCount-15+e][8]=g}for(var e=0;15>e;e++){var g=!a&&1==(1&d>>e);8>e?this.modules[8][this.moduleCount-e-1]=g:9>e?this.modules[8][15-e-1+1]=g:this.modules[8][15-e-1]=g}this.modules[this.moduleCount-8][8]=!a},mapData:function(a,b){for(var c=-1,d=this.moduleCount-1,e=7,g=0,h=this.moduleCount-1;h>0;h-=2)for(6==h&&h--;;){for(var i=0;2>i;i++)if(null==this.modules[d][h-i]){var j=!1;g<a.length&&(j=1==(1&a[g]>>>e));var k=f.getMask(b,d,h-i);k&&(j=!j),this.modules[d][h-i]=j,e--,-1==e&&(g++,e=7)}if(d+=c,0>d||this.moduleCount<=d){d-=c,c=-c;break}}}},b.PAD0=236,b.PAD1=17,b.createData=function(a,c,d){for(var e=j.getRSBlocks(a,c),g=new k,h=0;h<d.length;h++){var i=d[h];g.put(i.mode,4),g.put(i.getLength(),f.getLengthInBits(i.mode,a)),i.write(g)}for(var l=0,h=0;h<e.length;h++)l+=e[h].dataCount;if(g.getLengthInBits()>8*l)throw new Error("code length overflow. ("+g.getLengthInBits()+">"+8*l+")");for(g.getLengthInBits()+4<=8*l&&g.put(0,4);0!=g.getLengthInBits()%8;)g.putBit(!1);for(;;){if(g.getLengthInBits()>=8*l)break;if(g.put(b.PAD0,8),g.getLengthInBits()>=8*l)break;g.put(b.PAD1,8)}return b.createBytes(g,e)},b.createBytes=function(a,b){for(var c=0,d=0,e=0,g=new Array(b.length),h=new Array(b.length),j=0;j<b.length;j++){var k=b[j].dataCount,l=b[j].totalCount-k;d=Math.max(d,k),e=Math.max(e,l),g[j]=new Array(k);for(var m=0;m<g[j].length;m++)g[j][m]=255&a.buffer[m+c];c+=k;var n=f.getErrorCorrectPolynomial(l),o=new i(g[j],n.getLength()-1),p=o.mod(n);h[j]=new Array(n.getLength()-1);for(var m=0;m<h[j].length;m++){var q=m+p.getLength()-h[j].length;h[j][m]=q>=0?p.get(q):0}}for(var r=0,m=0;m<b.length;m++)r+=b[m].totalCount;for(var s=new Array(r),t=0,m=0;d>m;m++)for(var j=0;j<b.length;j++)m<g[j].length&&(s[t++]=g[j][m]);for(var m=0;e>m;m++)for(var j=0;j<b.length;j++)m<h[j].length&&(s[t++]=h[j][m]);return s};for(var c={MODE_NUMBER:1,MODE_ALPHA_NUM:2,MODE_8BIT_BYTE:4,MODE_KANJI:8},d={L:1,M:0,Q:3,H:2},e={PATTERN000:0,PATTERN001:1,PATTERN010:2,PATTERN011:3,PATTERN100:4,PATTERN101:5,PATTERN110:6,PATTERN111:7},f={PATTERN_POSITION_TABLE:[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],G15:1335,G18:7973,G15_MASK:21522,getBCHTypeInfo:function(a){for(var b=a<<10;f.getBCHDigit(b)-f.getBCHDigit(f.G15)>=0;)b^=f.G15<<f.getBCHDigit(b)-f.getBCHDigit(f.G15);return(a<<10|b)^f.G15_MASK},getBCHTypeNumber:function(a){for(var b=a<<12;f.getBCHDigit(b)-f.getBCHDigit(f.G18)>=0;)b^=f.G18<<f.getBCHDigit(b)-f.getBCHDigit(f.G18);return a<<12|b},getBCHDigit:function(a){for(var b=0;0!=a;)b++,a>>>=1;return b},getPatternPosition:function(a){return f.PATTERN_POSITION_TABLE[a-1]},getMask:function(a,b,c){switch(a){case e.PATTERN000:return 0==(b+c)%2;case e.PATTERN001:return 0==b%2;case e.PATTERN010:return 0==c%3;case e.PATTERN011:return 0==(b+c)%3;case e.PATTERN100:return 0==(Math.floor(b/2)+Math.floor(c/3))%2;case e.PATTERN101:return 0==b*c%2+b*c%3;case e.PATTERN110:return 0==(b*c%2+b*c%3)%2;case e.PATTERN111:return 0==(b*c%3+(b+c)%2)%2;default:throw new Error("bad maskPattern:"+a)}},getErrorCorrectPolynomial:function(a){for(var b=new i([1],0),c=0;a>c;c++)b=b.multiply(new i([1,g.gexp(c)],0));return b},getLengthInBits:function(a,b){if(b>=1&&10>b)switch(a){case c.MODE_NUMBER:return 10;case c.MODE_ALPHA_NUM:return 9;case c.MODE_8BIT_BYTE:return 8;case c.MODE_KANJI:return 8;default:throw new Error("mode:"+a)}else if(27>b)switch(a){case c.MODE_NUMBER:return 12;case c.MODE_ALPHA_NUM:return 11;case c.MODE_8BIT_BYTE:return 16;case c.MODE_KANJI:return 10;default:throw new Error("mode:"+a)}else{if(!(41>b))throw new Error("type:"+b);switch(a){case c.MODE_NUMBER:return 14;case c.MODE_ALPHA_NUM:return 13;case c.MODE_8BIT_BYTE:return 16;case c.MODE_KANJI:return 12;default:throw new Error("mode:"+a)}}},getLostPoint:function(a){for(var b=a.getModuleCount(),c=0,d=0;b>d;d++)for(var e=0;b>e;e++){for(var f=0,g=a.isDark(d,e),h=-1;1>=h;h++)if(!(0>d+h||d+h>=b))for(var i=-1;1>=i;i++)0>e+i||e+i>=b||(0!=h||0!=i)&&g==a.isDark(d+h,e+i)&&f++;f>5&&(c+=3+f-5)}for(var d=0;b-1>d;d++)for(var e=0;b-1>e;e++){var j=0;a.isDark(d,e)&&j++,a.isDark(d+1,e)&&j++,a.isDark(d,e+1)&&j++,a.isDark(d+1,e+1)&&j++,(0==j||4==j)&&(c+=3)}for(var d=0;b>d;d++)for(var e=0;b-6>e;e++)a.isDark(d,e)&&!a.isDark(d,e+1)&&a.isDark(d,e+2)&&a.isDark(d,e+3)&&a.isDark(d,e+4)&&!a.isDark(d,e+5)&&a.isDark(d,e+6)&&(c+=40);for(var e=0;b>e;e++)for(var d=0;b-6>d;d++)a.isDark(d,e)&&!a.isDark(d+1,e)&&a.isDark(d+2,e)&&a.isDark(d+3,e)&&a.isDark(d+4,e)&&!a.isDark(d+5,e)&&a.isDark(d+6,e)&&(c+=40);for(var k=0,e=0;b>e;e++)for(var d=0;b>d;d++)a.isDark(d,e)&&k++;var l=Math.abs(100*k/b/b-50)/5;return c+=10*l}},g={glog:function(a){if(1>a)throw new Error("glog("+a+")");return g.LOG_TABLE[a]},gexp:function(a){for(;0>a;)a+=255;for(;a>=256;)a-=255;return g.EXP_TABLE[a]},EXP_TABLE:new Array(256),LOG_TABLE:new Array(256)},h=0;8>h;h++)g.EXP_TABLE[h]=1<<h;for(var h=8;256>h;h++)g.EXP_TABLE[h]=g.EXP_TABLE[h-4]^g.EXP_TABLE[h-5]^g.EXP_TABLE[h-6]^g.EXP_TABLE[h-8];for(var h=0;255>h;h++)g.LOG_TABLE[g.EXP_TABLE[h]]=h;i.prototype={get:function(a){return this.num[a]},getLength:function(){return this.num.length},multiply:function(a){for(var b=new Array(this.getLength()+a.getLength()-1),c=0;c<this.getLength();c++)for(var d=0;d<a.getLength();d++)b[c+d]^=g.gexp(g.glog(this.get(c))+g.glog(a.get(d)));return new i(b,0)},mod:function(a){if(this.getLength()-a.getLength()<0)return this;for(var b=g.glog(this.get(0))-g.glog(a.get(0)),c=new Array(this.getLength()),d=0;d<this.getLength();d++)c[d]=this.get(d);for(var d=0;d<a.getLength();d++)c[d]^=g.gexp(g.glog(a.get(d))+b);return new i(c,0).mod(a)}},j.RS_BLOCK_TABLE=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],j.getRSBlocks=function(a,b){var c=j.getRsBlockTable(a,b);if(void 0==c)throw new Error("bad rs block @ typeNumber:"+a+"/errorCorrectLevel:"+b);for(var d=c.length/3,e=[],f=0;d>f;f++)for(var g=c[3*f+0],h=c[3*f+1],i=c[3*f+2],k=0;g>k;k++)e.push(new j(h,i));return e},j.getRsBlockTable=function(a,b){switch(b){case d.L:return j.RS_BLOCK_TABLE[4*(a-1)+0];case d.M:return j.RS_BLOCK_TABLE[4*(a-1)+1];case d.Q:return j.RS_BLOCK_TABLE[4*(a-1)+2];case d.H:return j.RS_BLOCK_TABLE[4*(a-1)+3];default:return void 0}},k.prototype={get:function(a){var b=Math.floor(a/8);return 1==(1&this.buffer[b]>>>7-a%8)},put:function(a,b){for(var c=0;b>c;c++)this.putBit(1==(1&a>>>b-c-1))},getLengthInBits:function(){return this.length},putBit:function(a){var b=Math.floor(this.length/8);this.buffer.length<=b&&this.buffer.push(0),a&&(this.buffer[b]|=128>>>this.length%8),this.length++}};var l=[[17,14,11,7],[32,26,20,14],[53,42,32,24],[78,62,46,34],[106,84,60,44],[134,106,74,58],[154,122,86,64],[192,152,108,84],[230,180,130,98],[271,213,151,119],[321,251,177,137],[367,287,203,155],[425,331,241,177],[458,362,258,194],[520,412,292,220],[586,450,322,250],[644,504,364,280],[718,560,394,310],[792,624,442,338],[858,666,482,382],[929,711,509,403],[1003,779,565,439],[1091,857,611,461],[1171,911,661,511],[1273,997,715,535],[1367,1059,751,593],[1465,1125,805,625],[1528,1190,868,658],[1628,1264,908,698],[1732,1370,982,742],[1840,1452,1030,790],[1952,1538,1112,842],[2068,1628,1168,898],[2188,1722,1228,958],[2303,1809,1283,983],[2431,1911,1351,1051],[2563,1989,1423,1093],[2699,2099,1499,1139],[2809,2213,1579,1219],[2953,2331,1663,1273]],o=function(){var a=function(a,b){this._el=a,this._htOption=b};return a.prototype.draw=function(a){function g(a,b){var c=document.createElementNS("http://www.w3.org/2000/svg",a);for(var d in b)b.hasOwnProperty(d)&&c.setAttribute(d,b[d]);return c}var b=this._htOption,c=this._el,d=a.getModuleCount();Math.floor(b.width/d),Math.floor(b.height/d),this.clear();var h=g("svg",{viewBox:"0 0 "+String(d)+" "+String(d),width:"100%",height:"100%",fill:b.colorLight});h.setAttributeNS("http://www.w3.org/2000/xmlns/","xmlns:xlink","http://www.w3.org/1999/xlink"),c.appendChild(h),h.appendChild(g("rect",{fill:b.colorDark,width:"1",height:"1",id:"template"}));for(var i=0;d>i;i++)for(var j=0;d>j;j++)if(a.isDark(i,j)){var k=g("use",{x:String(i),y:String(j)});k.setAttributeNS("http://www.w3.org/1999/xlink","href","#template"),h.appendChild(k)}},a.prototype.clear=function(){for(;this._el.hasChildNodes();)this._el.removeChild(this._el.lastChild)},a}(),p="svg"===document.documentElement.tagName.toLowerCase(),q=p?o:m()?function(){function a(){this._elImage.src=this._elCanvas.toDataURL("image/png"),this._elImage.style.display="block",this._elCanvas.style.display="none"}function d(a,b){var c=this;if(c._fFail=b,c._fSuccess=a,null===c._bSupportDataURI){var d=document.createElement("img"),e=function(){c._bSupportDataURI=!1,c._fFail&&_fFail.call(c)},f=function(){c._bSupportDataURI=!0,c._fSuccess&&c._fSuccess.call(c)};return d.onabort=e,d.onerror=e,d.onload=f,d.src="data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==",void 0}c._bSupportDataURI===!0&&c._fSuccess?c._fSuccess.call(c):c._bSupportDataURI===!1&&c._fFail&&c._fFail.call(c)}if(this._android&&this._android<=2.1){var b=1/window.devicePixelRatio,c=CanvasRenderingContext2D.prototype.drawImage;CanvasRenderingContext2D.prototype.drawImage=function(a,d,e,f,g,h,i,j){if("nodeName"in a&&/img/i.test(a.nodeName))for(var l=arguments.length-1;l>=1;l--)arguments[l]=arguments[l]*b;else"undefined"==typeof j&&(arguments[1]*=b,arguments[2]*=b,arguments[3]*=b,arguments[4]*=b);c.apply(this,arguments)}}var e=function(a,b){this._bIsPainted=!1,this._android=n(),this._htOption=b,this._elCanvas=document.createElement("canvas"),this._elCanvas.width=b.width,this._elCanvas.height=b.height,a.appendChild(this._elCanvas),this._el=a,this._oContext=this._elCanvas.getContext("2d"),this._bIsPainted=!1,this._elImage=document.createElement("img"),this._elImage.style.display="none",this._el.appendChild(this._elImage),this._bSupportDataURI=null};return e.prototype.draw=function(a){var b=this._elImage,c=this._oContext,d=this._htOption,e=a.getModuleCount(),f=d.width/e,g=d.height/e,h=Math.round(f),i=Math.round(g);b.style.display="none",this.clear();for(var j=0;e>j;j++)for(var k=0;e>k;k++){var l=a.isDark(j,k),m=k*f,n=j*g;c.strokeStyle=l?d.colorDark:d.colorLight,c.lineWidth=1,c.fillStyle=l?d.colorDark:d.colorLight,c.fillRect(m,n,f,g),c.strokeRect(Math.floor(m)+.5,Math.floor(n)+.5,h,i),c.strokeRect(Math.ceil(m)-.5,Math.ceil(n)-.5,h,i)}this._bIsPainted=!0},e.prototype.makeImage=function(){this._bIsPainted&&d.call(this,a)},e.prototype.isPainted=function(){return this._bIsPainted},e.prototype.clear=function(){this._oContext.clearRect(0,0,this._elCanvas.width,this._elCanvas.height),this._bIsPainted=!1},e.prototype.round=function(a){return a?Math.floor(1e3*a)/1e3:a},e}():function(){var a=function(a,b){this._el=a,this._htOption=b};return a.prototype.draw=function(a){for(var b=this._htOption,c=this._el,d=a.getModuleCount(),e=Math.floor(b.width/d),f=Math.floor(b.height/d),g=['<table style="border:0;border-collapse:collapse;">'],h=0;d>h;h++){g.push("<tr>");for(var i=0;d>i;i++)g.push('<td style="border:0;border-collapse:collapse;padding:0;margin:0;width:'+e+"px;height:"+f+"px;background-color:"+(a.isDark(h,i)?b.colorDark:b.colorLight)+';"></td>');g.push("</tr>")}g.push("</table>"),c.innerHTML=g.join("");var j=c.childNodes[0],k=(b.width-j.offsetWidth)/2,l=(b.height-j.offsetHeight)/2;k>0&&l>0&&(j.style.margin=l+"px "+k+"px")},a.prototype.clear=function(){this._el.innerHTML=""},a}();QRCode=function(a,b){if(this._htOption={width:256,height:256,typeNumber:4,colorDark:"#000000",colorLight:"#ffffff",correctLevel:d.H},"string"==typeof b&&(b={text:b}),b)for(var c in b)this._htOption[c]=b[c];"string"==typeof a&&(a=document.getElementById(a)),this._android=n(),this._el=a,this._oQRCode=null,this._oDrawing=new q(this._el,this._htOption),this._htOption.text&&this.makeCode(this._htOption.text)},QRCode.prototype.makeCode=function(a){this._oQRCode=new b(r(a,this._htOption.correctLevel),this._htOption.correctLevel),this._oQRCode.addData(a),this._oQRCode.make(),this._el.title=a,this._oDrawing.draw(this._oQRCode),this.makeImage()},QRCode.prototype.makeImage=function(){"function"==typeof this._oDrawing.makeImage&&(!this._android||this._android>=3)&&this._oDrawing.makeImage()},QRCode.prototype.clear=function(){this._oDrawing.clear()},QRCode.CorrectLevel=d}();
+</script>
+<script>
+/*! JsBarcode v3.12.1 | (c) Johan Lindell | MIT license */
+!function(t){var e={};function n(r){if(e[r])return e[r].exports;var o=e[r]={i:r,l:!1,exports:{}};return t[r].call(o.exports,o,o.exports,n),o.l=!0,o.exports}n.m=t,n.c=e,n.d=function(t,e,r){n.o(t,e)||Object.defineProperty(t,e,{enumerable:!0,get:r})},n.r=function(t){"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(t,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(t,"__esModule",{value:!0})},n.t=function(t,e){if(1&e&&(t=n(t)),8&e)return t;if(4&e&&"object"==typeof t&&t&&t.__esModule)return t;var r=Object.create(null);if(n.r(r),Object.defineProperty(r,"default",{enumerable:!0,value:t}),2&e&&"string"!=typeof t)for(var o in t)n.d(r,o,function(e){return t[e]}.bind(null,o));return r},n.n=function(t){var e=t&&t.__esModule?function(){return t.default}:function(){return t};return n.d(e,"a",e),e},n.o=function(t,e){return Object.prototype.hasOwnProperty.call(t,e)},n.p="",n(n.s=7)}([function(t,e,n){"use strict";var r;function o(t,e,n){return e in t?Object.defineProperty(t,e,{value:n,enumerable:!0,configurable:!0,writable:!0}):t[e]=n,t}Object.defineProperty(e,"__esModule",{value:!0});var i=e.SET_A=0,a=e.SET_B=1,u=e.SET_C=2,s=(e.SHIFT=98,e.START_A=103),f=e.START_B=104,c=e.START_C=105;e.MODULO=103,e.STOP=106,e.FNC1=207,e.SET_BY_CODE=(o(r={},s,i),o(r,f,a),o(r,c,u),r),e.SWAP={101:i,100:a,99:u},e.A_START_CHAR=String.fromCharCode(208),e.B_START_CHAR=String.fromCharCode(209),e.C_START_CHAR=String.fromCharCode(210),e.A_CHARS="[\0-_È-Ï]",e.B_CHARS="[ -È-Ï]",e.C_CHARS="(Ï*[0-9]{2}Ï*)",e.BARS=[11011001100,11001101100,11001100110,10010011e3,10010001100,10001001100,10011001e3,10011000100,10001100100,11001001e3,11001000100,11000100100,10110011100,10011011100,10011001110,10111001100,10011101100,10011100110,11001110010,11001011100,11001001110,11011100100,11001110100,11101101110,11101001100,11100101100,11100100110,11101100100,11100110100,11100110010,11011011e3,11011000110,11000110110,10100011e3,10001011e3,10001000110,10110001e3,10001101e3,10001100010,11010001e3,11000101e3,11000100010,10110111e3,10110001110,10001101110,10111011e3,10111000110,10001110110,11101110110,11010001110,11000101110,11011101e3,11011100010,11011101110,11101011e3,11101000110,11100010110,11101101e3,11101100010,11100011010,11101111010,11001000010,11110001010,1010011e4,10100001100,1001011e4,10010000110,10000101100,10000100110,1011001e4,10110000100,1001101e4,10011000010,10000110100,10000110010,11000010010,1100101e4,11110111010,11000010100,10001111010,10100111100,10010111100,10010011110,10111100100,10011110100,10011110010,11110100100,11110010100,11110010010,11011011110,11011110110,11110110110,10101111e3,10100011110,10001011110,10111101e3,10111100010,11110101e3,11110100010,10111011110,10111101110,11101011110,11110101110,11010000100,1101001e4,11010011100,1100011101011]},function(t,e,n){"use strict";Object.defineProperty(e,"__esModule",{value:!0});var r,o=function(){function t(t,e){for(var n=0;n<e.length;n++){var r=e[n];r.enumerable=r.enumerable||!1,r.configurable=!0,"value"in r&&(r.writable=!0),Object.defineProperty(t,r.key,r)}}return function(e,n,r){return n&&t(e.prototype,n),r&&t(e,r),e}}(),i=n(11),a=(r=i)&&r.__esModule?r:{default:r},u=n(0);var s=function(t){function e(t,n){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e);var r=function(t,e){if(!t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return!e||"object"!=typeof e&&"function"!=typeof e?t:e}(this,(e.__proto__||Object.getPrototypeOf(e)).call(this,t.substring(1),n));return r.bytes=t.split("").map((function(t){return t.charCodeAt(0)})),r}return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function, not "+typeof e);t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,enumerable:!1,writable:!0,configurable:!0}}),e&&(Object.setPrototypeOf?Object.setPrototypeOf(t,e):t.__proto__=e)}(e,t),o(e,[{key:"valid",value:function(){return/^[\x00-\x7F\xC8-\xD3]+$/.test(this.data)}},{key:"encode",value:function(){var t=this.bytes,n=t.shift()-105,r=u.SET_BY_CODE[n];if(void 0===r)throw new RangeError("The encoding does not start with a start character.");!0===this.shouldEncodeAsEan128()&&t.unshift(u.FNC1);var o=e.next(t,1,r);return{text:this.text===this.data?this.text.replace(/[^\x20-\x7E]/g,""):this.text,data:e.getBar(n)+o.result+e.getBar((o.checksum+n)%u.MODULO)+e.getBar(u.STOP)}}},{key:"shouldEncodeAsEan128",value:function(){var t=this.options.ean128||!1;return"string"==typeof t&&(t="true"===t.toLowerCase()),t}}],[{key:"getBar",value:function(t){return u.BARS[t]?u.BARS[t].toString():""}},{key:"correctIndex",value:function(t,e){if(e===u.SET_A){var n=t.shift();return n<32?n+64:n-32}return e===u.SET_B?t.shift()-32:10*(t.shift()-48)+t.shift()-48}},{key:"next",value:function(t,n,r){if(!t.length)return{result:"",checksum:0};var o=void 0,i=void 0;if(t[0]>=200){i=t.shift()-105;var a=u.SWAP[i];void 0!==a?o=e.next(t,n+1,a):(r!==u.SET_A&&r!==u.SET_B||i!==u.SHIFT||(t[0]=r===u.SET_A?t[0]>95?t[0]-96:t[0]:t[0]<32?t[0]+96:t[0]),o=e.next(t,n+1,r))}else i=e.correctIndex(t,r),o=e.next(t,n+1,r);var s=i*n;return{result:e.getBar(i)+o.result,checksum:s+o.checksum}}}]),e}(a.default);e.default=s},function(t,e,n){"use strict";Object.defineProperty(e,"__esModule",{value:!0});var r=Object.assign||function(t){for(var e=1;e<arguments.length;e++){var n=arguments[e];for(var r in n)Object.prototype.hasOwnProperty.call(n,r)&&(t[r]=n[r])}return t};e.default=function(t,e){return r({},t,e)}},function(t,e,n){"use strict";Object.defineProperty(e,"__esModule",{value:!0}),e.default=function(t){var e=["width","height","textMargin","fontSize","margin","marginTop","marginBottom","marginLeft","marginRight"];for(var n in e)e.hasOwnProperty(n)&&(n=e[n],"string"==typeof t[n]&&(t[n]=parseInt(t[n],10)));"string"==typeof t.displayValue&&(t.displayValue="false"!=t.displayValue);return t}},function(t,e,n){"use strict";Object.defineProperty(e,"__esModule",{value:!0});var r={width:2,height:100,format:"auto",displayValue:!0,fontOptions:"",font:"monospace",text:void 0,textAlign:"center",textPosition:"bottom",textMargin:2,fontSize:20,background:"#ffffff",lineColor:"#000000",margin:10,marginTop:void 0,marginBottom:void 0,marginLeft:void 0,marginRight:void 0,valid:function(){}};e.default=r},function(t,e,n){"use strict";Object.defineProperty(e,"__esModule",{value:!0}),e.getTotalWidthOfEncodings=e.calculateEncodingAttributes=e.getBarcodePadding=e.getEncodingHeight=e.getMaximumHeightOfEncodings=void 0;var r,o=n(2),i=(r=o)&&r.__esModule?r:{default:r};function a(t,e){return e.height+(e.displayValue&&t.text.length>0?e.fontSize+e.textMargin:0)+e.marginTop+e.marginBottom}function u(t,e,n){if(n.displayValue&&e<t){if("center"==n.textAlign)return Math.floor((t-e)/2);if("left"==n.textAlign)return 0;if("right"==n.textAlign)return Math.floor(t-e)}return 0}function s(t,e,n){var r;if(n)r=n;else{if("undefined"==typeof document)return 0;r=document.createElement("canvas").getContext("2d")}r.font=e.fontOptions+" "+e.fontSize+"px "+e.font;var o=r.measureText(t);return o?o.width:0}e.getMaximumHeightOfEncodings=function(t){for(var e=0,n=0;n<t.length;n++)t[n].height>e&&(e=t[n].height);return e},e.getEncodingHeight=a,e.getBarcodePadding=u,e.calculateEncodingAttributes=function(t,e,n){for(var r=0;r<t.length;r++){var o,f=t[r],c=(0,i.default)(e,f.options);o=c.displayValue?s(f.text,c,n):0;var l=f.data.length*c.width;f.width=Math.ceil(Math.max(o,l)),f.height=a(f,c),f.barcodePadding=u(o,l,c)}},e.getTotalWidthOfEncodings=function(t){for(var e=0,n=0;n<t.length;n++)e+=t[n].width;return e}},function(t,e,n){"use strict";function r(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}function o(t,e){if(!t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return!e||"object"!=typeof e&&"function"!=typeof e?t:e}function i(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function, not "+typeof e);t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,enumerable:!1,writable:!0,configurable:!0}}),e&&(Object.setPrototypeOf?Object.setPrototypeOf(t,e):t.__proto__=e)}Object.defineProperty(e,"__esModule",{value:!0});var a=function(t){function e(t,n){r(this,e);var i=o(this,(e.__proto__||Object.getPrototypeOf(e)).call(this));return i.name="InvalidInputException",i.symbology=t,i.input=n,i.message='"'+i.input+'" is not a valid input for '+i.symbology,i}return i(e,Error),e}(),u=function(t){function e(){r(this,e);var t=o(this,(e.__proto__||Object.getPrototypeOf(e)).call(this));return t.name="InvalidElementException",t.message="Not supported type to render on",t}return i(e,Error),e}(),s=function(t){function e(){r(this,e);var t=o(this,(e.__proto__||Object.getPrototypeOf(e)).call(this));return t.name="NoElementException",t.message="No element to render on.",t}return i(e,Error),e}();e.InvalidInputException=a,e.InvalidElementException=u,e.NoElementException=s},function(t,e,n){"use strict";var r=d(n(8)),o=d(n(2)),i=d(n(16)),a=d(n(17)),u=d(n(18)),s=d(n(3)),f=d(n(24)),c=n(6),l=d(n(4));function d(t){return t&&t.__esModule?t:{default:t}}var p=function(){},h=function(t,e,n){var r=new p;if(void 0===t)throw Error("No element to render on was provided.");return r._renderProperties=(0,u.default)(t),r._encodings=[],r._options=l.default,r._errorHandler=new f.default(r),void 0!==e&&((n=n||{}).format||(n.format=b()),r.options(n)[n.format](e,n).render()),r};for(var v in h.getModule=function(t){return r.default[t]},r.default)r.default.hasOwnProperty(v)&&g(r.default,v);function g(t,e){p.prototype[e]=p.prototype[e.toUpperCase()]=p.prototype[e.toLowerCase()]=function(n,r){var i=this;return i._errorHandler.wrapBarcodeCall((function(){r.text=void 0===r.text?void 0:""+r.text;var a=(0,o.default)(i._options,r);a=(0,s.default)(a);var u=t[e],f=y(n,u,a);return i._encodings.push(f),i}))}}function y(t,e,n){var r=new e(t=""+t,n);if(!r.valid())throw new c.InvalidInputException(r.constructor.name,t);var a=r.encode();a=(0,i.default)(a);for(var u=0;u<a.length;u++)a[u].options=(0,o.default)(n,a[u].options);return a}function b(){return r.default.CODE128?"CODE128":Object.keys(r.default)[0]}function _(t,e,n){e=(0,i.default)(e);for(var r=0;r<e.length;r++)e[r].options=(0,o.default)(n,e[r].options),(0,a.default)(e[r].options);(0,a.default)(n),new(0,t.renderer)(t.element,e,n).render(),t.afterRender&&t.afterRender()}p.prototype.options=function(t){return this._options=(0,o.default)(this._options,t),this},p.prototype.blank=function(t){var e=new Array(t+1).join("0");return this._encodings.push({data:e}),this},p.prototype.init=function(){var t;if(this._renderProperties)for(var e in Array.isArray(this._renderProperties)||(this._renderProperties=[this._renderProperties]),this._renderProperties){t=this._renderProperties[e];var n=(0,o.default)(this._options,t.options);"auto"==n.format&&(n.format=b()),this._errorHandler.wrapBarcodeCall((function(){var e=y(n.value,r.default[n.format.toUpperCase()],n);_(t,e,n)}))}},p.prototype.render=function(){if(!this._renderProperties)throw new c.NoElementException;if(Array.isArray(this._renderProperties))for(var t=0;t<this._renderProperties.length;t++)_(this._renderProperties[t],this._encodings,this._options);else _(this._renderProperties,this._encodings,this._options);return this},p.prototype._defaults=l.default,"undefined"!=typeof window&&(window.JsBarcode=h),"undefined"!=typeof jQuery&&(jQuery.fn.JsBarcode=function(t,e){var n=[];return jQuery(this).each((function(){n.push(this)})),h(n,t,e)}),t.exports=h},function(t,e,n){"use strict";Object.defineProperty(e,"__esModule",{value:!0});var r=n(9);e.default={CODE128:r.CODE128,CODE128A:r.CODE128A,CODE128B:r.CODE128B,CODE128C:r.CODE128C}},function(t,e,n){"use strict";Object.defineProperty(e,"__esModule",{value:!0}),e.CODE128C=e.CODE128B=e.CODE128A=e.CODE128=void 0;var r=u(n(10)),o=u(n(13)),i=u(n(14)),a=u(n(15));function u(t){return t&&t.__esModule?t:{default:t}}e.CODE128=r.default,e.CODE128A=o.default,e.CODE128B=i.default,e.CODE128C=a.default},function(t,e,n){"use strict";Object.defineProperty(e,"__esModule",{value:!0});var r=i(n(1)),o=i(n(12));function i(t){return t&&t.__esModule?t:{default:t}}function a(t,e){if(!t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return!e||"object"!=typeof e&&"function"!=typeof e?t:e}var u=function(t){function e(t,n){if(function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),/^[\x00-\x7F\xC8-\xD3]+$/.test(t))var r=a(this,(e.__proto__||Object.getPrototypeOf(e)).call(this,(0,o.default)(t),n));else r=a(this,(e.__proto__||Object.getPrototypeOf(e)).call(this,t,n));return a(r)}return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function, not "+typeof e);t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,enumerable:!1,writable:!0,configurable:!0}}),e&&(Object.setPrototypeOf?Object.setPrototypeOf(t,e):t.__proto__=e)}(e,t),e}(r.default);e.default=u},function(t,e,n){"use strict";Object.defineProperty(e,"__esModule",{value:!0});e.default=function t(e,n){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.data=e,this.text=n.text||e,this.options=n}},function(t,e,n){"use strict";Object.defineProperty(e,"__esModule",{value:!0});var r=n(0),o=function(t){return t.match(new RegExp("^"+r.A_CHARS+"*"))[0].length},i=function(t){return t.match(new RegExp("^"+r.B_CHARS+"*"))[0].length},a=function(t){return t.match(new RegExp("^"+r.C_CHARS+"*"))[0]};function u(t,e){var n=e?r.A_CHARS:r.B_CHARS,o=t.match(new RegExp("^("+n+"+?)(([0-9]{2}){2,})([^0-9]|$)"));if(o)return o[1]+String.fromCharCode(204)+s(t.substring(o[1].length));var i=t.match(new RegExp("^"+n+"+"))[0];return i.length===t.length?t:i+String.fromCharCode(e?205:206)+u(t.substring(i.length),!e)}function s(t){var e=a(t),n=e.length;if(n===t.length)return t;t=t.substring(n);var r=o(t)>=i(t);return e+String.fromCharCode(r?206:205)+u(t,r)}e.default=function(t){var e=void 0;if(a(t).length>=2)e=r.C_START_CHAR+s(t);else{var n=o(t)>i(t);e=(n?r.A_START_CHAR:r.B_START_CHAR)+u(t,n)}return e.replace(/[\xCD\xCE]([^])[\xCD\xCE]/,(function(t,e){return String.fromCharCode(203)+e}))}},function(t,e,n){"use strict";Object.defineProperty(e,"__esModule",{value:!0});var r,o=function(){function t(t,e){for(var n=0;n<e.length;n++){var r=e[n];r.enumerable=r.enumerable||!1,r.configurable=!0,"value"in r&&(r.writable=!0),Object.defineProperty(t,r.key,r)}}return function(e,n,r){return n&&t(e.prototype,n),r&&t(e,r),e}}(),i=n(1),a=(r=i)&&r.__esModule?r:{default:r},u=n(0);var s=function(t){function e(t,n){return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),function(t,e){if(!t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return!e||"object"!=typeof e&&"function"!=typeof e?t:e}(this,(e.__proto__||Object.getPrototypeOf(e)).call(this,u.A_START_CHAR+t,n))}return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function, not "+typeof e);t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,enumerable:!1,writable:!0,configurable:!0}}),e&&(Object.setPrototypeOf?Object.setPrototypeOf(t,e):t.__proto__=e)}(e,t),o(e,[{key:"valid",value:function(){return new RegExp("^"+u.A_CHARS+"+$").test(this.data)}}]),e}(a.default);e.default=s},function(t,e,n){"use strict";Object.defineProperty(e,"__esModule",{value:!0});var r,o=function(){function t(t,e){for(var n=0;n<e.length;n++){var r=e[n];r.enumerable=r.enumerable||!1,r.configurable=!0,"value"in r&&(r.writable=!0),Object.defineProperty(t,r.key,r)}}return function(e,n,r){return n&&t(e.prototype,n),r&&t(e,r),e}}(),i=n(1),a=(r=i)&&r.__esModule?r:{default:r},u=n(0);var s=function(t){function e(t,n){return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),function(t,e){if(!t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return!e||"object"!=typeof e&&"function"!=typeof e?t:e}(this,(e.__proto__||Object.getPrototypeOf(e)).call(this,u.B_START_CHAR+t,n))}return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function, not "+typeof e);t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,enumerable:!1,writable:!0,configurable:!0}}),e&&(Object.setPrototypeOf?Object.setPrototypeOf(t,e):t.__proto__=e)}(e,t),o(e,[{key:"valid",value:function(){return new RegExp("^"+u.B_CHARS+"+$").test(this.data)}}]),e}(a.default);e.default=s},function(t,e,n){"use strict";Object.defineProperty(e,"__esModule",{value:!0});var r,o=function(){function t(t,e){for(var n=0;n<e.length;n++){var r=e[n];r.enumerable=r.enumerable||!1,r.configurable=!0,"value"in r&&(r.writable=!0),Object.defineProperty(t,r.key,r)}}return function(e,n,r){return n&&t(e.prototype,n),r&&t(e,r),e}}(),i=n(1),a=(r=i)&&r.__esModule?r:{default:r},u=n(0);var s=function(t){function e(t,n){return function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,e),function(t,e){if(!t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return!e||"object"!=typeof e&&"function"!=typeof e?t:e}(this,(e.__proto__||Object.getPrototypeOf(e)).call(this,u.C_START_CHAR+t,n))}return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function, not "+typeof e);t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,enumerable:!1,writable:!0,configurable:!0}}),e&&(Object.setPrototypeOf?Object.setPrototypeOf(t,e):t.__proto__=e)}(e,t),o(e,[{key:"valid",value:function(){return new RegExp("^"+u.C_CHARS+"+$").test(this.data)}}]),e}(a.default);e.default=s},function(t,e,n){"use strict";Object.defineProperty(e,"__esModule",{value:!0}),e.default=function(t){var e=[];return function t(n){if(Array.isArray(n))for(var r=0;r<n.length;r++)t(n[r]);else n.text=n.text||"",n.data=n.data||"",e.push(n)}(t),e}},function(t,e,n){"use strict";Object.defineProperty(e,"__esModule",{value:!0}),e.default=function(t){return t.marginTop=t.marginTop||t.margin,t.marginBottom=t.marginBottom||t.margin,t.marginRight=t.marginRight||t.margin,t.marginLeft=t.marginLeft||t.margin,t}},function(t,e,n){"use strict";Object.defineProperty(e,"__esModule",{value:!0});var r="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t},o=u(n(19)),i=u(n(20)),a=n(6);function u(t){return t&&t.__esModule?t:{default:t}}function s(t){if("string"==typeof t)return function(t){var e=document.querySelectorAll(t);if(0===e.length)return;for(var n=[],r=0;r<e.length;r++)n.push(s(e[r]));return n}(t);if(Array.isArray(t)){for(var e=[],n=0;n<t.length;n++)e.push(s(t[n]));return e}if("undefined"!=typeof HTMLCanvasElement&&t instanceof HTMLImageElement)return u=t,{element:f=document.createElement("canvas"),options:(0,o.default)(u),renderer:i.default.CanvasRenderer,afterRender:function(){u.setAttribute("src",f.toDataURL())}};if(t&&t.nodeName&&"svg"===t.nodeName.toLowerCase()||"undefined"!=typeof SVGElement&&t instanceof SVGElement)return{element:t,options:(0,o.default)(t),renderer:i.default.SVGRenderer};if("undefined"!=typeof HTMLCanvasElement&&t instanceof HTMLCanvasElement)return{element:t,options:(0,o.default)(t),renderer:i.default.CanvasRenderer};if(t&&t.getContext)return{element:t,renderer:i.default.CanvasRenderer};if(t&&"object"===(void 0===t?"undefined":r(t))&&!t.nodeName)return{element:t,renderer:i.default.ObjectRenderer};throw new a.InvalidElementException;var u,f}e.default=s},function(t,e,n){"use strict";Object.defineProperty(e,"__esModule",{value:!0});var r=i(n(3)),o=i(n(4));function i(t){return t&&t.__esModule?t:{default:t}}e.default=function(t){var e={};for(var n in o.default)o.default.hasOwnProperty(n)&&(t.hasAttribute("jsbarcode-"+n.toLowerCase())&&(e[n]=t.getAttribute("jsbarcode-"+n.toLowerCase())),t.hasAttribute("data-"+n.toLowerCase())&&(e[n]=t.getAttribute("data-"+n.toLowerCase())));return e.value=t.getAttribute("jsbarcode-value")||t.getAttribute("data-value"),e=(0,r.default)(e)}},function(t,e,n){"use strict";Object.defineProperty(e,"__esModule",{value:!0});var r=a(n(21)),o=a(n(22)),i=a(n(23));function a(t){return t&&t.__esModule?t:{default:t}}e.default={CanvasRenderer:r.default,SVGRenderer:o.default,ObjectRenderer:i.default}},function(t,e,n){"use strict";Object.defineProperty(e,"__esModule",{value:!0});var r,o=function(){function t(t,e){for(var n=0;n<e.length;n++){var r=e[n];r.enumerable=r.enumerable||!1,r.configurable=!0,"value"in r&&(r.writable=!0),Object.defineProperty(t,r.key,r)}}return function(e,n,r){return n&&t(e.prototype,n),r&&t(e,r),e}}(),i=n(2),a=(r=i)&&r.__esModule?r:{default:r},u=n(5);var s=function(){function t(e,n,r){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.canvas=e,this.encodings=n,this.options=r}return o(t,[{key:"render",value:function(){if(!this.canvas.getContext)throw new Error("The browser does not support canvas.");this.prepareCanvas();for(var t=0;t<this.encodings.length;t++){var e=(0,a.default)(this.options,this.encodings[t].options);this.drawCanvasBarcode(e,this.encodings[t]),this.drawCanvasText(e,this.encodings[t]),this.moveCanvasDrawing(this.encodings[t])}this.restoreCanvas()}},{key:"prepareCanvas",value:function(){var t=this.canvas.getContext("2d");t.save(),(0,u.calculateEncodingAttributes)(this.encodings,this.options,t);var e=(0,u.getTotalWidthOfEncodings)(this.encodings),n=(0,u.getMaximumHeightOfEncodings)(this.encodings);this.canvas.width=e+this.options.marginLeft+this.options.marginRight,this.canvas.height=n,t.clearRect(0,0,this.canvas.width,this.canvas.height),this.options.background&&(t.fillStyle=this.options.background,t.fillRect(0,0,this.canvas.width,this.canvas.height)),t.translate(this.options.marginLeft,0)}},{key:"drawCanvasBarcode",value:function(t,e){var n,r=this.canvas.getContext("2d"),o=e.data;n="top"==t.textPosition?t.marginTop+t.fontSize+t.textMargin:t.marginTop,r.fillStyle=t.lineColor;for(var i=0;i<o.length;i++){var a=i*t.width+e.barcodePadding;"1"===o[i]?r.fillRect(a,n,t.width,t.height):o[i]&&r.fillRect(a,n,t.width,t.height*o[i])}}},{key:"drawCanvasText",value:function(t,e){var n,r,o=this.canvas.getContext("2d"),i=t.fontOptions+" "+t.fontSize+"px "+t.font;t.displayValue&&(r="top"==t.textPosition?t.marginTop+t.fontSize-t.textMargin:t.height+t.textMargin+t.marginTop+t.fontSize,o.font=i,"left"==t.textAlign||e.barcodePadding>0?(n=0,o.textAlign="left"):"right"==t.textAlign?(n=e.width-1,o.textAlign="right"):(n=e.width/2,o.textAlign="center"),o.fillText(e.text,n,r))}},{key:"moveCanvasDrawing",value:function(t){this.canvas.getContext("2d").translate(t.width,0)}},{key:"restoreCanvas",value:function(){this.canvas.getContext("2d").restore()}}]),t}();e.default=s},function(t,e,n){"use strict";Object.defineProperty(e,"__esModule",{value:!0});var r,o=function(){function t(t,e){for(var n=0;n<e.length;n++){var r=e[n];r.enumerable=r.enumerable||!1,r.configurable=!0,"value"in r&&(r.writable=!0),Object.defineProperty(t,r.key,r)}}return function(e,n,r){return n&&t(e.prototype,n),r&&t(e,r),e}}(),i=n(2),a=(r=i)&&r.__esModule?r:{default:r},u=n(5);var s="http://www.w3.org/2000/svg",f=function(){function t(e,n,r){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.svg=e,this.encodings=n,this.options=r,this.document=r.xmlDocument||document}return o(t,[{key:"render",value:function(){var t=this.options.marginLeft;this.prepareSVG();for(var e=0;e<this.encodings.length;e++){var n=this.encodings[e],r=(0,a.default)(this.options,n.options),o=this.createGroup(t,r.marginTop,this.svg);this.setGroupOptions(o,r),this.drawSvgBarcode(o,r,n),this.drawSVGText(o,r,n),t+=n.width}}},{key:"prepareSVG",value:function(){for(;this.svg.firstChild;)this.svg.removeChild(this.svg.firstChild);(0,u.calculateEncodingAttributes)(this.encodings,this.options);var t=(0,u.getTotalWidthOfEncodings)(this.encodings),e=(0,u.getMaximumHeightOfEncodings)(this.encodings),n=t+this.options.marginLeft+this.options.marginRight;this.setSvgAttributes(n,e),this.options.background&&this.drawRect(0,0,n,e,this.svg).setAttribute("style","fill:"+this.options.background+";")}},{key:"drawSvgBarcode",value:function(t,e,n){var r,o=n.data;r="top"==e.textPosition?e.fontSize+e.textMargin:0;for(var i=0,a=0,u=0;u<o.length;u++)a=u*e.width+n.barcodePadding,"1"===o[u]?i++:i>0&&(this.drawRect(a-e.width*i,r,e.width*i,e.height,t),i=0);i>0&&this.drawRect(a-e.width*(i-1),r,e.width*i,e.height,t)}},{key:"drawSVGText",value:function(t,e,n){var r,o,i=this.document.createElementNS(s,"text");e.displayValue&&(i.setAttribute("style","font:"+e.fontOptions+" "+e.fontSize+"px "+e.font),o="top"==e.textPosition?e.fontSize-e.textMargin:e.height+e.textMargin+e.fontSize,"left"==e.textAlign||n.barcodePadding>0?(r=0,i.setAttribute("text-anchor","start")):"right"==e.textAlign?(r=n.width-1,i.setAttribute("text-anchor","end")):(r=n.width/2,i.setAttribute("text-anchor","middle")),i.setAttribute("x",r),i.setAttribute("y",o),i.appendChild(this.document.createTextNode(n.text)),t.appendChild(i))}},{key:"setSvgAttributes",value:function(t,e){var n=this.svg;n.setAttribute("width",t+"px"),n.setAttribute("height",e+"px"),n.setAttribute("x","0px"),n.setAttribute("y","0px"),n.setAttribute("viewBox","0 0 "+t+" "+e),n.setAttribute("xmlns",s),n.setAttribute("version","1.1"),n.setAttribute("style","transform: translate(0,0)")}},{key:"createGroup",value:function(t,e,n){var r=this.document.createElementNS(s,"g");return r.setAttribute("transform","translate("+t+", "+e+")"),n.appendChild(r),r}},{key:"setGroupOptions",value:function(t,e){t.setAttribute("style","fill:"+e.lineColor+";")}},{key:"drawRect",value:function(t,e,n,r,o){var i=this.document.createElementNS(s,"rect");return i.setAttribute("x",t),i.setAttribute("y",e),i.setAttribute("width",n),i.setAttribute("height",r),o.appendChild(i),i}}]),t}();e.default=f},function(t,e,n){"use strict";Object.defineProperty(e,"__esModule",{value:!0});var r=function(){function t(t,e){for(var n=0;n<e.length;n++){var r=e[n];r.enumerable=r.enumerable||!1,r.configurable=!0,"value"in r&&(r.writable=!0),Object.defineProperty(t,r.key,r)}}return function(e,n,r){return n&&t(e.prototype,n),r&&t(e,r),e}}();var o=function(){function t(e,n,r){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.object=e,this.encodings=n,this.options=r}return r(t,[{key:"render",value:function(){this.object.encodings=this.encodings}}]),t}();e.default=o},function(t,e,n){"use strict";Object.defineProperty(e,"__esModule",{value:!0});var r=function(){function t(t,e){for(var n=0;n<e.length;n++){var r=e[n];r.enumerable=r.enumerable||!1,r.configurable=!0,"value"in r&&(r.writable=!0),Object.defineProperty(t,r.key,r)}}return function(e,n,r){return n&&t(e.prototype,n),r&&t(e,r),e}}();var o=function(){function t(e){!function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}(this,t),this.api=e}return r(t,[{key:"handleCatch",value:function(t){if("InvalidInputException"!==t.name)throw t;if(this.api._options.valid===this.api._defaults.valid)throw t.message;this.api._options.valid(!1),this.api.render=function(){}}},{key:"wrapBarcodeCall",value:function(t){try{var e=t.apply(void 0,arguments);return this.api._options.valid(!0),e}catch(t){return this.handleCatch(t),this.api}}}]),t}();e.default=o}]);
+</script>
 </head>
 <body>
   <div id="message"></div>
@@ -522,8 +542,8 @@ button{touch-action:manipulation}
         <section id="weightSnapshotSection" class="home-feed-block layout-block" data-layout-key="weight_snapshot"><div class="section-head"><div class="feed-author"><span class="feed-author-icon">⚖️</span><span><h3>Weight Room Snapshot</h3><small id="weightSnapshotSubtitle">Today’s private team totals</small></span></div></div>
         <div id="homeWeightNotification" class="weight-snapshot-alert hidden" aria-live="polite"><button id="openHomeWeightNotificationBtn" type="button" class="weight-alert-open"><b>New weigh-ins</b><small id="homeWeightNotificationSummary"></small></button><button id="markWeightNotificationsReadBtn" type="button" class="link-btn">Mark All Read</button></div>
         <div id="teamWeightSnapshotMetrics" class="metric-grid">
-          <button type="button" class="metric metric-btn" data-weight-metric="weighed"><span>Weighed today</span><strong id="weighed">0</strong></button>
-          <button type="button" class="metric metric-btn" data-go="weight"><span>Not weighed</span><strong id="notWeighed">0</strong></button>
+          <button type="button" class="metric metric-btn" data-weight-metric="weighed"><span data-weighed-label>Weighed today</span><strong id="weighed">0</strong></button>
+          <button type="button" class="metric metric-btn" data-weight-metric="not-weighed"><span>Not weighed</span><strong id="notWeighed">0</strong></button>
           <button type="button" class="metric metric-btn" data-go="weight"><span>Newly eligible</span><strong id="eligible">0</strong></button>
           <button type="button" class="metric metric-btn" data-go="weight"><span>Challenges</span><strong id="challenges">0</strong></button>
         </div><div id="homeCoachWeightSnapshot" class="coach-weight-snapshot hidden"></div><div id="homePersonalWeightList" class="personal-weight-list hidden"></div></section>
@@ -579,7 +599,7 @@ button{touch-action:manipulation}
         <div id="communicationSafetySummary" class="hidden"></div>
         <div class="communication-search-wrap"><span class="communication-search-icon">⌕</span><input id="communicationSearchInput" type="search" placeholder="Search conversations and messages" autocomplete="off"></div>
         <div id="communicationSearchResults" class="communication-search-results hidden"></div>
-        <div class="section-head"><h3>Conversations</h3><button id="communicationPreferencesBtn" class="link-btn" type="button">Notification settings</button></div>
+        <div class="section-head"><h3>Conversations</h3></div>
         <p class="fine" style="margin-top:-6px">Press and hold a conversation to mute it, remove it from your list, or block a member.</p>
         <div id="communicationThreadList" class="thread-list"><div class="empty-card">Loading conversations…</div></div>
       </section>
@@ -588,17 +608,18 @@ button{touch-action:manipulation}
         <button type="button" class="tab-back-btn" data-back-home><span>←</span> Back to Home</button>
         <div class="section-head top-space"><div><div class="eyebrow">WRESTLING-SPECIFIC</div><h2>Weight Room</h2></div></div>
         <div id="teamWeightRoomMetrics" class="metric-grid">
-          <button type="button" class="metric metric-btn" data-weight-metric="weighed"><span>Weighed today</span><strong id="weighed2">0</strong></button>
+          <button type="button" class="metric metric-btn" data-weight-metric="weighed"><span data-weighed-label>Weighed today</span><strong id="weighed2">0</strong></button>
           <button type="button" class="metric metric-btn" data-weight-metric="not-weighed"><span>Not weighed</span><strong id="notWeighed2">0</strong></button>
           <button type="button" class="metric metric-btn" data-weight-metric="eligible"><span>Newly eligible</span><strong id="eligible2">0</strong></button>
           <button type="button" class="metric metric-btn" data-weight-metric="challenges"><span>Challenges</span><strong id="challenges2">0</strong></button>
         </div>
         <section id="coachWeightRoomSection" class="feature-card hidden"><h3>Weight Room Snapshot</h3><p class="fine">Choose an athlete to see their latest weight and open their trend.</p><div id="roomCoachWeightSnapshot" class="coach-weight-snapshot"></div></section>
+        <button id="athleteCardsRoomBtn" type="button" class="wide secondary">Athlete Cards · QR / Barcode / NFC</button>
         <section id="personalWeightRoomSection" class="feature-card hidden"><div class="section-head" style="margin-top:0"><div><div class="eyebrow">PRIVATE ATHLETE WEIGHTS</div><h3 id="personalWeightRoomTitle">My Weight</h3></div><button id="startMyWeightCheckBtn" type="button" class="primary-small hidden">＋ Check Weight</button></div><div id="athleteTeammateWeightActions" class="hidden"><button id="startTeammateWeightCheckBtn" type="button" class="wide secondary">Teammate Weight Check</button></div><button id="weightPinRoomBtn" type="button" class="wide secondary">Weight Check PIN</button><div id="weightRoomPersonalWeightList" class="personal-weight-list"></div><p class="personal-weight-private">Only the athlete, their connected parent or guardian, and authorized team staff can view these weights.</p></section>
         <div id="weighInModeArea">
           <div class="section-head"><div><div class="eyebrow">SCALE MODES</div><h3>Weigh-In Console</h3></div><span class="operator-chip">Home Team Recognition · Always On</span></div>
           <div class="mode-grid">
-            <button class="mode-card operator-only" data-weigh-mode="team_kiosk"><span>📲</span><b>Team Kiosk</b><small>QR/barcode camera identification and private team weight capture.</small></button>
+            <button class="mode-card operator-only" data-weigh-mode="team_kiosk"><span>📲</span><b>Team Kiosk</b><small>QR, barcode, or iPhone NFC identification and private team weight capture.</small></button>
             <button class="mode-card operator-only" data-weigh-mode="dual"><span>🤼</span><b>Dual Weigh-In</b><small>Two-team official weigh-in with roster selection and verification.</small></button>
             <button class="mode-card operator-only" data-weigh-mode="tournament"><span>🏟️</span><b>Tournament Weigh-In</b><small>Multiple teams, imported rosters, scans and event export.</small></button>
             <button class="mode-card operator-only" data-weigh-mode="open_scale"><span>⚖️</span><b>Open Scale</b><small>Large private live display. Weight only — no athlete identification required.</small></button>
@@ -674,6 +695,16 @@ button{touch-action:manipulation}
     <button id="verifyTeammateWeightPinBtn" type="button" class="wide">Continue</button>
     <p class="fine">Your name and weight clear after you step off. This phone cannot open your weight history. This is a practice weight check, not an official weigh-in.</p>
   </section>
+
+
+  <section id="athleteCardSheet" class="sheet hidden" aria-modal="true">
+    <div class="sheet-handle"></div><div class="sheet-head"><div><div class="eyebrow">ATHLETE ACCESS</div><h2>Athlete Cards</h2></div><button class="icon-close" data-close-sheet>×</button></div>
+    <label for="athleteCardSelect">Athlete</label><select id="athleteCardSelect"></select>
+    <p id="athleteCardStatus" class="fine" role="status"></p><div id="athleteCardDisplay"></div>
+    <div id="athleteCardActions" class="hidden"><button id="saveAthleteCardBtn" type="button" class="wide">Save / Share Card</button><button id="programAthleteNfcBtn" type="button" class="wide secondary">Program NFC Card / Wristband</button><button id="replaceAthleteCardBtn" type="button" class="wide secondary">Replace Lost Card</button><p class="fine">Keep your card private. Replacing it disables its previous QR, barcode, and programmed NFC items.</p></div>
+    <button id="retryAthleteCardBtn" type="button" class="link-btn">Reload Card</button>
+  </section>
+  <section id="missingWeightChecksSheet" class="sheet hidden" aria-modal="true"><div class="sheet-handle"></div><div class="sheet-head"><div><h2>Not Weighed</h2><p id="missingWeightChecksSummary" class="fine"></p></div><button class="icon-close" data-close-sheet>×</button></div><div id="missingWeightChecksList" class="card-list"></div></section>
 
   <section id="weightPinSheet" class="sheet hidden" aria-modal="true" aria-labelledby="weightPinTitle">
     <div class="sheet-handle"></div>
@@ -864,7 +895,7 @@ button{touch-action:manipulation}
 
   <section id="communicationPreferencesSheet" class="sheet hidden" aria-modal="true">
     <div class="sheet-handle"></div>
-    <div class="sheet-head"><div><div class="eyebrow">NOTIFICATIONS</div><h2>Communication Preferences</h2><p class="muted">In-app alerts stay on. Choose how Wrestling Manager reaches you when the app is not in front of you.</p></div><button class="icon-close" data-close-sheet>×</button></div>
+    <div class="sheet-head"><div><div class="eyebrow">NOTIFICATIONS</div><h2>Notification Settings</h2><p class="muted">These are your notification preferences for the selected team. Choose how Wrestling Manager reaches you when the app is not in front of you.</p></div><button class="icon-close" data-close-sheet>×</button></div>
     <div class="delivery-grid">
       <div class="delivery-card"><h3>Messages</h3>
         <label class="toggle-row"><span><b>Push alerts</b><small>Send to a registered phone or app.</small></span><input id="prefPushMessages" type="checkbox"></label>
@@ -1063,6 +1094,7 @@ button{touch-action:manipulation}
       <div id="viewAthletePhoto" class="profile-view-photo-placeholder">👤</div>
       <div><h3 id="viewAthleteHeroName">Athlete</h3><p id="viewAthleteHeroMeta">Team athlete</p></div>
     </div>
+    <button id="viewAthleteCardBtn" class="wide secondary" type="button">Athlete Card · QR / Barcode / NFC</button>
     <div id="viewAthleteTeamSnapshot" class="profile-view-card"></div>
     <div id="viewAthleteAgeDivisions" class="join-summary"></div>
     <div class="profile-view-card">
@@ -1096,6 +1128,7 @@ button{touch-action:manipulation}
     <div class="profile-photo-row"><div id="profilePhotoBox" class="profile-photo-placeholder">👤</div><div><label style="margin-top:0">Profile photo</label><input id="profilePhotoInput" type="file" accept="image/*"><div class="tiny">Athlete, parent or authorized team staff can update the picture.</div></div></div>
     <div id="profileAgeDivisions" class="join-summary"></div>
     <div id="profileWeightSnapshot" class="join-summary"><b>Latest team weight</b><small>Loading weight history…</small></div>
+    <button id="profileAthleteCardBtn" class="wide secondary" type="button">Athlete Card · QR / Barcode / NFC</button>
     <button id="profileWeightTrendBtn" class="wide secondary" type="button">📈 Weight Trend</button>
     <div class="profile-grid"><div><label>First name</label><input id="profileFirstName"></div><div><label>Last name</label><input id="profileLastName"></div></div>
     <div class="profile-grid"><div><label>Birthday</label><input id="profileBirthDate" type="date"></div><div><label>School level</label><select id="profileSchoolLevel"><option value="">Choose…</option><option value="elementary">Elementary</option><option value="middle_school">Middle School</option><option value="high_school">High School</option><option value="college">College</option><option value="adult">Adult / Open</option><option value="other">Other</option></select></div></div>
@@ -1273,9 +1306,8 @@ button{touch-action:manipulation}
     </div>
 
     <div class="feature-card">
-      <h3>Weigh-In Credentials</h3>
-      <p class="muted">Issue a QR or barcode credential for the iPad camera. The token itself contains no name, weight or other personal information. NFC remains available for an external reader.</p>
-      <div class="inline-actions"><button data-issue-credential="qr">Issue QR · Recommended</button><button data-issue-credential="barcode" class="secondary">Issue Barcode</button><button data-issue-credential="nfc" class="secondary">Issue NFC Token · External Reader</button></div>
+      <h3>Athlete Card</h3><p class="muted">Open this athlete’s reusable QR and barcode, or program an NFC card or wristband using a compatible iPhone.</p>
+      <button id="accessAthleteCardBtn" type="button" class="wide">Open Athlete Card</button>
       <div id="credentialIssueBox"></div>
     </div>
 
@@ -1352,14 +1384,15 @@ button{touch-action:manipulation}
       <div class="kiosk-control-actions"><button id="kioskUnlockTab" type="button">Unlock</button><button id="kioskExitTab" class="kiosk-exit" type="button">Exit Kiosk</button></div>
     </div>
     <div class="sheet-head"><div><div id="weighConsoleMode" class="eyebrow">WEIGH-IN</div><h2 id="weighConsoleTitle">Weigh-In Console</h2></div><div style="display:flex;gap:7px"><button id="unlockKioskBtn" class="secondary">Unlock Admin</button><button class="icon-close" data-close-sheet>×</button></div></div>
-    <div class="weigh-console-banner"><b>Home Team Recognition · ON</b><small>Your team’s QR/barcode credentials stay active in every mode. An external NFC reader can type the same opaque token. Synced event-roster athletes from other Wrestling Manager teams can also scan.</small></div>
+    <div class="weigh-console-banner"><b>Home Team Recognition · ON</b><small>Athlete cards identify your team in every mode. Scan a QR/barcode, or tap an NFC card or wristband using a compatible iPhone. Athletes from other teams can scan when they are included on this event’s roster.</small></div>
     <div id="weighOfficialChip" class="operator-chip official-name-chip hidden"></div>
     <div class="lock-strip"><div><b>iPad Screen Lock</b><small>Lock this screen to the weigh-in console. A PIN is required to return to the rest of the app.</small></div><button id="lockKioskBtn" class="secondary">Lock</button></div>
     <div class="hardware-note"><b>Live scale:</b> the native iPhone/iPad app feeds the connected American Scale directly into this display. Manual entry remains available for browser testing.</div>
 
     <label data-scan-label>Scan NFC / QR / barcode</label>
     <div id="weighScanRow" class="two-col"><input id="weighScanToken" autocomplete="off" placeholder="Tap or scan credential"><button id="openCredentialScannerBtn" class="scanner-btn" type="button">▣ Scan Code</button><button id="resolveWeighScanBtn" type="button">Identify</button></div>
-    <small class="scanner-guidance">Use the iPad camera for an athlete QR or barcode. A paired USB/Bluetooth scanner can still type directly into the credential box.</small>
+    <button id="scanAthleteNfcBtn" type="button" class="wide secondary hidden">Tap NFC Card / Wristband</button>
+    <small class="scanner-guidance">Use Scan Code for an athlete’s QR or barcode. On a compatible iPhone, use Tap NFC Card / Wristband and hold the tag at the top of the phone.</small>
     <label data-roster-label>Or find athlete on event roster</label><input id="weighRosterSearch" placeholder="Search name or team">
     <div id="weighRosterResults" class="search-results"></div>
 
@@ -1485,11 +1518,14 @@ button{touch-action:manipulation}
     <button id="editStaffProfileBtn" class="wide hidden" type="button">Edit My Coach / Staff Profile</button>
     <button id="editTeamBtn" class="wide admin-only" type="button">Edit Team</button>
     <button id="communicationBtn" class="wide admin-only" type="button">Communication Settings</button>
+    <button id="communicationPreferencesBtn" class="wide secondary" type="button">Notification Settings</button>
+    <button id="weightScheduleSettingsBtn" class="wide secondary admin-only" type="button">Weigh-in Schedule</button>
+    <button id="athleteCardsSettingsBtn" class="wide secondary" type="button">Athlete Cards</button>
     <button id="customizeLayoutBtn" class="wide secondary" type="button">↕ Customize App Layout</button>
     <button id="securityBtn" class="wide secondary" type="button">🔒 Sign-In & App Security</button>
     <button id="weightPinSettingsBtn" class="wide secondary hidden" type="button">Weight Check PIN</button>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.15.26</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.15.27</p>
   </section>
 
   <section id="layoutEditorSheet" class="sheet hidden" aria-modal="true">
@@ -1632,14 +1668,24 @@ button{touch-action:manipulation}
       <label class="level-check"><input type="checkbox" value="college">College</label>
       <label class="level-check"><input type="checkbox" value="club">Club</label>
     </div>
-    <div class="team-branding-block">
-      <h3>Season Home Settings</h3>
-      <p class="fine">Control whether coaches see “athletes still expected to weigh” on Home.</p>
-      <label class="toggle-row"><span><b>Show daily weigh-in reminder on Home</b><small>The reminder only appears during the date range below.</small></span><input id="editTeamHomeWeighReminder" type="checkbox"></label>
-      <div class="two-col">
-        <div><label>First day of season</label><input id="editSeasonStarts" type="date"></div>
-        <div><label>Last day of season</label><input id="editSeasonEnds" type="date"></div>
-      </div>
+    <div id="weightScheduleSettingsBlock" class="team-branding-block">
+      <h3>Weigh-in Schedule</h3>
+      <p class="fine">Choose when this team expects a weight check. Athletes can still weigh at any time.</p>
+      <label for="editWeightFrequency">Weight checks</label>
+      <select id="editWeightFrequency"><option value="off">Off · no scheduled checks</option><option value="daily">Daily · every day</option><option value="weekly">Weekly · choose days</option></select>
+      <div id="editWeightWeekdays" class="hidden"><label>Check weights on</label><div class="level-check-grid">
+        <label class="level-check"><input type="checkbox" value="1" data-weight-weekday>Monday</label>
+        <label class="level-check"><input type="checkbox" value="2" data-weight-weekday>Tuesday</label>
+        <label class="level-check"><input type="checkbox" value="3" data-weight-weekday>Wednesday</label>
+        <label class="level-check"><input type="checkbox" value="4" data-weight-weekday>Thursday</label>
+        <label class="level-check"><input type="checkbox" value="5" data-weight-weekday>Friday</label>
+        <label class="level-check"><input type="checkbox" value="6" data-weight-weekday>Saturday</label>
+        <label class="level-check"><input type="checkbox" value="0" data-weight-weekday>Sunday</label>
+      </div><p class="fine">Each selected day starts a new count. Choose one day for a once-weekly check, or several days for multiple checks.</p></div>
+      <p class="fine">The weighed and not-weighed tiles appear only on scheduled days during the season.</p>
+      <label for="editWeightTimezone">Team time zone</label><select id="editWeightTimezone"><option value="America/Denver">Mountain</option><option value="America/Phoenix">Arizona</option><option value="America/Los_Angeles">Pacific</option><option value="America/Chicago">Central</option><option value="America/New_York">Eastern</option><option value="America/Anchorage">Alaska</option><option value="Pacific/Honolulu">Hawaii</option><option value="UTC">UTC</option></select>
+      <div class="two-col"><div><label>First day of season · optional</label><input id="editSeasonStarts" type="date"></div><div><label>Last day of season · optional</label><input id="editSeasonEnds" type="date"></div></div>
+      <p class="fine">Leave dates blank for a year-round schedule.</p>
     </div>
     <div class="team-branding-block weight-class-settings">
       <h3>Weight Classes</h3>
@@ -1932,39 +1978,8 @@ function coachWeightAthletes(){
   if(!isStaff)return [];
   return [...new Map(rosterRows.filter(row=>row.active!==false&&!['standby','removed','inactive'].includes(row.roster_status)).map(row=>[String(row.athlete_id),row])).values()].sort((a,b)=>`${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`));
 }
-function renderCoachWeightSnapshots(){
-  show('homeCoachWeightSnapshot',isStaff);show('coachWeightRoomSection',isStaff);
-  const athletes=coachWeightAthletes();
-  if(!athletes.some(row=>row.athlete_id===coachWeightAthleteId))coachWeightAthleteId=athletes[0]?.athlete_id||null;
-  const athlete=athletes.find(row=>row.athlete_id===coachWeightAthleteId);
-  for(const id of ['homeCoachWeightSnapshot','roomCoachWeightSnapshot']){
-    const box=$(id);if(!box)continue;
-    if(!isStaff){box.innerHTML='';continue;}
-    if(!athlete){box.innerHTML='<div class="empty-card">No active athletes on this team yet.</div>';continue;}
-    const snapshot=coachWeightSnapshot?.athleteId===coachWeightAthleteId?coachWeightSnapshot:null;
-    const latest=snapshot?.latest;
-    const when=!snapshot?'Loading latest weight…':snapshot.error?'Latest weight could not be loaded.':latest?fmtDateTime(latest.captured_at):'No recorded weigh-in yet';
-    const value=latest?`${Number(latest.weight_lbs).toFixed(1)} lb`:'—';
-    box.innerHTML=`<label for="${id}Select">Athlete</label><select id="${id}Select" data-coach-weight-select>${athletes.map(row=>`<option value="${esc(row.athlete_id)}" ${row.athlete_id===coachWeightAthleteId?'selected':''}>${esc(row.first_name)} ${esc(row.last_name)}</option>`).join('')}</select><button type="button" class="personal-weight-card" data-coach-weight-trend><span><b>${esc(athlete.first_name)} ${esc(athlete.last_name)}</b><small>${esc(when)}</small></span><span class="personal-weight-value">${esc(value)}<small>View trend</small></span></button>${snapshot?.error?'<button type="button" class="secondary" data-coach-weight-retry>Try Again</button>':''}`;
-    box.querySelector('[data-coach-weight-select]').onchange=event=>{coachWeightAthleteId=event.target.value;coachWeightSnapshot=null;loadCoachWeightSnapshot();};
-    box.querySelector('[data-coach-weight-trend]').onclick=()=>openWeightTrend(coachWeightAthleteId);
-    const retry=box.querySelector('[data-coach-weight-retry]');if(retry)retry.onclick=()=>loadCoachWeightSnapshot();
-  }
-}
-async function loadCoachWeightSnapshot(){
-  const version=++coachWeightSnapshotRequest;renderCoachWeightSnapshots();
-  const athleteId=coachWeightAthleteId,teamId=activeTeam?.id,seasonId=activeSeason?.id,userId=session?.user?.id;
-  if(!isStaff||!athleteId||!seasonId)return;
-  const current=()=>version===coachWeightSnapshotRequest&&isStaff&&coachWeightAthleteId===athleteId&&activeTeam?.id===teamId&&activeSeason?.id===seasonId&&session?.user?.id===userId;
-  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
-  try{
-    const {data,error}=await client.rpc('get_athlete_weight_trend',{p_athlete_id:athleteId,p_season_id:seasonId,p_days:0}).abortSignal(controller.signal);
-    if(!current())return;if(error)throw error;
-    coachWeightSnapshot={athleteId,latest:Array.isArray(data?.points)?data.points.at(-1)||null:null};
-  }catch(error){if(!current())return;coachWeightSnapshot={athleteId,latest:null,error:true};}
-  finally{clearTimeout(timer);}
-  if(current())renderCoachWeightSnapshots();
-}
+
+
 function updateWeightTrendControls(){
   const athlete=rosterRows.find(row=>row.athlete_id===weightTrendAthleteId)||rosterManagementRows.find(row=>row.athlete_id===weightTrendAthleteId)||personalWeightAthletes().find(row=>row.id===weightTrendAthleteId);
   $('weightTrendAthleteName').textContent=athlete?`${athlete.first_name||''} ${athlete.last_name||''}`.trim():'Athlete';
@@ -2543,11 +2558,11 @@ function closeSheets(){
   if(document.body.classList.contains('kiosk-locked')) return;
   ++weightTrendRequestVersion;
   if(myWeightCheckActive)resetMyWeightCheck();
-  resetTeammateWeightPicker();resetWeightPinEditor();
+  resetTeammateWeightPicker();resetWeightPinEditor();resetAthleteCard();
   document.activeElement?.blur?.();
   stopCommunicationReceiptLiveRefresh();
   clearPendingCommunicationMedia();
-  ['weightPinSheet','teammateWeightCheckSheet','eventSheet','eventDetailSheet','attendanceSheet','announcementSheet','communicationThreadSheet','conversationActionsSheet','communicationMuteSheet','newCommunicationSheet','guardianSafetyTestSheet','athleteChatPermissionsSheet','scheduleMessageSheet','communicationPreferencesSheet','communicationNotificationsSheet','massTextSheet','textRepliesSheet','communicationSafetySheet','rosterSheet','athleteTeamsSheet','addAthleteSheet','joinSheet','joinRequestSheet','coachJoinRequestsSheet','athleteViewSheet','athleteProfileSheet','weightTrendSheet','photoCropSheet','communicationSheet','staffProfileSheet','staffDirectorySheet','familySheet','agreementsSheet','agreementEditorSheet','agreementPreviewSheet','calendarSubscriptionSheet','medicalClearanceSheet','medicalCaseSheet','excuseSheet','athleteAccessSheet','staffAccessSheet','weighedTodaySheet','weighInStartSheet','weighInConsoleSheet','myWeightCheckSheet','importRosterSheet','teamSwitcherSheet','createTeamSheet','editTeamSheet','lineupClassSheet','accountSheet','layoutEditorSheet','forgotPasswordSheet','resetPasswordSheet','securitySheet'].forEach(id=>show(id,false));
+  ['athleteCardSheet','missingWeightChecksSheet','weightPinSheet','teammateWeightCheckSheet','eventSheet','eventDetailSheet','attendanceSheet','announcementSheet','communicationThreadSheet','conversationActionsSheet','communicationMuteSheet','newCommunicationSheet','guardianSafetyTestSheet','athleteChatPermissionsSheet','scheduleMessageSheet','communicationPreferencesSheet','communicationNotificationsSheet','massTextSheet','textRepliesSheet','communicationSafetySheet','rosterSheet','athleteTeamsSheet','addAthleteSheet','joinSheet','joinRequestSheet','coachJoinRequestsSheet','athleteViewSheet','athleteProfileSheet','weightTrendSheet','photoCropSheet','communicationSheet','staffProfileSheet','staffDirectorySheet','familySheet','agreementsSheet','agreementEditorSheet','agreementPreviewSheet','calendarSubscriptionSheet','medicalClearanceSheet','medicalCaseSheet','excuseSheet','athleteAccessSheet','staffAccessSheet','weighedTodaySheet','weighInStartSheet','weighInConsoleSheet','myWeightCheckSheet','importRosterSheet','teamSwitcherSheet','createTeamSheet','editTeamSheet','lineupClassSheet','accountSheet','layoutEditorSheet','forgotPasswordSheet','resetPasswordSheet','securitySheet'].forEach(id=>show(id,false));
   show('sheetBackdrop', false); $('sheetBackdrop').style.pointerEvents='none'; document.body.style.overflow='';
 }
 function recoverInteractionLayer(){
@@ -3070,8 +3085,16 @@ async function createTeam(){
   message(`${name} created.`);
 }
 
-function openEditTeam(){
+async function openEditTeam(){
   if(!activeTeam||!isTeamAdmin){message('Head coach or team admin access is required.',true);return;}
+  const settingsTeamId=activeTeam.id,settingsSeasonId=activeSeason?.id;
+  const [teamSettings,seasonSettings]=await Promise.all([
+    client.from('teams').select('weight_check_frequency,weight_check_days,timezone').eq('id',settingsTeamId).single(),
+    settingsSeasonId?client.from('seasons').select('starts_on,ends_on,home_weigh_reminder_enabled').eq('id',settingsSeasonId).single():Promise.resolve({data:null,error:null})
+  ]);
+  if(activeTeam?.id!==settingsTeamId||activeSeason?.id!==settingsSeasonId)return;
+  if(teamSettings.error||seasonSettings.error){message('Could not load current team settings. Please try again.',true);return;}
+  Object.assign(activeTeam,teamSettings.data);if(activeSeason&&seasonSettings.data)Object.assign(activeSeason,seasonSettings.data);
   $('editTeamName').value=activeTeam.name||'';
   $('editTeamType').value=activeTeam.team_type||'school';
   $('editTeamGender').value=activeTeam.gender_scope||'open';
@@ -3079,7 +3102,7 @@ function openEditTeam(){
   const stateNote=$('editTeamStateRuleNote');
   if(stateNote) stateNote.textContent=activeStateWeightRule?`${activeStateWeightRule.association_name} rule loaded for ${activeStateWeightRule.season_name}.`:`High-school state rules are season-specific. If no verified rule is loaded, choose the correct NFHS set or Custom.`;
   setTeamLevels('editTeamLevels',activeTeam.service_levels||[]);
-  $('editTeamHomeWeighReminder').checked=!!activeSeason?.home_weigh_reminder_enabled;
+  fillWeightScheduleEditor();
   $('editSeasonStarts').value=activeSeason?.starts_on||'';
   $('editSeasonEnds').value=activeSeason?.ends_on||'';
   const p=normalizeTeamColor(activeTeam.primary_color,'#163A67'),s=normalizeTeamColor(activeTeam.secondary_color,'#285E9E'),a=normalizeTeamColor(activeTeam.accent_color,'#FFFFFF');
@@ -3109,9 +3132,10 @@ async function saveEditTeam(){
   const secondary=normalizeTeamColor($('editTeamSecondaryHex').value,null);
   const accent=normalizeTeamColor($('editTeamAccentHex').value,null);
   if(!primary||!secondary||!accent){message('Team colors must use a six-digit hex value such as #163A67.',true);return;}
-  const reminderOn=$('editTeamHomeWeighReminder').checked;
+  const weightFrequency=$('editWeightFrequency').value;
+  const weightDays=[...document.querySelectorAll('[data-weight-weekday]:checked')].map(el=>Number(el.value));
+  if(weightFrequency==='weekly'&&!weightDays.length){message('Choose at least one weekday for weight checks.',true);return;}
   const seasonStarts=$('editSeasonStarts').value||null, seasonEnds=$('editSeasonEnds').value||null;
-  if(reminderOn && (!seasonStarts||!seasonEnds)){message('Add the first and last day of the season before turning on the Home weigh-in reminder.',true);return;}
   if(seasonStarts&&seasonEnds&&seasonEnds<seasonStarts){message('The last day of the season cannot be before the first day.',true);return;}
   const btn=$('saveEditTeamBtn');btn.disabled=true;btn.textContent='Saving…';
   const oldBannerPath=activeTeam.banner_path||null;
@@ -3144,7 +3168,7 @@ async function saveEditTeam(){
   });
   let seasonError=null,weightClassError=null;
   if(!error&&activeSeason?.id){
-    const seasonResult=await client.rpc('update_team_season_settings',{p_season_id:activeSeason.id,p_starts_on:seasonStarts,p_ends_on:seasonEnds,p_home_weigh_reminder_enabled:reminderOn});
+    const seasonResult=await client.rpc('save_team_weight_schedule',{p_team_id:activeTeam.id,p_season_id:activeSeason.id,p_frequency:weightFrequency,p_days:weightDays,p_timezone:$('editWeightTimezone').value,p_starts_on:seasonStarts,p_ends_on:seasonEnds});
     seasonError=seasonResult.error;
   }
   let weightClassWarning='';
@@ -3181,7 +3205,8 @@ async function activateTeam(teamId,{persist=true}={}){
   const team=availableTeams.find(t=>t.id===teamId);
   if(!team){message('That team is not available to this account.',true);return;}
   if(myWeightCheckActive)resetMyWeightCheck();
-  resetTeammateWeightPicker();resetWeightPinEditor();
+  resetTeammateWeightPicker();resetWeightPinEditor();resetAthleteCard();
+  weightCardPhotoCache.clear();
   activeTeam=team;
   communicationNotifications=[];communicationNotificationRenderSignature='';renderCommunicationNotifications();
   coachWeightAthleteId=null;coachWeightSnapshot=null;++coachWeightSnapshotRequest;++weightTrendRequestVersion;
@@ -3375,7 +3400,7 @@ function renderPersonalWeightSnapshots(){
   show('teamWeightSnapshotMetrics',isStaff);
   show('teamWeightRoomMetrics',isStaff);
   show('weighInModeArea',canWeighIn);
-  if($('weightSnapshotSubtitle'))$('weightSnapshotSubtitle').textContent=isStaff?'Today’s private team totals':'Private athlete weight and progress';
+  renderWeightSchedule();
   if($('personalWeightRoomTitle'))$('personalWeightRoomTitle').textContent=personalWeightSnapshots.length===1?'My Weight':'My Athletes’ Weights';
   show('startMyWeightCheckBtn',!!signedInAthleteProfile()&&!isStaff&&!isManager);
   show('athleteTeammateWeightActions',!!signedInAthleteProfile()&&!isStaff&&!isManager);
@@ -3385,7 +3410,14 @@ function renderPersonalWeightSnapshots(){
     const when=latest?fmtDateTime(latest.captured_at):'No recorded weigh-in yet';
     return `<button type="button" class="personal-weight-card" data-personal-weight-athlete="${row.id}"><span><b>${esc(row.first_name)} ${esc(row.last_name)}</b><small>${esc(row.relationship)} · ${esc(when)}</small></span><span class="personal-weight-value">${esc(value)}<small>${latest?'View trend':'Weight history'}</small></span></button>`;
   }).join(''):'<div class="empty-card">No athlete weight profile is connected to this account.</div>';
-  [home,room].filter(Boolean).forEach(box=>{box.innerHTML=html;box.querySelectorAll('[data-personal-weight-athlete]').forEach(btn=>btn.onclick=()=>openWeightTrend(btn.dataset.personalWeightAthlete));});
+  if(room){room.innerHTML=html;room.querySelectorAll('[data-personal-weight-athlete]').forEach(btn=>btn.onclick=()=>openWeightTrend(btn.dataset.personalWeightAthlete));}
+  if(home){
+    const offset=home.querySelector('.weight-swipe-list')?.scrollLeft||0;
+    const rows=personalWeightSnapshots.map(row=>({...familyAthletes.find(a=>String(a.athlete_id)===String(row.id)),...row}));
+    home.innerHTML=available?`<div class="family-athlete-list weight-swipe-list" aria-label="My athlete weight snapshots">${rows.map(row=>weightSwipeCard(row,row.latest)).join('')}</div>`:html;
+    const strip=home.querySelector('.weight-swipe-list');if(strip)strip.scrollLeft=offset;
+    home.querySelectorAll('[data-weight-card]').forEach(btn=>btn.onclick=()=>openWeightTrend(btn.dataset.weightCard));hydrateWeightCardPhotos(home,rows);
+  }
   applyRoleUI();
 }
 
@@ -5143,10 +5175,7 @@ function localTodayYMD(){
 }
 
 function homeWeighReminderActiveToday(){
-  if(!activeSeason?.home_weigh_reminder_enabled)return false;
-  if(!activeSeason?.starts_on||!activeSeason?.ends_on)return false;
-  const today=localTodayYMD();
-  return today>=activeSeason.starts_on && today<=activeSeason.ends_on;
+  return dashboardCounts?.local_date===teamTodayDateString()?dashboardCounts.schedule_active===true:weightScheduleActiveToday();
 }
 
 function teamUsesCertificationPlans(){
@@ -5156,21 +5185,17 @@ function teamUsesCertificationPlans(){
 }
 
 async function loadDashboard(){
-  if (!activeSeason) return;
-  const { data: counts, error } = await client.rpc('team_dashboard_counts_v2',{p_season_id:activeSeason.id});
-  if(error){ message(error.message,true); return; }
-  if(counts?.[0]){
-    const c=counts[0];
-    dashboardCounts=c;
-    const values={
-      weighed:`${c.weighed_today}/${c.expected_to_weigh}`,
-      notWeighed:c.not_weighed_today,
-      eligible:c.newly_eligible,
-      challenges:c.challenge_queue
-    };
-    Object.entries(values).forEach(([k,v])=>{ if($(k)) $(k).textContent=v; if($(k+'2')) $(k+'2').textContent=v; });
+  if(!activeSeason||!isStaff)return;
+  const version=++dashboardRequestVersion,teamId=activeTeam.id,seasonId=activeSeason.id,userId=session?.user?.id;
+  const {data:c,error}=await client.rpc('team_dashboard_counts_v3',{p_season_id:seasonId});
+  if(version!==dashboardRequestVersion||activeTeam?.id!==teamId||activeSeason?.id!==seasonId||session?.user?.id!==userId||!isStaff)return;
+  if(error){dashboardCounts=null;renderWeightSchedule();message(error.message,true);return;}
+  if(c){
+    dashboardCounts=c;activeTeam.weight_check_frequency=c.frequency;activeTeam.weight_check_days=c.days;
+    const values={weighed:`${c.weighed_today}/${c.expected_to_weigh}`,notWeighed:c.not_weighed_today,eligible:c.newly_eligible,challenges:c.challenge_queue};
+    Object.entries(values).forEach(([k,v])=>{if($(k))$(k).textContent=v;if($(k+'2'))$(k+'2').textContent=v;});
   }
-  renderAttention();
+  renderWeightSchedule();renderAttention();
 }
 
 function fmtShortDateOnly(dateStr){
@@ -7687,21 +7712,26 @@ async function renderSelectedWeighInEntry(){
 function openNativeCredentialScanner(){
   const bridge=window.webkit?.messageHandlers?.credentialScanner;
   if(!bridge){message('Camera scanning is available in the updated iPhone/iPad app. You can still use a paired barcode scanner or type the credential.',true);return;}
+  if(!activeWeighInSession||selectedWeighInEntry)return;
+  nativeCameraScanContext={sessionId:activeWeighInSession.id,teamId:activeTeam.id,userId:session?.user?.id};
   bridge.postMessage({command:'scan',formats:['qr','code128']});
 }
 window.wrestlingManagerCredentialScanned=async function(token,type='qr'){
+  const scan=nativeCameraScanContext;nativeCameraScanContext=null;
+  if(!scan||scan.sessionId!==activeWeighInSession?.id||scan.teamId!==activeTeam?.id||scan.userId!==session?.user?.id)return;
   const value=String(token||'').trim();
-  if(!value)return;
+  if(!value||!activeWeighInSession||selectedWeighInEntry||$('weighInConsoleSheet').classList.contains('hidden'))return;
   $('weighScanToken').value=value;
   selectedIdentificationMethod=type==='qr'?'qr':'barcode';
-  await resolveWeighCredential();
+  await resolveWeighCredential(type==='qr'?'qr':'barcode');
 };
 window.wrestlingManagerCredentialScannerError=function(reason){
   if(reason)message(String(reason),true);
 };
 
-async function resolveWeighCredential(){
-  if(!activeWeighInSession||weighCredentialResolving)return;
+async function resolveWeighCredential(scanMethod=null){
+  if(!activeWeighInSession||weighCredentialResolving||selectedWeighInEntry)return;
+  const scanSessionId=activeWeighInSession.id,scanTeamId=activeTeam?.id,scanUserId=session?.user?.id;
   const input=$('weighScanToken');
   const token=String(input?.value||'').trim();
   if(!token){message('Scan or enter a credential first.',true);input?.focus();return;}
@@ -7712,12 +7742,14 @@ async function resolveWeighCredential(){
   try{
     const {data,error}=await client.rpc('resolve_session_credential',{p_session_id:activeWeighInSession.id,p_credential_token:token});
     if(error){message(error.message,true);return;}
+    if(activeWeighInSession?.id!==scanSessionId||activeTeam?.id!==scanTeamId||session?.user?.id!==scanUserId||$('weighInConsoleSheet').classList.contains('hidden'))return;
     if(!data?.length){message('Credential was not found on this event roster.',true);return;}
     const hit=data[0];
     let row=weighInRoster.find(x=>x.id===hit.roster_entry_id);
     if(!row){await loadWeighInRoster();row=weighInRoster.find(x=>x.id===hit.roster_entry_id);}
+    if(activeWeighInSession?.id!==scanSessionId||activeTeam?.id!==scanTeamId||session?.user?.id!==scanUserId||$('weighInConsoleSheet').classList.contains('hidden'))return;
     if(!row){message('The athlete was identified, but the roster is still refreshing. Try once more.',true);return;}
-    resetTeamKioskCycle();selectedWeighInEntry=row;selectedIdentificationMethod=hit.credential_type||'nfc';stableTeamWeighInId=null;stableReadingKey=null;$('liveWeightInput').value='';show('stableWeightStatus',false);await renderSelectedWeighInEntry();input.value='';
+    resetTeamKioskCycle();selectedWeighInEntry=row;selectedIdentificationMethod=['qr','barcode','nfc'].includes(scanMethod)?scanMethod:hit.credential_type||'qr';stableTeamWeighInId=null;stableReadingKey=null;$('liveWeightInput').value='';show('stableWeightStatus',false);await renderSelectedWeighInEntry();input.value='';
   }catch(error){
     console.error('Identify athlete:',error);
     message('The athlete could not be identified. Please try the roster selection.',true);
@@ -8097,6 +8129,7 @@ document.querySelectorAll('[data-back-home]').forEach(btn=>btn.onclick=()=>setTa
 document.querySelectorAll('[data-weight-metric]').forEach(btn=>btn.onclick=async()=>{
   const metric=btn.dataset.weightMetric;
   if(metric==='weighed'){await openWeighedToday();return;}
+  if(metric==='not-weighed'){await openMissingWeightChecks();return;}
   const labels={'not-weighed':'Not weighed today',eligible:'Newly eligible',challenges:'Challenge queue'};
   message(`${labels[metric]||'Weight Room'} details will open here as that section is built out.`);
 });
@@ -8211,12 +8244,218 @@ $('joinFamilyRetryBtn').onclick=()=>loadJoinFamilyChildren();
 $('joinOtherChildBtn').onclick=()=>setParentJoinPath('other');
 $('joinBackToChildrenBtn').onclick=()=>setParentJoinPath('family');
 
+// Team scheduling, swipeable weight cards, and athlete credentials (v0.15.27).
+const WEIGHT_WEEKDAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+let dashboardRequestVersion=0,athleteCardRequestVersion=0,athleteCardRows=[],activeAthleteCard=null;
+let nativeNfcState={available:false},pendingNfcRequest=null,nativeCameraScanContext=null,weightCardPhotoCache=new Map();
+
+function weightScheduleActiveToday(){
+  if(!activeTeam||!activeSeason||activeSeason.active===false)return false;
+  const today=teamTodayDateString(),mode=activeTeam.weight_check_frequency||'off';
+  if(mode==='off'||(activeSeason.starts_on&&today<activeSeason.starts_on)||(activeSeason.ends_on&&today>activeSeason.ends_on))return false;
+  return mode==='daily'||(mode==='weekly'&&(activeTeam.weight_check_days||[]).includes(new Date(today+'T12:00:00Z').getUTCDay()));
+}
+function renderWeightSchedule(){
+  const current=dashboardCounts?.local_date===teamTodayDateString();
+  const active=isStaff&&(current?dashboardCounts.schedule_active===true:weightScheduleActiveToday());
+  ['weighed','notWeighed','weighed2','notWeighed2'].forEach(id=>{
+    const button=$(id)?.closest('button');if(button)button.classList.toggle('hidden',!active);
+  });
+  document.querySelectorAll('[data-weighed-label]').forEach(el=>el.textContent=activeTeam?.weight_check_frequency==='weekly'?'Weighed · weekly check':'Weighed today');
+  if($('weightSnapshotSubtitle'))$('weightSnapshotSubtitle').textContent=!isStaff?'Private athlete weight and progress':!active?'Latest private athlete weights':activeTeam?.weight_check_frequency==='weekly'?`Weekly schedule · ${(activeTeam.weight_check_days||[]).map(d=>WEIGHT_WEEKDAYS[d].slice(0,3)).join(', ')}`:'Daily weight checks';
+}
+function renderWeightScheduleEditor(){
+  show('editWeightWeekdays',$('editWeightFrequency').value==='weekly');
+}
+function fillWeightScheduleEditor(){
+  $('editWeightFrequency').value=activeTeam?.weight_check_frequency||'off';
+  document.querySelectorAll('[data-weight-weekday]').forEach(el=>el.checked=(activeTeam?.weight_check_days||[]).includes(Number(el.value)));
+  const zone=activeTeam?.timezone||'America/Denver',select=$('editWeightTimezone');
+  if(![...select.options].some(o=>o.value===zone))select.add(new Option(zone,zone));
+  select.value=zone;renderWeightScheduleEditor();
+}
+async function openWeightScheduleSettings(){
+  await openEditTeam();requestAnimationFrame(()=>requestAnimationFrame(()=>$('weightScheduleSettingsBlock')?.scrollIntoView({block:'start'})));
+}
+async function openMissingWeightChecks(){
+  if(!isStaff)return;
+  await loadDashboard();
+  closeSheets();openSheet('missingWeightChecksSheet');
+  const c=dashboardCounts;
+  $('missingWeightChecksSummary').textContent=c?.schedule_active?`${activeTeam.name} · ${c.local_date}`:'No weight check is scheduled today.';
+  $('missingWeightChecksList').innerHTML=c?.schedule_active?(c.missing_athletes||[]).map(a=>`<button class="family-athlete-card" data-missing-athlete="${esc(a.athlete_id)}"><div><b>${esc(a.first_name)} ${esc(a.last_name)}</b><small>Awaiting today’s weight check</small></div><span>›</span></button>`).join('')||'<div class="empty-card">Everyone expected to weigh has checked in.</div>':'<div class="empty-card">Athletes can still record a weight whenever they need to.</div>';
+  $('missingWeightChecksList').querySelectorAll('[data-missing-athlete]').forEach(b=>b.onclick=()=>openWeightTrend(b.dataset.missingAthlete));
+}
+function weightSwipeCard(row,latest,{loading=false,error=false}={}){
+  const id=row.athlete_id||row.id,name=`${row.first_name||''} ${row.last_name||''}`.trim();
+  const when=loading?'Loading latest weight…':error?'Weight unavailable · tap to retry':latest?fmtDateTime(latest.captured_at):'No recorded weigh-in yet';
+  const value=latest?`${Number(latest.weight_lbs).toFixed(1)} lb`:'—';
+  return `<button type="button" class="family-athlete-card weight-swipe-card" data-weight-card="${esc(id)}"><span class="family-athlete-placeholder" data-weight-photo="${esc(id)}">👤</span><span class="weight-swipe-copy"><b>${esc(name)}</b><small>${esc(when)}</small><strong>${esc(value)}</strong><small>View weight trend</small></span><span aria-hidden="true">›</span></button>`;
+}
+function hydrateWeightCardPhotos(box,rows){
+  const teamId=activeTeam?.id;
+  rows.forEach(async row=>{
+    if(!row.photo_path)return;
+    const id=row.athlete_id||row.id,path=row.photo_path;
+    const key=teamId+':'+path;
+    let url=weightCardPhotoCache.get(key);
+    if(!url){url=await athletePhotoUrl(path);if(url)weightCardPhotoCache.set(key,url);}
+    if(!url||activeTeam?.id!==teamId)return;
+    box.querySelectorAll('[data-weight-photo]').forEach(el=>{
+      if(el.dataset.weightPhoto!==String(id)||el.tagName==='IMG')return;
+      const img=document.createElement('img');img.className='family-athlete-photo';img.src=url;img.alt='';img.dataset.weightPhoto=id;el.replaceWith(img);
+    });
+  });
+}
+function renderCoachWeightSnapshots(){
+  show('homeCoachWeightSnapshot',isStaff);show('coachWeightRoomSection',isStaff);
+  const athletes=coachWeightAthletes(),byId=new Map((coachWeightSnapshot?.rows||[]).map(r=>[String(r.athlete_id),r]));
+  for(const id of ['homeCoachWeightSnapshot','roomCoachWeightSnapshot']){
+    const box=$(id);if(!box)continue;
+    if(!isStaff){box.innerHTML='';continue;}
+    const previous=box.querySelector('.weight-swipe-list')?.scrollLeft||0;
+    const rows=athletes.map(a=>({...a,...byId.get(String(a.athlete_id))}));
+    box.innerHTML=rows.length?`<div class="family-athlete-list weight-swipe-list" aria-label="Athlete weight snapshots">${rows.map(row=>weightSwipeCard(row,row.latest,{loading:!coachWeightSnapshot,error:coachWeightSnapshot?.error})).join('')}</div>`:'<div class="empty-card">No active athletes on this team yet.</div>';
+    const scroller=box.querySelector('.weight-swipe-list');if(scroller)scroller.scrollLeft=previous;
+    box.querySelectorAll('[data-weight-card]').forEach(b=>b.onclick=()=>openWeightTrend(b.dataset.weightCard));
+    hydrateWeightCardPhotos(box,rows);
+  }
+}
+async function loadCoachWeightSnapshot(){
+  const version=++coachWeightSnapshotRequest,teamId=activeTeam?.id,seasonId=activeSeason?.id,userId=session?.user?.id;
+  renderCoachWeightSnapshots();if(!isStaff||!seasonId)return;
+  const current=()=>version===coachWeightSnapshotRequest&&isStaff&&activeTeam?.id===teamId&&activeSeason?.id===seasonId&&session?.user?.id===userId;
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
+  try{
+    const {data,error}=await client.rpc('get_coach_weight_snapshots',{p_season_id:seasonId}).abortSignal(controller.signal);
+    if(!current())return;if(error)throw error;
+    coachWeightSnapshot={rows:Array.isArray(data)?data:[]};
+  }catch(error){if(!current())return;coachWeightSnapshot={rows:[],error:true};}
+  finally{clearTimeout(timer);}
+  if(current())renderCoachWeightSnapshots();
+}
+
+function resetAthleteCard(){
+  ++athleteCardRequestVersion;athleteCardRows=[];activeAthleteCard=null;
+  if(pendingNfcRequest){postNfcCommand({command:'cancel',requestId:pendingNfcRequest.id});pendingNfcRequest=null;}
+  if($('athleteCardDisplay'))$('athleteCardDisplay').innerHTML='';
+  if($('athleteCardSelect'))$('athleteCardSelect').innerHTML='';
+  if($('athleteCardStatus'))$('athleteCardStatus').textContent='';
+}
+async function openAthleteCards(athleteId=null){
+  if(!activeTeam)return;
+  closeSheets();openSheet('athleteCardSheet');
+  const version=++athleteCardRequestVersion,teamId=activeTeam.id,userId=session?.user?.id;
+  const current=()=>version===athleteCardRequestVersion&&activeTeam?.id===teamId&&session?.user?.id===userId&&!$('athleteCardSheet').classList.contains('hidden');
+  $('athleteCardStatus').textContent='Loading your athlete cards…';show('athleteCardActions',false);
+  try{
+    const {data,error}=await client.rpc('get_athlete_card_roster',{p_team_id:teamId});
+    if(!current())return;if(error)throw error;
+    athleteCardRows=data||[];
+    $('athleteCardSelect').innerHTML='<option value="">Choose an athlete</option>'+athleteCardRows.map(a=>`<option value="${esc(a.athlete_id)}">${esc(a.first_name)} ${esc(a.last_name)}</option>`).join('');
+    $('athleteCardStatus').textContent=athleteCardRows.length?'':'No athlete cards are available for this account on this team.';
+    const selected=athleteCardRows.some(a=>String(a.athlete_id)===String(athleteId))?athleteId:athleteCardRows.length===1?athleteCardRows[0].athlete_id:null;
+    if(selected){$('athleteCardSelect').value=selected;await loadAthleteCard();}
+    postNfcCommand({command:'status'});
+  }catch(error){if(current())$('athleteCardStatus').textContent=error.message||'Could not load athlete cards. Try again.';}
+}
+async function loadAthleteCard(replace=false){
+  const athleteId=$('athleteCardSelect').value;if(!athleteId){activeAthleteCard=null;$('athleteCardDisplay').innerHTML='';show('athleteCardActions',false);return;}
+  if(replace&&!confirm('Replace this athlete’s card? The old QR, barcode, and any NFC cards or wristbands programmed with it will stop working. Save the new card and reprogram their NFC items.'))return;
+  if(pendingNfcRequest){postNfcCommand({command:'cancel',requestId:pendingNfcRequest.id});pendingNfcRequest=null;}
+  const version=++athleteCardRequestVersion,teamId=activeTeam.id,userId=session?.user?.id;
+  const current=()=>version===athleteCardRequestVersion&&activeTeam?.id===teamId&&session?.user?.id===userId&&$('athleteCardSelect').value===athleteId&&!$('athleteCardSheet').classList.contains('hidden');
+  activeAthleteCard=null;$('athleteCardDisplay').innerHTML='';$('athleteCardStatus').textContent=replace?'Replacing card…':'Opening card…';show('athleteCardActions',false);
+  $('replaceAthleteCardBtn').disabled=true;
+  try{
+    const {data,error}=await client.rpc('get_athlete_scan_card',{p_team_id:teamId,p_athlete_id:athleteId,p_replace:replace});
+    if(!current())return;if(error)throw error;
+    if(!data?.credential_token)throw new Error('The card could not be loaded.');
+    activeAthleteCard=data;renderAthleteCard();$('athleteCardStatus').textContent=replace?'New card ready. The previous card has been disabled.':'';
+  }catch(error){if(current())$('athleteCardStatus').textContent=error.message||'Could not open this card. Try again.';}
+  finally{if(current())$('replaceAthleteCardBtn').disabled=false;}
+}
+function renderAthleteCard(){
+  const c=activeAthleteCard;if(!c)return;
+  $('athleteCardDisplay').innerHTML=`<div class="athlete-scan-card"><div class="eyebrow">WRESTLING MANAGER</div><h3>${esc(c.first_name)} ${esc(c.last_name)}</h3><small>Athlete Card</small><div id="athleteCardQr" class="athlete-card-qr"></div><div class="athlete-card-barcode"><svg id="athleteCardBarcode" role="img" aria-label="Athlete barcode"></svg></div><p>Show this card at your team or tournament station.</p></div>`;
+  new QRCode($('athleteCardQr'),{text:c.credential_token,width:224,height:224,correctLevel:QRCode.CorrectLevel.M});
+  JsBarcode($('athleteCardBarcode'),c.credential_token,{format:'CODE128',width:3,height:90,displayValue:false,margin:30});
+  const svg=$('athleteCardBarcode');svg.setAttribute('viewBox',`0 0 ${parseFloat(svg.getAttribute('width'))} ${parseFloat(svg.getAttribute('height'))}`);
+  show('athleteCardActions',true);
+}
+async function saveAthleteCardImage(){
+  const c=activeAthleteCard,qr=$('athleteCardQr')?.querySelector('canvas');if(!c||!qr)return;
+  const canvas=document.createElement('canvas');canvas.width=1000;canvas.height=1160;const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,1000,1160);ctx.fillStyle='#10151c';ctx.textAlign='center';ctx.font='bold 34px sans-serif';ctx.fillText('WRESTLING MANAGER',500,76);
+  ctx.font='bold 48px sans-serif';ctx.fillText(`${c.first_name} ${c.last_name}`,500,150,880);ctx.font='28px sans-serif';ctx.fillText('Athlete Card',500,199);
+  ctx.imageSmoothingEnabled=false;ctx.drawImage(qr,220,260,560,560);
+  const barcode=document.createElement('canvas');JsBarcode(barcode,c.credential_token,{format:'CODE128',width:3,height:110,displayValue:false,margin:30});
+  ctx.drawImage(barcode,40,860,920,180);ctx.font='24px sans-serif';ctx.fillText('Show at your team or tournament station.',500,1100);
+  const dataUrl=canvas.toDataURL('image/png'),fileName=`${c.first_name}-${c.last_name}-Athlete-Card.png`.replace(/[^a-zA-Z0-9_.-]/g,'_');
+  if(window.webkit?.messageHandlers?.athleteNfc){postNfcCommand({command:'shareCard',dataUrl,fileName});return;}
+  const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+  const file=new File([blob],fileName,{type:'image/png'});
+  if(navigator.canShare?.({files:[file]})){try{await navigator.share({files:[file],title:'Athlete Card'});}catch(error){if(error.name!=='AbortError')message('The card could not be shared.',true);}return;}
+  const a=document.createElement('a');a.href=dataUrl;a.download=fileName;a.click();
+}
+function postNfcCommand(body){
+  const bridge=window.webkit?.messageHandlers?.athleteNfc;if(!bridge)return false;
+  bridge.postMessage(body);return true;
+}
+function startAthleteNfcScan(){
+  if(pendingNfcRequest){message('Finish or cancel the current NFC scan first.',true);return;}
+  if(!activeWeighInSession||selectedWeighInEntry||weighCredentialResolving){message('Finish the current weight check before scanning the next athlete.',true);return;}
+  if(!nativeNfcState.available){message('NFC scanning needs a compatible iPhone with NFC enabled in this app. Use Scan Code on this device.',true);return;}
+  const id=crypto.randomUUID();pendingNfcRequest={id,mode:'read',sessionId:activeWeighInSession.id,teamId:activeTeam.id};
+  postNfcCommand({command:'read',requestId:id});
+}
+function programAthleteNfc(){
+  if(!activeAthleteCard)return;
+  if(pendingNfcRequest){message('Finish or cancel the current NFC scan first.',true);return;}
+  if(!nativeNfcState.available){message('Open Athlete Cards in the updated app on an NFC-capable iPhone to program a card or wristband.',true);return;}
+  if(!confirm(`Program an NFC card or wristband for ${activeAthleteCard.first_name} ${activeAthleteCard.last_name}? Use a blank or reusable NDEF tag. Existing tag contents will be replaced.`))return;
+  const id=crypto.randomUUID();pendingNfcRequest={id,mode:'write',athleteId:activeAthleteCard.athlete_id,teamId:activeTeam.id};
+  $('athleteCardStatus').textContent='Hold the card or wristband against the top of the iPhone.';
+  postNfcCommand({command:'write',requestId:id,token:activeAthleteCard.credential_token});
+}
+window.wrestlingManagerNfcResult=async function(result){
+  if(result?.event==='status'){nativeNfcState=result;show('scanAthleteNfcBtn',!!result.available);return;}
+  const request=pendingNfcRequest;if(!request||result?.requestId!==request.id)return;pendingNfcRequest=null;
+  if(activeTeam?.id!==request.teamId)return;
+  if(request.mode==='write'){
+    if(activeAthleteCard?.athlete_id!==request.athleteId||$('athleteCardSheet').classList.contains('hidden'))return;
+    $('athleteCardStatus').textContent=result.ok?'NFC card programmed and verified. It is ready to use.':result.cancelled?'Programming cancelled.':result.message||'Programming failed. Try again.';return;
+  }
+  if(activeWeighInSession?.id!==request.sessionId||$('weighInConsoleSheet').classList.contains('hidden')||selectedWeighInEntry)return;
+  if(result.ok&&result.token){$('weighScanToken').value=result.token;await resolveWeighCredential('nfc');}
+  else if(!result.cancelled)message(result.message||'NFC scan failed. Try again.',true);
+};
+
+$('editWeightFrequency').onchange=renderWeightScheduleEditor;
+$('weightScheduleSettingsBtn').onclick=openWeightScheduleSettings;
+$('athleteCardsSettingsBtn').onclick=()=>openAthleteCards();
+$('athleteCardsRoomBtn').onclick=()=>openAthleteCards();
+$('viewAthleteCardBtn').onclick=()=>openAthleteCards(viewAthleteId);
+$('profileAthleteCardBtn').onclick=()=>openAthleteCards(profileAthleteId);
+$('accessAthleteCardBtn').onclick=()=>openAthleteCards(accessAthleteId);
+$('athleteCardSelect').onchange=()=>loadAthleteCard();
+$('retryAthleteCardBtn').onclick=()=>loadAthleteCard();
+$('replaceAthleteCardBtn').onclick=()=>loadAthleteCard(true);
+$('saveAthleteCardBtn').onclick=saveAthleteCardImage;
+$('programAthleteNfcBtn').onclick=programAthleteNfc;
+$('scanAthleteNfcBtn').onclick=startAthleteNfcScan;
+postNfcCommand({command:'status'});
+setInterval(()=>{
+  if(isStaff&&activeSeason&&document.visibilityState==='visible'&&dashboardCounts?.local_date!==teamTodayDateString())loadDashboard();
+},60000);
+
 setupPhoneFormatting();
 window.addEventListener('pageshow',()=>{recoverInteractionLayer();refreshTeamData();});
 window.addEventListener('online',()=>refreshTeamData({force:true}));
 setInterval(pollAccountMemberships,30000);
 setRememberSession(shouldRememberSession());
 client.auth.onAuthStateChange((event,nextSession)=>{
+  if(session?.user?.id!==nextSession?.user?.id){resetAthleteCard();nativeCameraScanContext=null;weightCardPhotoCache.clear();}
   if(session?.user?.id!==nextSession?.user?.id&&(myWeightCheckMode==='teammate'||!$('teammateWeightCheckSheet').classList.contains('hidden')||!$('weightPinSheet').classList.contains('hidden')))closeSheets();
   session=nextSession||null;
   if(!session)subscribeAccountMemberships();
@@ -8236,5 +8475,32 @@ setupGearSelects();
 refresh();
 
 </script>
+<!-- Bundled library licenses
+QRCode.js
+The MIT License (MIT)
+---------------------
+Copyright (c) 2012 davidshimjs
+
+Permission is hereby granted, free of charge,
+to any person obtaining a copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+JsBarcode
+Copyright (c) 2016 Johan Lindell (johan@lindell.me)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+-->
 </body>
 </html>
