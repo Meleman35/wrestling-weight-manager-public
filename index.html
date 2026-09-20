@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.15.24: repeat self weigh-ins after scale zero, with safe save retries. -->
+<!-- Wrestling Manager v0.15.25: compact Home weight alerts, message-only bell, and dismiss-on-read notifications. -->
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -232,6 +232,12 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     .trend-metric span{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
     .trend-metric b{display:block;font-size:22px;margin-top:4px}
     .coach-weight-snapshot{margin-top:14px}
+    .weight-snapshot-alert{display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:9px 11px;background:var(--soft);border:1px solid var(--line);border-radius:14px}
+    .weight-snapshot-alert button{min-height:40px}
+    .weight-snapshot-alert .weight-alert-open{flex:1;min-width:0;background:transparent;color:var(--ink);text-align:left;padding:4px;border:0;box-shadow:none}
+    .weight-alert-open b,.weight-alert-open small{display:block}
+    .weight-alert-open small{margin-top:3px;color:var(--muted);font-size:12px}
+    .weight-snapshot-alert .link-btn{flex:0 0 auto;font-size:12px;padding:6px}
     .coach-weight-snapshot select{margin-bottom:10px;color:var(--ink)}
     #weightTrendAthletePicker{margin:12px 0}
     #weightTrendAthleteSelect{color:var(--ink)}
@@ -514,6 +520,7 @@ button{touch-action:manipulation}
         </section>
 
         <section id="weightSnapshotSection" class="home-feed-block layout-block" data-layout-key="weight_snapshot"><div class="section-head"><div class="feed-author"><span class="feed-author-icon">⚖️</span><span><h3>Weight Room Snapshot</h3><small id="weightSnapshotSubtitle">Today’s private team totals</small></span></div></div>
+        <div id="homeWeightNotification" class="weight-snapshot-alert hidden" aria-live="polite"><button id="openHomeWeightNotificationBtn" type="button" class="weight-alert-open"><b>New weigh-ins</b><small id="homeWeightNotificationSummary"></small></button><button id="markWeightNotificationsReadBtn" type="button" class="link-btn">Mark All Read</button></div>
         <div id="teamWeightSnapshotMetrics" class="metric-grid">
           <button type="button" class="metric metric-btn" data-weight-metric="weighed"><span>Weighed today</span><strong id="weighed">0</strong></button>
           <button type="button" class="metric metric-btn" data-go="weight"><span>Not weighed</span><strong id="notWeighed">0</strong></button>
@@ -578,7 +585,6 @@ button{touch-action:manipulation}
       </section>
 
       <section id="weightTab" class="tabview hidden">
-        <div class="feature-card"><h3>Weigh-in alerts</h3><div id="weightNotificationList"><p class="fine">No weigh-in alerts yet.</p></div></div>
         <button type="button" class="tab-back-btn" data-back-home><span>←</span> Back to Home</button>
         <div class="section-head top-space"><div><div class="eyebrow">WRESTLING-SPECIFIC</div><h2>Weight Room</h2></div></div>
         <div id="teamWeightRoomMetrics" class="metric-grid">
@@ -849,7 +855,7 @@ button{touch-action:manipulation}
         <label class="toggle-row"><span><b>Email copies</b><small>Send the full announcement by email.</small></span><input id="prefEmailAnnouncements" type="checkbox"></label>
       </div>
     </div>
-    <div class="delivery-card"><h3>Weigh-ins</h3><label class="toggle-row"><span><b>Weight push alerts</b><small>For approved parents and team leaders. Includes athlete, source team, method and weight in the notification preview. In-app alerts stay on.</small></span><input id="prefPushWeighIns" type="checkbox" checked></label></div>
+    <div class="delivery-card"><h3>Weigh-ins</h3><label class="toggle-row"><span><b>Weight push alerts</b><small>For approved parents and team leaders. Includes athlete, source team, method and weight in the notification preview. In-app weight updates appear together in the Home snapshot.</small></span><input id="prefPushWeighIns" type="checkbox" checked></label></div>
     <h3 class="subhead">Quiet hours</h3>
     <p class="fine">Ordinary alerts wait during quiet hours. Important announcements and safety alerts can still arrive immediately.</p>
     <div class="two-col"><div><label for="prefQuietStart">Start</label><input id="prefQuietStart" type="time" value="20:00"></div><div><label for="prefQuietEnd">End</label><input id="prefQuietEnd" type="time" value="08:00"></div></div>
@@ -860,8 +866,8 @@ button{touch-action:manipulation}
 
   <section id="communicationNotificationsSheet" class="sheet hidden" aria-modal="true">
     <div class="sheet-handle"></div>
-    <div class="sheet-head"><div><div class="eyebrow">IN-APP ALERTS</div><h2>Notifications</h2></div><button class="icon-close" data-close-sheet>×</button></div>
-    <div id="communicationNotificationList"><div class="empty-card">No notifications yet.</div></div>
+    <div class="sheet-head"><div><div class="eyebrow">MESSAGES</div><h2>Message Notifications</h2></div><button class="icon-close" data-close-sheet>×</button></div>
+    <div id="communicationNotificationList"><div class="empty-card">No unread message notifications.</div></div>
     <button id="markCommunicationNotificationsReadBtn" class="wide secondary" type="button">Mark All Read</button>
   </section>
 
@@ -1460,7 +1466,7 @@ button{touch-action:manipulation}
     <button id="customizeLayoutBtn" class="wide secondary" type="button">↕ Customize App Layout</button>
     <button id="securityBtn" class="wide secondary" type="button">🔒 Sign-In & App Security</button>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.15.10</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.15.25</p>
   </section>
 
   <section id="layoutEditorSheet" class="sheet hidden" aria-modal="true">
@@ -1877,6 +1883,9 @@ let communicationThreadQueuedRefresh = false;
 let communicationThreadQueuedPreserveScroll = false;
 let communicationInboxRenderSignature = '';
 let communicationNotificationRenderSignature = '';
+// Keep successful/pending acknowledgements over stale in-flight refreshes.
+// Keys are scoped to the signed-in account and team; the server persists reads.
+const notificationReadOverrides = new Map();
 let communicationLongPressTimer = null;
 let communicationLongPressStart = null;
 let suppressCommunicationClickUntil = 0;
@@ -2469,13 +2478,13 @@ function updateBottomNavBadges(){
   const messageCount=(communicationThreads||[]).filter(row=>row.kind!=='announcements').reduce((sum,row)=>sum+Math.max(0,Number(row.unread_count)||0),0)+Math.max(0,Number(smsUnreadReplies)||0);
   const homeSeen=navSeenAt('home');
   const generalHomeUnread=(communicationNotifications||[]).filter(row=>row.category!=='weigh_in'&&!row.read_at&&!row.thread_id&&new Date(row.created_at||0).getTime()>homeSeen).length;
-  const homeCount=announcementUnread+generalHomeUnread;
+  const homeCount=announcementUnread+generalHomeUnread+(unreadWeightNotifications().length?1:0);
   const scheduleSeen=navSeenAt('schedule');
   const scheduleCount=(scheduleRows||[]).filter(row=>new Date(row.updated_at||row.created_at||0).getTime()>scheduleSeen).length;
   setNavBadge('messages',messageCount,'unread messages');
   setNavBadge('home',homeCount,'unseen home alerts');
   setNavBadge('schedule',scheduleCount,'unseen schedule changes');
-  setNavBadge('weight',(communicationNotifications||[]).filter(row=>row.category==='weigh_in'&&!row.read_at).length,'unread weigh-ins');
+  setNavBadge('weight',0,'unread weigh-ins');
 }
 
 function setTab(name){
@@ -3144,6 +3153,7 @@ async function activateTeam(teamId,{persist=true}={}){
   const team=availableTeams.find(t=>t.id===teamId);
   if(!team){message('That team is not available to this account.',true);return;}
   activeTeam=team;
+  communicationNotifications=[];communicationNotificationRenderSignature='';renderCommunicationNotifications();
   coachWeightAthleteId=null;coachWeightSnapshot=null;++coachWeightSnapshotRequest;++weightTrendRequestVersion;
   rosterRows=[];rosterManagementRows=[];
   show('homeCoachWeightSnapshot',false);show('coachWeightRoomSection',false);
@@ -3974,10 +3984,32 @@ async function fetchCommunicationInbox(teamId=activeTeam?.id,seasonId=activeSeas
   return legacy.error?current:legacy;
 }
 
+function notificationReadKey(id,userId=session?.user?.id,teamId=activeTeam?.id){return `${userId}:${teamId}:${id}`;}
+function unreadMessageNotifications(){
+  return communicationNotifications.filter(n=>!n.read_at&&['message','sms_reply'].includes(n.category));
+}
+function unreadWeightNotifications(){return communicationNotifications.filter(n=>!n.read_at&&n.category==='weigh_in');}
+async function fetchUnreadCommunicationNotifications(teamId,userId){
+  // Read only this user's authorized unread rows. UUID paging avoids the old
+  // RPC's 100-row cap and keeps weight traffic from hiding older messages.
+  const rows=[],pageSize=200;let cursor=null;
+  do{
+    if(session?.user?.id!==userId||activeTeam?.id!==teamId)return {data:[],error:null};
+    let query=client.from('communication_notifications').select('*').eq('team_id',teamId).eq('user_id',userId).is('read_at',null).order('id',{ascending:true}).limit(pageSize);
+    if(cursor)query=query.gt('id',cursor);
+    const {data,error}=await query;
+    if(error)return {data:null,error};
+    const page=data||[];rows.push(...page);
+    if(page.length<pageSize)break;
+    cursor=page.at(-1).id;
+  }while(cursor);
+  return {data:rows.sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at))||String(b.id).localeCompare(String(a.id))),error:null};
+}
+
 async function loadCommunications(showErrors=true){
-  if(!activeTeam||!activeSeason)return;
-  const teamId=activeTeam.id,seasonId=activeSeason.id;
-  const requestKey=`${teamId}:${seasonId}`;
+  if(!activeTeam||!activeSeason||!session?.user?.id)return;
+  const teamId=activeTeam.id,seasonId=activeSeason.id,userId=session?.user?.id;
+  const requestKey=`${userId}:${teamId}:${seasonId}`;
   // Every caller for the same team awaits the same refresh. Previously each
   // realtime update started a new load and cancelled the refresh a tap was
   // waiting for, which caused the second-tap behavior.
@@ -3986,16 +4018,21 @@ async function loadCommunications(showErrors=true){
   const request=(async()=>{
     const [inboxResult,notificationResult,smsAccessResult,safetyResult]=await Promise.all([
       fetchCommunicationInbox(teamId,seasonId),
-      client.rpc('get_communication_notifications',{p_team_id:teamId,p_limit:40}),
+      fetchUnreadCommunicationNotifications(teamId,userId),
       client.rpc('get_team_sms_access',{p_team_id:teamId}),
       isStaff?client.rpc('get_communication_safety_queue',{p_team_id:teamId}):Promise.resolve({data:[],error:null})
     ]);
-    if(loadId!==communicationLoadSequence||activeTeam?.id!==teamId||activeSeason?.id!==seasonId)return;
+    if(loadId!==communicationLoadSequence||session?.user?.id!==userId||activeTeam?.id!==teamId||activeSeason?.id!==seasonId)return;
     const nextThreads=inboxResult.error?[]:await hydrateCommunicationPhotos(inboxResult.data||[]);
-    const nextNotifications=notificationResult.error?[]:(notificationResult.data||[]);
+    if(loadId!==communicationLoadSequence||session?.user?.id!==userId||activeTeam?.id!==teamId||activeSeason?.id!==seasonId)return;
+    const nextNotifications=(notificationResult.error?communicationNotifications:(notificationResult.data||[])).map(row=>{
+      const override=notificationReadOverrides.get(notificationReadKey(row.id,userId,teamId));
+      return override?{...row,read_at:override.readAt}:row;
+    });
     const nextInboxSignature=JSON.stringify(nextThreads);
     const nextNotificationSignature=JSON.stringify(nextNotifications);
     if(inboxResult.error&&showErrors)message(inboxResult.error.message,true);
+    if(notificationResult.error&&showErrors)message('Notifications could not refresh. Please try again.',true);
     communicationThreads=nextThreads;
     communicationNotifications=nextNotifications;
     if(!smsAccessResult.error){actualCanMassText=!!smsAccessResult.data?.can_send;canMassText=viewMode==='parent'?false:actualCanMassText;smsUnreadReplies=Number(smsAccessResult.data?.unread_replies||0);}
@@ -4023,7 +4060,7 @@ async function loadCommunications(showErrors=true){
 
 function renderCommunicationInbox(){
   const list=$('communicationThreadList');if(!list)return;
-  const unread=communicationNotifications.filter(n=>!n.read_at).length;
+  const unread=unreadMessageNotifications().length;
   $('communicationUnreadCount').textContent=unread>99?'99+':String(unread);
   updateBottomNavBadges();
   if(!communicationThreads.length){list.innerHTML='<div class="empty-card">No conversations yet. Tap New to start one.</div>';return;}
@@ -4134,7 +4171,7 @@ function subscribeCommunicationRealtime(){
   const notificationChannel=client.channel(`wm-notifications-${session.user.id}`)
     .on('postgres_changes',{event:'*',schema:'public',table:'communication_notifications',filter:`user_id=eq.${session.user.id}`},payload=>{
       loadCommunications(false);
-      if(payload.new?.category==='weigh_in'&&payload.new.team_id===activeTeam?.id){
+      if(payload.eventType==='INSERT'&&payload.new?.category==='weigh_in'&&payload.new.team_id===activeTeam?.id){
         loadPersonalWeightSnapshots();if(isStaff){loadRoster();loadDashboard();}
       }
     }).subscribe();
@@ -4758,11 +4795,53 @@ async function enableBrowserNotifications(){
 }
 
 function renderCommunicationNotifications(){
-  const list=$('communicationNotificationList');if(!list)return;
-  const card=n=>`<button class="notification-card ${n.read_at?'':'unread'}" type="button" data-notification-id="${esc(n.id)}" data-notification-thread="${n.thread_id||''}" data-notification-category="${esc(n.category||'')}"><b>${esc(n.title)}</b><p>${esc(n.body)}</p><small>${esc(fmtDateTime(n.created_at))}</small></button>`;
-  list.innerHTML=communicationNotifications.length?communicationNotifications.map(card).join(''):'<div class="empty-card">No notifications yet.</div>';
-  const weights=communicationNotifications.filter(n=>n.category==='weigh_in');
-  if($('weightNotificationList'))$('weightNotificationList').innerHTML=weights.length?weights.map(card).join(''):'<p class="fine">No weigh-in alerts yet.</p>';
+  const list=$('communicationNotificationList'),messages=unreadMessageNotifications(),weights=unreadWeightNotifications();
+  const card=n=>`<button class="notification-card unread" type="button" data-notification-id="${esc(n.id)}"><b>${esc(n.title)}</b><p>${esc(n.body)}</p><small>${esc(fmtDateTime(n.created_at))}</small></button>`;
+  if(list)list.innerHTML=messages.length?messages.map(card).join(''):'<div class="empty-card">No unread message notifications.</div>';
+  $('communicationUnreadCount').textContent=messages.length>99?'99+':String(messages.length);
+  $('openNotificationsBtn').setAttribute('aria-label',`Message notifications, ${messages.length} unread`);
+  $('markCommunicationNotificationsReadBtn').disabled=!messages.length;
+  show('homeWeightNotification',weights.length>0);
+  $('homeWeightNotificationSummary').textContent=weights.length?`${weights.length} new ${weights.length===1?'weigh-in':'weigh-ins'} · Tap to view and clear`:'';
+  updateBottomNavBadges();
+}
+async function markNotificationRowsRead(rows){
+  const userId=session?.user?.id,teamId=activeTeam?.id;
+  const ids=[...new Set(rows.filter(row=>!row.read_at&&row.id&&row.team_id===teamId&&!notificationReadOverrides.has(notificationReadKey(row.id,userId,teamId))).map(row=>row.id))];
+  if(!userId||!teamId||!ids.length)return true;
+  const idSet=new Set(ids),operation={readAt:new Date().toISOString()};
+  for(const id of ids)notificationReadOverrides.set(notificationReadKey(id,userId,teamId),operation);
+  communicationNotifications=communicationNotifications.map(row=>idSet.has(row.id)?{...row,read_at:operation.readAt}:row);
+  communicationNotificationRenderSignature=JSON.stringify(communicationNotifications);
+  renderCommunicationNotifications();
+  let failure=null;
+  try{
+    const outcome=await settleWithin(client.rpc('mark_communication_notifications_read',{p_notification_ids:ids}),10000,'Read status');
+    failure=outcome.ok?outcome.value?.error:outcome.error;
+  }catch(error){failure=error;}
+  if(failure){
+    for(const id of ids){const key=notificationReadKey(id,userId,teamId);if(notificationReadOverrides.get(key)===operation)notificationReadOverrides.delete(key);}
+    if(session?.user?.id===userId&&activeTeam?.id===teamId){
+      communicationNotifications=communicationNotifications.map(row=>idSet.has(row.id)?{...row,read_at:null}:row);
+      communicationNotificationRenderSignature=JSON.stringify(communicationNotifications);renderCommunicationNotifications();
+      message('Could not mark these notifications read. Please try again.',true);
+    }
+    return false;
+  }
+  if(session?.user?.id===userId&&activeTeam?.id===teamId){loadCommunications(false);syncNativeNotificationBadge();}
+  return true;
+}
+async function openHomeWeightNotification(){
+  const weights=unreadWeightNotifications();if(!weights.length)return;
+  // Acknowledge the group visible at the time of the tap; later arrivals stay new.
+  markNotificationRowsRead(weights);
+  await openWeighInNotification(weights[0]);
+}
+async function openMessageNotification(notification){
+  if(!notification)return;
+  markNotificationRowsRead([notification]);
+  if(notification.category==='sms_reply'){openTextReplies();return;}
+  if(notification.thread_id){closeSheets();setTab('messages');await openCommunicationThread(notification.thread_id);}
 }
 async function openWeighInNotification(payload){
   if(!payload.weigh_in_id||!payload.athlete_id||activeTeam?.id!==payload.team_id){message('This weigh-in is not available in your current team access.',true);return;}
@@ -4775,11 +4854,11 @@ async function openWeighInNotification(payload){
   await loadPersonalWeightSnapshots();
   await openWeightTrend(payload.athlete_id);
   const notificationId=payload.notification_id||payload.id;
-  if(notificationId)await client.rpc('mark_communication_notifications_read',{p_notification_ids:[notificationId]});
+  if(notificationId)await markNotificationRowsRead([{...payload,id:notificationId}]);
   await loadCommunications(false);await syncNativeNotificationBadge();
 }
 async function openCommunicationNotifications(){await loadCommunications(false);closeSheets();openSheet('communicationNotificationsSheet');}
-async function markCommunicationNotificationsRead(){const {error}=await client.rpc('mark_communication_notifications_read',{p_notification_ids:null});if(error){message(error.message,true);return;}await loadCommunications(false);await syncNativeNotificationBadge();message('Notifications marked read.');}
+async function markCommunicationNotificationsRead(){await markNotificationRowsRead(unreadMessageNotifications());}
 
 const SMS_TEMPLATES={
   leaving_event:{category:'leaving_event',body:'We are leaving the event now. Our estimated arrival home is [time].'},
@@ -7885,21 +7964,16 @@ if(chatThreadIdentity){
   chatThreadIdentity.addEventListener('contextmenu',event=>{event.preventDefault();clearCommunicationTextSelection();openCommunicationActions();});
 }
 $('communicationNotificationList').addEventListener('click',event=>{
-  const card=event.target.closest('[data-notification-thread]');if(!card)return;
+  const card=event.target.closest('[data-notification-id]');if(!card)return;
   event.preventDefault();
-  if(card.dataset.notificationCategory==='sms_reply'){openTextReplies();return;}
-  if(card.dataset.notificationCategory==='weigh_in'){
-    const notification=communicationNotifications.find(n=>n.id===card.dataset.notificationId);
-    if(notification)openWeighInNotification(notification);return;
-  }
-  const id=card.dataset.notificationThread;
-  if(id){closeSheets();setTab('messages');openCommunicationThread(id);}
+  openMessageNotification(unreadMessageNotifications().find(n=>String(n.id)===card.dataset.notificationId));
 });
 bindReliableMessageTap('newCommunicationBtn',openNewCommunication);
-$('weightNotificationList').addEventListener('click',event=>{
-  const card=event.target.closest('[data-notification-id]');
-  const notification=communicationNotifications.find(n=>n.id===card?.dataset.notificationId);
-  if(notification)openWeighInNotification(notification);
+$('openHomeWeightNotificationBtn').onclick=openHomeWeightNotification;
+$('markWeightNotificationsReadBtn').onclick=()=>markNotificationRowsRead(unreadWeightNotifications());
+$('weightSnapshotSection').addEventListener('click',event=>{
+  // Existing snapshot cards and totals also count as opening the weight update.
+  if(event.target.closest('button')&&!event.target.closest('#homeWeightNotification'))markNotificationRowsRead(unreadWeightNotifications());
 });
 bindReliableMessageTap('guardianSafetyTestBtn',openGuardianSafetyTest);
 $('endGuardianSafetyTestBtn').onclick=endGuardianSafetyTest;
