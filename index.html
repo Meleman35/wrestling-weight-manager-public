@@ -398,6 +398,9 @@ button{touch-action:manipulation}
 #teamProfileChoiceView .stack-actions button{white-space:normal;text-align:left;padding:20px;}
 #teamProfileChoiceView button small{display:block;font-size:15px;line-height:1.5;margin-top:6px;font-weight:500;}
 #teamProfileChoiceStatus{min-height:1.5em;}
+
+.ops-toolbar{display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin:12px 0}.ops-toolbar>label{flex:1;min-width:130px;margin:0}.ops-tabs{display:flex;gap:6px;overflow:auto;padding:8px 0 14px;white-space:nowrap}.ops-tabs button{width:auto;flex-shrink:0;padding:10px 14px}.ops-tabs .selected{background:var(--primary,#2460dd);color:white}.ops-card{border:1px solid var(--line,#d9e1ec);border-radius:16px;padding:16px;margin:10px 0;background:var(--surface,#fff);overflow-wrap:anywhere}.ops-card h3{margin:0 0 7px}.ops-card p{margin:6px 0;white-space:pre-wrap}.ops-meta{font-size:12px;color:var(--muted,#667085)}.ops-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.ops-actions button{width:auto;padding:10px 14px}.ops-badge{display:inline-block;font-size:12px;padding:4px 8px;background:#edf2f9;color:#263a59;border-radius:8px;margin:3px 4px 3px 0}.ops-badge.warn{background:#fff0cf;color:#7e5000}.ops-badge.ok{background:#dcf5e8;color:#126144}.ops-pre{white-space:pre-wrap;font:inherit;line-height:1.5}.ops-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.ops-grid>label{min-width:0}.ops-row-editor{border:1px solid #dbe2ec;border-radius:12px;padding:10px;margin:8px 0}.ops-row-editor input,.ops-row-editor select{min-width:0}.ops-status{padding:10px 0;font-size:14px}.ops-error{color:#a82c2c}.ops-amount{font-size:25px;font-weight:800}.ops-contract{max-height:45vh;overflow:auto;border:1px solid #dae0e8;padding:14px;border-radius:10px;white-space:pre-wrap}.ops-roster-person summary{cursor:pointer;font-weight:700}.ops-code{overflow-wrap:anywhere;user-select:all}.match-score-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.match-corner{border-radius:18px;padding:12px;color:white;min-width:0}.match-corner.red{background:#a62038}.match-corner.green{background:#11653f}.match-corner.blue{background:#1853a6}.match-corner h3{color:white;text-align:center;overflow-wrap:anywhere;margin:0 0 5px;font-size:16px}.match-score{font-size:64px;font-weight:800;text-align:center;line-height:1.2}.match-score-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}.match-score-actions button{padding:10px 4px;font-size:12px;min-height:48px;background:rgba(255,255,255,.96);color:#182235;border:0;border-radius:8px;white-space:normal}.match-clock{text-align:center;font-size:62px;line-height:1.1;font-variant-numeric:tabular-nums;font-weight:850;margin:8px 0}.match-period{text-align:center;font-size:14px}.match-clock-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.match-log{max-height:240px;overflow:auto}.match-log p{border-bottom:1px solid #e2e7ef;padding:8px 0;font-size:13px;margin:0}.match-running{color:#11653f}.match-end{color:#ac263b}.ops-check{display:flex;gap:10px;align-items:center}.ops-check input{width:auto}.ops-sheet-note{font-size:13px;color:var(--muted,#667085);line-height:1.45}.ops-calendar-empty{text-align:center;padding:20px}.ops-form textarea{min-height:95px}.ops-link{color:var(--primary,#2460dd);font-weight:650}.ops-table{width:100%;border-collapse:collapse;font-size:13px}.ops-table th,.ops-table td{text-align:left;padding:7px;border-bottom:1px solid #dbe1eb;vertical-align:top}.ops-sheet h2{overflow-wrap:anywhere}@media(max-width:430px){.ops-grid{grid-template-columns:1fr}.match-clock{font-size:54px}.match-score{font-size:54px}}
+
 </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>/* QRCode.js 1.0.0, MIT, David Shim — bundled for athlete cards. */
@@ -519,7 +522,8 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
       <input id="seasonName" value="2026-27">
       <button id="bootstrapTeamBtn" class="wide">Create Organization + Team</button>
     </div>
-  </section>
+  <button id="setupOrgHubBtn" class="wide secondary" type="button">Organization Hub · for assigned leaders</button><button id="setupFeedbackBtn" class="wide secondary" type="button">Feedback</button>
+</section>
 
   <section id="appView" class="app hidden">
     <header class="app-header">
@@ -677,8 +681,8 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
           <div id="weighInSessionList"><div class="empty-card">No active weigh-in sessions.</div></div>
         </div>
         <div class="feature-card">
-          <h3>Weight Management</h3>
-          <p>Certification plans, weekly eligibility, lineup classes, challenge requests and wrestle-offs remain part of the Weight Room and will build on this scale foundation.</p>
+          <h3>Weight Management</h3><button id="matchBookRoomBtn" class="wide secondary coach-only">Challenges & Match Scoring</button>
+          <p>Certification plans, weekly eligibility, lineup classes, challenge requests and wrestle-offs are part of the Weight Room. Open Match Scoring for a configurable clock and scoring timeline.</p>
         </div>
       </section>
 
@@ -686,6 +690,9 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
         <button type="button" class="tab-back-btn" data-back-home><span>←</span> Back to Home</button>
         <div class="section-head top-space"><div><div class="eyebrow">TEAM MANAGEMENT</div><h2>More</h2></div></div>
         <div id="moreMenuCard" class="menu-card">
+<button id="organizationHubBtn" class="menu-row" data-layout-key="organization_hub"><span>🏛️</span><div><b>Organization Hub</b><small>Divisions, calendars, officials, budgets and contracts</small></div><i>›</i></button>
+<button id="matchBookBtn" class="menu-row coach-only" data-layout-key="match_book"><span>⏱️</span><div><b>Match Book</b><small>Challenges, scoring, clocks and results</small></div><i>›</i></button>
+<button id="feedbackBtn" class="menu-row" data-layout-key="feedback"><span>💬</span><div><b>Feedback</b><small>Share ideas, problems and what you like</small></div><i>›</i></button>
           <button id="rosterBtn" class="menu-row coach-only" data-layout-key="roster"><span>👥</span><div><b>Roster</b><small>Athletes, profiles, standby and team transfers</small></div><i>›</i></button>
           <button id="joinBtn" class="menu-row coach-only" data-layout-key="join"><span>🔗</span><div><b>Team Join</b><small>QR code, text, email and team code</small></div><i>›</i></button>
           <button id="joinRequestsBtn" class="menu-row coach-only" data-layout-key="join_requests"><span>✅</span><div><b>Join Requests</b><small>Approve or deny athletes and parents</small></div><i id="joinRequestCount">›</i></button>
@@ -712,6 +719,45 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
   </section>
 
   <div id="sheetBackdrop" class="backdrop hidden"></div>
+<section id="opsHubSheet" class="sheet ops-sheet hidden" aria-modal="true" role="dialog" aria-labelledby="opsHubTitle">
+ <div class="sheet-handle"></div><div class="sheet-head"><div><div class="eyebrow">ORGANIZATION</div><h2 id="opsHubTitle">Organization Hub</h2></div><button class="icon-close" data-close-sheet aria-label="Close">×</button></div>
+ <div class="ops-toolbar"><label>Organization<select id="opsOrg"></select></label><label>Division<select id="opsDivision"><option value="">All divisions</option></select></label></div>
+ <div id="opsTabs" class="ops-tabs"></div><div id="opsStatus" class="ops-status" role="status"></div><div id="opsContent"></div>
+</section>
+<section id="opsEditorSheet" class="sheet ops-sheet hidden" aria-modal="true" role="dialog" aria-labelledby="opsEditorTitle">
+ <div class="sheet-handle"></div><div class="sheet-head"><h2 id="opsEditorTitle">Edit</h2><button class="icon-close" id="opsEditorBack" aria-label="Back">×</button></div>
+ <form id="opsForm" class="ops-form"><div id="opsFields"></div><div id="opsEditorStatus" class="ops-status" role="status"></div><button id="opsSave" class="wide" type="submit">Save</button></form>
+</section>
+<section id="feedbackSheet" class="sheet ops-sheet hidden" aria-modal="true" role="dialog" aria-labelledby="feedbackTitle">
+ <div class="sheet-handle"></div><div class="sheet-head"><div><div class="eyebrow">HELP IMPROVE THE APP</div><h2 id="feedbackTitle">Feedback</h2></div><button class="icon-close" data-close-sheet aria-label="Close">×</button></div>
+ <form id="feedbackForm"><label>What would you like to share?<select id="feedbackCategory"><option value="idea">Feature idea</option><option value="problem">Something isn't working</option><option value="like">Something I like</option><option value="other">Other feedback</option></select></label>
+ <label>Details<textarea id="feedbackBody" required minlength="3" maxlength="4000" placeholder="Tell us what happened or what you would like to see."></textarea></label>
+ <p class="ops-sheet-note">Your team administrators can review feedback submitted for this team. Please leave out passwords and private athlete information.</p>
+ <div id="feedbackStatus" class="ops-status" role="status"></div><button id="feedbackSend" class="wide" type="submit">Send feedback</button></form><h3>Feedback history</h3><div id="feedbackHistory"></div>
+</section>
+<section id="matchListSheet" class="sheet ops-sheet hidden" aria-modal="true" role="dialog" aria-labelledby="matchListTitle">
+ <div class="sheet-handle"></div><div class="sheet-head"><div><div class="eyebrow">CHALLENGES & WRESTLE-OFFS</div><h2 id="matchListTitle">Match Book</h2></div><button class="icon-close" data-close-sheet aria-label="Close">×</button></div>
+ <button id="matchNew" class="wide">＋ Score a match</button><div id="matchListStatus" role="status" class="ops-status"></div><div id="matchDraft"></div><div id="matchChallenges"></div><div id="matchList"></div>
+</section>
+<section id="matchSetupSheet" class="sheet ops-sheet hidden" aria-modal="true" role="dialog" aria-labelledby="matchSetupTitle">
+ <div class="sheet-handle"></div><div class="sheet-head"><h2 id="matchSetupTitle">Match setup</h2><button class="icon-close" data-close-sheet aria-label="Close">×</button></div>
+ <form id="matchSetupForm"><label>Style<select id="matchStyle"><option value="folkstyle">Folkstyle · Red / Green</option><option value="freestyle">Freestyle · Red / Blue</option><option value="greco">Greco-Roman · Red / Blue</option></select></label>
+ <div class="ops-grid"><label>Red athlete<select id="matchRedAthlete"></select></label><label>Green / Blue athlete<select id="matchOtherAthlete"></select></label><label>Red name<input id="matchRedName" required maxlength="120"></label><label>Green / Blue name<input id="matchOtherName" required maxlength="120"></label></div>
+ <label>Period lengths, separated by commas<input id="matchPeriods" value="1:30, 1:30, 1:30" required placeholder="1:30, 1:30, 1:30"></label><p class="ops-sheet-note">Enter minutes or minutes:seconds, up to 12 periods. Examples: 2, 2, 2 or 1:30, 1:30, 1:30.</p>
+ <div class="ops-grid"><label>Break between periods<input id="matchBreak" value="0:30" required></label><label>Folkstyle takedown points<select id="matchTD"><option value="3">3 points</option><option value="2">2 points</option></select></label></div>
+ <label>Weight class / match label<input id="matchLabel" maxlength="120" placeholder="145 lb challenge"></label><p class="ops-sheet-note">Confirm your event's scoring and period rules before starting. The scorer records your decisions; it does not automatically award penalties, decide ties, or end on a technical fall.</p><div id="matchSetupStatus" class="ops-status" role="status"></div><button class="wide" type="submit">Open scoreboard</button></form>
+</section>
+<section id="matchScoreSheet" class="sheet ops-sheet hidden" aria-modal="true" role="dialog" aria-labelledby="matchScoreTitle">
+ <div class="sheet-handle"></div><div class="sheet-head"><div><div class="eyebrow" id="matchStyleLabel">WRESTLE-OFF</div><h2 id="matchScoreTitle">Scoreboard</h2></div><button class="icon-close" id="matchClose" aria-label="Pause and close">×</button></div>
+ <div id="matchPeriodLabel" class="match-period"></div><div id="matchClock" class="match-clock" aria-live="off">1:30</div>
+ <div class="match-clock-actions"><button id="matchToggle" type="button">Start clock</button><button id="matchAdvance" type="button" class="secondary">Next period / break</button></div>
+ <div id="matchCorners" class="match-score-grid"></div><div class="ops-actions"><button id="matchUndo" type="button" class="secondary">Undo last score</button><button id="matchClockEdit" type="button" class="secondary">Adjust clock</button><button id="matchTimeout" type="button" class="secondary">Timeout clock</button><button id="matchOvertime" type="button" class="secondary">Add overtime</button></div>
+ <div id="matchStatus" class="ops-status" role="status"></div><div class="ops-actions"><button id="matchSave" type="button">Save match</button><button id="matchFinish" type="button" class="secondary">Finish match</button><button id="matchExport" type="button" class="secondary">Export match</button></div>
+ <h3>Scoring timeline</h3><div id="matchLog" class="match-log"></div>
+</section>
+
+<section id="opsDialogSheet" class="sheet ops-sheet hidden" style="z-index:1500" aria-modal="true" role="dialog" aria-labelledby="opsDialogTitle"><div class="sheet-handle"></div><div class="sheet-head"><h2 id="opsDialogTitle"></h2><button id="opsDialogCancel" class="icon-close" aria-label="Cancel">×</button></div><form id="opsDialogForm"><div id="opsDialogFields"></div><button id="opsDialogSubmit" type="submit" class="wide">Continue</button></form></section>
+
 
   <section id="myWeightCheckSheet" class="sheet hidden" aria-modal="true">
     <div class="sheet-handle"></div>
@@ -1573,7 +1619,7 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
     <button id="weightPinSettingsBtn" class="wide secondary hidden" type="button">Weight Check PIN</button>
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.15.32</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.16.0</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -2094,7 +2140,7 @@ const ADULT_SHOE_SIZES=['4','4.5','5','5.5','6','6.5','7','7.5','8','8.5','9','9
 const UI_LAYOUT_META={
   home:{important:['📣','Important Announcements'],my_athletes:['👨‍👩‍👧','My Athletes'],quick_actions:['⚡','Quick Actions'],coach_weight_board:['🤼','Lineup by Weight Class'],attention:['✅','Needs Attention'],upcoming:['📅','Upcoming'],weight_snapshot:['⚖️','Weight Room Snapshot']},
   nav:{home:['⌂','Home'],schedule:['▣','Schedule'],messages:['◯','Messages'],weight:['⚖','Weight Room'],more:['☰','More']},
-  more:{roster:['👥','Roster'],join:['🔗','Team Join'],join_requests:['✅','Join Requests'],agreements:['✍️','Team Agreement'],medical:['🩺','Medical Clearance'],member_profiles:['👤','My Athlete Profiles'],family:['👨‍👩‍👧','Family'],staff_directory:['📇','Coaches & Staff'],staff_access:['🪪','Adult Roles & Admins'],equipment:['🎽','Equipment'],files:['📁','Files & Photos'],account:['⚙️','Account & Team']}
+  more:{organization_hub:['🏛️','Organization Hub'],match_book:['⏱️','Match Book'],feedback:['💬','Feedback'],roster:['👥','Roster'],join:['🔗','Team Join'],join_requests:['✅','Join Requests'],agreements:['✍️','Team Agreement'],medical:['🩺','Medical Clearance'],member_profiles:['👤','My Athlete Profiles'],family:['👨‍👩‍👧','Family'],staff_directory:['📇','Coaches & Staff'],staff_access:['🪪','Adult Roles & Admins'],equipment:['🎽','Equipment'],files:['📁','Files & Photos'],account:['⚙️','Account & Team']}
 };
 const DEFAULT_UI_LAYOUT={home:Object.keys(UI_LAYOUT_META.home),nav:Object.keys(UI_LAYOUT_META.nav),more:Object.keys(UI_LAYOUT_META.more)};
 let pendingUiLayout=null;
@@ -2655,6 +2701,7 @@ function openSheet(id){
 }
 function closeSheets(){
   if(document.body.classList.contains('kiosk-locked')) return;
+  window.WMOperations?.close();window.WMMatch?.close();
   ++teamLoginAdminVersion;show('teamLoginsSheet',false);$('teamLoginPassword').value='';$('teamLoginPasswordConfirm').value='';
   ++weightTrendRequestVersion;
   ++weightTestVersion;weightTestAthletes=[];weightTestContext=null;weightTestBusy=false;
@@ -7462,7 +7509,10 @@ async function loadSchedule(){
   if (!activeTeam) return;
   const { data, error } = await client.from('team_events').select('*').eq('team_id',activeTeam.id).order('starts_at',{ascending:true});
   if (error){ message(error.message,true); return; }
-  scheduleRows=data||[];
+  const opsTeamId=activeTeam?.id;
+  const orgEvents=window.WMOperations?await window.WMOperations.calendar(opsTeamId):[];
+  if(activeTeam?.id!==opsTeamId)return;
+  scheduleRows=[...(data||[]),...orgEvents].sort((a,b)=>String(a.starts_at).localeCompare(String(b.starts_at)));
   renderSchedule(); renderUpcomingHome(); renderAttention(); updateBottomNavBadges();
 }
 
@@ -7752,6 +7802,7 @@ async function saveEvent(){
 }
 
 async function openEventDetail(id){
+  if(String(id).startsWith('ops:')){const row=scheduleRows.find(e=>e.id===id);if(row)await window.WMOperations?.open(row.organization_id,row.ops_id);return;}
   activeEvent=scheduleRows.find(e=>e.id===id); if(!activeEvent) return;
   $('detailType').textContent=eventLabel(activeEvent.event_type).toUpperCase(); $('detailTitle').textContent=activeEvent.title;
   $('detailMeta').innerHTML=`
@@ -8685,6 +8736,7 @@ document.querySelectorAll('[data-go]').forEach(btn=>btn.onclick=()=>{setTab(btn.
 document.querySelectorAll('[data-back-home]').forEach(btn=>btn.onclick=()=>setTab('home'));
 document.querySelectorAll('[data-weight-metric]').forEach(btn=>btn.onclick=async()=>{
   const metric=btn.dataset.weightMetric;
+  if(metric==='challenges'){await window.WMMatch?.open();return;}
   if(metric==='weighed'){await openWeighedToday();return;}
   if(metric==='not-weighed'){await openMissingWeightChecks();return;}
   const labels={'not-weighed':'Not weighed today',eligible:'Newly eligible',challenges:'Challenge queue'};
@@ -9060,5 +9112,241 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 -->
+<script>
+/* v0.16.0 organization operations. All authorization is enforced again by the RPC. */
+window.WMOperations=(()=>{
+ let hub=null,org=null,division='',tab='event',generation=0,editor=null,feedbackId=null,dialogResolve=null;
+ const $o=id=>document.getElementById(id),e=v=>esc(String(v??'')),list=v=>Array.isArray(v)?v:[];
+ const labels={event:'Calendar',person:'People & credentials',assignment:'Officials',requirement:'Annual requirements',squad:'Dual rosters',budget:'Budgets',contract:'Contracts',settings:'Divisions & access'};
+ const roles={president:'President',director:'Overall director',board:'Board member',division_director:'Division director',pairing_director:'Pairing director',mat_director:'Mat officials director',coach:'Coach',chaperone:'Chaperone',team_leader:'Team leader',official:'Official',pairing_official:'Pairing official',mat_official:'Mat official',all:'Everyone'};
+ const year=()=>{const d=new Date(),y=d.getFullYear()-(d.getMonth()<7?1:0);return y+'–'+String(y+1).slice(-2)};
+ const note=(id,msg,bad=false)=>{$o(id).textContent=msg;$o(id).classList.toggle('ops-error',bad)};
+ const input=(id,label,value='',type='text',extra='')=>`<label>${e(label)}<input id="${id}" type="${type}" value="${e(value)}" ${extra}></label>`;
+ const area=(id,label,value='',extra='')=>`<label>${e(label)}<textarea id="${id}" ${extra}>${e(value)}</textarea></label>`;
+ const opts=(rows,value)=>rows.map(([id,name])=>`<option value="${e(id)}" ${String(id??'')===String(value??'')?'selected':''}>${e(name)}</option>`).join('');
+ const select=(id,label,rows,value='')=>`<label>${e(label)}<select id="${id}">${opts(rows,value)}</select></label>`;
+ const value=id=>$o(id)?.value?.trim()||'';
+ const allDivs=()=>[['','Organization'],...list(hub?.divisions).map(d=>[d.id,d.name])];
+ const divName=id=>hub?.divisions?.find(d=>d.id===id)?.name||'Organization';
+ const rowName=id=>hub?.records?.find(r=>r.id===id)?.title||'Unavailable record';
+ const badge=(text,cls='')=>`<span class="ops-badge ${cls}">${e(text)}</span>`;
+ const money=v=>Number(v||0).toLocaleString(undefined,{style:'currency',currency:'USD'});
+ const localDate=v=>{if(!v)return '';const d=new Date(v);return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16)};
+ const iso=id=>value(id)?new Date(value(id)).toISOString():null;
+ const context=()=>({uid:session?.user?.id,team:activeTeam?.id});
+ const same=c=>c.uid===session?.user?.id&&c.team===activeTeam?.id;
+ async function rpc(write,request){const c=context();const {data,error}=await client.rpc(write?'save_operations':'get_operations',{p_request:request});if(!same(c))throw new Error('Your account or team changed. Open this tool again.');if(error)throw new Error(error.message);return data;}
+ function can(kind,div=division||null){if(!hub)return false;if(kind==='contract')return hub.president;return !!hub.capabilities?.find(c=>c.division_id===(div||null))?.[kind==='event'?'event':'records'];}
+ function inDivision(id){if(!division)return true;let d=id,seen=new Set();while(d&&!seen.has(d)){if(d===division)return true;seen.add(d);d=hub.divisions.find(x=>x.id===d)?.parent_id;}return false;}
+ async function open(wantedOrg=null,wantedRecord=null){
+  if(document.body.classList.contains('kiosk-locked'))return;
+  if(managedLogin){message('Use your personal account for organization tools.',true);return;}
+  closeSheets();openSheet('opsHubSheet');note('opsStatus','Loading organization…');$o('opsContent').innerHTML='';
+  const ticket=++generation;
+  try{const organizations=await rpc(false,{action:'context'});if(ticket!==generation)return;
+   $o('opsOrg').innerHTML=opts(organizations.map(o=>[o.id,o.name]),wantedOrg||org);
+   if(!organizations.length){hub=null;org=null;$o('opsTabs').innerHTML='';$o('opsContent').innerHTML='<div class="empty-card">Your organization will appear here when you join a team or receive a leadership role.</div><div class="ops-card"><h3>Your account code</h3><p>Give this code to your organization administrator so they can assign your role.</p><p class="ops-code">'+e(session?.user?.id)+'</p></div>';note('opsStatus','');return;}
+   org=organizations.some(o=>o.id===(wantedOrg||org))?(wantedOrg||org):organizations[0].id;$o('opsOrg').value=org;
+   await reload();if(wantedRecord){const r=hub.records.find(r=>r.id===wantedRecord);if(r){tab=r.kind;render();view(r);}}
+  }catch(err){note('opsStatus',err.message,true);}
+ }
+ async function reload(){const ticket=++generation;const data=await rpc(false,{action:'hub',organization_id:org});if(ticket!==generation)return;hub=data;
+  if(!hub.divisions.some(d=>d.id===division))division='';if(!division&&!hub.capabilities?.find(c=>c.division_id===null&&(c.event||c.records)))division=hub.capabilities?.find(c=>c.division_id&&(c.event||c.records))?.division_id||'';$o('opsDivision').innerHTML=opts([['','All divisions'],...hub.divisions.map(d=>[d.id,d.name])],division);note('opsStatus','');render();}
+ function render(){if(!hub)return;
+  $o('opsTabs').innerHTML=Object.entries(labels).map(([key,label])=>`<button class="secondary ${tab===key?'selected':''}" data-ops-tab="${key}">${e(label)}</button>`).join('');
+  $o('opsTabs').querySelectorAll('[data-ops-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.opsTab;render()});
+  if(tab==='settings'){settings();return;}
+  const rows=hub.records.filter(r=>r.kind===tab&&inDivision(r.division_id));if(tab==='event')rows.push(...list(hub.team_events).filter(r=>inDivision(r.division_id)));
+  if(tab==='event')rows.sort((a,b)=>String(a.data.starts_at).localeCompare(String(b.data.starts_at)));
+  $o('opsContent').innerHTML=`${can(tab)?`<button id="opsAdd" class="wide">＋ ${({event:'Calendar event',person:'Staff member',assignment:'Tournament assignment',requirement:'Annual requirements',squad:'Dual roster',budget:'Budget proposal',contract:'Contract'})[tab]}</button>`:''}
+   ${tab==='person'?'<p class="ops-sheet-note">Credentials are manually recorded. “Verified” means an organization leader reviewed them; this app does not query USA Wrestling or SafeSport.</p>':''}
+   ${tab==='assignment'?'<p class="ops-sheet-note">Only distinct tournaments marked Verified count toward the configured season requirement. An assignment alone does not count.</p>':''}
+   ${tab==='contract'&&!hub.president?'<p class="ops-sheet-note">The organization President publishes contracts. Use your personal account to sign for your assigned role.</p>':''}
+   ${tab==='squad'?`<div class="ops-card"><h3>Tournament roster & parent contacts</h3>${select('opsRosterTeam','Team',[['','Choose team'],...hub.teams.filter(t=>t.can_roster&&(!division||t.division_id===division)).map(t=>[t.id,t.name])])}<button id="opsLoadRoster" class="wide secondary">View tournament roster</button><div id="opsRosterContacts"></div></div>`:''}
+   ${rows.map(card).join('')||'<div class="empty-card">Nothing here yet for this division.</div>'}`;
+  $o('opsAdd')?.addEventListener('click',()=>edit(tab));
+  $o('opsContent').querySelectorAll('[data-ops-view]').forEach(b=>b.onclick=()=>view([...hub.records,...list(hub.team_events)].find(r=>r.id===b.dataset.opsView)));
+  $o('opsContent').querySelectorAll('[data-ops-edit]').forEach(b=>b.onclick=()=>edit(tab,hub.records.find(r=>r.id===b.dataset.opsEdit)));
+  $o('opsLoadRoster')?.addEventListener('click',async()=>{const t=value('opsRosterTeam');if(!t)return;const panel=$o('opsRosterContacts');panel.textContent='Loading…';try{const data=await rpc(false,{action:'roster',organization_id:org,division_id:division||null,team_id:t});if(!panel.isConnected)return;panel.innerHTML=data.map(a=>`<details class="ops-card ops-roster-person"><summary>${e(a.first_name+' '+a.last_name)} · ${e(a.lineup||a.target||'No class')}</summary><p>${e(a.season)} · ${e(a.status)}</p><p>Birth date: ${e(a.birth_date||'Not recorded')} · Graduation: ${e(a.graduation_year||'Not recorded')}</p>${Object.entries(a.details||{}).filter(([k,v])=>k!=='athlete_id'&&v).map(([k,v])=>`<p>${e(k.replaceAll('_',' '))}: ${e(v)}</p>`).join('')}<b>Parent / guardian contact</b>${list(a.guardians).map(g=>`<p>${e(g.name)} · ${e(g.relationship)}<br>${e(g.phone||'No phone recorded')}</p>`).join('')||'<p>No parent contact recorded.</p>'}</details>`).join('')||'<p>No active roster found.</p>';}catch(err){panel.textContent=err.message;}});
+ }
+ function credentialStatus(p){
+  const y=p.data.year||year(),reqs=hub.records.filter(r=>r.kind==='requirement'&&r.data.year===y&&(r.division_id===null||r.division_id===p.division_id)&&(r.data.role==='all'||r.data.role===p.data.role||r.data.role==='official'&&p.data.role.includes('official')));
+  const needed=[...new Set(reqs.flatMap(r=>list(r.data.credentials)))];const creds=list(p.data.credentials),today=new Date().toISOString().slice(0,10);
+  return [...new Set([...needed,...creds.map(c=>c.name)])].map(name=>{const c=creds.find(c=>c.name.toLowerCase()===String(name).toLowerCase());const state=!c||c.status==='missing'?'Missing':c.expires&&c.expires<today?'Expired':c.status==='verified'?'Verified':'Recorded';return badge(name+' · '+state,state==='Verified'?'ok':'warn')}).join('')+(needed.length?'':'<p class="ops-meta">Annual requirements have not been configured for this role and year.</p>');
+ }
+ function tournamentProgress(p){const assignments=hub.records.filter(r=>r.kind==='assignment'&&r.data.person_id===p.id&&r.data.year===(p.data.year||year()));const count=new Set(assignments.filter(a=>a.data.status==='verified').map(a=>a.data.event_id)).size;const required=Math.max(0,...hub.records.filter(r=>r.kind==='requirement'&&r.data.year===(p.data.year||year())&&(r.division_id===null||r.division_id===p.division_id)&&(r.data.role==='all'||r.data.role===p.data.role||r.data.role==='official'&&p.data.role.includes('official'))).map(r=>Number(r.data.tournament_count||0)));return `${count}${required?' / '+required:''} verified tournaments${required?' toward configured count':' · target not set'}`;}
+ function summary(r){const d=r.data;
+  switch(r.kind){
+   case'event':return `<p>${e(fmtDateTime(d.starts_at))}${d.location?' · '+e(d.location):''}</p>${badge(d.status)}${badge(d.visibility==='clubs'?'Affiliated clubs':d.visibility==='division'?'Division':'Leaders')}`;
+   case'person':return `<p>${e(roles[d.role])} ${d.rank?'· '+e(d.rank):''} · ${e(d.year)}</p>${credentialStatus(r)}${d.role.includes('official')?'<p>'+e(tournamentProgress(r))+'</p>':''}`;
+   case'assignment':return `<p>${e(rowName(d.person_id))} → ${e(rowName(d.event_id))}</p>${badge(d.status,d.status==='verified'?'ok':'')}${badge(d.year)}`;
+   case'requirement':return `<p>${e(roles[d.role])} · ${e(d.year)}</p><p>${e(list(d.credentials).join(', ')||'No credentials configured')}</p><p>${Number(d.tournament_count)||0} verified tournaments required</p>`;
+   case'squad':return `<p>${e(hub.teams.find(t=>t.id===d.team_id)?.name||'Team')} · ${list(d.members).length} athletes</p>`;
+   case'budget':return `<div class="ops-amount">${money(list(d.lines).reduce((n,l)=>n+Number(l.quantity)*Number(l.amount),0))}</div>${badge('Proposed budget')}${badge(d.status)}<p>${e(d.description||'')}</p>`;
+   case'contract':return `${badge(d.status)}${badge(roles[d.audience]||d.audience)}${badge('Version '+(d.version||1))}<p>${hub.signatures.filter(s=>s.contract_id===r.id).length} visible signatures</p>`;
+  }return '';
+ }
+ function card(r){return `<article class="ops-card"><div class="ops-meta">${e(divName(r.division_id))}</div><h3>${e(r.title)}</h3>${summary(r)}<div class="ops-actions"><button class="secondary" data-ops-view="${r.id}">View</button>${r.can_edit&&!(r.kind==='contract'&&r.data.status==='published')?`<button class="secondary" data-ops-edit="${r.id}">Edit</button>`:''}</div></article>`;}
+ function settings(){
+  const admin=hub.admin;$o('opsContent').innerHTML=`<div class="ops-card"><h3>Your account code</h3><p class="ops-sheet-note">Share this code with an organization administrator when they need to add you as a leader.</p><p class="ops-code">${e(hub.user_id)}</p></div>
+   ${admin?`<div class="ops-card"><h3>Divisions & subteams</h3>${hub.divisions.map(d=>`<p>${e(d.name)}${d.parent_id?' · within '+e(divName(d.parent_id)):''} <button class="secondary" data-div-edit="${d.id}">Edit</button></p>`).join('')}<button class="wide secondary" id="opsNewDivision">＋ Add division</button></div>
+   <div class="ops-card"><h3>Leadership assignments</h3><p class="ops-sheet-note">Add multiple assignments when a leader belongs to several divisions. Board members edit organization calendar events; division directors manage their assigned division and its subteams.</p>${hub.roles.map(r=>`<p>${e(r.name)} · ${e(roles[r.role])} · ${e(divName(r.division_id))} <button class="secondary" data-role-remove="${r.id}">Remove</button></p>`).join('')}<button class="wide secondary" id="opsNewRole">＋ Assign leader</button></div>
+   <div class="ops-card"><h3>Teams & affiliated clubs</h3>${hub.teams.map(t=>`<p>${e(t.name)} · ${t.approved?e(divName(t.division_id)):t.external?'Approval needed':'Division not assigned'} <button class="secondary" data-team-link="${t.id}">${t.external&&!t.approved?'Review affiliation':'Assign division'}</button></p>`).join('')}
+   <p class="ops-sheet-note">Approved affiliation shares published club events and budget proposals. Assigning a division also gives its directors operational roster access, including parent contacts.</p><p class="ops-code">${e(hub.invite_code||'No club affiliation code yet.')}</p><button id="opsInvite" class="wide secondary">${hub.invite_code?'Replace':'Create'} club affiliation code</button></div>`:'<div class="ops-card"><h3>Your leadership assignments</h3>'+hub.roles.map(r=>'<p>'+e(roles[r.role])+' · '+e(divName(r.division_id))+'</p>').join('')+'</div>'}
+   ${actualIsTeamAdmin?`<div class="ops-card"><h3>Affiliate your current team</h3>${input('opsJoinCode','Organization code','','text','required')}<button id="opsJoinOrg" class="wide secondary">Request affiliation for ${e(activeTeam?.name||'this team')}</button><p class="ops-sheet-note">An organization administrator must approve this request.</p></div>`:''}`;
+  $o('opsNewDivision')?.addEventListener('click',()=>editSpecial('division'));
+  $o('opsNewRole')?.addEventListener('click',()=>editSpecial('role'));
+  $o('opsInvite')?.addEventListener('click',()=>mutate({action:'invite'}));
+  $o('opsJoinOrg')?.addEventListener('click',()=>mutate({action:'join',team_id:activeTeam?.id,code:value('opsJoinCode')}));
+  $o('opsContent').querySelectorAll('[data-div-edit]').forEach(b=>b.onclick=()=>editSpecial('division',hub.divisions.find(d=>d.id===b.dataset.divEdit)));
+  $o('opsContent').querySelectorAll('[data-team-link]').forEach(b=>b.onclick=()=>editSpecial('link',hub.teams.find(t=>t.id===b.dataset.teamLink)));
+  $o('opsContent').querySelectorAll('[data-role-remove]').forEach(b=>b.onclick=async()=>{const r=hub.roles.find(r=>r.id===b.dataset.roleRemove);if(await confirmAction('Remove this leadership assignment?'))await mutate({action:'role',user_id:r.user_id,role:r.role,division_id:r.division_id,remove:true});});
+ }
+ async function mutate(q){note('opsStatus','Saving…');try{await rpc(true,{organization_id:org,...q});await reload();note('opsStatus',q.action==='join'?'Affiliation requested.':'Saved.');}catch(err){note('opsStatus',err.message,true);}}
+ function startEditor(titleText,info,html,saveText='Save'){editor={...info,uid:session?.user?.id,team:activeTeam?.id,org};$o('opsEditorTitle').textContent=titleText;$o('opsFields').innerHTML=html;note('opsEditorStatus','');$o('opsSave').textContent=saveText;show('opsSave',true);show('opsHubSheet',false);openSheet('opsEditorSheet');}
+ function editSpecial(kind,r=null){let html='';if(kind==='division')html=input('oeTitle','Division name',r?.name||'','text','required maxlength="120"')+select('oeParent','Within',allDivs().filter(([id])=>id!==r?.id),r?.parent_id||'');
+  if(kind==='role')html=select('oeUser','Existing personal account',[['','Choose member'],...hub.directory.map(p=>[p.id,p.name||'Unnamed member'])])+input('oeAccountCode','Or enter another leader’s account code')+select('oeRole','Role',Object.entries(roles).filter(([r])=>!['all','pairing_official','mat_official'].includes(r)),'division_director')+select('oeDivision','Scope',allDivs(),division);
+  if(kind==='link')html=`<h3>${e(r.name)}</h3>`+select('oeDivision','Division',allDivs(),r.division_id||'')+'<p class="ops-sheet-note">This grants division directors access to this team’s tournament roster and parent contacts.</p>';
+  startEditor(kind==='division'?'Division':kind==='role'?'Assign a leader':'Assign team division',{special:kind,row:r},html);
+ }
+ function rowEditor(kind,rows){const fields=kind==='credential'?['name','expires','status']:['label','quantity','amount'];return `<div id="oeRows" data-row-kind="${kind}">${rows.map(r=>rowHtml(kind,r)).join('')}</div><button type="button" class="wide secondary" id="oeAddRow">＋ ${kind==='credential'?'Credential':'Budget line'}</button>`;}
+ function rowHtml(kind,r={}){return `<div class="ops-row-editor" data-edit-row>${kind==='credential'?`<label>Credential<input data-key="name" value="${e(r.name||'')}" placeholder="SafeSport, background check, Bronze…" maxlength="100" required></label><div class="ops-grid"><label>Expires<input data-key="expires" type="date" value="${e(r.expires||'')}"></label><label>Status<select data-key="status">${opts([['recorded','Recorded · not reviewed'],['verified','Verified by leader'],['missing','Missing']],r.status||'recorded')}</select></label></div>`:`<label>Budget item<input data-key="label" value="${e(r.label||'')}" maxlength="160" required></label><div class="ops-grid"><label>Quantity<input data-key="quantity" type="number" min="0" max="100000" step=".01" value="${e(r.quantity??1)}" required></label><label>Unit cost ($)<input data-key="amount" type="number" min="0" max="10000000" step=".01" value="${e(r.amount??0)}" required></label></div>`}<button class="secondary" type="button" data-remove-row>Remove</button></div>`;}
+ function bindRows(){const box=$o('oeRows');if(!box)return;box.querySelectorAll('[data-remove-row]').forEach(b=>b.onclick=()=>b.closest('[data-edit-row]').remove());$o('oeAddRow').onclick=()=>{box.insertAdjacentHTML('beforeend',rowHtml(box.dataset.rowKind));bindRows();};}
+ function edit(kind,r=null,copy=false){let d=r?.data||{},div=r?.division_id??division;let html=input('oeTitle',kind==='person'?'Full name':'Title',r?.title||'','text','required maxlength="160"');
+  html+=select('oeDivision','Division',allDivs().filter(([id])=>can(kind,id||null)),div);
+  if(kind==='event'||kind==='budget'){
+   if(kind==='event')html+=select('oeType','Event type',[['meeting','Board meeting'],['tournament','Tournament'],['camp','Camp'],['other','Other']],d.event_type||'meeting');
+   html+=input('oeStart',kind==='budget'?'Calendar date (optional)':'Starts',localDate(d.starts_at),'datetime-local',kind==='event'?'required':'')+input('oeEnd','Ends',localDate(d.ends_at),'datetime-local')+input('oeLocation','Location',d.location||'','text','maxlength="300"')+area('oeDescription','Notes',d.description||'','maxlength="8000"');
+   html+=select('oeVisibility','Who can see the published item?',[['leaders','Leaders responsible for this division'],['division','Division members'],['clubs','All affiliated clubs']],d.visibility||'leaders')+select('oeStatus','Status',[['draft','Draft'],['published','Published']],d.status||'draft');
+   if(kind==='budget')html+=rowEditor('budget',d.lines||[{label:'',quantity:1,amount:0}]);
+  }
+  if(kind==='person')html+=select('oeRole','Staff role',Object.entries(roles).filter(([r])=>['coach','chaperone','team_leader','official','pairing_official','mat_official','director'].includes(r)),d.role||'coach')+input('oeRank','Official rank (if applicable)',d.rank||'','text','placeholder="M1, M2, M3…" maxlength="80"')+input('oeYear','Season year',d.year||year(),'text','required maxlength="20"')+input('oeUser','Personal account code (optional)',d.user_id||'')+'<p class="ops-sheet-note">Link an account so this person can see assignments and sign role-specific contracts. This does not grant leadership access.</p>'+rowEditor('credential',d.credentials||[]);
+  if(kind==='requirement')html+=select('oeRole','Applies to',Object.entries(roles).filter(([r])=>['all','coach','chaperone','team_leader','official','pairing_official','mat_official','director'].includes(r)),d.role||'all')+input('oeYear','Season year',d.year||year(),'text','required maxlength="20"')+area('oeCredentials','Required credentials, one per line',list(d.credentials).join('\n'),'placeholder="SafeSport\nBackground check" maxlength="4000"')+input('oeCount','Required verified tournaments',d.tournament_count||0,'number','required min="0" max="100"')+area('oeSource','Rule source / notes',d.source||'','maxlength="4000"')+'<p class="ops-sheet-note">Enter the actual requirements for your organization and year. Reaching the count alone does not certify an official for state.</p>';
+  if(kind==='assignment')html+=select('oePerson','Official',hub.records.filter(r=>r.kind==='person'&&r.data.role.includes('official')).map(p=>[p.id,p.title]),d.person_id)+select('oeEvent','Tournament',hub.records.filter(r=>r.kind==='event'&&r.data.event_type==='tournament').map(p=>[p.id,p.title]),d.event_id)+input('oeYear','Season year',d.year||year(),'text','required maxlength="20"')+select('oeStatus','Assignment status',[['assigned','Assigned'],['worked','Worked · awaiting verification'],['verified','Verified by director'],['cancelled','Cancelled']],d.status||'assigned')+input('oeStyles','Styles worked',d.styles||'','text','placeholder="Folkstyle, freestyle, Greco-Roman" maxlength="160"');
+  if(kind==='squad')html+=select('oeTeam','Team',hub.teams.filter(t=>t.can_roster).map(t=>[t.id,t.name]),d.team_id)+input('oeEventName','Event / purpose',d.event||'','text','maxlength="160"')+'<div id="oeSquadMembers">Loading roster…</div>';
+  if(kind==='contract')html+=select('oeAudience','Who signs?',Object.entries(roles).filter(([r])=>['all','coach','chaperone','team_leader','official'].includes(r)).concat([['athlete','Athletes and guardians']]),d.audience||'athlete')+input('oeVersion','Version',copy?Number(d.version||1)+1:d.version||1,'number','required min="1" max="9999"')+area('oeContent','Contract text',d.content||'','required maxlength="60000" style="min-height:280px"')+select('oeParent','Athlete contract signatures',[['yes','Athlete and parent / guardian'],['no','Athlete only']],d.require_guardian===false?'no':'yes')+select('oeStatus','Status',[['draft','Draft'],['published','Publish for signing']],copy?'draft':d.status||'draft')+'<p class="ops-sheet-note">Review the final text before publishing. Published versions cannot be changed; make a new version for revisions.</p>';
+  startEditor((copy?'New version: ':r?'Edit: ':'New: ')+labels[kind],{kind,row:copy?null:r},html);bindRows();
+  if(kind==='assignment'){$o('oePerson').onchange=()=>{const person=hub.records.find(r=>r.id===value('oePerson'));if(person)$o('oeDivision').value=person.division_id||'';};if(!r)$o('oePerson').onchange();}
+  if(kind==='squad'){$o('oeTeam').onchange=()=>loadSquad([]);loadSquad(d.members||[]);}
+ }
+ async function loadSquad(members){const target=$o('oeSquadMembers'),team=value('oeTeam'),ed=editor;target.textContent='Loading…';if(!team){target.textContent='Assign a team to your division first.';return;}try{const rows=await rpc(false,{action:'roster',organization_id:org,team_id:team,division_id:null});if(editor!==ed||value('oeTeam')!==team)return;const unique=[...new Map(rows.map(r=>[r.id,r])).values()];target.innerHTML=unique.map(a=>{const m=members.find(m=>m.athlete_id===a.id);return `<div class="ops-row-editor" data-squad-athlete="${a.id}" data-name="${e(a.first_name+' '+a.last_name)}"><label class="ops-check"><input type="checkbox" data-included ${m?'checked':''}>${e(a.first_name+' '+a.last_name)}</label><div class="ops-grid"><label>Weight class<input data-weight value="${e(m?.weight||a.lineup||a.target||'')}" maxlength="40"></label><label>Roster role<select data-roster-role>${opts([['starter','Starter'],['alternate','Alternate']],m?.role||'starter')}</select></label></div></div>`}).join('')||'<p>No active athletes on this team.</p>'; }catch(err){target.textContent=err.message;}}
+ function collectRows(){return [...$o('oeRows').querySelectorAll('[data-edit-row]')].map(el=>Object.fromEntries([...el.querySelectorAll('[data-key]')].map(i=>[i.dataset.key,i.value.trim()])));}
+ async function saveEditor(ev){ev.preventDefault();const ed=editor;if(!ed)return;if(!same({uid:ed.uid,team:ed.team})||ed.org!==org){note('opsEditorStatus','Account context changed. Reopen the editor.',true);return;}$o('opsSave').disabled=true;note('opsEditorStatus','Saving…');
+  try{let q={organization_id:org};
+   if(ed.special==='division')q={...q,action:'division',id:ed.row?.id||null,title:value('oeTitle'),parent_id:value('oeParent')||null};
+   else if(ed.special==='role')q={...q,action:'role',user_id:value('oeAccountCode')||value('oeUser'),role:value('oeRole'),division_id:value('oeDivision')||null};
+   else if(ed.special==='link')q={...q,action:'link',team_id:ed.row.id,division_id:value('oeDivision')||null};
+   else if(ed.special==='sign'){const signFor=value('oeSignFor').split(':');q={...q,action:'sign',id:ed.row.id,revision:ed.row.revision,capacity:signFor[0],athlete_id:signFor[1]||null,signature_name:value('oeSignature'),consent:$o('oeConsent').checked};}
+   else{const k=ed.kind;let data={};if(k==='event'||k==='budget'){data={event_type:k==='event'?value('oeType'):'other',starts_at:iso('oeStart'),ends_at:iso('oeEnd'),location:value('oeLocation'),description:value('oeDescription'),visibility:value('oeVisibility'),status:value('oeStatus')};if(k==='budget')data.lines=collectRows();}
+    if(k==='person')data={role:value('oeRole'),rank:value('oeRank'),year:value('oeYear'),user_id:value('oeUser')||null,credentials:collectRows()};
+    if(k==='requirement')data={role:value('oeRole'),year:value('oeYear'),credentials:value('oeCredentials').split('\n').map(v=>v.trim()).filter(Boolean),tournament_count:Number(value('oeCount')),source:value('oeSource')};
+    if(k==='assignment')data={person_id:value('oePerson'),event_id:value('oeEvent'),year:value('oeYear'),status:value('oeStatus'),styles:value('oeStyles')};
+    if(k==='squad')data={team_id:value('oeTeam'),event:value('oeEventName'),members:[...$o('oeSquadMembers').querySelectorAll('[data-squad-athlete]')].filter(el=>el.querySelector('[data-included]').checked).map(el=>({athlete_id:el.dataset.squadAthlete,name:el.dataset.name,weight:el.querySelector('[data-weight]').value.trim(),role:el.querySelector('[data-roster-role]').value}))};
+    if(k==='contract')data={audience:value('oeAudience'),version:Number(value('oeVersion')),content:value('oeContent'),require_guardian:value('oeParent')==='yes',status:value('oeStatus')};
+    q={...q,action:'record',kind:k,id:ed.row?.id||null,revision:ed.row?.revision||null,division_id:value('oeDivision')||null,title:value('oeTitle'),data};
+   }
+   await rpc(true,q);if(editor!==ed)return;show('opsEditorSheet',false);openSheet('opsHubSheet');editor=null;await reload();note('opsStatus','Saved.');if(['event','budget'].includes(ed.kind))await loadSchedule();
+  }catch(err){note('opsEditorStatus',err.message,true);}finally{$o('opsSave').disabled=false;}
+ }
+ function view(r){if(!r)return;let body=summary(r),d=r.data;
+  if(r.kind==='event')body+=`<p class="ops-pre">${e(d.description||'')}</p>`;
+  if(r.kind==='budget')body+=`<table class="ops-table"><tr><th>Item</th><th>Qty</th><th>Unit</th><th>Total</th></tr>${list(d.lines).map(l=>`<tr><td>${e(l.label)}</td><td>${e(l.quantity)}</td><td>${money(l.amount)}</td><td>${money(Number(l.quantity)*Number(l.amount))}</td></tr>`).join('')}</table><p>Calendar: ${e(d.starts_at?fmtDateTime(d.starts_at):'Not scheduled')}</p>`;
+  if(r.kind==='squad')body+=`<p>${e(d.event)}</p><table class="ops-table"><tr><th>Athlete</th><th>Class</th><th>Role</th></tr>${list(d.members).map(m=>`<tr><td>${e(m.name)}</td><td>${e(m.weight)}</td><td>${e(m.role)}</td></tr>`).join('')}</table>`;
+  if(r.kind==='requirement')body+=`<p class="ops-pre">${e(d.source||'')}</p>`;
+  if(r.kind==='person')body+=list(d.credentials).map(c=>`<p>${e(c.name)} · ${e(c.status)} · ${c.expires?'Expires '+e(c.expires):'No expiry recorded'}</p>`).join('');
+  if(r.kind==='contract'){body+=`<div class="ops-contract">${e(d.content)}</div><p>${d.require_guardian?'Athlete contracts require athlete and guardian signatures.':'Athlete signature is required for athlete contracts.'}</p>`;
+   const sigs=hub.signatures.filter(s=>s.contract_id===r.id);const athleteIds=[...new Set(sigs.map(s=>s.athlete_id).filter(Boolean))];body+=athleteIds.map(id=>{const ss=sigs.filter(s=>s.athlete_id===id),athlete=ss.some(s=>s.capacity==='athlete'),guardian=ss.some(s=>s.capacity==='guardian');return '<p>'+e(hub.family.find(a=>a.id===id)?.name||ss.find(s=>s.capacity==='athlete')?.signature_name||'Athlete')+': '+badge(athlete&&(!d.require_guardian||guardian)?'Signatures complete':!athlete?'Awaiting athlete signature':'Awaiting guardian signature',athlete&&(!d.require_guardian||guardian)?'ok':'warn')+'</p>';}).join('');body+=sigs.map(s=>`<p>Signed: ${e(s.signature_name)} · ${e(s.capacity)} · ${e(fmtDateTime(s.signed_at))}</p>`).join('');
+   if(d.status==='published')body+='<button id="oeSignContract" type="button" class="wide">Review & sign</button>';
+   if(hub.president)body+='<button id="oeCopyContract" type="button" class="wide secondary">Copy as new version</button>';
+  }
+  body+=`<div class="ops-actions"><button type="button" class="secondary" id="oeExport">Export record</button>${r.can_edit&&!(r.kind==='contract'&&d.status==='published')?'<button type="button" class="secondary" id="oeEdit">Edit</button><button type="button" class="secondary" id="oeDelete">Delete</button>':''}</div>`;
+  startEditor(r.title,{special:'view',row:r},body);show('opsSave',false);
+  $o('oeEdit')?.addEventListener('click',()=>edit(r.kind,r));$o('oeCopyContract')?.addEventListener('click',()=>edit(r.kind,r,true));$o('oeSignContract')?.addEventListener('click',()=>sign(r));
+  $o('oeDelete')?.addEventListener('click',async()=>{if(!await confirmAction('Delete '+r.title+'?'))return;try{await rpc(true,{action:'delete',organization_id:org,id:r.id,revision:r.revision});show('opsEditorSheet',false);openSheet('opsHubSheet');await reload();if(['event','budget'].includes(r.kind))await loadSchedule();}catch(err){note('opsEditorStatus',err.message,true);}});
+  $o('oeExport').onclick=()=>download(r.title+'.txt',r.title+'\n'+divName(r.division_id)+'\n\n'+(r.kind==='contract'?d.content:JSON.stringify(d,null,2))+(r.kind==='contract'?'\n\nSignatures visible to this account:\n'+hub.signatures.filter(s=>s.contract_id===r.id).map(s=>`${s.signature_name} | ${s.capacity} | ${s.signed_at}`).join('\n'):''));
+ }
+ function sign(r){const choices=[];if(r.data.audience!=='athlete'&&(actualIsTeamAdmin||isStaff||hub.roles.length||hub.records.some(p=>p.kind==='person'&&p.data.user_id===hub.user_id)))choices.push(['self','Myself · assigned adult role']);if(['all','athlete'].includes(r.data.audience))choices.push(...hub.family.map(a=>[a.capacity+':'+a.id,a.name+' · '+(a.capacity==='guardian'?'Parent / guardian':'Athlete')]));
+  startEditor('Sign '+r.title,{special:'sign',row:r},`<div class="ops-contract">${e(r.data.content)}</div><p>Version ${e(r.data.version||1)}</p>${select('oeSignFor','Signing as',choices)}${input('oeSignature','Your full legal name','','text','required minlength="2" maxlength="160"')}<label class="ops-check"><input type="checkbox" id="oeConsent" required>I have read this version and agree to sign it electronically.</label>`,'Sign this version');
+ }
+ function dialog({title,fields=[],submit='Continue',description=''}){if(dialogResolve)dialogResolve(null);return new Promise(resolve=>{dialogResolve=resolve;$o('opsDialogTitle').textContent=title;$o('opsDialogFields').innerHTML=(description?'<p>'+e(description)+'</p>':'')+fields.map(f=>f.options?select('od_'+f.id,f.label,f.options,f.value):f.type==='textarea'?area('od_'+f.id,f.label,f.value||'',f.required?'required':''):input('od_'+f.id,f.label,f.value??'',f.type||'text',(f.required?'required ':'')+(f.extra||''))).join('');$o('opsDialogSubmit').textContent=submit;openSheet('opsDialogSheet');$o('opsDialogForm').onsubmit=ev=>{ev.preventDefault();const result=Object.fromEntries(fields.map(f=>[f.id,value('od_'+f.id)]));finishDialog(result);};});}
+ function finishDialog(result){show('opsDialogSheet',false);const resolve=dialogResolve;dialogResolve=null;resolve?.(result);}
+ async function confirmAction(text){return !!await dialog({title:text,submit:'Confirm'});}
+ async function download(name,text){name=name.replace(/[^a-zA-Z0-9._ -]/g,'');const file=new File([text],name,{type:'text/plain;charset=utf-8'});if(navigator.canShare?.({files:[file]})){try{await navigator.share({files:[file],title:name});}catch(err){if(err.name!=='AbortError')message('Could not share this record.',true);}return;}const url=URL.createObjectURL(file),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);}
+
+ async function calendar(team){try{return await rpc(false,{action:'calendar',team_id:team});}catch(err){console.warn('Organization calendar unavailable:',err.message);return [];}}
+ async function feedback(){if(document.body.classList.contains('kiosk-locked'))return;closeSheets();feedbackId=crypto.randomUUID();note('feedbackStatus','');openSheet('feedbackSheet');await feedbackHistory();}
+ async function feedbackHistory(){const target=$o('feedbackHistory');target.textContent='Loading…';try{const rows=await rpc(false,{action:'feedback',team_id:activeTeam?.id||null});target.innerHTML=list(rows).map(r=>`<article class="ops-card"><b>${e(r.category)}</b> ${badge(r.status)}<p>${e(r.body)}</p><small>${e(fmtDateTime(r.created_at))} · ${e(r.build)}</small>${r.response?'<p>Response: '+e(r.response)+'</p>':''}${actualIsTeamAdmin&&!managedLogin&&r.team_id===activeTeam?.id?`<div class="ops-actions"><button class="secondary" data-feedback-review="${r.id}">Review</button></div>`:''}</article>`).join('')||'<p>No feedback yet.</p>';target.querySelectorAll('[data-feedback-review]').forEach(b=>b.onclick=async()=>{const row=rows.find(r=>r.id===b.dataset.feedbackReview),result=await dialog({title:'Review feedback',fields:[{id:'status',label:'Status',options:['new','reviewing','planned','resolved'].map(s=>[s,s]),value:row.status},{id:'response',label:'Response',type:'textarea',value:row.response||''}],submit:'Save review'});if(!result)return;const {status,response}=result;try{await rpc(true,{action:'feedback_status',id:row.id,status,response});await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}});}catch(err){target.textContent=err.message;}}
+ async function sendFeedback(ev){ev.preventDefault();if(!session?.user)return;$o('feedbackSend').disabled=true;try{await rpc(true,{action:'feedback',id:feedbackId||crypto.randomUUID(),team_id:activeTeam?.id||null,category:value('feedbackCategory'),body:value('feedbackBody'),build:'v0.16.0'});$o('feedbackBody').value='';feedbackId=crypto.randomUUID();note('feedbackStatus','Thanks—your feedback was saved.');await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}finally{$o('feedbackSend').disabled=false}}
+ function close(){finishDialog(null);generation++;editor=null;$o('opsRosterContacts')?.replaceChildren();$o('opsFields').replaceChildren();hub=null;['opsHubSheet','opsEditorSheet','feedbackSheet'].forEach(id=>show(id,false));}
+ $o('opsDialogCancel').onclick=()=>finishDialog(null);
+ $o('opsOrg').onchange=async()=>{org=value('opsOrg');division='';try{await reload()}catch(err){note('opsStatus',err.message,true)}};
+ $o('opsDivision').onchange=()=>{division=value('opsDivision');render()};$o('opsEditorBack').onclick=()=>{editor=null;show('opsEditorSheet',false);openSheet('opsHubSheet')};$o('opsForm').onsubmit=saveEditor;
+ $o('feedbackForm').onsubmit=sendFeedback;$o('organizationHubBtn').onclick=()=>open();$o('feedbackBtn').onclick=feedback;
+ return {open,calendar,close,feedback,rpc,download,year,dialog,confirmAction};
+})();
+
+/* Configurable practice match clock and scoring ledger; no automatic officiating decisions. */
+window.WMMatch=(()=>{
+ const el=id=>document.getElementById(id),e=v=>esc(String(v??''));let catalogue={matches:[],athletes:[],challenges:[]},match=null,team=null,owner=null,season=null,revision=null,challenge=null,timer=null,busy=false,version=0;
+ const status=(msg,bad=false)=>{el('matchStatus').textContent=msg;el('matchStatus').classList.toggle('ops-error',bad)};
+ const now=()=>Date.now();
+ function parseTime(text){const s=String(text).trim();if(/^\d+(\.5)?$/.test(s))return Number(s)*60;if(/^\d{1,2}:[0-5]\d$/.test(s)){const [m,sec]=s.split(':').map(Number);return m*60+sec;}return NaN;}
+ function fmt(ms){const sec=Math.max(0,Math.ceil(ms/1000));return Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0');}
+ function remaining(at=now()){return !match?0:match.deadline===null?match.remainingMs:Math.max(0,match.deadline-at);}
+ function key(){return 'wm-match-draft-v1:'+owner+':'+team;}
+ function validContext(){return !!match&&session?.user?.id===owner&&activeTeam?.id===team&&!managedLogin;}
+ function persist(){if(!match||!owner||!team)return;try{localStorage.setItem(key(),JSON.stringify({data:match,revision,challenge_id:challenge,season_id:season,team_id:team,owner}));}catch{status('This device could not save a recovery copy. Use Save match before leaving.',true);}}
+ function log(label,corner='none',points=0,extra={}){match.ledger.push({id:crypto.randomUUID(),label,corner,points,period:match.period+1,phase:match.phase,remaining_ms:remaining(),at:new Date().toISOString(),...extra});persist();}
+ function pause(reason=null){if(!match||match.deadline===null)return;match.remainingMs=remaining();match.deadline=null;if(reason)log(reason);persist();paintClock();}
+ function start(){if(!validContext()||match.status==='complete')return;if(remaining()<=0){status('The clock is at zero. Advance the period or adjust the clock.');return;}match.deadline=now()+match.remainingMs;log('Clock started');persist();paintClock();}
+ function tick(){if(!match)return;if(!validContext()){pause('Clock paused: account or team changed');clearInterval(timer);timer=null;return;}if(match.deadline!==null&&remaining()<=0){match.remainingMs=0;match.deadline=null;log('Clock expired');status(match.phase==='timeout'?'Timeout ended. Tap Return to match.':match.phase==='break'?'Break ended. Tap Start next period.':'Period ended. Advance or finish the match.');navigator.vibrate?.([100,50,100]);}paintClock();}
+ function paintClock(){if(!match)return;el('matchClock').textContent=fmt(remaining());el('matchClock').classList.toggle('match-running',match.deadline!==null);el('matchClock').classList.toggle('match-end',remaining()<=0);el('matchPeriodLabel').textContent=match.phase==='timeout'?match.timeoutLabel:match.phase==='break'?'Break after period '+(match.period+1):'Period '+(match.period+1)+' of '+match.periods.length;el('matchToggle').textContent=match.deadline!==null?'Stop clock':'Start clock';el('matchToggle').disabled=match.status==='complete';el('matchAdvance').textContent=match.phase==='timeout'?'Return to match':match.phase==='break'?'Start next period':'Next period / break';el('matchAdvance').disabled=match.status==='complete';}
+ function scores(){return match.ledger.reduce((s,a)=>{if(!a.voided&&['red','other'].includes(a.corner))s[a.corner]+=Number(a.points)||0;return s;},{red:0,other:0});}
+ function actions(){if(match.style==='folkstyle')return [['Takedown',match.takedown],['Escape',1],['Reversal',2],['Near fall · 2',2],['Near fall · 3',3],['Near fall · 4',4],['Penalty · 1',1],['Penalty · 2',2],['Stalling warning',0],['Caution',0],['Custom award','custom']];return [['Takedown · 2',2],['Exposure · 2',2],['Step out',1],['Reversal',1],['Action · 4',4],['Action · 5',5],['Passivity point',1],['Caution + 1',1],['Caution + 2',2],['Challenge point',1],['Warning',0],['Custom award','custom']];}
+ function render(){if(!match)return;const s=scores();el('matchScoreTitle').textContent=match.label||'Scoreboard';el('matchStyleLabel').textContent=match.style.toUpperCase()+(match.status==='complete'?' · COMPLETE':' · PRACTICE MATCH');
+  el('matchCorners').innerHTML=['red','other'].map(c=>`<div class="match-corner ${c==='red'?'red':match.style==='folkstyle'?'green':'blue'}"><h3>${e(c==='red'?match.red_name:match.other_name)}</h3><div class="match-score" aria-label="${c==='red'?'Red':match.style==='folkstyle'?'Green':'Blue'} score">${s[c]}</div><div class="match-score-actions">${actions().map(([label,points],i)=>`<button type="button" data-award="${i}" data-corner="${c}" ${match.status==='complete'?'disabled':''}>${e(label.replace(/ · \d$/,''))}${typeof points==='number'&&points>0?' +'+points:''}</button>`).join('')}</div></div>`).join('');
+  el('matchCorners').querySelectorAll('[data-award]').forEach(b=>b.onclick=()=>award(b.dataset.corner,Number(b.dataset.award)));
+  el('matchLog').innerHTML=[...match.ledger].reverse().map(a=>`<p style="${a.voided?'text-decoration:line-through;opacity:.65':''}"><b>${a.corner==='red'?'Red':a.corner==='other'?match.style==='folkstyle'?'Green':'Blue':''}</b> ${e(a.label)} ${a.points?e((a.points>0?'+':'')+a.points):''} <span class="ops-meta">P${a.period} · ${fmt(a.remaining_ms)}${a.voided?' · undone':''}</span></p>`).join('')||'<p>No scoring actions yet.</p>';
+  for(const id of ['matchUndo','matchClockEdit','matchTimeout','matchOvertime','matchFinish'])el(id).disabled=match.status==='complete';paintClock();
+ }
+ async function award(c,index){if(!validContext()||match.status==='complete')return;let [label,points]=actions()[index];if(points==='custom'){const result=await WMOperations.dialog({title:'Custom scoring / correction',fields:[{id:'label',label:'Action or correction reason',required:true,extra:'maxlength=160'},{id:'points',label:'Points for this corner (negative to subtract)',type:'number',value:1,required:true,extra:'min=-99 max=99 step=1'}],submit:'Record score'});if(!result||!validContext())return;label=result.label;points=Number(result.points);if(!Number.isInteger(points)||Math.abs(points)>99){status('Enter a whole number from -99 to 99.',true);return;}}if(scores()[c]+points<0){status('A score cannot be negative.',true);return;}log(label,c,points,{scoring:true});render();status('Recorded on this device. Save match to sync.');}
+ function undo(){if(!validContext()||match.status==='complete')return;const last=[...match.ledger].reverse().find(a=>a.scoring&&!a.voided);if(!last){status('There is no scoring action to undo.');return;}last.voided=true;last.voided_at=new Date().toISOString();log('Undid '+last.label,'none',0,{undo_of:last.id});render();}
+ function advance(){if(!validContext()||match.status==='complete')return;pause();if(match.phase==='timeout'){const r=match.resume;match.phase=r.phase;match.remainingMs=r.remainingMs;match.period=r.period;delete match.resume;delete match.timeoutLabel;log('Returned from timeout');}
+  else if(match.phase==='period'&&match.period>=match.periods.length-1){status('All scheduled periods are finished. Choose Finish match or add overtime.');return;}
+  else if(match.phase==='period'&&match.breakSeconds>0){match.phase='break';match.remainingMs=match.breakSeconds*1000;log('Break started');}
+  else{match.period++;match.phase='period';match.remainingMs=match.periods[match.period]*1000;log('Period advanced');}persist();render();}
+ async function clockEdit(){if(!validContext()||match.status==='complete')return;pause();const result=await WMOperations.dialog({title:'Adjust clock',fields:[{id:'time',label:'Remaining time (minutes:seconds)',value:fmt(remaining()),required:true}],submit:'Set clock'});if(!result||!validContext())return;const sec=parseTime(result.time);if(!Number.isFinite(sec)||sec<0||sec>900){status('Use a time from 0:00 to 15:00.',true);return;}const old=fmt(remaining());match.remainingMs=sec*1000;log('Clock adjusted from '+old+' to '+fmt(match.remainingMs));render();}
+ async function timeout(){if(!validContext()||match.status==='complete')return;if(match.phase==='timeout'){status('Return to the match before starting another timeout.');return;}pause();const result=await WMOperations.dialog({title:'Timeout clock',fields:[{id:'label',label:'Type',options:['Injury','Blood','Recovery','Activity','Other'].map(x=>[x,x]),value:'Injury'},{id:'time',label:'Length (minutes:seconds)',value:'1:30',required:true}],submit:'Open timeout'});if(!result||!validContext())return;const label=result.label,sec=parseTime(result.time);if(!Number.isFinite(sec)||sec<=0||sec>900){status('Choose a timeout from 0:01 to 15:00.',true);return;}match.resume={phase:match.phase,period:match.period,remainingMs:remaining()};match.phase='timeout';match.timeoutLabel=label;match.remainingMs=sec*1000;log('Timeout: '+label);render();}
+ async function overtime(){if(!validContext()||match.status==='complete')return;pause();if(match.periods.length>=12){status('A match can have at most 12 periods.',true);return;}const result=await WMOperations.dialog({title:'Add overtime',fields:[{id:'time',label:'Period length (minutes:seconds)',value:'1:00',required:true}],submit:'Add period'});if(!result||!validContext())return;const sec=parseTime(result.time);if(!Number.isFinite(sec)||sec<=0||sec>900){status('Choose a time from 0:01 to 15:00.',true);return;}match.periods.push(sec);log('Added overtime period '+match.periods.length);render();}
+ async function guardDraft(incomingId){let draft;try{draft=JSON.parse(localStorage.getItem(key())||'null')}catch{}if(draft?.data?.status==='live'&&draft.data.id!==incomingId)return await WMOperations.confirmAction('Replace the unfinished device draft? Resume or save it first if you want to keep its unsaved changes.');return true;}
+ async function showScore(saved){if(saved&&!await guardDraft(saved.data?.id))return;if(saved){match=structuredClone(saved.data);revision=saved.revision||null;challenge=saved.challenge_id||null;season=saved.season_id||activeSeason?.id||null;team=saved.team_id||activeTeam?.id;owner=session?.user?.id;if(match.deadline!==null){match.remainingMs=Math.max(0,match.deadline-now());match.deadline=null;log('Recovered match; clock paused');}}
+  if(!validContext()){message('Open this match with its team and personal account.',true);return;}['matchListSheet','matchSetupSheet'].forEach(id=>show(id,false));openSheet('matchScoreSheet');status(match.status==='complete'?'Saved result: '+match.result:'Clock is paused.');render();clearInterval(timer);timer=setInterval(tick,100);persist();}
+ async function open(){if(document.body.classList.contains('kiosk-locked'))return;if(managedLogin){message('A personal team coach or administrator must score matches.',true);return;}closeSheets();owner=session?.user?.id;team=activeTeam?.id;season=activeSeason?.id||null;if(!owner||!team){message('Choose a team first.',true);return;}openSheet('matchListSheet');el('matchListStatus').textContent='Loading match book…';const ticket=++version;
+  try{catalogue=await WMOperations.rpc(false,{action:'matches',team_id:team});if(ticket!==version)return;el('matchListStatus').textContent='';el('matchList').innerHTML=catalogue.matches.map(r=>{const d=r.data;const s=d.ledger.reduce((s,a)=>{if(!a.voided&&['red','other'].includes(a.corner))s[a.corner]+=Number(a.points)||0;return s},{red:0,other:0});return `<article class="ops-card"><h3>${e(d.red_name)} vs ${e(d.other_name)}</h3><p>${s.red}–${s.other} · ${e(d.status==='complete'?d.result:'In progress')} · ${e(d.style)}</p><p class="ops-meta">${e(fmtDateTime(r.updated_at))}</p><button type="button" class="wide secondary" data-match-open="${r.id}">Open match</button></article>`}).join('')||'<p>No saved matches yet.</p>';
+   el('matchList').querySelectorAll('[data-match-open]').forEach(b=>b.onclick=()=>showScore(catalogue.matches.find(r=>r.id===b.dataset.matchOpen)));
+   let draft=null;try{draft=JSON.parse(localStorage.getItem(key())||'null');}catch{}el('matchDraft').innerHTML=draft?.owner===owner&&draft?.team_id===team&&draft?.data?.status!=='complete'?'<div class="ops-card"><h3>Match saved on this device</h3><button type="button" id="matchResume" class="wide secondary">Resume draft</button><button type="button" id="matchDiscard" class="wide secondary">Discard device draft</button></div>':'';
+   el('matchResume')?.addEventListener('click',()=>showScore(draft));el('matchDiscard')?.addEventListener('click',async()=>{if(await WMOperations.confirmAction('Discard the match recovery copy on this device? Saved server matches are kept.')){localStorage.removeItem(key());el('matchDraft').innerHTML='';}});
+   el('matchChallenges').innerHTML=catalogue.challenges.length?'<h3>Challenge queue</h3>'+catalogue.challenges.map(c=>`<article class="ops-card"><b>${e(catalogue.athletes.find(a=>a.id===c.challenger_id)?.name||'Challenger')}</b><p>${e(c.challenged_class)} · ${e(c.status)}</p><button class="wide secondary" data-challenge-score="${c.id}">Score this wrestle-off</button></article>`).join(''):'';
+   el('matchChallenges').querySelectorAll('[data-challenge-score]').forEach(b=>b.onclick=()=>setup(catalogue.challenges.find(c=>c.id===b.dataset.challengeScore)));
+  }catch(err){el('matchListStatus').textContent=err.message;el('matchListStatus').classList.add('ops-error');}
+ }
+ async function setup(c=null){if(!await guardDraft(null))return;challenge=c?.id||null;revision=null;match=null;el('matchSetupStatus').textContent='';el('matchRedAthlete').innerHTML=el('matchOtherAthlete').innerHTML='<option value="">Enter name</option>'+catalogue.athletes.map(a=>`<option value="${a.id}">${e(a.name)}</option>`).join('');el('matchRedAthlete').value=c?.challenger_id||'';el('matchOtherAthlete').value=c?.incumbent_athlete_id||'';el('matchRedAthlete').onchange();el('matchOtherAthlete').onchange();el('matchLabel').value=c?c.challenged_class+' lb challenge':'';show('matchListSheet',false);openSheet('matchSetupSheet');}
+ function create(ev){ev.preventDefault();const periods=el('matchPeriods').value.split(',').map(parseTime),breakSeconds=parseTime(el('matchBreak').value);if(!periods.length||periods.length>12||periods.some(p=>!Number.isFinite(p)||p<=0||p>900)||!Number.isFinite(breakSeconds)||breakSeconds<0||breakSeconds>900){el('matchSetupStatus').textContent='Use 1–12 valid period lengths and a break from 0:00 to 15:00.';return;}if(el('matchRedAthlete').value&&el('matchRedAthlete').value===el('matchOtherAthlete').value){el('matchSetupStatus').textContent='Choose two different athletes.';return;}
+  match={id:crypto.randomUUID(),style:el('matchStyle').value,red_id:el('matchRedAthlete').value||null,other_id:el('matchOtherAthlete').value||null,red_name:el('matchRedName').value.trim(),other_name:el('matchOtherName').value.trim(),label:el('matchLabel').value.trim(),periods,breakSeconds,takedown:Number(el('matchTD').value),period:0,phase:'period',remainingMs:periods[0]*1000,deadline:null,ledger:[],status:'live'};showScore();
+ }
+ async function save(){if(!validContext()||busy)return false;busy=true;el('matchSave').disabled=true;status('Saving…');const current=match;try{const data=structuredClone(match);data.remainingMs=remaining();data.deadline=null;const row=await WMOperations.rpc(true,{action:'match',id:match.id,team_id:team,season_id:season,challenge_id:challenge,revision,data});if(match!==current)return false;revision=row.revision;persist();status(match.ledger.length===data.ledger.length?'Match saved.':'Snapshot saved. Save again to sync the newest scoring actions.');return true;}catch(err){status(err.message+' Your device draft is still available.',true);return false;}finally{busy=false;el('matchSave').disabled=false}}
+ async function finish(){if(!validContext()||match.status==='complete')return;pause();const answer=await WMOperations.dialog({title:'Finish match',fields:[{id:'winner',label:'Winner',options:[['red',match.red_name+' · Red'],['other',match.other_name+(match.style==='folkstyle'?' · Green':' · Blue')],['none','No winner']],value:'red'},{id:'result',label:'Result',options:['Decision','Fall','Technical fall','Major decision','Default','Disqualification','Forfeit','No contest'].map(x=>[x,x]),value:'Decision'}],submit:'Save final result'});if(!answer||!validContext())return;const normal=answer.winner,result=answer.result;match.status='complete';match.winner=normal==='green'||normal==='blue'?'other':normal;match.result=result.slice(0,100);log('Match finished: '+match.result);render();if(await save()){localStorage.removeItem(key());status('Final result saved.');}else{match.status='live';persist();render();}}
+ function exportMatch(){if(!match)return;const s=scores();WMOperations.download('Match_'+match.red_name+'_vs_'+match.other_name+'.txt',`${match.red_name} ${s.red} – ${s.other} ${match.other_name}\n${match.style} · ${match.result||'In progress'}\n${match.label||''}\n\n`+match.ledger.map(a=>`${a.at} | P${a.period} ${fmt(a.remaining_ms)} | ${a.corner} | ${a.label} ${a.points||''}${a.voided?' [UNDONE]':''}`).join('\n'));}
+ function close(){version++;if(match){pause('Clock paused when leaving scoreboard');persist();}clearInterval(timer);timer=null;match=null;['matchListSheet','matchSetupSheet','matchScoreSheet'].forEach(id=>show(id,false));}
+ el('matchNew').onclick=()=>setup();el('matchSetupForm').onsubmit=create;el('matchRedAthlete').onchange=()=>el('matchRedName').value=catalogue.athletes.find(a=>a.id===el('matchRedAthlete').value)?.name||'';el('matchOtherAthlete').onchange=()=>el('matchOtherName').value=catalogue.athletes.find(a=>a.id===el('matchOtherAthlete').value)?.name||'';
+ el('matchToggle').onclick=()=>{if(match?.deadline!==null){pause('Clock stopped');render();}else start();};el('matchAdvance').onclick=advance;el('matchUndo').onclick=undo;el('matchClockEdit').onclick=clockEdit;el('matchTimeout').onclick=timeout;el('matchOvertime').onclick=overtime;el('matchSave').onclick=save;el('matchFinish').onclick=finish;el('matchExport').onclick=exportMatch;el('matchClose').onclick=()=>closeSheets();
+ el('matchBookBtn').onclick=open;el('matchBookRoomBtn').onclick=open;
+ document.addEventListener('visibilitychange',()=>{if(document.hidden&&match){pause('Clock paused when app moved to background');render();}});
+ window.addEventListener('pagehide',()=>pause('Clock paused when page closed'));
+ return{open,close,parseTime,remaining,scores};
+})();
+
+document.getElementById('setupOrgHubBtn').onclick=()=>WMOperations.open();document.getElementById('setupFeedbackBtn').onclick=()=>WMOperations.feedback();
+</script>
 </body>
 </html>
