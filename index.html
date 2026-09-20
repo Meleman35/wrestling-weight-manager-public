@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.15.21: live memberships, selected-child joining, private weigh-in alerts. -->
+<!-- Wrestling Manager v0.15.23: selected-child joining and coaching weight snapshots/trends. -->
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -231,8 +231,17 @@ body.kiosk-locked{height:100dvh!important;min-height:100dvh!important;overflow:h
     .trend-metric{padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface-2)}
     .trend-metric span{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
     .trend-metric b{display:block;font-size:22px;margin-top:4px}
+    .coach-weight-snapshot{margin-top:14px}
+    .coach-weight-snapshot select{margin-bottom:10px;color:var(--ink)}
+    #weightTrendAthletePicker{margin:12px 0}
+    #weightTrendAthleteSelect{color:var(--ink)}
+    #weightTrendSheet .sheet-head>div{min-width:0}
+    #weightTrendSheet .icon-close{flex-shrink:0}
+    .trend-filter:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+    #joinFamilyResult small{display:block;margin-top:8px}
+    #joinOtherChildBtn{margin-top:14px}
     .trend-filter-row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px}
-    .trend-filter{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 12px;font-weight:800}
+    .trend-filter{color:var(--ink);border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 12px;font-weight:800}
     .trend-filter.active{background:var(--team-primary);color:var(--team-primary-text);border-color:var(--team-primary)}
     .trend-chart-wrap{border:1px solid var(--line);border-radius:16px;background:var(--surface);padding:10px;overflow:hidden}
     .trend-chart-wrap svg{width:100%;height:230px;display:block}
@@ -510,7 +519,7 @@ button{touch-action:manipulation}
           <button type="button" class="metric metric-btn" data-go="weight"><span>Not weighed</span><strong id="notWeighed">0</strong></button>
           <button type="button" class="metric metric-btn" data-go="weight"><span>Newly eligible</span><strong id="eligible">0</strong></button>
           <button type="button" class="metric metric-btn" data-go="weight"><span>Challenges</span><strong id="challenges">0</strong></button>
-        </div><div id="homePersonalWeightList" class="personal-weight-list hidden"></div></section>
+        </div><div id="homeCoachWeightSnapshot" class="coach-weight-snapshot hidden"></div><div id="homePersonalWeightList" class="personal-weight-list hidden"></div></section>
         </div>
       </section>
 
@@ -578,6 +587,7 @@ button{touch-action:manipulation}
           <button type="button" class="metric metric-btn" data-weight-metric="eligible"><span>Newly eligible</span><strong id="eligible2">0</strong></button>
           <button type="button" class="metric metric-btn" data-weight-metric="challenges"><span>Challenges</span><strong id="challenges2">0</strong></button>
         </div>
+        <section id="coachWeightRoomSection" class="feature-card hidden"><h3>Weight Room Snapshot</h3><p class="fine">Choose an athlete to see their latest weight and open their trend.</p><div id="roomCoachWeightSnapshot" class="coach-weight-snapshot"></div></section>
         <section id="personalWeightRoomSection" class="feature-card hidden"><div class="section-head" style="margin-top:0"><div><div class="eyebrow">PRIVATE ATHLETE WEIGHTS</div><h3 id="personalWeightRoomTitle">My Weight</h3></div><button id="startMyWeightCheckBtn" type="button" class="primary-small hidden">＋ Check Weight</button></div><div id="weightRoomPersonalWeightList" class="personal-weight-list"></div><p class="personal-weight-private">Only the athlete, their connected parent or guardian, and authorized team staff can view these weights.</p></section>
         <div id="weighInModeArea">
           <div class="section-head"><div><div class="eyebrow">SCALE MODES</div><h3>Weigh-In Console</h3></div><span class="operator-chip">Home Team Recognition · Always On</span></div>
@@ -947,17 +957,26 @@ button{touch-action:manipulation}
       <button id="joinAsParentBtn" class="join-role-btn">I am a Parent / Guardian</button>
     </div>
     <div id="parentJoinChoice" class="parent-join-choice hidden">
-      <div class="claim-help"><b>Parent / Guardian account</b><br>Choose which children are joining this team. Existing profiles stay connected across teams; other children and their teams are unchanged. Coach approval is still required.</div>
-      <div id="joinFamilyChildren"></div>
-      <button id="joinSelectedChildrenBtn" class="wide hidden" type="button">Send Selected Children for Approval</button>
-      <p class="fine">Child not listed? Claim an existing roster profile or create a profile for a child who is new to Wrestling Manager.</p>
+      <div id="joinFamilyPanel">
+        <div class="claim-help"><b>Choose your children</b><br>Select the children joining this team. Your approved parent connection carries over when their profile is already on this roster. New roster additions go to the coach for approval.</div>
+        <div id="joinFamilyChildren"></div>
+        <button id="joinFamilyRetryBtn" type="button" class="secondary hidden">Try Again</button>
+        <button id="joinSelectedChildrenBtn" class="wide hidden" type="button" disabled>Continue with Selected Children</button>
+        <div id="joinFamilyResult" class="join-summary hidden" role="status" aria-live="polite"></div>
+        <button id="joinOtherChildBtn" class="secondary" type="button">Child not listed?</button>
+      </div>
+      <div id="joinOtherChildPanel" class="hidden">
+        <button id="joinBackToChildrenBtn" class="secondary" type="button">Back to My Children</button>
+        <p class="fine">Find or add a child who is not connected to your account yet.</p>
       <div class="parent-path-grid">
         <button id="claimExistingAthleteBtn" class="parent-path-btn" type="button"><b>Claim My Athlete</b><small>Use this when your child is already on the team roster. The coach approves the link to your account.</small></button>
         <button id="createAthleteProfileBtn" class="parent-path-btn" type="button"><b>Create Athlete Profile</b><small>Use this when your child is new. You fill out their profile and send it to the coach for approval.</small></button>
       </div>
+      </div>
     </div>
     <input id="joinRequestCode" type="hidden">
     <input id="joinRequestTeamId" type="hidden">
+    <div id="joinIndividualForm">
     <h3 id="joinAthleteHeading" class="subhead">Athlete</h3>
     <div id="joinAthleteNameRow" class="profile-grid"><div><label>First name</label><input id="joinFirstName" name="athlete_first_name" autocomplete="off"></div><div><label>Last name</label><input id="joinLastName" name="athlete_last_name" autocomplete="off"></div></div>
     <div id="joinAthleteDobSchoolRow" class="profile-grid"><div><label>Birthday <span id="joinBirthdayHint" class="optional-label">for age division</span></label><input id="joinBirthDate" type="date" autocomplete="off"></div><div id="joinSchoolLevelBox"><label>School level</label><select id="joinSchoolLevel"><option value="">Choose…</option><option value="elementary">Elementary</option><option value="middle_school">Middle School</option><option value="high_school">High School</option><option value="college">College</option><option value="adult">Adult / Open</option><option value="other">Other</option></select></div></div>
@@ -1000,6 +1019,7 @@ button{touch-action:manipulation}
     <label>Guardian email <span class="optional-label">optional</span></label><input id="joinGuardianEmail" type="email" autocomplete="email">
     <label>Guardian phone <span class="optional-label">optional</span></label><input id="joinGuardianPhone" type="tel" autocomplete="tel">
     <button id="submitJoinRequestBtn" class="wide sticky-save">Send Join Request</button>
+    </div>
   </section>
 
   <section id="coachJoinRequestsSheet" class="sheet hidden" aria-modal="true">
@@ -1094,7 +1114,9 @@ button{touch-action:manipulation}
   <section id="weightTrendSheet" class="sheet hidden" aria-modal="true">
     <div class="sheet-handle"></div>
     <div class="sheet-head"><div><div class="eyebrow">WEIGHT TREND</div><h2 id="weightTrendAthleteName">Athlete</h2><p class="muted">Daily trend, pre/post-practice weights and weight-management progress</p></div><button class="icon-close" data-close-sheet>×</button></div>
-    <div class="trend-filter-row"><button class="trend-filter" data-trend-days="7">7 Days</button><button class="trend-filter active" data-trend-days="30">30 Days</button><button class="trend-filter" data-trend-days="0">Season</button></div>
+    <div id="weightTrendAthletePicker" class="hidden"><label for="weightTrendAthleteSelect">Athlete</label><select id="weightTrendAthleteSelect"></select></div>
+    <div class="trend-filter-row" role="group" aria-label="Time range"><button class="trend-filter" type="button" aria-pressed="false" data-trend-days="7">7 Days</button><button class="trend-filter active" type="button" aria-pressed="true" data-trend-days="30">30 Days</button><button class="trend-filter" type="button" aria-pressed="false" data-trend-days="0">All Time</button></div>
+    <button id="weightTrendRetryBtn" type="button" class="secondary hidden">Try Again</button>
     <div id="weightTrendSummary" class="trend-summary-grid"></div>
     <div class="trend-chart-wrap"><svg id="weightTrendChart" viewBox="0 0 720 230" role="img" aria-label="Athlete weight trend"></svg></div>
     <div class="trend-legend"><span><i class="trend-dot"></i>Pre-practice</span><span><i class="trend-dot post"></i>Post-practice</span><span><i class="trend-dot other"></i>Other weigh-in</span></div>
@@ -1864,7 +1886,60 @@ let smsUnreadReplies = 0;
 let athleteTeamsAthleteId = null;
 let weighedTodayRows = [];
 let weightTrendAthleteId = null;
+function updateJoinFamilySelection(){
+  const count=$('joinFamilyChildren').querySelectorAll('[data-join-child]:checked').length;
+  $('joinSelectedChildrenBtn').disabled=joinFamilySubmitting||!count;
+  $('joinSelectedChildrenBtn').textContent=joinFamilySubmitting?'Connecting selected children…':'Continue with Selected Children';
+}
+function coachWeightAthletes(){
+  if(!isStaff)return [];
+  return [...new Map(rosterRows.filter(row=>row.active!==false&&!['standby','removed','inactive'].includes(row.roster_status)).map(row=>[String(row.athlete_id),row])).values()].sort((a,b)=>`${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`));
+}
+function renderCoachWeightSnapshots(){
+  show('homeCoachWeightSnapshot',isStaff);show('coachWeightRoomSection',isStaff);
+  const athletes=coachWeightAthletes();
+  if(!athletes.some(row=>row.athlete_id===coachWeightAthleteId))coachWeightAthleteId=athletes[0]?.athlete_id||null;
+  const athlete=athletes.find(row=>row.athlete_id===coachWeightAthleteId);
+  for(const id of ['homeCoachWeightSnapshot','roomCoachWeightSnapshot']){
+    const box=$(id);if(!box)continue;
+    if(!isStaff){box.innerHTML='';continue;}
+    if(!athlete){box.innerHTML='<div class="empty-card">No active athletes on this team yet.</div>';continue;}
+    const snapshot=coachWeightSnapshot?.athleteId===coachWeightAthleteId?coachWeightSnapshot:null;
+    const latest=snapshot?.latest;
+    const when=!snapshot?'Loading latest weight…':snapshot.error?'Latest weight could not be loaded.':latest?fmtDateTime(latest.captured_at):'No recorded weigh-in yet';
+    const value=latest?`${Number(latest.weight_lbs).toFixed(1)} lb`:'—';
+    box.innerHTML=`<label for="${id}Select">Athlete</label><select id="${id}Select" data-coach-weight-select>${athletes.map(row=>`<option value="${esc(row.athlete_id)}" ${row.athlete_id===coachWeightAthleteId?'selected':''}>${esc(row.first_name)} ${esc(row.last_name)}</option>`).join('')}</select><button type="button" class="personal-weight-card" data-coach-weight-trend><span><b>${esc(athlete.first_name)} ${esc(athlete.last_name)}</b><small>${esc(when)}</small></span><span class="personal-weight-value">${esc(value)}<small>View trend</small></span></button>${snapshot?.error?'<button type="button" class="secondary" data-coach-weight-retry>Try Again</button>':''}`;
+    box.querySelector('[data-coach-weight-select]').onchange=event=>{coachWeightAthleteId=event.target.value;coachWeightSnapshot=null;loadCoachWeightSnapshot();};
+    box.querySelector('[data-coach-weight-trend]').onclick=()=>openWeightTrend(coachWeightAthleteId);
+    const retry=box.querySelector('[data-coach-weight-retry]');if(retry)retry.onclick=()=>loadCoachWeightSnapshot();
+  }
+}
+async function loadCoachWeightSnapshot(){
+  const version=++coachWeightSnapshotRequest;renderCoachWeightSnapshots();
+  const athleteId=coachWeightAthleteId,teamId=activeTeam?.id,seasonId=activeSeason?.id,userId=session?.user?.id;
+  if(!isStaff||!athleteId||!seasonId)return;
+  const current=()=>version===coachWeightSnapshotRequest&&isStaff&&coachWeightAthleteId===athleteId&&activeTeam?.id===teamId&&activeSeason?.id===seasonId&&session?.user?.id===userId;
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
+  try{
+    const {data,error}=await client.rpc('get_athlete_weight_trend',{p_athlete_id:athleteId,p_season_id:seasonId,p_days:0}).abortSignal(controller.signal);
+    if(!current())return;if(error)throw error;
+    coachWeightSnapshot={athleteId,latest:Array.isArray(data?.points)?data.points.at(-1)||null:null};
+  }catch(error){if(!current())return;coachWeightSnapshot={athleteId,latest:null,error:true};}
+  finally{clearTimeout(timer);}
+  if(current())renderCoachWeightSnapshots();
+}
+function updateWeightTrendControls(){
+  const athlete=rosterRows.find(row=>row.athlete_id===weightTrendAthleteId)||rosterManagementRows.find(row=>row.athlete_id===weightTrendAthleteId)||personalWeightAthletes().find(row=>row.id===weightTrendAthleteId);
+  $('weightTrendAthleteName').textContent=athlete?`${athlete.first_name||''} ${athlete.last_name||''}`.trim():'Athlete';
+  const choices=coachWeightAthletes();
+  if(isStaff&&athlete&&!choices.some(row=>row.athlete_id===weightTrendAthleteId))choices.push({...athlete,athlete_id:weightTrendAthleteId});
+  show('weightTrendAthletePicker',isStaff&&choices.length>0);
+  $('weightTrendAthleteSelect').innerHTML=isStaff?choices.map(row=>`<option value="${esc(row.athlete_id)}" ${row.athlete_id===weightTrendAthleteId?'selected':''}>${esc(row.first_name)} ${esc(row.last_name)}</option>`).join(''):'';
+  document.querySelectorAll('[data-trend-days]').forEach(button=>{const active=Number(button.dataset.trendDays)===weightTrendDays;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));});
+}
 let weightTrendDays = 30;
+let weightTrendRequestVersion=0;
+let coachWeightAthleteId=null,coachWeightSnapshot=null,coachWeightSnapshotRequest=0;
 
 const APPAREL_SIZES=['XS','S','M','L','XL','XXL','XXXL'];
 const YOUTH_SHOE_SIZES=['10','10.5','11','11.5','12','12.5','13','13.5','1','1.5','2','2.5','3','3.5','4','4.5','5','5.5','6','6.5','7'];
@@ -2416,6 +2491,7 @@ function setTab(name){
   if (name==='weight'){
     loadCommunications(false);
     if(canWeighIn)loadWeighInSessions();
+    if(isStaff)loadRoster();
     if(personalWeightAthletes().length)loadPersonalWeightSnapshots();
   }
 }
@@ -2428,6 +2504,7 @@ function openSheet(id){
 }
 function closeSheets(){
   if(document.body.classList.contains('kiosk-locked')) return;
+  ++weightTrendRequestVersion;
   if(myWeightCheckActive)resetMyWeightCheck();
   document.activeElement?.blur?.();
   stopCommunicationReceiptLiveRefresh();
@@ -3066,6 +3143,9 @@ async function activateTeam(teamId,{persist=true}={}){
   const team=availableTeams.find(t=>t.id===teamId);
   if(!team){message('That team is not available to this account.',true);return;}
   activeTeam=team;
+  coachWeightAthleteId=null;coachWeightSnapshot=null;++coachWeightSnapshotRequest;++weightTrendRequestVersion;
+  rosterRows=[];rosterManagementRows=[];
+  show('homeCoachWeightSnapshot',false);show('coachWeightRoomSection',false);
   communicationRealtimeChannels.forEach(ch=>client.removeChannel(ch));
   communicationRealtimeChannels=[];
   if(announcementRealtimeChannel)client.removeChannel(announcementRealtimeChannel);
@@ -3209,6 +3289,7 @@ function applyRoleUI(){
   show('teamWeightSnapshotMetrics',isStaff);
   show('teamWeightRoomMetrics',isStaff);
   show('personalWeightRoomSection',!isStaff&&hasPersonalWeights);
+  renderCoachWeightSnapshots();
   show('weighInModeArea',canWeighIn);
   const messagesNav=document.querySelector('.nav-btn[data-tab="messages"]');
   if(messagesNav) messagesNav.classList.remove('hidden');
@@ -5013,10 +5094,12 @@ async function changeAthleteTeamStatus(athleteId,status){
 
 async function loadRoster(){
   if (!activeSeason || !isStaff) return;
+  const teamId=activeTeam?.id,seasonId=activeSeason.id,userId=session?.user?.id;
   const activePromise=client.from('roster_dashboard').select('*').eq('season_id',activeSeason.id).order('last_name');
   const managePromise=isTeamAdmin?client.rpc('get_roster_management',{p_season_id:activeSeason.id}):Promise.resolve({data:[],error:null});
   const latestPromise=client.rpc('get_latest_team_weigh_ins',{p_season_id:activeSeason.id});
   const [{data,error},{data:manageData,error:manageErr},{data:latestData,error:latestErr}]=await Promise.all([activePromise,managePromise,latestPromise]);
+  if(!isStaff||activeTeam?.id!==teamId||activeSeason?.id!==seasonId||session?.user?.id!==userId)return;
   if(error||manageErr||latestErr){message(error?.message||manageErr?.message||latestErr?.message,true);return;}
   const latestMap=new Map((latestData||[]).map(x=>[x.athlete_id,x]));
   rosterRows=(data||[]).map(r=>{const latest=latestMap.get(r.athlete_id);return {...r,latest_weigh_in_id:latest?.weigh_in_id||null,latest_weight_linked_official:!!latest?.linked_official,latest_weigh_in_at:latest?.captured_at||r.latest_weigh_in_at};});
@@ -5062,7 +5145,7 @@ async function loadRoster(){
     $('inactiveRosterList').querySelectorAll('[data-athlete-teams]').forEach(btn=>btn.onclick=()=>openAthleteTeams(btn.dataset.athleteTeams));
     bindRosterManagementActions($('inactiveRosterList'));
   }
-  await loadCoachWeightClassBoard();
+  await Promise.all([loadCoachWeightClassBoard(),loadCoachWeightSnapshot()]);
 }
 
 function athleteTeamRow(athleteId){
@@ -5274,41 +5357,54 @@ async function loadJoinGuardianDefaults(){
   if(!$('joinGuardianEmail').value)$('joinGuardianEmail').value=session?.user?.email||'';
 }
 
-let joinFamilyChildren=[],joinFamilyLoadVersion=0;
+let joinFamilyChildren=[],joinFamilyLoadVersion=0,joinFamilySubmitting=false;
 async function loadJoinFamilyChildren(){
   const version=++joinFamilyLoadVersion,userId=session?.user?.id,teamId=$('joinRequestTeamId').value;
-  joinFamilyChildren=[];show('joinSelectedChildrenBtn',false);
+  joinFamilyChildren=[];show('joinSelectedChildrenBtn',false);show('joinFamilyRetryBtn',false);
   $('joinFamilyChildren').innerHTML='<p class="fine">Checking your connected children…</p>';
-  const {data,error}=await client.rpc('get_my_children_for_team_join',{p_team_id:teamId});
-  if(version!==joinFamilyLoadVersion||session?.user?.id!==userId||$('joinRequestTeamId').value!==teamId||joinRequesterRole!=='parent_guardian')return;
-  if(error){$('joinFamilyChildren').innerHTML='<p class="fine">Could not load your connected children. Reopen this form to retry.</p>';return;}
-  joinFamilyChildren=data||[];
-  $('joinFamilyChildren').innerHTML=joinFamilyChildren.length?'<h3>Your connected children</h3>'+joinFamilyChildren.map(child=>{
-    const unavailable=child.join_status!=='available';
-    const note=child.join_status==='joined'?'Already on this team':child.join_status==='pending'?'Awaiting coach approval':'Reuse existing profile — coach approval required';
-    return `<label class="toggle-row"><span><b>${esc(child.display_name)}</b><small>${note}</small></span><input type="checkbox" data-join-child="${esc(child.athlete_id)}" ${unavailable?'disabled':''}></label>`;
-  }).join(''):'';
-  show('joinSelectedChildrenBtn',joinFamilyChildren.some(child=>child.join_status==='available'));
+  try{
+    const {data,error}=await client.rpc('get_my_children_for_team_join_v2',{p_team_id:teamId});
+    if(version!==joinFamilyLoadVersion||session?.user?.id!==userId||$('joinRequestTeamId').value!==teamId||joinRequesterRole!=='parent_guardian')return;
+    if(error)throw error;
+    joinFamilyChildren=data||[];
+    $('joinFamilyChildren').innerHTML=joinFamilyChildren.length?'<h3>Your connected children</h3>'+joinFamilyChildren.map(child=>{
+      const unavailable=!['available','ready'].includes(child.join_status);
+      const note=child.join_status==='joined'?'Connected to your account on this team':child.join_status==='pending'?'Awaiting coach approval':child.join_status==='ready'?'Already on the roster. Connect your parent account.':'Send this existing profile for coach approval';
+      return `<label class="toggle-row"><span><b>${esc(child.display_name)}</b><small>${note}</small></span><input type="checkbox" data-join-child="${esc(child.athlete_id)}" ${unavailable?'disabled':''}></label>`;
+    }).join(''):'<p class="fine">No children are connected to your account yet. Choose “Child not listed?” to find or add your child.</p>';
+    show('joinSelectedChildrenBtn',joinFamilyChildren.some(child=>['available','ready'].includes(child.join_status)));
+    updateJoinFamilySelection();
+  }catch(error){
+    if(version!==joinFamilyLoadVersion||session?.user?.id!==userId||$('joinRequestTeamId').value!==teamId||joinRequesterRole!=='parent_guardian')return;
+    $('joinFamilyChildren').innerHTML='<p class="fine">Could not load your connected children. Check your connection and try again.</p>';
+    show('joinFamilyRetryBtn',true);
+  }
 }
 async function submitSelectedChildrenJoin(){
+  if(joinRequesterRole!=='parent_guardian'||joinParentPath!=='family'||joinFamilySubmitting)return;
   const selected=[...$('joinFamilyChildren').querySelectorAll('[data-join-child]:checked')].map(el=>el.dataset.joinChild);
   if(!selected.length){message('Select the children joining this team.',true);return;}
-  const btn=$('joinSelectedChildrenBtn');if(btn.disabled)return;
   const teamId=$('joinRequestTeamId').value,userId=session?.user?.id;
-  btn.disabled=true;btn.textContent='Sending selected children…';
+  const selectedNames=new Map(joinFamilyChildren.map(child=>[child.athlete_id,child.display_name]));
+  joinFamilySubmitting=true;updateJoinFamilySelection();show('joinFamilyResult',false);
   try{
-    const {error}=await client.rpc('submit_selected_children_join',{p_team_id:teamId,p_join_code:$('joinRequestCode').value||null,p_athlete_ids:selected});
+    const {data,error}=await client.rpc('submit_selected_children_join',{p_team_id:teamId,p_join_code:$('joinRequestCode').value||null,p_athlete_ids:selected});
     if(error)throw error;
     if(session?.user?.id!==userId||$('joinRequestTeamId').value!==teamId)return;
+    const rows=Array.isArray(data)?data:[];
+    $('joinFamilyResult').innerHTML='<b>Selection saved</b>'+rows.map(row=>`<small>${esc(selectedNames.get(row.athlete_id)||'Child')}: ${row.status==='joined'?'Connected to your account on this team.':'Sent for coach approval.'}</small>`).join('');
+    show('joinFamilyResult',true);
     await loadJoinFamilyChildren();
-    message('Selected children sent for coach approval. Other children and existing teams are unchanged.');
+    if(session?.user?.id!==userId||$('joinRequestTeamId').value!==teamId)return;
+    if(rows.some(row=>row.status==='joined'))scheduleAccountConnectionRefresh();
+    message('Your selection is saved. You do not need to claim or create these profiles again.');
   }catch(error){message(error.message||'Could not send the selected children. Please try again.',true);}
-  finally{btn.disabled=false;btn.textContent='Send Selected Children for Approval';}
+  finally{joinFamilySubmitting=false;updateJoinFamilySelection();}
 }
 
 async function startJoinFlow(code,teamId=null,parentExisting=false){
   joinRequesterRole=parentExisting?'parent_guardian':'athlete';
-  joinParentPath=parentExisting?'create':null;
+  joinParentPath=parentExisting?'family':null;show('joinFamilyResult',false);
   joinMatchSearchCompleted=false;
   selectedClaimAthleteId=null;
   joinPreview=null;
@@ -5339,19 +5435,20 @@ async function startJoinFlow(code,teamId=null,parentExisting=false){
 
 function setParentJoinPath(path){
   joinParentPath=path;
-  const isClaim=path==='claim';
+  const isClaim=path==='claim',individual=isClaim||path==='create';
+  show('joinFamilyPanel',path==='family');show('joinOtherChildPanel',path!=='family');
+  show('joinIndividualForm',individual);show('submitJoinRequestBtn',individual);
   resetJoinClaimMatch();
   $('claimExistingAthleteBtn')?.classList.toggle('active',isClaim);
   $('createAthleteProfileBtn')?.classList.toggle('active',path==='create');
-  ['joinAthleteHeading','joinAthleteNameRow'].forEach(id=>show(id,!!path));
-  show('joinAthleteDobSchoolRow',!!path&&!isClaim);
+  ['joinAthleteHeading','joinAthleteNameRow'].forEach(id=>show(id,individual));
+  show('joinAthleteDobSchoolRow',individual&&!isClaim);
   if($('joinBirthdayHint'))$('joinBirthdayHint').textContent=isClaim?'to distinguish matching profiles':'for age division';
-  show('joinProfileClaimBox',!!path||joinRequesterRole==='athlete');
+  show('joinProfileClaimBox',individual||joinRequesterRole==='athlete');
   show('joinNewAthleteDetails',path==='create'||joinRequesterRole==='athlete');
   show('joinSchoolLevelBox',path==='create'||joinRequesterRole==='athlete');
-  show('joinClaimHelp',isClaim);
-  $('joinRequestSheet')?.classList.toggle('join-claim-mode',isClaim);
-  if($('submitJoinRequestBtn'))$('submitJoinRequestBtn').textContent=isClaim?'Send Claim Request':'Send Join Request';
+  show('joinClaimHelp',isClaim);$('joinRequestSheet')?.classList.toggle('join-claim-mode',isClaim);
+  $('submitJoinRequestBtn').textContent=isClaim?'Send Claim Request':'Send Join Request';
   if(isClaim){
     $('joinAthleteEmail').value='';$('joinAthletePhone').value='';$('joinBirthDate').value='';
     ['joinShareEmail','joinSharePhone','joinShareBirth','joinSms','joinMedicalShare'].forEach(id=>{if($(id))$(id).checked=false;});
@@ -5360,28 +5457,17 @@ function setParentJoinPath(path){
 }
 
 function setJoinRole(role){
-  joinRequesterRole=role;
-  joinMatchSearchCompleted=false;selectedClaimAthleteId=null;
+  joinRequesterRole=role;joinMatchSearchCompleted=false;selectedClaimAthleteId=null;
   if($('joinClaimMatches'))$('joinClaimMatches').innerHTML='';show('continueNewProfileBtn',false);
   $('joinAsAthleteBtn').classList.toggle('active',role==='athlete');
   $('joinAsParentBtn').classList.toggle('active',role==='parent_guardian');
-  show('parentJoinChoice',role==='parent_guardian');
-  ++joinFamilyLoadVersion;
+  show('parentJoinChoice',role==='parent_guardian');++joinFamilyLoadVersion;
   if(role==='parent_guardian')loadJoinFamilyChildren();
   if(role==='athlete'){
-    joinParentPath='create';
-    $('joinAthleteEmail').value=$('joinAthleteEmail').value||session?.user?.email||'';
-    setParentJoinPath('create');
-  } else {
-    joinParentPath=null;
+    joinParentPath='create';$('joinAthleteEmail').value=$('joinAthleteEmail').value||session?.user?.email||'';setParentJoinPath('create');
+  }else{
     $('joinGuardianEmail').value=$('joinGuardianEmail').value||session?.user?.email||'';
-    ['joinFirstName','joinLastName','joinBirthDate'].forEach(id=>{if($(id))$(id).value='';});
-    ['joinAthleteHeading','joinAthleteNameRow','joinAthleteDobSchoolRow','joinNewAthleteDetails','joinClaimHelp','joinProfileClaimBox'].forEach(id=>show(id,false));
-    $('claimExistingAthleteBtn')?.classList.remove('active');
-    $('createAthleteProfileBtn')?.classList.remove('active');
-    $('joinRequestSheet')?.classList.remove('join-claim-mode');
-    if($('submitJoinRequestBtn'))$('submitJoinRequestBtn').textContent='Choose Claim or Create Above';
-    setTimeout(()=>{if(joinRequesterRole==='parent_guardian'&&!joinParentPath){$('joinFirstName').value='';$('joinLastName').value='';}},80);
+    ['joinFirstName','joinLastName','joinBirthDate'].forEach(id=>{if($(id))$(id).value='';});setParentJoinPath('family');
   }
   updateJoinSensitiveControls();
 }
@@ -5450,6 +5536,7 @@ function resetJoinClaimMatch(){
 function continueWithNewProfile(){setParentJoinPath('create');joinMatchSearchCompleted=true;message('Complete the new athlete profile below.');}
 
 async function submitJoinRequest(){
+  if(joinRequesterRole==='parent_guardian'&&!['claim','create'].includes(joinParentPath))return;
   const first=$('joinFirstName').value.trim(),last=$('joinLastName').value.trim(),gname=$('joinGuardianName').value.trim();
   if(joinRequesterRole==='parent_guardian'&&!joinParentPath){message('Choose Claim My Athlete or Create Athlete Profile first.',true);return;}
   if(!first||!last||!gname){message('Add the athlete name and the parent/guardian name.',true);return;}
@@ -5592,14 +5679,23 @@ function renderWeightTrend(data){
   $('weightTrendHistory').innerHTML=points.length?[...points].reverse().slice(0,60).map(p=>{const phase=p.practice_phase==='pre_practice'?'PRE':p.practice_phase==='post_practice'?'POST':'WEIGH-IN';return `<div class="trend-row"><div><b>${p.weight_lbs.toFixed(1)} lb</b><small>${fmtDateTime(p.captured_at)}${p.practice_title?' · '+esc(p.practice_title):''}</small></div><span class="phase-badge">${phase}</span></div>`}).join(''):'<div class="empty-card">No weigh-ins in this time range yet.</div>';
 }
 async function loadWeightTrend(){
-  if(!weightTrendAthleteId||!activeSeason)return; $('weightTrendSummary').innerHTML='<div class="empty-card">Loading trend…</div>';
-  const {data,error}=await client.rpc('get_athlete_weight_trend',{p_athlete_id:weightTrendAthleteId,p_season_id:activeSeason.id,p_days:weightTrendDays});
-  if(error){message(error.message,true);return;} renderWeightTrend(data||{});
+  const version=++weightTrendRequestVersion,athleteId=weightTrendAthleteId,teamId=activeTeam?.id,seasonId=activeSeason?.id,userId=session?.user?.id,days=weightTrendDays,staff=isStaff;
+  if(!athleteId||!seasonId)return;
+  $('weightTrendSummary').innerHTML='<div class="empty-card" role="status">Loading trend…</div>';
+  ['weightTrendChart','weightTrendHistory','weightTrendPlan'].forEach(id=>$(id).innerHTML='');
+  show('weightTrendPlan',false);show('weightTrendRetryBtn',false);$('weightTrendSheet').setAttribute('aria-busy','true');
+  const current=()=>version===weightTrendRequestVersion&&weightTrendAthleteId===athleteId&&weightTrendDays===days&&activeTeam?.id===teamId&&activeSeason?.id===seasonId&&session?.user?.id===userId&&isStaff===staff;
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
+  try{
+    const {data,error}=await client.rpc('get_athlete_weight_trend',{p_athlete_id:athleteId,p_season_id:seasonId,p_days:days}).abortSignal(controller.signal);
+    if(!current())return;if(error)throw error;renderWeightTrend(data||{});
+  }catch(error){
+    if(!current())return;
+    $('weightTrendSummary').innerHTML='<div class="empty-card" role="status">Could not load this athlete’s trend. Please try again.</div>';show('weightTrendRetryBtn',true);
+  }finally{clearTimeout(timer);if(current())$('weightTrendSheet').setAttribute('aria-busy','false');}
 }
 async function openWeightTrend(athleteId){
-  weightTrendAthleteId=athleteId; const a=rosterRows.find(x=>x.athlete_id===athleteId)||rosterManagementRows.find(x=>x.athlete_id===athleteId)||memberAthletes.find(x=>x.id===athleteId);
-  $('weightTrendAthleteName').textContent=a?`${a.first_name||''} ${a.last_name||''}`.trim():(profileData?`${profileData.first_name||''} ${profileData.last_name||''}`.trim():'Athlete');
-  document.querySelectorAll('[data-trend-days]').forEach(b=>b.classList.toggle('active',Number(b.dataset.trendDays)===weightTrendDays)); closeSheets();openSheet('weightTrendSheet');await loadWeightTrend();
+  weightTrendAthleteId=athleteId;updateWeightTrendControls();closeSheets();openSheet('weightTrendSheet');await loadWeightTrend();
 }
 
 
@@ -7679,7 +7775,12 @@ bindDateAdvancePair('newTeamStarts','newTeamEnds');
 bindDateAdvancePair('editSeasonStarts','editSeasonEnds');
 bindDateAdvancePair('practiceRepeatStart','practiceRepeatEnd');
 $('profileWeightTrendBtn').onclick=()=>{if(profileAthleteId)openWeightTrend(profileAthleteId);};
-document.querySelectorAll('[data-trend-days]').forEach(btn=>btn.onclick=async()=>{weightTrendDays=Number(btn.dataset.trendDays);document.querySelectorAll('[data-trend-days]').forEach(x=>x.classList.toggle('active',x===btn));await loadWeightTrend();});
+document.querySelectorAll('[data-trend-days]').forEach(btn=>btn.onclick=async()=>{weightTrendDays=Number(btn.dataset.trendDays);updateWeightTrendControls();await loadWeightTrend();});
+$('weightTrendAthleteSelect').onchange=async event=>{
+  if(!isStaff||!coachWeightAthletes().some(row=>String(row.athlete_id)===event.target.value))return;
+  weightTrendAthleteId=event.target.value;updateWeightTrendControls();await loadWeightTrend();
+};
+$('weightTrendRetryBtn').onclick=()=>loadWeightTrend();
 document.querySelectorAll('.type-btn').forEach(btn=>btn.onclick=()=>applyEventTypeDefaults(btn.dataset.type));
 document.querySelectorAll('.nav-btn').forEach(btn=>btn.onclick=()=>setTab(btn.dataset.tab));
 document.querySelectorAll('[data-go]').forEach(btn=>btn.onclick=()=>{setTab(btn.dataset.go);if(btn.dataset.action==='create-event')setTimeout(prepareEventForm,0);});
@@ -7801,6 +7902,10 @@ $('athleteChatPermissionsAccountBtn').onclick=openAthleteChatPermissions;
 $('saveAthleteChatPermissionsBtn').onclick=saveAthleteChatPermissions;
 $('joinCodeBtn').onclick=showTeamJoin;
 $('joinSelectedChildrenBtn').onclick=submitSelectedChildrenJoin;
+$('joinFamilyChildren').onchange=updateJoinFamilySelection;
+$('joinFamilyRetryBtn').onclick=()=>loadJoinFamilyChildren();
+$('joinOtherChildBtn').onclick=()=>setParentJoinPath('other');
+$('joinBackToChildrenBtn').onclick=()=>setParentJoinPath('family');
 
 setupPhoneFormatting();
 window.addEventListener('pageshow',()=>{recoverInteractionLayer();refreshTeamData();});
