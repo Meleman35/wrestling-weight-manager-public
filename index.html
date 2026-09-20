@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.15.23: selected-child joining and coaching weight snapshots/trends. -->
+<!-- Wrestling Manager v0.15.24: repeat self weigh-ins after scale zero, with safe save retries. -->
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -1754,6 +1754,7 @@ let myWeightCheckPhase = null;
 let myWeightCheckCandidate = null;
 let myWeightCheckStableTimer = null;
 let myWeightCheckLatestWeight = null;
+let myWeightCheckVersion=0,myWeightCheckZeroSeen=false,myWeightCheckRequest=null;
 let familyAthletes = [];
 let viewMode = 'staff';
 let actualIsStaff = false;
@@ -3370,9 +3371,18 @@ function setMyWeightCheckState(text,type=''){
   const box=$('myWeightCheckState');if(!box)return;
   box.textContent=text;box.classList.toggle('success',type==='success');box.classList.toggle('error',type==='error');
 }
+function myWeightCheckScaleIsZero(){
+  return Number.isFinite(myWeightCheckLatestWeight)&&Math.abs(myWeightCheckLatestWeight)<=0.5;
+}
+function readyForAnotherMyWeightCheck(){
+  myWeightCheckSaved=false;myWeightCheckRequest=null;myWeightCheckCandidate=null;myWeightCheckZeroSeen=false;
+  $('beginMyWeightCheckBtn').disabled=false;$('beginMyWeightCheckBtn').textContent='Begin Weight Check';
+  setMyWeightCheckState('Weight saved. The scale is back at zero. Tap Begin Weight Check whenever you want to weigh again.','success');
+}
 function resetMyWeightCheck(){
-  clearTimeout(myWeightCheckStableTimer);myWeightCheckStableTimer=null;
-  myWeightCheckActive=false;myWeightCheckArmed=false;myWeightCheckSaving=false;myWeightCheckSaved=false;myWeightCheckCandidate=null;
+  ++myWeightCheckVersion;clearTimeout(myWeightCheckStableTimer);myWeightCheckStableTimer=null;
+  myWeightCheckActive=false;myWeightCheckArmed=false;myWeightCheckSaving=false;myWeightCheckSaved=false;
+  myWeightCheckCandidate=null;myWeightCheckZeroSeen=false;myWeightCheckRequest=null;
   if($('beginMyWeightCheckBtn')){$('beginMyWeightCheckBtn').disabled=false;$('beginMyWeightCheckBtn').textContent='Begin Weight Check';}
 }
 function openMyWeightCheck(){
@@ -3380,52 +3390,83 @@ function openMyWeightCheck(){
   if(!athlete){message('A signed-in athlete profile is required for My Weight Check.',true);return;}
   closeSheets();resetMyWeightCheck();myWeightCheckActive=true;myWeightCheckPhase=null;
   $('myWeightCheckAthleteName').textContent=`${athlete.first_name||''} ${athlete.last_name||''}`.trim();
-  $('myWeightCheckValue').textContent=Number.isFinite(myWeightCheckLatestWeight)?Number(myWeightCheckLatestWeight).toFixed(1):'—';
+  $('myWeightCheckValue').textContent=Number.isFinite(myWeightCheckLatestWeight)?myWeightCheckLatestWeight.toFixed(1):'—';
   document.querySelectorAll('[data-self-weigh-phase]').forEach(btn=>btn.classList.toggle('active',btn.dataset.selfWeighPhase==='independent'));
-  setMyWeightCheckState('Use the scale button at the top of the app to connect, then tap Begin Weight Check.');
+  setMyWeightCheckState('Connect the scale, let it return to zero, then tap Begin Weight Check. You can repeat this whenever you need.');
   openSheet('myWeightCheckSheet');
 }
 function beginMyWeightCheck(){
-  if(myWeightCheckSaved){closeSheets();return;}
-  if(!myWeightCheckActive||!signedInAthleteProfile())return;
-  myWeightCheckArmed=true;myWeightCheckSaved=false;myWeightCheckCandidate=null;
-  $('beginMyWeightCheckBtn').disabled=true;$('beginMyWeightCheckBtn').textContent='Waiting for stable weight…';
-  setMyWeightCheckState('Ready. Step onto the scale and stand still. Nothing saves until the reading is stable.');
-  handleMyWeightCheckReading(myWeightCheckLatestWeight);
+  if(!myWeightCheckActive||myWeightCheckSaving||myWeightCheckArmed||myWeightCheckSaved)return;
+  const athlete=signedInAthleteProfile();
+  if(!athlete||!activeTeam||!activeSeason)return;
+  if(myWeightCheckRequest?.weight!==undefined){saveMyWeightCheck(myWeightCheckRequest.weight);return;}
+  myWeightCheckRequest={id:crypto.randomUUID(),userId:session?.user?.id,athleteId:athlete.id,
+    teamId:activeTeam.id,seasonId:activeSeason.id,phase:myWeightCheckPhase};
+  myWeightCheckArmed=true;myWeightCheckCandidate=null;myWeightCheckZeroSeen=myWeightCheckScaleIsZero();
+  $('beginMyWeightCheckBtn').disabled=true;$('beginMyWeightCheckBtn').textContent=myWeightCheckZeroSeen?'Waiting for stable weight…':'Waiting for scale to zero…';
+  setMyWeightCheckState(myWeightCheckZeroSeen?'Ready. Step onto the scale and stand still.':'Step off and let the connected scale return to zero. Then step on for a new check.');
 }
 function handleMyWeightCheckReading(rawWeight){
-  if(!myWeightCheckActive)return;
-  const weight=Number(rawWeight);
+  // Keep the actual reading current even when the sheet is closed. Never invent
+  // a zero or capture the cached weight when Begin is tapped.
+  const weight=rawWeight===null||rawWeight===undefined||rawWeight===''?NaN:Number(rawWeight);
   myWeightCheckLatestWeight=Number.isFinite(weight)?weight:null;
-  $('myWeightCheckValue').textContent=weight>0?weight.toFixed(1):'—';
-  if(!myWeightCheckArmed||myWeightCheckSaved||myWeightCheckSaving)return;
+  if(!myWeightCheckActive)return;
+  $('myWeightCheckValue').textContent=Number.isFinite(weight)?weight.toFixed(1):'—';
+  if(myWeightCheckScaleIsZero()){
+    clearTimeout(myWeightCheckStableTimer);myWeightCheckStableTimer=null;myWeightCheckCandidate=null;
+    if(myWeightCheckSaving)return;
+    if(myWeightCheckSaved){readyForAnotherMyWeightCheck();return;}
+    if(myWeightCheckArmed){myWeightCheckZeroSeen=true;$('beginMyWeightCheckBtn').textContent='Waiting for stable weight…';setMyWeightCheckState('Ready. Step onto the scale and stand still.');}
+    return;
+  }
   if(!(weight>1&&weight<1000)){
     clearTimeout(myWeightCheckStableTimer);myWeightCheckStableTimer=null;myWeightCheckCandidate=null;
-    setMyWeightCheckState('Ready. Step onto the scale and stand still.');return;
+    return;
   }
+  if(!myWeightCheckArmed||myWeightCheckSaved||myWeightCheckSaving||!myWeightCheckZeroSeen)return;
   if(myWeightCheckCandidate===null||Math.abs(weight-myWeightCheckCandidate)>0.2){
     myWeightCheckCandidate=weight;clearTimeout(myWeightCheckStableTimer);
+    const version=myWeightCheckVersion;
     setMyWeightCheckState(`Hold still at ${weight.toFixed(1)} lb…`);
-    myWeightCheckStableTimer=setTimeout(()=>saveMyWeightCheck(weight),1600);
+    myWeightCheckStableTimer=setTimeout(()=>{if(version===myWeightCheckVersion)saveMyWeightCheck(weight);},1600);
   }
 }
 async function saveMyWeightCheck(candidate){
-  if(!myWeightCheckActive||!myWeightCheckArmed||myWeightCheckSaved||myWeightCheckSaving)return;
-  const current=Number(myWeightCheckLatestWeight);
-  if(!(current>1)||Math.abs(current-candidate)>0.2){handleMyWeightCheckReading(current);return;}
-  myWeightCheckSaving=true;setMyWeightCheckState('Saving your private weight…');
-  const {data,error}=await client.rpc('record_self_scale_weight',{
-    p_team_id:activeTeam.id,p_season_id:activeSeason.id,p_weight_lbs:current,
-    p_practice_phase:myWeightCheckPhase
-  });
-  myWeightCheckSaving=false;
-  if(error){myWeightCheckArmed=false;$('beginMyWeightCheckBtn').disabled=false;$('beginMyWeightCheckBtn').textContent='Try Again';setMyWeightCheckState(error.message||'Weight could not be saved.','error');return;}
-  myWeightCheckSaved=true;myWeightCheckArmed=false;
-  if(!data?.duplicate)dispatchCommunicationNotifications();
-  $('beginMyWeightCheckBtn').disabled=false;$('beginMyWeightCheckBtn').textContent='Done';
-  const phase=data?.practice_phase==='pre_practice'?'before practice':data?.practice_phase==='post_practice'?'after practice':'daytime check';
-  setMyWeightCheckState(`${current.toFixed(1)} lb saved as a ${phase}.${data?.duplicate?' The duplicate reading was safely ignored.':' Step off the scale.'}`,'success');
-  await loadPersonalWeightSnapshots();
+  if(!myWeightCheckActive||myWeightCheckSaved||myWeightCheckSaving||!myWeightCheckRequest)return;
+  const request=myWeightCheckRequest,version=myWeightCheckVersion;
+  if(session?.user?.id!==request.userId||activeTeam?.id!==request.teamId||activeSeason?.id!==request.seasonId||signedInAthleteProfile()?.id!==request.athleteId){resetMyWeightCheck();return;}
+  if(request.weight===undefined){
+    const current=myWeightCheckLatestWeight;
+    if(!myWeightCheckArmed||!myWeightCheckZeroSeen)return;
+    if(!(current>1&&current<1000)||Math.abs(current-candidate)>0.2){handleMyWeightCheckReading(current);return;}
+    request.weight=current;
+  }
+  clearTimeout(myWeightCheckStableTimer);myWeightCheckStableTimer=null;
+  myWeightCheckSaving=true;myWeightCheckArmed=false;
+  $('beginMyWeightCheckBtn').disabled=true;$('beginMyWeightCheckBtn').textContent='Saving…';
+  setMyWeightCheckState('Saving your private weight…');
+  const current=()=>myWeightCheckActive&&version===myWeightCheckVersion&&myWeightCheckRequest===request&&session?.user?.id===request.userId&&activeTeam?.id===request.teamId&&activeSeason?.id===request.seasonId;
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
+  try{
+    const {data,error}=await client.rpc('record_self_scale_weight_v2',{
+      p_team_id:request.teamId,p_season_id:request.seasonId,p_weight_lbs:request.weight,
+      p_practice_phase:request.phase,p_check_id:request.id
+    }).abortSignal(controller.signal);
+    if(error)throw error;
+    if(session?.user?.id===request.userId&&activeTeam?.id===request.teamId)dispatchCommunicationNotifications();
+    if(!current())return;
+    myWeightCheckSaving=false;myWeightCheckSaved=true;
+    const phase=data?.practice_phase==='pre_practice'?'before practice':data?.practice_phase==='post_practice'?'after practice':'daytime check';
+    $('beginMyWeightCheckBtn').disabled=true;$('beginMyWeightCheckBtn').textContent='Step off to weigh again';
+    setMyWeightCheckState(`${Number(data?.weight_lbs??request.weight).toFixed(1)} lb saved (${phase}). Step off and let the scale return to zero to begin another check.`,'success');
+    if(myWeightCheckScaleIsZero())readyForAnotherMyWeightCheck();
+    loadPersonalWeightSnapshots();
+  }catch(error){
+    if(!current())return;
+    myWeightCheckSaving=false;$('beginMyWeightCheckBtn').disabled=false;$('beginMyWeightCheckBtn').textContent='Retry Save';
+    setMyWeightCheckState('Could not confirm the save. Tap Retry Save to safely retry this same weight check.','error');
+  }finally{clearTimeout(timer);}
 }
 
 function membershipRoleForAthlete(athleteId){
@@ -7526,7 +7567,7 @@ function handleTeamKioskWeightChange(){
 // team-kiosk weigh-ins are persisted.
 window.wrestlingManagerSetScaleWeight=function(weight){
   const n=Number(weight);
-  handleMyWeightCheckReading(n);
+  handleMyWeightCheckReading(weight);
   const input=$('liveWeightInput');
   if(!input)return;
   input.value=Number.isFinite(n)?n.toFixed(1):'';
@@ -7736,7 +7777,7 @@ $('sheetBackdrop').onclick=closeSheets; document.querySelectorAll('[data-close-s
 $('startMyWeightCheckBtn').onclick=openMyWeightCheck;
 $('beginMyWeightCheckBtn').onclick=beginMyWeightCheck;
 document.querySelectorAll('[data-self-weigh-phase]').forEach(btn=>btn.onclick=()=>{
-  if(myWeightCheckArmed||myWeightCheckSaving||myWeightCheckSaved)return;
+  if(myWeightCheckArmed||myWeightCheckSaving||myWeightCheckSaved||myWeightCheckRequest?.weight!==undefined)return;
   myWeightCheckPhase=btn.dataset.selfWeighPhase==='independent'?null:btn.dataset.selfWeighPhase;
   document.querySelectorAll('[data-self-weigh-phase]').forEach(item=>item.classList.toggle('active',item===btn));
 });
