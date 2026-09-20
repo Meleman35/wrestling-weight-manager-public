@@ -401,6 +401,11 @@ button{touch-action:manipulation}
 
 .ops-toolbar{display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin:12px 0}.ops-toolbar>label{flex:1;min-width:130px;margin:0}.ops-tabs{display:flex;gap:6px;overflow:auto;padding:8px 0 14px;white-space:nowrap}.ops-tabs button{width:auto;flex-shrink:0;padding:10px 14px}.ops-tabs .selected{background:var(--primary,#2460dd);color:white}.ops-card{border:1px solid var(--line,#d9e1ec);border-radius:16px;padding:16px;margin:10px 0;background:var(--surface,#fff);overflow-wrap:anywhere}.ops-card h3{margin:0 0 7px}.ops-card p{margin:6px 0;white-space:pre-wrap}.ops-meta{font-size:12px;color:var(--muted,#667085)}.ops-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.ops-actions button{width:auto;padding:10px 14px}.ops-badge{display:inline-block;font-size:12px;padding:4px 8px;background:#edf2f9;color:#263a59;border-radius:8px;margin:3px 4px 3px 0}.ops-badge.warn{background:#fff0cf;color:#7e5000}.ops-badge.ok{background:#dcf5e8;color:#126144}.ops-pre{white-space:pre-wrap;font:inherit;line-height:1.5}.ops-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.ops-grid>label{min-width:0}.ops-row-editor{border:1px solid #dbe2ec;border-radius:12px;padding:10px;margin:8px 0}.ops-row-editor input,.ops-row-editor select{min-width:0}.ops-status{padding:10px 0;font-size:14px}.ops-error{color:#a82c2c}.ops-amount{font-size:25px;font-weight:800}.ops-contract{max-height:45vh;overflow:auto;border:1px solid #dae0e8;padding:14px;border-radius:10px;white-space:pre-wrap}.ops-roster-person summary{cursor:pointer;font-weight:700}.ops-code{overflow-wrap:anywhere;user-select:all}.match-score-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.match-corner{border-radius:18px;padding:12px;color:white;min-width:0}.match-corner.red{background:#a62038}.match-corner.green{background:#11653f}.match-corner.blue{background:#1853a6}.match-corner h3{color:white;text-align:center;overflow-wrap:anywhere;margin:0 0 5px;font-size:16px}.match-score{font-size:64px;font-weight:800;text-align:center;line-height:1.2}.match-score-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}.match-score-actions button{padding:10px 4px;font-size:12px;min-height:48px;background:rgba(255,255,255,.96);color:#182235;border:0;border-radius:8px;white-space:normal}.match-clock{text-align:center;font-size:62px;line-height:1.1;font-variant-numeric:tabular-nums;font-weight:850;margin:8px 0}.match-period{text-align:center;font-size:14px}.match-clock-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.match-log{max-height:240px;overflow:auto}.match-log p{border-bottom:1px solid #e2e7ef;padding:8px 0;font-size:13px;margin:0}.match-running{color:#11653f}.match-end{color:#ac263b}.ops-check{display:flex;gap:10px;align-items:center}.ops-check input{width:auto}.ops-sheet-note{font-size:13px;color:var(--muted,#667085);line-height:1.45}.ops-calendar-empty{text-align:center;padding:20px}.ops-form textarea{min-height:95px}.ops-link{color:var(--primary,#2460dd);font-weight:650}.ops-table{width:100%;border-collapse:collapse;font-size:13px}.ops-table th,.ops-table td{text-align:left;padding:7px;border-bottom:1px solid #dbe1eb;vertical-align:top}.ops-sheet h2{overflow-wrap:anywhere}@media(max-width:430px){.ops-grid{grid-template-columns:1fr}.match-clock{font-size:54px}.match-score{font-size:54px}}
 
+/* Organization overview and the non-modal scale reminder. */
+.organization-home-entry{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#edf4fd;color:#173d67;border:1px solid #cbdbee;border-radius:16px;padding:14px;margin:0 0 14px}.organization-home-entry>span:nth-child(2){flex:1;min-width:0}.organization-home-entry b,.organization-home-entry small{display:block}.organization-home-entry small{font-size:12px;line-height:1.4;margin-top:4px;font-weight:400}.ops-overview-intro{padding:4px 0 16px}.ops-overview-intro h3{font-size:23px;line-height:1.2;margin:6px 0 8px}.ops-overview-intro p{font-size:13px;color:var(--muted);line-height:1.5;margin:4px 0}.ops-home-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.ops-home-tile{min-width:0;text-align:left;padding:16px 13px;background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:17px;min-height:150px}.ops-home-tile>span{display:block;font-size:25px;margin-bottom:12px}.ops-home-tile b{display:block;font-size:15px;line-height:1.3}.ops-home-tile small{display:block;margin-top:7px;line-height:1.45;font-size:12px;font-weight:400;color:var(--muted)}.ops-home-tile:focus-visible{outline:3px solid var(--accent2);outline-offset:2px}.ops-section-heading{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:20px}.ops-section-heading h3{margin:0}.ops-section-heading button{width:auto;padding:10px}.ops-upcoming{display:block;width:100%;background:#f4f7fb;color:var(--ink);text-align:left;border:1px solid var(--line);padding:14px;margin:8px 0}.ops-upcoming b,.ops-upcoming small{display:block}.ops-upcoming small{font-weight:400;color:var(--muted);font-size:12px;line-height:1.4;margin-top:5px}.scale-idle-reminder{position:fixed;z-index:1200;left:50%;bottom:calc(12px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(430px,calc(100% - 24px));background:#fff8e7;color:#543d0c;border:1px solid #dbc48e;box-shadow:0 8px 32px #0003;border-radius:18px;padding:16px}.scale-idle-reminder b{font-size:17px}.scale-idle-reminder p{font-size:14px;line-height:1.45;margin:8px 0 12px}.scale-idle-reminder button{width:100%;min-height:44px;font-size:13px;background:#543d0c;color:#fff}.scale-idle-reminder.hidden{display:none}
+
+#opsHubSheet>.sheet-head>div,#createTeamSheet>.sheet-head>div{min-width:0;flex:1}#opsHubSheet>.sheet-head .icon-close,#createTeamSheet>.sheet-head .icon-close{flex:0 0 40px;height:40px}
+
 </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>/* QRCode.js 1.0.0, MIT, David Shim — bundled for athlete cards. */
@@ -500,10 +505,12 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
     </div>
     <div class="card">
       <h2>Create Your First Team</h2>
-      <label>Organization</label>
-      <input id="orgName" value="Lyman High School">
+      <button id="setupExistingOrgTeamBtn" type="button" class="wide secondary">Choose an Existing Organization</button>
+      <p class="fine">Use an existing organization when you have administrator access. Otherwise, ask its administrator to add you, or create your own organization below.</p>
+      <label>New organization name</label>
+      <input id="orgName" placeholder="School, club or association name">
       <label>Team</label>
-      <input id="teamName" value="Lyman Girls Wrestling">
+      <input id="teamName" placeholder="Wrestling team name">
       <label>Team type</label>
       <select id="teamType">
         <option value="school">School</option>
@@ -545,6 +552,9 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
           <div><div class="eyebrow">YOUR TEAM</div><h2>Team Feed</h2><p>Updates, athletes and the next things that matter.</p></div>
           <span class="feed-live-chip"><span class="feed-live-dot"></span> LIVE</span>
         </div>
+        <button id="organizationHomeBtn" type="button" class="organization-home-entry">
+          <span aria-hidden="true">🏛️</span><span><b>Organization Hub</b><small>Organization calendar, divisions and wrestling teams</small></span><span aria-hidden="true">›</span>
+        </button>
         <div id="homeLayoutBlocks">
         <section id="importantAnnouncementsSection" class="important-announcements home-feed-block layout-block" data-layout-key="important">
           <div class="section-head"><div class="feed-author"><span class="feed-author-icon">📣</span><span><h3>Important Announcements</h3><small>Coaches & team leaders</small></span></div><button id="newAnnouncementBtn" class="link-btn coach-only">＋ Post</button></div>
@@ -1528,7 +1538,11 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
 
   <section id="createTeamSheet" class="sheet hidden" aria-modal="true">
     <div class="sheet-handle"></div>
-    <div class="sheet-head"><div><div class="eyebrow">NEW TEAM</div><h2>Create Wrestling Team</h2><p class="team-switch-hint">Creates a new team inside the current organization with its own active season.</p></div><button class="icon-close" data-close-sheet>×</button></div>
+    <div class="sheet-head"><div><div class="eyebrow">NEW TEAM</div><h2>Create Wrestling Team</h2><p class="team-switch-hint">Choose the organization this wrestling team belongs to. Each team has its own season and roster.</p></div><button class="icon-close" data-close-sheet>×</button></div>
+    <label for="newTeamOrganization">Organization</label>
+    <select id="newTeamOrganization" disabled><option value="">Loading organizations…</option></select>
+    <p class="fine">Choose an organization you administer, such as Wyoming Amateur Wrestling Association. For an independent club, use its own organization and request an affiliation through Organization Hub.</p>
+    <div id="newTeamOrganizationStatus" class="ops-status" role="status"></div>
     <label>Team name</label>
     <input id="newTeamName" type="text" placeholder="Lyman Boys Wrestling" autocomplete="off">
     <label>Team type</label>
@@ -1619,7 +1633,7 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
     <button id="weightPinSettingsBtn" class="wide secondary hidden" type="button">Weight Check PIN</button>
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.16.0</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.16.1</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -2701,6 +2715,7 @@ function openSheet(id){
 }
 function closeSheets(){
   if(document.body.classList.contains('kiosk-locked')) return;
+  ++newTeamSetupGeneration;
   window.WMOperations?.close();window.WMMatch?.close();
   ++teamLoginAdminVersion;show('teamLoginsSheet',false);$('teamLoginPassword').value='';$('teamLoginPasswordConfirm').value='';
   ++weightTrendRequestVersion;
@@ -3023,6 +3038,7 @@ async function refresh(){
     return;
   }
   managedLogin=loginContext.data||null;teamProfileReadyUserId=null;$('switchTeamProfileBtn').disabled=true;
+  show('organizationHomeBtn',!managedLogin);
   show('personalAccountProfileCard',!managedLogin);show('managedAccountNote',!!managedLogin);
   show('switchTeamProfileBtn',!!managedLogin?.shared_login_id);
   $('managedProfileLabel').textContent=managedLogin?`Using ${teamProfileLabel(managedLogin.kind)}`:'Team Login';
@@ -3218,7 +3234,7 @@ function renderTeamSwitcher(){
     closeSheets();
     await activateTeam(btn.dataset.switchTeam);
   });
-  const canCreate=!!activeTeam && organizationMemberships.some(x=>x.organization_id===activeTeam.organization_id && x.role==='organization_admin');
+  const canCreate=!managedLogin && organizationMemberships.some(x=>x.role==='organization_admin');
   show('createTeamBtn',canCreate);
 }
 
@@ -3457,10 +3473,17 @@ function defaultSeasonName(){
   return `${start}-${String(start+1).slice(-2)}`;
 }
 
-function openCreateTeam(){
-  if(!activeTeam){message('Open an organization team first.',true);return;}
-  const orgAdmin=organizationMemberships.some(x=>x.organization_id===activeTeam.organization_id && x.role==='organization_admin');
-  if(!orgAdmin){message('Organization admin access is required to create a team.',true);return;}
+let newTeamSetupGeneration=0, teamCreationOrganizations=[], teamCreationUserId=null, teamCreationSaving=false;
+async function openCreateTeam(wantedOrg=null){
+  if(!session?.user||managedLogin||document.body.classList.contains('kiosk-locked')){message('Use your personal organization administrator account to create a team.',true);return;}
+  if(teamCreationSaving){message('Your team is still being created. Please wait.',true);return;}
+  const preferred=typeof wantedOrg==='string'?wantedOrg:activeTeam?.organization_id;
+  closeSheets();
+  const ticket=++newTeamSetupGeneration, uid=session.user.id;
+  teamCreationOrganizations=[];teamCreationUserId=uid;
+  $('newTeamOrganization').innerHTML='<option value="">Loading organizations…</option>';
+  $('newTeamOrganization').disabled=true;$('saveNewTeamBtn').disabled=true;
+  $('newTeamOrganizationStatus').textContent='';
   $('newTeamName').value='';
   $('newTeamType').value='school';
   $('newTeamGender').value='girls';
@@ -3471,16 +3494,38 @@ function openCreateTeam(){
   $('newTeamSecondaryColor').value='#285E9E';$('newTeamSecondaryHex').value='#285E9E';
   $('newTeamAccentColor').value='#FFFFFF';$('newTeamAccentHex').value='#FFFFFF';
   updateNewTeamBrandPreview();
-  $('newTeamStarts').value='';
-  $('newTeamEnds').value='';
+  $('newTeamStarts').value='';$('newTeamEnds').value='';
   $('newTeamHomeWeighReminder').checked=false;
-  show('teamSwitcherSheet',false);
   openSheet('createTeamSheet');
-  setTimeout(()=>$('newTeamName')?.focus(),80);
+  try{
+    const memberships=await client.from('organization_memberships').select('organization_id,role').eq('user_id',uid).eq('role','organization_admin');
+    if(memberships.error)throw memberships.error;
+    const ids=[...new Set((memberships.data||[]).map(m=>m.organization_id))];
+    const result=ids.length?await client.from('organizations').select('id,name').in('id',ids).order('name'):{data:[]};
+    if(ticket!==newTeamSetupGeneration||session?.user?.id!==uid||managedLogin)return;
+    if(result.error)throw result.error;
+    teamCreationOrganizations=(result.data||[]).filter(o=>ids.includes(o.id));
+    $('newTeamOrganization').innerHTML=teamCreationOrganizations.map(o=>`<option value="${esc(o.id)}">${esc(o.name)}</option>`).join('')||'<option value="">No organizations available</option>';
+    if(teamCreationOrganizations.some(o=>o.id===preferred))$('newTeamOrganization').value=preferred;
+    $('newTeamOrganization').disabled=!teamCreationOrganizations.length;
+    $('saveNewTeamBtn').disabled=!teamCreationOrganizations.length;
+    if(!teamCreationOrganizations.length)$('newTeamOrganizationStatus').textContent='Ask the organization administrator to grant you team-creation access. Selecting an organization does not grant access.';
+  }catch(err){
+    if(ticket!==newTeamSetupGeneration||session?.user?.id!==uid)return;
+    $('newTeamOrganization').innerHTML='<option value="">Unable to load organizations</option>';
+    $('newTeamOrganizationStatus').textContent=(err.message||'Could not load organizations.')+' Close this form and try again.';
+  }
 }
 
 async function createTeam(){
-  if(!activeTeam){message('No current organization selected.',true);return;}
+  if(teamCreationSaving)return;
+  const uid=session?.user?.id, organizationId=$('newTeamOrganization').value;
+  if(!uid||uid!==teamCreationUserId||managedLogin||!teamCreationOrganizations.some(o=>o.id===organizationId)){
+    message('Choose an organization you administer. Reopen Create Team if your access changed.',true);return;
+  }
+  const selectedOrganization=teamCreationOrganizations.find(o=>o.id===organizationId);
+  const organizationTeam=availableTeams.find(t=>t.organization_id===organizationId);
+  const contextStillValid=()=>session?.user?.id===uid&&!managedLogin;
   const name=$('newTeamName').value.trim();
   if(!name){message('Enter a team name.',true);return;}
   const btn=$('saveNewTeamBtn');
@@ -3493,8 +3538,10 @@ async function createTeam(){
   if(!levels.length){message('Select at least one program level this team serves.',true);btn.disabled=false;btn.textContent='Create Team & Switch';return;}
   const newTeamType=$('newTeamType').value;
   const newTeamGender=$('newTeamGender').value;
+  teamCreationSaving=true;
+  try{
   const {data,error}=await client.rpc('create_team_in_organization_v4',{
-    p_organization_id:activeTeam.organization_id,
+    p_organization_id:organizationId,
     p_team_name:name,
     p_team_type:newTeamType,
     p_gender_scope:newTeamGender,
@@ -3506,9 +3553,9 @@ async function createTeam(){
     p_season_name:$('newTeamSeasonName').value.trim()||defaultSeasonName(),
     p_starts_on:starts,
     p_ends_on:ends,
-    p_timezone:activeTeam.timezone||'America/Denver'
+    p_timezone:organizationTeam?.timezone||'America/Denver'
   });
-  btn.disabled=false; btn.textContent='Create Team & Switch';
+  if(!contextStillValid())return;
   if(error){message(error.message,true);return;}
   const row=Array.isArray(data)?data[0]:data;
   const newTeamId=row?.team_id;
@@ -3517,15 +3564,21 @@ async function createTeam(){
     const {error:seasonError}=await client.rpc('update_team_season_settings',{p_season_id:newSeasonId,p_starts_on:starts,p_ends_on:ends,p_home_weigh_reminder_enabled:reminderOn});
     if(seasonError){message(`Team created, but season Home settings could not save: ${seasonError.message}`,true);}
   }
+  if(!contextStillValid())return;
   if(newTeamId&&newSeasonId){
     const presetResult=await client.rpc('apply_recommended_team_weight_classes',{p_team_id:newTeamId,p_season_id:newSeasonId});
     if(presetResult.error){message(`Team created, but weight classes could not be initialized: ${presetResult.error.message}`,true);}
     else if(presetResult.data?.reason==='state_rule_not_verified'){message(`Team created. ${stateName($('newTeamState').value)} does not have a verified ${$('newTeamSeasonName').value.trim()||defaultSeasonName()} preset loaded yet, so weight classes were left Custom rather than using another state's rules.`);}
   }
+  if(!contextStillValid())return;
   closeSheets();
   if(newTeamId) localStorage.setItem('wm_active_team_id',newTeamId);
   await refresh();
-  message(`${name} created.`);
+  if(!contextStillValid())return;
+  message(`${name} created in ${selectedOrganization.name}.`);
+  await window.WMOperations?.open(organizationId);
+  }catch(err){if(contextStillValid())message(err.message||'Could not create the team. Please try again.',true);}
+  finally{teamCreationSaving=false;btn.disabled=false;btn.textContent='Create Team & Switch';}
 }
 
 async function openEditTeam(){
@@ -3892,6 +3945,7 @@ function athleteScaleCommand(command){
 }
 window.wrestlingManagerScaleConnectionChanged=function(connected){
   athleteScaleConnected=connected===true;
+  window.WMScaleIdle?.connection(athleteScaleConnected);
   if(!athleteScaleConnected){
     latestKioskScaleWeight=null;kioskScaleBatteryPercent=null;
     if(teamKioskStableTimer){clearTimeout(teamKioskStableTimer);teamKioskStableTimer=null;}
@@ -4153,6 +4207,7 @@ function beginMyWeightCheck(){
   myWeightCheckRequest={id:crypto.randomUUID(),userId:session?.user?.id,athleteId:athlete.id,
     hostAthleteId:hostAthlete?.id,mode:myWeightCheckMode,token:teammateWeightGrant?.token,
     teamId:activeTeam.id,seasonId:activeSeason.id,phase:myWeightCheckPhase};
+  window.WMScaleIdle?.activity();
   myWeightCheckArmed=true;myWeightCheckCandidate=null;myWeightCheckZeroSeen=myWeightCheckScaleIsZero();
   $('beginMyWeightCheckBtn').disabled=true;$('beginMyWeightCheckBtn').textContent=myWeightCheckZeroSeen?'Waiting for stable weight…':'Waiting for scale to zero…';
   setMyWeightCheckState(myWeightCheckZeroSeen?'Ready. Step onto the scale and stand still.':'Step off and let the connected scale return to zero. Then step on for a new check.');
@@ -4184,6 +4239,7 @@ function handleMyWeightCheckReading(rawWeight){
   }
 }
 async function saveMyWeightCheck(candidate){
+  window.WMScaleIdle?.activity();
   if(!myWeightCheckActive||myWeightCheckSaved||myWeightCheckSaving||!myWeightCheckRequest)return;
   const request=myWeightCheckRequest,version=myWeightCheckVersion;
   if(session?.user?.id!==request.userId||activeTeam?.id!==request.teamId||activeSeason?.id!==request.seasonId||(request.mode==='test'?(!validTestWeightContext()||myWeightTestAthlete.id!==request.athleteId):signedInAthleteProfile()?.id!==(request.hostAthleteId||request.athleteId))){resetMyWeightCheck();return;}
@@ -8207,6 +8263,7 @@ function applyWeighInConsolePrivacy(){
 }
 
 async function openWeighInConsole(sessionId){
+  window.WMScaleIdle?.activity();
   if(!canWeighIn)return;
   const {data:sessions,error}=await client.from('official_weigh_in_sessions').select('*').eq('id',sessionId).limit(1);
   if(error||!sessions?.length){message(error?.message||'Weigh-in session not found.',true);return;}
@@ -8243,6 +8300,7 @@ function renderWeighInRosterResults(){
 }
 
 async function selectWeighInEntry(id,method='roster'){
+  window.WMScaleIdle?.activity();
   resetTeamKioskCycle();
   selectedWeighInEntry=weighInRoster.find(x=>x.id===id)||null; selectedIdentificationMethod=method; stableTeamWeighInId=null;stableReadingKey=null;show('stableWeightStatus',false);$('liveWeightInput').value='';
   await renderSelectedWeighInEntry();
@@ -8437,6 +8495,7 @@ function handleTeamKioskWeightChange(){
 // live reading here; the web kiosk handles the workflow and only completed
 // team-kiosk weigh-ins are persisted.
 window.wrestlingManagerSetScaleWeight=function(weight){
+  window.WMScaleIdle?.reading(weight);
   const n=Number(weight);
   latestKioskScaleWeight=Number.isFinite(n)?n:null;
   const wasPrivateCheck=myWeightCheckMode==='teammate'||myWeightCheckMode==='test';
@@ -8449,6 +8508,7 @@ window.wrestlingManagerSetScaleWeight=function(weight){
 };
 
 async function captureStableReading(){
+  window.WMScaleIdle?.activity();
   if(!activeWeighInSession)return;
   const weight=Number($('liveWeightInput').value); if(!(weight>0&&weight<1000)){message('Enter a valid scale weight.',true);return;}
   if(activeWeighInSession.mode!=='open_scale'&&!selectedWeighInEntry){message('Identify the athlete first.',true);return;}
@@ -8464,6 +8524,7 @@ async function captureStableReading(){
 }
 
 async function acceptOfficialWeight(){
+  window.WMScaleIdle?.activity();
   if(!activeWeighInSession)return;
   const weight=Number($('liveWeightInput').value); if(!(weight>0&&weight<1000)){message('Enter a valid weight.',true);return;}
   if(!selectedWeighInEntry){if(activeWeighInSession.mode==='open_scale'){message('Open Scale can display the weight without saving it. Select an athlete if you want an official record.',true);return;}message('Identify the athlete first.',true);return;}
@@ -8619,6 +8680,7 @@ document.addEventListener('visibilitychange',()=>{
 $('staffViewModeBtn').onclick=()=>setViewMode('staff'); $('parentViewModeBtn').onclick=()=>setViewMode('parent');
 $('acceptInviteBtn').onclick=acceptInvite;
 $('setupJoinBtn').onclick=()=>startJoinFlow($('setupJoinCode').value.trim());
+$('setupExistingOrgTeamBtn').onclick=()=>openCreateTeam();
 $('bootstrapTeamBtn').onclick=async()=>{
   const {error}=await client.rpc('bootstrap_wrestling_organization',{p_organization_name:$('orgName').value.trim(),p_team_name:$('teamName').value.trim(),p_team_type:$('teamType').value,p_gender_scope:$('genderScope').value,p_season_name:$('seasonName').value.trim()});
   if(error){message(error.message,true);return;} message('Organization and team created.'); await refresh();
@@ -9113,11 +9175,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -->
 <script>
-/* v0.16.0 organization operations. All authorization is enforced again by the RPC. */
+/* v0.16.1 organization operations. All authorization is enforced again by the RPC. */
 window.WMOperations=(()=>{
- let hub=null,org=null,division='',tab='event',generation=0,editor=null,feedbackId=null,dialogResolve=null;
+ let hub=null,org=null,division='',tab='home',generation=0,editor=null,feedbackId=null,dialogResolve=null;
  const $o=id=>document.getElementById(id),e=v=>esc(String(v??'')),list=v=>Array.isArray(v)?v:[];
- const labels={event:'Calendar',person:'People & credentials',assignment:'Officials',requirement:'Annual requirements',squad:'Dual rosters',budget:'Budgets',contract:'Contracts',settings:'Divisions & access'};
+ const labels={home:'Overview',event:'Calendar',teams:'Wrestling teams',person:'People & credentials',assignment:'Officials',requirement:'Annual requirements',squad:'Dual rosters',budget:'Budgets',contract:'Contracts',settings:'Divisions & access'};
  const roles={president:'President',director:'Overall director',board:'Board member',division_director:'Division director',pairing_director:'Pairing director',mat_director:'Mat officials director',coach:'Coach',chaperone:'Chaperone',team_leader:'Team leader',official:'Official',pairing_official:'Pairing official',mat_official:'Mat official',all:'Everyone'};
  const year=()=>{const d=new Date(),y=d.getFullYear()-(d.getMonth()<7?1:0);return y+'–'+String(y+1).slice(-2)};
  const note=(id,msg,bad=false)=>{$o(id).textContent=msg;$o(id).classList.toggle('ops-error',bad)};
@@ -9141,20 +9203,23 @@ window.WMOperations=(()=>{
  async function open(wantedOrg=null,wantedRecord=null){
   if(document.body.classList.contains('kiosk-locked'))return;
   if(managedLogin){message('Use your personal account for organization tools.',true);return;}
-  closeSheets();openSheet('opsHubSheet');note('opsStatus','Loading organization…');$o('opsContent').innerHTML='';
+  closeSheets();tab='home';$o('opsHubTitle').textContent='Organization Hub';$o('opsTabs').innerHTML='';openSheet('opsHubSheet');note('opsStatus','Loading organization…');$o('opsContent').innerHTML='';
   const ticket=++generation;
   try{const organizations=await rpc(false,{action:'context'});if(ticket!==generation)return;
    $o('opsOrg').innerHTML=opts(organizations.map(o=>[o.id,o.name]),wantedOrg||org);
    if(!organizations.length){hub=null;org=null;$o('opsTabs').innerHTML='';$o('opsContent').innerHTML='<div class="empty-card">Your organization will appear here when you join a team or receive a leadership role.</div><div class="ops-card"><h3>Your account code</h3><p>Give this code to your organization administrator so they can assign your role.</p><p class="ops-code">'+e(session?.user?.id)+'</p></div>';note('opsStatus','');return;}
    org=organizations.some(o=>o.id===(wantedOrg||org))?(wantedOrg||org):organizations[0].id;$o('opsOrg').value=org;
-   await reload();if(wantedRecord){const r=hub.records.find(r=>r.id===wantedRecord);if(r){tab=r.kind;render();view(r);}}
+   await reload();if(wantedRecord&&hub){const r=hub.records.find(r=>r.id===wantedRecord);if(r){tab=r.kind;render();view(r);}}
   }catch(err){note('opsStatus',err.message,true);}
  }
  async function reload(){const ticket=++generation;const data=await rpc(false,{action:'hub',organization_id:org});if(ticket!==generation)return;hub=data;
   if(!hub.divisions.some(d=>d.id===division))division='';if(!division&&!hub.capabilities?.find(c=>c.division_id===null&&(c.event||c.records)))division=hub.capabilities?.find(c=>c.division_id&&(c.event||c.records))?.division_id||'';$o('opsDivision').innerHTML=opts([['','All divisions'],...hub.divisions.map(d=>[d.id,d.name])],division);note('opsStatus','');render();}
  function render(){if(!hub)return;
+  $o('opsHubTitle').textContent=hub.organizations?.find(o=>o.id===org)?.name||'Organization Hub';
   $o('opsTabs').innerHTML=Object.entries(labels).map(([key,label])=>`<button class="secondary ${tab===key?'selected':''}" data-ops-tab="${key}">${e(label)}</button>`).join('');
   $o('opsTabs').querySelectorAll('[data-ops-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.opsTab;render()});
+  if(tab==='home'){home();return;}
+  if(tab==='teams'){teams();return;}
   if(tab==='settings'){settings();return;}
   const rows=hub.records.filter(r=>r.kind===tab&&inDivision(r.division_id));if(tab==='event')rows.push(...list(hub.team_events).filter(r=>inDivision(r.division_id)));
   if(tab==='event')rows.sort((a,b)=>String(a.data.starts_at).localeCompare(String(b.data.starts_at)));
@@ -9162,12 +9227,45 @@ window.WMOperations=(()=>{
    ${tab==='person'?'<p class="ops-sheet-note">Credentials are manually recorded. “Verified” means an organization leader reviewed them; this app does not query USA Wrestling or SafeSport.</p>':''}
    ${tab==='assignment'?'<p class="ops-sheet-note">Only distinct tournaments marked Verified count toward the configured season requirement. An assignment alone does not count.</p>':''}
    ${tab==='contract'&&!hub.president?'<p class="ops-sheet-note">The organization President publishes contracts. Use your personal account to sign for your assigned role.</p>':''}
-   ${tab==='squad'?`<div class="ops-card"><h3>Tournament roster & parent contacts</h3>${select('opsRosterTeam','Team',[['','Choose team'],...hub.teams.filter(t=>t.can_roster&&(!division||t.division_id===division)).map(t=>[t.id,t.name])])}<button id="opsLoadRoster" class="wide secondary">View tournament roster</button><div id="opsRosterContacts"></div></div>`:''}
+   ${tab==='squad'?`<div class="ops-card"><h3>Tournament roster & parent contacts</h3>${select('opsRosterTeam','Team',[['','Choose team'],...hub.teams.filter(t=>t.can_roster&&inDivision(t.division_id)).map(t=>[t.id,t.name])])}<button id="opsLoadRoster" class="wide secondary">View tournament roster</button><div id="opsRosterContacts"></div></div>`:''}
    ${rows.map(card).join('')||'<div class="empty-card">Nothing here yet for this division.</div>'}`;
   $o('opsAdd')?.addEventListener('click',()=>edit(tab));
   $o('opsContent').querySelectorAll('[data-ops-view]').forEach(b=>b.onclick=()=>view([...hub.records,...list(hub.team_events)].find(r=>r.id===b.dataset.opsView)));
   $o('opsContent').querySelectorAll('[data-ops-edit]').forEach(b=>b.onclick=()=>edit(tab,hub.records.find(r=>r.id===b.dataset.opsEdit)));
   $o('opsLoadRoster')?.addEventListener('click',async()=>{const t=value('opsRosterTeam');if(!t)return;const panel=$o('opsRosterContacts');panel.textContent='Loading…';try{const data=await rpc(false,{action:'roster',organization_id:org,division_id:division||null,team_id:t});if(!panel.isConnected)return;panel.innerHTML=data.map(a=>`<details class="ops-card ops-roster-person"><summary>${e(a.first_name+' '+a.last_name)} · ${e(a.lineup||a.target||'No class')}</summary><p>${e(a.season)} · ${e(a.status)}</p><p>Birth date: ${e(a.birth_date||'Not recorded')} · Graduation: ${e(a.graduation_year||'Not recorded')}</p>${Object.entries(a.details||{}).filter(([k,v])=>k!=='athlete_id'&&v).map(([k,v])=>`<p>${e(k.replaceAll('_',' '))}: ${e(v)}</p>`).join('')}<b>Parent / guardian contact</b>${list(a.guardians).map(g=>`<p>${e(g.name)} · ${e(g.relationship)}<br>${e(g.phone||'No phone recorded')}</p>`).join('')||'<p>No parent contact recorded.</p>'}</details>`).join('')||'<p>No active roster found.</p>';}catch(err){panel.textContent=err.message;}});
+ }
+ const canCreateTeam=()=>!managedLogin&&organizationMemberships.some(m=>m.organization_id===org&&m.role==='organization_admin');
+ const visibleTeams=()=>list(hub.teams).filter(t=>(!t.external||t.approved||hub.admin)&&inDivision(t.division_id));
+ function home(){
+  const tiles=[
+   ['event','📅','Calendar','Board meetings, tournaments and shared dates'],
+   ['teams','🤼','Wrestling teams','Open teams and organize your programs'],
+   ['person','🪪','People & credentials','Staff, certifications and missing requirements'],
+   ['assignment','🏅','Officials','Ranks, assignments and tournament counts'],
+   ['requirement','✓','Annual requirements','Credentials and required tournament counts'],
+   ['squad','📋','Dual rosters','Red and Blue teams and tournament rosters'],
+   ['budget','💵','Budgets','Proposals shared with affiliated clubs'],
+   ['contract','✍️','Contracts','Published agreements and signatures'],
+   ['settings','⚙️','Divisions & access','Leadership, divisions and club affiliations']
+  ];
+  const upcoming=[...hub.records.filter(r=>r.kind==='event'),...list(hub.team_events)]
+    .filter(r=>inDivision(r.division_id)&&r.data.status!=='cancelled'&&new Date(r.data.ends_at||r.data.starts_at).getTime()>=Date.now())
+    .sort((a,b)=>String(a.data.starts_at).localeCompare(String(b.data.starts_at))).slice(0,3);
+  $o('opsContent').innerHTML=`<div class="ops-overview-intro"><p>${e(division?divName(division):'All divisions')} · Organization Hub</p><h3>Everything your organization coordinates</h3><p>Choose a tile to open its tools. Your assigned role controls what you can see and manage.</p></div>
+   <div class="ops-home-grid">${tiles.map(([key,icon,title,description])=>`<button class="ops-home-tile" type="button" data-ops-home="${key}"><span aria-hidden="true">${icon}</span><b>${e(title)}</b><small>${e(description)}</small></button>`).join('')}</div>
+   <div class="ops-section-heading"><h3>Coming up</h3><button class="secondary" type="button" data-ops-home="event">View calendar</button></div>
+   ${upcoming.map(r=>`<button class="ops-upcoming" type="button" data-ops-upcoming="${e(r.id)}"><b>${e(r.title)}</b><small>${e(fmtDateTime(r.data.starts_at))} · ${e(r.data.status||'')}</small></button>`).join('')||'<p class="ops-sheet-note">No upcoming events in this view. Open Calendar to view or add dates.</p>'}`;
+  $o('opsContent').querySelectorAll('[data-ops-home]').forEach(b=>b.onclick=()=>{tab=b.dataset.opsHome;render();$o('opsHubSheet').scrollTop=0;});
+  $o('opsContent').querySelectorAll('[data-ops-upcoming]').forEach(b=>b.onclick=()=>view([...hub.records,...list(hub.team_events)].find(r=>r.id===b.dataset.opsUpcoming)));
+ }
+ function teams(){
+  const rows=visibleTeams();
+  $o('opsContent').innerHTML=`${canCreateTeam()?'<button id="opsCreateTeam" class="wide" type="button">＋ Create wrestling team</button>':''}<p class="ops-sheet-note">Teams have their own rosters and seasons. Affiliated clubs keep their own administrators.</p>
+   ${rows.map(t=>`<article class="ops-card"><h3>${e(t.name)}</h3><p>${e(divName(t.division_id))}</p>${badge(t.external?(t.approved?'Affiliated club':'Affiliation pending'):'Organization team')}
+    <div class="ops-actions">${availableTeams.some(a=>a.id===t.id)?`<button type="button" data-ops-open-team="${e(t.id)}">Open Wrestling Manager</button>`:''}${t.can_roster?`<button class="secondary" type="button" data-ops-team-roster="${e(t.id)}">Tournament roster</button>`:''}</div></article>`).join('')||'<div class="empty-card">No teams in this division yet.</div>'}`;
+  $o('opsCreateTeam')?.addEventListener('click',()=>openCreateTeam(org));
+  $o('opsContent').querySelectorAll('[data-ops-open-team]').forEach(b=>b.onclick=async()=>{const id=b.dataset.opsOpenTeam;if(!availableTeams.some(t=>t.id===id))return;closeSheets();if(activeTeam?.id!==id)await activateTeam(id);else setTab('home');});
+  $o('opsContent').querySelectorAll('[data-ops-team-roster]').forEach(b=>b.onclick=()=>{const id=b.dataset.opsTeamRoster;tab='squad';render();if([...$o('opsRosterTeam').options].some(o=>o.value===id)){$o('opsRosterTeam').value=id;$o('opsLoadRoster').click();}});
  }
  function credentialStatus(p){
   const y=p.data.year||year(),reqs=hub.records.filter(r=>r.kind==='requirement'&&r.data.year===y&&(r.division_id===null||r.division_id===p.division_id)&&(r.data.role==='all'||r.data.role===p.data.role||r.data.role==='official'&&p.data.role.includes('official')));
@@ -9276,10 +9374,10 @@ window.WMOperations=(()=>{
  async function calendar(team){try{return await rpc(false,{action:'calendar',team_id:team});}catch(err){console.warn('Organization calendar unavailable:',err.message);return [];}}
  async function feedback(){if(document.body.classList.contains('kiosk-locked'))return;closeSheets();feedbackId=crypto.randomUUID();note('feedbackStatus','');openSheet('feedbackSheet');await feedbackHistory();}
  async function feedbackHistory(){const target=$o('feedbackHistory');target.textContent='Loading…';try{const rows=await rpc(false,{action:'feedback',team_id:activeTeam?.id||null});target.innerHTML=list(rows).map(r=>`<article class="ops-card"><b>${e(r.category)}</b> ${badge(r.status)}<p>${e(r.body)}</p><small>${e(fmtDateTime(r.created_at))} · ${e(r.build)}</small>${r.response?'<p>Response: '+e(r.response)+'</p>':''}${actualIsTeamAdmin&&!managedLogin&&r.team_id===activeTeam?.id?`<div class="ops-actions"><button class="secondary" data-feedback-review="${r.id}">Review</button></div>`:''}</article>`).join('')||'<p>No feedback yet.</p>';target.querySelectorAll('[data-feedback-review]').forEach(b=>b.onclick=async()=>{const row=rows.find(r=>r.id===b.dataset.feedbackReview),result=await dialog({title:'Review feedback',fields:[{id:'status',label:'Status',options:['new','reviewing','planned','resolved'].map(s=>[s,s]),value:row.status},{id:'response',label:'Response',type:'textarea',value:row.response||''}],submit:'Save review'});if(!result)return;const {status,response}=result;try{await rpc(true,{action:'feedback_status',id:row.id,status,response});await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}});}catch(err){target.textContent=err.message;}}
- async function sendFeedback(ev){ev.preventDefault();if(!session?.user)return;$o('feedbackSend').disabled=true;try{await rpc(true,{action:'feedback',id:feedbackId||crypto.randomUUID(),team_id:activeTeam?.id||null,category:value('feedbackCategory'),body:value('feedbackBody'),build:'v0.16.0'});$o('feedbackBody').value='';feedbackId=crypto.randomUUID();note('feedbackStatus','Thanks—your feedback was saved.');await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}finally{$o('feedbackSend').disabled=false}}
+ async function sendFeedback(ev){ev.preventDefault();if(!session?.user)return;$o('feedbackSend').disabled=true;try{await rpc(true,{action:'feedback',id:feedbackId||crypto.randomUUID(),team_id:activeTeam?.id||null,category:value('feedbackCategory'),body:value('feedbackBody'),build:'v0.16.1'});$o('feedbackBody').value='';feedbackId=crypto.randomUUID();note('feedbackStatus','Thanks—your feedback was saved.');await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}finally{$o('feedbackSend').disabled=false}}
  function close(){finishDialog(null);generation++;editor=null;$o('opsRosterContacts')?.replaceChildren();$o('opsFields').replaceChildren();hub=null;['opsHubSheet','opsEditorSheet','feedbackSheet'].forEach(id=>show(id,false));}
  $o('opsDialogCancel').onclick=()=>finishDialog(null);
- $o('opsOrg').onchange=async()=>{org=value('opsOrg');division='';try{await reload()}catch(err){note('opsStatus',err.message,true)}};
+ $o('opsOrg').onchange=async()=>{org=value('opsOrg');division='';tab='home';hub=null;$o('opsContent').replaceChildren();$o('opsTabs').replaceChildren();$o('opsHubTitle').textContent='Organization Hub';note('opsStatus','Loading organization…');try{await reload()}catch(err){note('opsStatus',err.message,true)}};
  $o('opsDivision').onchange=()=>{division=value('opsDivision');render()};$o('opsEditorBack').onclick=()=>{editor=null;show('opsEditorSheet',false);openSheet('opsHubSheet')};$o('opsForm').onsubmit=saveEditor;
  $o('feedbackForm').onsubmit=sendFeedback;$o('organizationHubBtn').onclick=()=>open();$o('feedbackBtn').onclick=feedback;
  return {open,calendar,close,feedback,rpc,download,year,dialog,confirmAction};
@@ -9347,6 +9445,56 @@ window.WMMatch=(()=>{
 })();
 
 document.getElementById('setupOrgHubBtn').onclick=()=>WMOperations.open();document.getElementById('setupFeedbackBtn').onclick=()=>WMOperations.feedback();
+</script>
+<aside id="scaleIdleReminder" class="scale-idle-reminder hidden" role="status" aria-live="polite" aria-atomic="true">
+  <b>Finished with the scale?</b>
+  <p>No scale activity for 10 minutes. Turn off the scale using its power button when you’re done.</p>
+  <button id="scaleIdleSnooze" type="button">Still using it · remind me in 10 minutes</button>
+</aside>
+<script>
+/* Remind the operator; never power off, release, or interrupt a scale check. */
+window.WMScaleIdle = (() => {
+  const idleMs = 10 * 60 * 1000;
+  let connected = false, lastActivity = 0;
+  const banner = () => document.getElementById('scaleIdleReminder');
+  function hide() { banner()?.classList.add('hidden'); }
+  function activity() {
+    if (!connected) return;
+    lastActivity = Date.now();
+    hide();
+  }
+  function connection(value) {
+    const next = value === true;
+    if (next === connected) return; // Battery/status heartbeats are not use.
+    connected = next;
+    if (connected) activity();
+    else { lastActivity = 0; hide(); }
+  }
+  function reading(raw) {
+    if (raw === null || raw === undefined || raw === '') return;
+    const weight = Number(raw);
+    // An occupied platform counts as use. Repeated zero/noise does not.
+    if (Number.isFinite(weight) && weight > 1) activity();
+  }
+  function check() {
+    if (!connected) { hide(); return; }
+    if (document.hidden) return;
+    if (myWeightCheckSaving || teamKioskSaving || weighCredentialResolving) {
+      activity();
+      return;
+    }
+    if (Date.now() - lastActivity >= idleMs) banner()?.classList.remove('hidden');
+  }
+  document.getElementById('scaleIdleSnooze').onclick = activity;
+  document.addEventListener('visibilitychange', check);
+  window.addEventListener('pageshow', check);
+  window.addEventListener('focus', check);
+  setInterval(check, 15000);
+  connection(athleteScaleConnected);
+  return { connection, reading, activity, check };
+})();
+
+document.getElementById('organizationHomeBtn').onclick=()=>WMOperations.open(activeTeam?.organization_id);
 </script>
 </body>
 </html>
