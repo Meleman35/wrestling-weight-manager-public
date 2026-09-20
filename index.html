@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.15.28: scanner lifecycle, safe kiosk rescans, and scale battery. -->
+<!-- Wrestling Manager v0.15.29: coach/admin test-athlete claims; includes v0.15.28 scanner and kiosk fixes. -->
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -627,6 +627,7 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
           <button type="button" class="metric metric-btn" data-weight-metric="challenges"><span>Challenges</span><strong id="challenges2">0</strong></button>
         </div>
         <section id="coachWeightRoomSection" class="feature-card hidden"><h3>Weight Room Snapshot</h3><p class="fine">Choose an athlete to see their latest weight and open their trend.</p><div id="roomCoachWeightSnapshot" class="coach-weight-snapshot"></div></section>
+        <button id="weightTestsRoomBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
         <button id="athleteCardsRoomBtn" type="button" class="wide secondary">Athlete Cards · QR / Barcode / NFC</button>
         <section id="personalWeightRoomSection" class="feature-card hidden"><div class="section-head" style="margin-top:0"><div><div class="eyebrow">PRIVATE ATHLETE WEIGHTS</div><h3 id="personalWeightRoomTitle">My Weight</h3></div><button id="startMyWeightCheckBtn" type="button" class="primary-small hidden">＋ Check Weight</button></div><div id="athleteTeammateWeightActions" class="hidden"><button id="startTeammateWeightCheckBtn" type="button" class="wide secondary">Teammate Weight Check</button></div><button id="weightPinRoomBtn" type="button" class="wide secondary">Weight Check PIN</button><div id="weightRoomPersonalWeightList" class="personal-weight-list"></div><p class="personal-weight-private">Only the athlete, their connected parent or guardian, and authorized team staff can view these weights.</p></section>
         <div id="weighInModeArea">
@@ -1538,8 +1539,17 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
     <button id="customizeLayoutBtn" class="wide secondary" type="button">↕ Customize App Layout</button>
     <button id="securityBtn" class="wide secondary" type="button">🔒 Sign-In & App Security</button>
     <button id="weightPinSettingsBtn" class="wide secondary hidden" type="button">Weight Check PIN</button>
+    <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.15.28</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.15.29</p>
+  </section>
+
+  <section id="weightTestAthleteSheet" class="sheet hidden" aria-modal="true">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><div><div class="eyebrow">COACH / ADMIN</div><h2>Test Athlete</h2></div><button class="icon-close" data-close-sheet>×</button></div>
+    <p>Claim the test profile to run weight checks from your coach or admin account. Each coach can claim their own access.</p>
+    <p class="fine">Weights save to the test athlete’s history. Your coach role and connected family profiles stay the same.</p>
+    <div id="weightTestAthleteList"></div>
   </section>
 
   <section id="layoutEditorSheet" class="sheet hidden" aria-modal="true">
@@ -1845,6 +1855,7 @@ let myWeightCheckStableTimer = null;
 let myWeightCheckLatestWeight = null;
 let myWeightCheckVersion=0,myWeightCheckZeroSeen=false,myWeightCheckRequest=null;
 let myWeightCheckMode='self',teammateWeightGrant=null,teammateWeightAthlete=null;
+let myWeightTestAthlete=null,weightTestAthletes=[],weightTestContext=null,weightTestVersion=0,weightTestBusy=false;
 let teammateWeightRoster=[],teammatePickerVersion=0,teammatePinVerifying=false;
 let weightPinAthletes=[],weightPinEditorVersion=0,weightPinSaving=false;
 let athleteScaleConnected=false,teammateGrantTimer=null;
@@ -2577,12 +2588,13 @@ function openSheet(id){
 function closeSheets(){
   if(document.body.classList.contains('kiosk-locked')) return;
   ++weightTrendRequestVersion;
+  ++weightTestVersion;weightTestAthletes=[];weightTestContext=null;weightTestBusy=false;
   if(myWeightCheckActive)resetMyWeightCheck();
   resetTeammateWeightPicker();resetWeightPinEditor();resetAthleteCard();
   document.activeElement?.blur?.();
   stopCommunicationReceiptLiveRefresh();
   clearPendingCommunicationMedia();
-  ['athleteCardSheet','missingWeightChecksSheet','weightPinSheet','teammateWeightCheckSheet','eventSheet','eventDetailSheet','attendanceSheet','announcementSheet','communicationThreadSheet','conversationActionsSheet','communicationMuteSheet','newCommunicationSheet','guardianSafetyTestSheet','athleteChatPermissionsSheet','scheduleMessageSheet','communicationPreferencesSheet','communicationNotificationsSheet','massTextSheet','textRepliesSheet','communicationSafetySheet','rosterSheet','athleteTeamsSheet','addAthleteSheet','joinSheet','joinRequestSheet','coachJoinRequestsSheet','athleteViewSheet','athleteProfileSheet','weightTrendSheet','photoCropSheet','communicationSheet','staffProfileSheet','staffDirectorySheet','familySheet','agreementsSheet','agreementEditorSheet','agreementPreviewSheet','calendarSubscriptionSheet','medicalClearanceSheet','medicalCaseSheet','excuseSheet','athleteAccessSheet','staffAccessSheet','weighedTodaySheet','weighInStartSheet','weighInConsoleSheet','myWeightCheckSheet','importRosterSheet','teamSwitcherSheet','createTeamSheet','editTeamSheet','lineupClassSheet','accountSheet','layoutEditorSheet','forgotPasswordSheet','resetPasswordSheet','securitySheet'].forEach(id=>show(id,false));
+  ['weightTestAthleteSheet','athleteCardSheet','missingWeightChecksSheet','weightPinSheet','teammateWeightCheckSheet','eventSheet','eventDetailSheet','attendanceSheet','announcementSheet','communicationThreadSheet','conversationActionsSheet','communicationMuteSheet','newCommunicationSheet','guardianSafetyTestSheet','athleteChatPermissionsSheet','scheduleMessageSheet','communicationPreferencesSheet','communicationNotificationsSheet','massTextSheet','textRepliesSheet','communicationSafetySheet','rosterSheet','athleteTeamsSheet','addAthleteSheet','joinSheet','joinRequestSheet','coachJoinRequestsSheet','athleteViewSheet','athleteProfileSheet','weightTrendSheet','photoCropSheet','communicationSheet','staffProfileSheet','staffDirectorySheet','familySheet','agreementsSheet','agreementEditorSheet','agreementPreviewSheet','calendarSubscriptionSheet','medicalClearanceSheet','medicalCaseSheet','excuseSheet','athleteAccessSheet','staffAccessSheet','weighedTodaySheet','weighInStartSheet','weighInConsoleSheet','myWeightCheckSheet','importRosterSheet','teamSwitcherSheet','createTeamSheet','editTeamSheet','lineupClassSheet','accountSheet','layoutEditorSheet','forgotPasswordSheet','resetPasswordSheet','securitySheet'].forEach(id=>show(id,false));
   show('sheetBackdrop', false); $('sheetBackdrop').style.pointerEvents='none'; document.body.style.overflow='';
 }
 function recoverInteractionLayer(){
@@ -3225,6 +3237,8 @@ async function activateTeam(teamId,{persist=true}={}){
   const team=availableTeams.find(t=>t.id===teamId);
   if(!team){message('That team is not available to this account.',true);return;}
   if(myWeightCheckActive)resetMyWeightCheck();
+  ++weightTestVersion;weightTestAthletes=[];weightTestContext=null;weightTestBusy=false;
+  show('weightTestAthleteSheet',false);
   resetTeammateWeightPicker();resetWeightPinEditor();resetAthleteCard();
   weightCardPhotoCache.clear();
   activeTeam=team;
@@ -3352,6 +3366,8 @@ async function renderFamilyAthletes(){
 
 function applyRoleUI(){
   show('newEventBtn', isStaff);
+  show('weightTestsRoomBtn',actualIsStaff&&viewMode!=='parent');
+  show('weightTestsSettingsBtn',actualIsStaff&&viewMode!=='parent');
   show('rosterBtn', isStaff);
   show('joinBtn', isStaff);
   show('joinRequestsBtn', isStaff);
@@ -3510,7 +3526,7 @@ function renderWeightPinStatus(){
   $('weightPinStatus').textContent=athlete?(athlete.has_pin?'A PIN is set. Save a new one here if it was forgotten.':'No PIN set yet. Choose four digits you can remember.'):'No athlete PIN is available to manage with this account on this team.';
   $('saveWeightPinBtn').disabled=!athlete||weightPinSaving;
 }
-async function openWeightPinSettings(){
+async function openWeightPinSettings(preferredAthleteId=null){
   if(!activeTeam||!session?.user)return;
   closeSheets();const version=weightPinEditorVersion,userId=session.user.id,teamId=activeTeam.id;
   $('weightPinAthleteSelect').innerHTML='<option value="">Loading…</option>';
@@ -3522,6 +3538,7 @@ async function openWeightPinSettings(){
   if(result.error){$('weightPinStatus').textContent='PIN settings could not load. Close this screen and try again.';return;}
   weightPinAthletes=Array.isArray(result.data)?result.data:[];
   $('weightPinAthleteSelect').innerHTML=weightPinAthletes.map(row=>`<option value="${esc(row.athlete_id)}">${esc(row.first_name)} ${esc(row.last_name)}</option>`).join('');
+  if(typeof preferredAthleteId==='string'&&weightPinAthletes.some(row=>row.athlete_id===preferredAthleteId))$('weightPinAthleteSelect').value=preferredAthleteId;
   $('weightPinAthleteSelect').disabled=weightPinAthletes.length<2;
   $('saveWeightPinBtn').textContent='Save PIN';renderWeightPinStatus();
 }
@@ -3591,6 +3608,74 @@ function openAuthorizedTeammateWeightCheck(athlete,grant){
   },Math.max(0,new Date(grant.expires_at).getTime()-Date.now()));
 }
 
+function validTestWeightContext(){
+  return !!(myWeightTestAthlete&&actualIsStaff&&myWeightTestAthlete.userId===session?.user?.id
+    &&myWeightTestAthlete.teamId===activeTeam?.id&&myWeightTestAthlete.seasonId===activeSeason?.id);
+}
+async function openWeightTestAthletes(){
+  if(!actualIsStaff||!activeTeam||!activeSeason)return;
+  closeSheets();const version=weightTestVersion;
+  const context={userId:session?.user?.id,teamId:activeTeam.id,seasonId:activeSeason.id};
+  weightTestContext=context;
+  $('weightTestAthleteList').innerHTML='<div class="empty-card">Loading test athletes…</div>';
+  openSheet('weightTestAthleteSheet');
+  const outcome=await settleWithin(client.rpc('get_weight_test_athletes',{p_team_id:context.teamId,p_season_id:context.seasonId}),12000,'Test athletes');
+  if(version!==weightTestVersion||!currentWeightTestContext(context))return;
+  const result=outcome.ok?outcome.value:{error:outcome.error};
+  if(result.error){$('weightTestAthleteList').innerHTML=`<div class="empty-card">${esc(result.error.message||'Could not load test athletes. Close and try again.')}</div>`;return;}
+  weightTestAthletes=Array.isArray(result.data)?result.data:[];renderWeightTestAthletes();
+}
+function currentWeightTestContext(context){
+  return !!(context&&actualIsStaff&&context===weightTestContext&&context.userId===session?.user?.id
+    &&context.teamId===activeTeam?.id&&context.seasonId===activeSeason?.id);
+}
+function renderWeightTestAthletes(){
+  const box=$('weightTestAthleteList');
+  box.innerHTML=weightTestAthletes.length?weightTestAthletes.map(a=>`<div class="feature-card">
+    <h3>${esc(a.first_name)} ${esc(a.last_name)}</h3><p class="fine">${a.claimed?'Claimed by you for weight testing.':'Available to claim for weight testing.'}</p>
+    ${a.claimed?`<button type="button" class="wide" data-test-weight="${esc(a.athlete_id)}">Run Weight Test</button>
+      <button type="button" class="wide secondary" data-test-pin="${esc(a.athlete_id)}">Set Test Athlete PIN</button>
+      <button type="button" class="wide secondary" data-test-card="${esc(a.athlete_id)}">QR / Barcode / NFC Card</button>
+      <button type="button" class="wide secondary" data-test-history="${esc(a.athlete_id)}">View Test Weights</button>
+      <button type="button" class="wide secondary" data-test-release="${esc(a.athlete_id)}">Release My Test Access</button>`:
+      `<button type="button" class="wide" data-test-claim="${esc(a.athlete_id)}">Claim Test Athlete</button>`}
+    </div>`).join(''):'<div class="empty-card">No designated test athlete is active on this team’s current season.</div>';
+  for(const [attribute,handler] of [
+    ['testClaim',id=>setWeightTestClaim(id,true)],['testRelease',id=>setWeightTestClaim(id,false)],
+    ['testWeight',id=>openTestWeightCheck(id)],['testPin',id=>openWeightPinSettings(id)],
+    ['testCard',id=>openAthleteCards(id)],['testHistory',id=>openWeightTrend(id)]]){
+    const selector='data-'+attribute.replace(/[A-Z]/g,c=>'-'+c.toLowerCase());
+    box.querySelectorAll('['+selector+']').forEach(button=>button.onclick=()=>{
+      if(currentWeightTestContext(weightTestContext)&&!weightTestBusy)handler(button.dataset[attribute]);
+    });
+  }
+}
+async function setWeightTestClaim(athleteId,claim){
+  const context=weightTestContext,version=weightTestVersion;
+  if(weightTestBusy||!currentWeightTestContext(context)||!weightTestAthletes.some(a=>a.athlete_id===athleteId))return;
+  weightTestBusy=true;$('weightTestAthleteList').querySelectorAll('button').forEach(b=>b.disabled=true);
+  const outcome=await settleWithin(client.rpc('set_weight_test_claim',{p_team_id:context.teamId,p_season_id:context.seasonId,p_athlete_id:athleteId,p_claim:claim}),12000,'Test athlete access');
+  if(version!==weightTestVersion||!currentWeightTestContext(context))return;
+  weightTestBusy=false;const result=outcome.ok?outcome.value:{error:outcome.error};
+  if(result.error){renderWeightTestAthletes();message(result.error.message||'Could not update test access. Try again.',true);return;}
+  weightTestAthletes=weightTestAthletes.map(a=>a.athlete_id===athleteId?{...a,claimed:result.data===true}:a);
+  renderWeightTestAthletes();message(claim?'Test Athlete claimed. You can now run weight tests.':'Your test access was released.');
+}
+function openTestWeightCheck(athleteId){
+  const context=weightTestContext,athlete=weightTestAthletes.find(a=>a.athlete_id===athleteId&&a.claimed);
+  if(!athlete||!currentWeightTestContext(context))return;
+  if(!window.webkit?.messageHandlers?.athleteScaleCheck){message('Open the iPhone/iPad app to use the connected scale for this test.',true);return;}
+  closeSheets();resetMyWeightCheck();myWeightCheckMode='test';myWeightCheckActive=true;myWeightCheckPhase=null;
+  myWeightTestAthlete={...athlete,...context,id:athlete.athlete_id};myWeightCheckLatestWeight=null;
+  $('myWeightCheckTitle').textContent='Test Athlete Weight Check';
+  $('myWeightCheckAthleteName').textContent=`${athlete.first_name} ${athlete.last_name}`;
+  $('myWeightCheckPrivacy').innerHTML='<b>Test athlete only</b><br>Weight checks save to this test profile and can be repeated after the scale returns to zero.';
+  $('myWeightCheckValue').textContent='—';
+  document.querySelectorAll('[data-self-weigh-phase]').forEach(btn=>btn.classList.toggle('active',btn.dataset.selfWeighPhase==='independent'));
+  setMyWeightCheckState('Connect the scale, let it return to zero, then tap Begin Weight Check.');
+  openSheet('myWeightCheckSheet');athleteScaleCommand('acquire');athleteScaleCommand('status');
+}
+
 function signedInAthleteProfile(){
   const membership=currentTeamMemberships.find(x=>x.role==='athlete'&&x.active!==false&&x.athlete_id);
   if(!membership)return null;
@@ -3614,13 +3699,13 @@ function readyForAnotherMyWeightCheck(){
   setMyWeightCheckState('Weight saved. The scale is back at zero. Tap Begin Weight Check whenever you want to weigh again.','success');
 }
 function resetMyWeightCheck(){
-  const wasTeammate=myWeightCheckMode==='teammate',grant=teammateWeightGrant;
+  const wasTeammate=myWeightCheckMode==='teammate',wasTest=myWeightCheckMode==='test',grant=teammateWeightGrant;
   ++myWeightCheckVersion;clearTimeout(myWeightCheckStableTimer);myWeightCheckStableTimer=null;
   clearTimeout(teammateGrantTimer);teammateGrantTimer=null;
   myWeightCheckActive=false;myWeightCheckArmed=false;myWeightCheckSaving=false;myWeightCheckSaved=false;
   myWeightCheckCandidate=null;myWeightCheckZeroSeen=false;myWeightCheckRequest=null;
-  myWeightCheckMode='self';teammateWeightGrant=null;teammateWeightAthlete=null;
-  if(wasTeammate){
+  myWeightCheckMode='self';teammateWeightGrant=null;teammateWeightAthlete=null;myWeightTestAthlete=null;
+  if(wasTeammate||wasTest){
     myWeightCheckLatestWeight=null;$('myWeightCheckValue').textContent='—';$('myWeightCheckAthleteName').textContent='';
     $('myWeightCheckState').textContent='';$('liveWeightInput').value='';
     cancelTeammateGrant(grant);athleteScaleCommand('release');
@@ -3642,8 +3727,10 @@ function openMyWeightCheck(){
 }
 function beginMyWeightCheck(){
   if(!myWeightCheckActive||myWeightCheckSaving||myWeightCheckArmed||myWeightCheckSaved)return;
-  const hostAthlete=signedInAthleteProfile(),athlete=myWeightCheckMode==='teammate'?teammateWeightAthlete:hostAthlete;
-  if(!hostAthlete||!athlete||!activeTeam||!activeSeason)return;
+  const hostAthlete=signedInAthleteProfile(),isTest=myWeightCheckMode==='test';
+  const athlete=isTest?myWeightTestAthlete:myWeightCheckMode==='teammate'?teammateWeightAthlete:hostAthlete;
+  if((isTest?!validTestWeightContext():!hostAthlete)||!athlete||!activeTeam||!activeSeason)return;
+  if(isTest&&!athleteScaleConnected){athleteScaleCommand('acquire');setMyWeightCheckState('Connect the scale, then tap Begin Weight Check.');return;}
   if(myWeightCheckRequest?.weight!==undefined){saveMyWeightCheck(myWeightCheckRequest.weight);return;}
   if(myWeightCheckMode==='teammate'){
     if(!teammateWeightGrant||new Date(teammateWeightGrant.expires_at).getTime()<=Date.now()){closeSheets();message('Enter the athlete PIN again to start a new check.',true);return;}
@@ -3685,10 +3772,10 @@ function handleMyWeightCheckReading(rawWeight){
 async function saveMyWeightCheck(candidate){
   if(!myWeightCheckActive||myWeightCheckSaved||myWeightCheckSaving||!myWeightCheckRequest)return;
   const request=myWeightCheckRequest,version=myWeightCheckVersion;
-  if(session?.user?.id!==request.userId||activeTeam?.id!==request.teamId||activeSeason?.id!==request.seasonId||signedInAthleteProfile()?.id!==(request.hostAthleteId||request.athleteId)){resetMyWeightCheck();return;}
+  if(session?.user?.id!==request.userId||activeTeam?.id!==request.teamId||activeSeason?.id!==request.seasonId||(request.mode==='test'?(!validTestWeightContext()||myWeightTestAthlete.id!==request.athleteId):signedInAthleteProfile()?.id!==(request.hostAthleteId||request.athleteId))){resetMyWeightCheck();return;}
   if(request.weight===undefined){
     const current=myWeightCheckLatestWeight;
-    if(request.mode==='teammate'&&!athleteScaleConnected)return;
+    if((request.mode==='teammate'||request.mode==='test')&&!athleteScaleConnected)return;
     if(!myWeightCheckArmed||!myWeightCheckZeroSeen)return;
     if(!(current>1&&current<1000)||Math.abs(current-candidate)>0.2){handleMyWeightCheckReading(current);return;}
     request.weight=current;
@@ -3696,15 +3783,16 @@ async function saveMyWeightCheck(candidate){
   clearTimeout(myWeightCheckStableTimer);myWeightCheckStableTimer=null;
   myWeightCheckSaving=true;myWeightCheckArmed=false;
   $('beginMyWeightCheckBtn').disabled=true;$('beginMyWeightCheckBtn').textContent='Saving…';
-  setMyWeightCheckState(request.mode==='teammate'?'Saving this teammate’s private weight…':'Saving your private weight…');
+  setMyWeightCheckState(request.mode==='test'?'Saving the test athlete’s weight…':request.mode==='teammate'?'Saving this teammate’s private weight…':'Saving your private weight…');
   const current=()=>myWeightCheckActive&&version===myWeightCheckVersion&&myWeightCheckRequest===request&&session?.user?.id===request.userId&&activeTeam?.id===request.teamId&&activeSeason?.id===request.seasonId;
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
   try{
-    const rpcName=request.mode==='teammate'?'record_teammate_scale_weight':'record_self_scale_weight_v2';
+    const rpcName=request.mode==='test'?'record_test_scale_weight':request.mode==='teammate'?'record_teammate_scale_weight':'record_self_scale_weight_v2';
     const rpcArgs=request.mode==='teammate'?{p_token:request.token,p_weight_lbs:request.weight,p_practice_phase:request.phase}:{
       p_team_id:request.teamId,p_season_id:request.seasonId,p_weight_lbs:request.weight,
       p_practice_phase:request.phase,p_check_id:request.id
     };
+    if(request.mode==='test')rpcArgs.p_athlete_id=request.athleteId;
     const {data,error}=await client.rpc(rpcName,rpcArgs).abortSignal(controller.signal);
     if(error)throw error;
     if(session?.user?.id===request.userId&&activeTeam?.id===request.teamId)dispatchCommunicationNotifications();
@@ -3714,7 +3802,7 @@ async function saveMyWeightCheck(candidate){
     $('beginMyWeightCheckBtn').disabled=true;$('beginMyWeightCheckBtn').textContent=request.mode==='teammate'?'Step off to finish':'Step off to weigh again';
     setMyWeightCheckState(`${Number(data?.weight_lbs??request.weight).toFixed(1)} lb saved (${phase}). ${request.mode==='teammate'?'Step off to clear your name and weight and release the scale.':'Step off and let the scale return to zero to begin another check.'}`,'success');
     if(myWeightCheckScaleIsZero())readyForAnotherMyWeightCheck();
-    if(request.mode!=='teammate')loadPersonalWeightSnapshots();
+    if(request.mode==='self')loadPersonalWeightSnapshots();
   }catch(error){
     if(!current())return;
     if(request.mode==='teammate'&&/expired|authorized|PIN|already saved/i.test(error.message||'')){
@@ -7919,9 +8007,9 @@ function handleTeamKioskWeightChange(){
 window.wrestlingManagerSetScaleWeight=function(weight){
   const n=Number(weight);
   latestKioskScaleWeight=Number.isFinite(n)?n:null;
-  const wasTeammate=myWeightCheckMode==='teammate';
+  const wasPrivateCheck=myWeightCheckMode==='teammate'||myWeightCheckMode==='test';
   handleMyWeightCheckReading(weight);
-  if(wasTeammate)return;
+  if(wasPrivateCheck)return;
   const input=$('liveWeightInput');
   if(!input)return;
   input.value=Number.isFinite(n)?n.toFixed(1):'';
@@ -8140,8 +8228,10 @@ $('teammateWeightPin').addEventListener('keydown',event=>{if(event.key==='Enter'
 $('weightPinConfirm').addEventListener('keydown',event=>{if(event.key==='Enter')saveAthleteWeightPin();});
 for(const id of ['teammateWeightPin','weightPinNew','weightPinConfirm'])$(id).addEventListener('input',event=>{event.target.value=event.target.value.replace(/[^0-9]/g,'').slice(0,4);});
 document.addEventListener('visibilitychange',()=>{
-  if(document.hidden&&(myWeightCheckMode==='teammate'||!$('teammateWeightCheckSheet').classList.contains('hidden')||!$('weightPinSheet').classList.contains('hidden')))closeSheets();
+  if(document.hidden&&(myWeightCheckMode==='teammate'||myWeightCheckMode==='test'||!$('weightTestAthleteSheet').classList.contains('hidden')||!$('teammateWeightCheckSheet').classList.contains('hidden')||!$('weightPinSheet').classList.contains('hidden')))closeSheets();
 });
+$('weightTestsRoomBtn').onclick=openWeightTestAthletes;
+$('weightTestsSettingsBtn').onclick=openWeightTestAthletes;
 $('startMyWeightCheckBtn').onclick=openMyWeightCheck;
 $('beginMyWeightCheckBtn').onclick=beginMyWeightCheck;
 document.querySelectorAll('[data-self-weigh-phase]').forEach(btn=>btn.onclick=()=>{
@@ -8525,7 +8615,7 @@ setInterval(pollAccountMemberships,30000);
 setRememberSession(shouldRememberSession());
 client.auth.onAuthStateChange((event,nextSession)=>{
   if(session?.user?.id!==nextSession?.user?.id){resetAthleteCard();nativeCameraScanContext=null;weightCardPhotoCache.clear();}
-  if(session?.user?.id!==nextSession?.user?.id&&(myWeightCheckMode==='teammate'||!$('teammateWeightCheckSheet').classList.contains('hidden')||!$('weightPinSheet').classList.contains('hidden')))closeSheets();
+  if(session?.user?.id!==nextSession?.user?.id&&(myWeightCheckMode==='teammate'||myWeightCheckMode==='test'||!$('weightTestAthleteSheet').classList.contains('hidden')||!$('teammateWeightCheckSheet').classList.contains('hidden')||!$('weightPinSheet').classList.contains('hidden')))closeSheets();
   session=nextSession||null;
   if(!session)subscribeAccountMemberships();
   if(event==='TOKEN_REFRESHED'){
