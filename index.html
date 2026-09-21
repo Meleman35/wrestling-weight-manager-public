@@ -485,7 +485,28 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
 </style>
 <style>
 #wpBody{min-width:0}.wp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px;margin:14px 0}.wp-grid button{min-width:0;overflow-wrap:anywhere;text-align:left}.wp-hero{display:grid;grid-template-columns:80px minmax(0,1fr);gap:15px;align-items:center;margin:22px 0}.wp-hero h2{margin:0;overflow-wrap:anywhere}.wp-hero p{margin:6px 0}.wp-photo{width:80px;height:80px;display:grid;place-items:center;background:#e7edf5;border-radius:50%;font-size:32px;overflow:hidden}.wp-photo img{width:100%;height:100%;object-fit:cover}.wp-panel{padding:16px;margin:16px 0;border:1px solid var(--line);border-radius:18px;background:#f7f9fc;overflow-wrap:anywhere}.wp-panel h3{margin:0 0 8px}.wp-panel p{white-space:pre-wrap}.wp-result{display:grid;gap:5px;padding:12px 0;border-top:1px solid var(--line)}.wp-actions{display:flex;flex-wrap:wrap;gap:12px;padding-bottom:6px}.wp-search{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px}.wp-qr{margin:15px auto;width:200px}.wp-panel input{min-width:0}.wp-panel a{overflow-wrap:anywhere}#wpEditForm .toggle-row{gap:15px}#wpEditForm .toggle-row input{flex:0 0 22px}#wrestlingProfilesSheet{padding-bottom:35px}
-</style><style>#homeOrganizationPanel{margin:0!important;padding:8px 18px;background:#f2f6fb}#homeOrganizationPanel summary{cursor:pointer;font-weight:700;padding:8px}#homeOrganizationPanel .org-home-teams{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}#myCornerHome:empty{display:none}#cornerHomeMembers{display:flex;flex-wrap:wrap;gap:10px}#familyBody{overflow-wrap:anywhere}#familyBody input,#familyBody select{max-width:100%}</style></head>
+</style><style>#homeOrganizationPanel{margin:0!important;padding:8px 18px;background:#f2f6fb}#homeOrganizationPanel summary{cursor:pointer;font-weight:700;padding:8px}#homeOrganizationPanel .org-home-teams{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}#myCornerHome:empty{display:none}#cornerHomeMembers{display:flex;flex-wrap:wrap;gap:10px}#familyBody{overflow-wrap:anywhere}#familyBody input,#familyBody select{max-width:100%}</style><style>
+.user-tile-hidden{display:none!important}
+.bottom-nav{display:flex!important}.bottom-nav>.nav-btn{flex:1 1 0;min-width:0}
+#homeLayoutBlocks{display:flex;flex-direction:column;gap:20px}
+#tileEditBar{position:fixed;z-index:1300;top:calc(env(safe-area-inset-top) + 8px);left:50%;transform:translateX(-50%);width:min(94vw,680px);box-sizing:border-box;background:#fff;color:#132d47;border:2px solid #235b91;border-radius:18px;padding:10px;box-shadow:0 5px 24px #0004;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+#tileEditBar.hidden{display:none}#tileEditLabel{flex:1 1 100%;font-weight:800;font-size:15px}#tileEditBar button{font-size:14px;min-height:42px;padding:8px 12px;border-radius:10px}
+.tile-editing [data-layout-key]{touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:grab}
+.tile-editing #homeLayoutBlocks>[data-layout-key],.tile-editing .bottom-nav>[data-layout-key],.tile-editing #moreMenuCard>[data-layout-key],.tile-editing .quick-grid>[data-layout-key]{animation:tile-wiggle .3s ease-in-out infinite alternate;outline:1px dashed #6085a5;outline-offset:-2px}
+.tile-editing .tile-selected{outline:3px solid #2266b2!important;outline-offset:-3px!important;cursor:grabbing}
+.tile-editing .content{padding-top:135px}
+.tile-visibility{display:flex;align-items:center;gap:8px;font-size:13px;margin-top:8px}.tile-visibility input{width:20px;height:20px;margin:0}
+@keyframes tile-wiggle{from{rotate:-.15deg}to{rotate:.15deg}}
+@media(prefers-reduced-motion:reduce){.tile-editing [data-layout-key]{animation:none!important}}
+</style>
+<style>
+#wrestlingProfilesSheet input,#wrestlingProfilesSheet select,#wrestlingProfilesSheet textarea{box-sizing:border-box;max-width:100%;min-width:0}
+#wrestlingProfilesSheet .wp-panel{min-width:0;overflow-wrap:anywhere}
+#wpCropCanvas{display:block;width:min(100%,280px);height:auto;border-radius:50%;touch-action:none;cursor:grab;margin:16px auto}
+#wpCropArea{max-width:400px}#wpCropZoom{width:100%}
+#wrestlingProfilesSheet summary{cursor:pointer;padding:14px 0;font-weight:700}
+#wpMusicPreview{padding:10px 0;overflow-wrap:anywhere}
+</style></head>
 <body>
   <div id="message"></div>
   <section id="appLockOverlay" class="app-lock-overlay hidden" aria-modal="true" aria-label="Wrestling Manager is locked">
@@ -625,9 +646,10 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
           <div><div class="eyebrow">YOUR TEAM</div><h2>Team Feed</h2><p>Updates, athletes and the next things that matter.</p></div>
           <span class="feed-live-chip"><span class="feed-live-dot"></span> LIVE</span>
         </div>
-        <section id="myCornerHome" class="home-feed-block wp-panel" aria-label="My Corner"></section>
+        
         <button id="organizationHomeBtn" class="hidden" type="button">Organization tools</button>
         <div id="homeLayoutBlocks">
+<section id="myCornerHome" class="home-feed-block wp-panel layout-block" data-layout-key="my_corner" aria-label="My Corner"></section>
         <section id="importantAnnouncementsSection" class="important-announcements home-feed-block layout-block" data-layout-key="important">
           <div class="section-head"><div class="feed-author"><span class="feed-author-icon">📣</span><span><h3>Important Announcements</h3><small>Coaches & team leaders</small></span></div><button id="newAnnouncementBtn" class="link-btn coach-only">＋ Post</button></div>
           <div id="importantAnnouncementsList"><div class="announcement-empty">No important announcements right now.</div></div>
@@ -642,11 +664,11 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
         <section class="home-action-strip layout-block" data-layout-key="quick_actions">
           <div class="section-head"><h3>Quick Actions</h3><span class="section-sub">Tap to open</span></div>
           <div class="quick-grid">
-            <button class="quick-card" data-go="schedule" data-action="create-event"><span>＋</span><b>Create event</b><small>Practice, dual, open mat…</small></button>
-            <button class="quick-card" data-go="schedule"><span>✓</span><b>Attendance</b><small>RSVPs and check-in</small></button>
-            <button class="quick-card" data-go="weight"><span>⚖️</span><b>Weight Room</b><small>Weigh-ins and eligibility</small></button>
-            <button class="quick-card" data-go="messages"><span>💬</span><b>Messages</b><small>Team and group chats</small></button>
-            <button class="quick-card" data-go="more"><span>☰</span><b>Team tools</b><small>Roster, join, equipment</small></button>
+            <button class="quick-card" data-layout-key="create_event" data-go="schedule" data-action="create-event"><span>＋</span><b>Create event</b><small>Practice, dual, open mat…</small></button>
+            <button class="quick-card" data-layout-key="attendance" data-go="schedule"><span>✓</span><b>Attendance</b><small>RSVPs and check-in</small></button>
+            <button class="quick-card" data-layout-key="weight" data-go="weight"><span>⚖️</span><b>Weight Room</b><small>Weigh-ins and eligibility</small></button>
+            <button class="quick-card" data-layout-key="messages" data-go="messages"><span>💬</span><b>Messages</b><small>Team and group chats</small></button>
+            <button class="quick-card" data-layout-key="tools" data-go="more"><span>☰</span><b>Team tools</b><small>Roster, join, equipment</small></button>
           </div>
         </section>
 
@@ -1706,7 +1728,7 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.18.0</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.19.2</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -1755,10 +1777,12 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
   <section id="layoutEditorSheet" class="sheet hidden" aria-modal="true">
     <div class="sheet-handle"></div>
     <div class="sheet-head"><div><div class="eyebrow">YOUR APP</div><h2>Customize Layout</h2><p class="muted">Move the parts you use most. This layout follows your account across teams and devices.</p></div><button class="icon-close" data-close-sheet>×</button></div>
-    <div class="layout-note">Use the arrows to arrange Home, the bottom navigation, and More. Hidden role-only tools stay hidden when you do not have access.</div>
+    <div class="layout-note">Hold a tile for half a second to arrange it directly. Use the arrows here as an alternative, or turn Show tile off to hide it. Restore hidden tiles here anytime. Home, More, and Account stay available. Your access permissions do not change.</div>
     <h3 class="subhead">Home</h3><div id="homeLayoutEditor" class="layout-editor-list"></div>
+    <h3 class="subhead">Quick Actions</h3><div id="quickLayoutEditor" class="layout-editor-list"></div>
     <h3 class="subhead">Bottom navigation</h3><div id="navLayoutEditor" class="layout-editor-list"></div>
     <h3 class="subhead">More</h3><div id="moreLayoutEditor" class="layout-editor-list"></div>
+    <button id="resetLayoutBtn" class="wide secondary" type="button">Reset to Default Layout</button>
     <button id="saveLayoutBtn" class="wide sticky-save" type="button">Save My Layout</button>
   </section>
 
@@ -2225,11 +2249,12 @@ const APPAREL_SIZES=['XS','S','M','L','XL','XXL','XXXL'];
 const YOUTH_SHOE_SIZES=['10','10.5','11','11.5','12','12.5','13','13.5','1','1.5','2','2.5','3','3.5','4','4.5','5','5.5','6','6.5','7'];
 const ADULT_SHOE_SIZES=['4','4.5','5','5.5','6','6.5','7','7.5','8','8.5','9','9.5','10','10.5','11','11.5','12','12.5','13','13.5','14','15','16','17','18'];
 const UI_LAYOUT_META={
-  home:{important:['📣','Important Announcements'],my_athletes:['👨‍👩‍👧','My Athletes'],quick_actions:['⚡','Quick Actions'],coach_weight_board:['🤼','Lineup by Weight Class'],attention:['✅','Needs Attention'],upcoming:['📅','Upcoming'],weight_snapshot:['⚖️','Weight Room Snapshot']},
+  home:{my_corner:['👥','My Corner'],important:['📣','Important Announcements'],my_athletes:['👨‍👩‍👧','My Athletes'],quick_actions:['⚡','Quick Actions'],coach_weight_board:['🤼','Lineup by Weight Class'],attention:['✅','Needs Attention'],upcoming:['📅','Upcoming'],weight_snapshot:['⚖️','Weight Room Snapshot']},
+  quick:{create_event:['＋','Create event'],attendance:['✓','Attendance'],weight:['⚖','Weight Room'],messages:['💬','Messages'],tools:['☰','Team tools']},
   nav:{home:['⌂','Home'],schedule:['▣','Schedule'],messages:['◯','Messages'],weight:['⚖','Weight Room'],more:['☰','More']},
   more:{organization_hub:['🏛️','Organization Hub'],match_book:['⏱️','Match Book'],feedback:['💬','Feedback'],roster:['👥','Roster'],join:['🔗','Team Join'],join_requests:['✅','Join Requests'],agreements:['✍️','Team Agreement'],medical:['🩺','Medical Clearance'],member_profiles:['👤','My Athlete Profiles'],family:['👨‍👩‍👧','Family'],staff_directory:['📇','Coaches & Staff'],staff_access:['🪪','Adult Roles & Admins'],equipment:['🎽','Equipment'],files:['📁','Files & Photos'],account:['⚙️','Account & Team']}
 };
-const DEFAULT_UI_LAYOUT={home:Object.keys(UI_LAYOUT_META.home),nav:Object.keys(UI_LAYOUT_META.nav),more:Object.keys(UI_LAYOUT_META.more)};
+const DEFAULT_UI_LAYOUT={home:Object.keys(UI_LAYOUT_META.home),nav:Object.keys(UI_LAYOUT_META.nav),quick:Object.keys(UI_LAYOUT_META.quick),more:Object.keys(UI_LAYOUT_META.more)};
 let pendingUiLayout=null;
 
 const $ = id => document.getElementById(id);
@@ -2593,35 +2618,105 @@ function parseStoredSize(value,defaultCategory='Youth'){
 }
 function storedApparelValue(prefix,id){const size=$(prefix+id)?.value;return size?`${$(prefix+'GearCategory')?.value||'Youth'} ${size}`:null;}
 function storedShoeValue(prefix){const size=$(prefix+'Shoe')?.value;return size?`${$(prefix+'ShoeCategory')?.value||'Youth'} ${size}`:null;}
+let tileEditing=false,tileEditUser=null,tileSelected=null,tileSaveBusy=false,tileGesture=null,tileSuppressClickUntil=0;
+const layoutParent=group=>group==='home'?$('homeLayoutBlocks'):group==='nav'?document.querySelector('.bottom-nav'):group==='quick'?document.querySelector('.quick-grid'):$('moreMenuCard');
+const layoutRequired=(group,key)=>(group==='nav'&&['home','more'].includes(key))||(group==='more'&&key==='account');
 function normalizedLayout(source={}){
-  const result={};
-  Object.keys(DEFAULT_UI_LAYOUT).forEach(group=>{
-    const saved=Array.isArray(source?.[group])?source[group]:[];
-    result[group]=[...saved.filter((x,i)=>DEFAULT_UI_LAYOUT[group].includes(x)&&saved.indexOf(x)===i),...DEFAULT_UI_LAYOUT[group].filter(x=>!saved.includes(x))];
-  });
-  return result;
+ const result={hidden:{}};
+ Object.keys(DEFAULT_UI_LAYOUT).forEach(group=>{
+  const saved=Array.isArray(source?.[group])?source[group]:[];
+  result[group]=[...saved.filter((x,i)=>DEFAULT_UI_LAYOUT[group].includes(x)&&saved.indexOf(x)===i),...DEFAULT_UI_LAYOUT[group].filter(x=>!saved.includes(x))];
+  result.hidden[group]=[...new Set(Array.isArray(source?.hidden?.[group])?source.hidden[group]:[])].filter(key=>DEFAULT_UI_LAYOUT[group].includes(key)&&!layoutRequired(group,key));
+ });return result;
 }
-function localUiLayout(){try{return JSON.parse(localStorage.getItem('wm_ui_layout')||'{}');}catch{return {};}}
+function localUiLayout(){try{return JSON.parse(localStorage.getItem('wm_ui_layout_'+(session?.user?.id||'signed-out'))||'{}');}catch{return {};}}
+function currentUiLayout(){return normalizedLayout(localUiLayout().pendingSync?localUiLayout().layout:(accountProfileData?.id===session?.user?.id?accountProfileData.ui_preferences?.layout:null)||localUiLayout().layout||{});}
 function reorderChildren(parent,order){if(!parent)return;order.forEach(key=>{const el=[...parent.children].find(x=>x.dataset.layoutKey===key);if(el)parent.appendChild(el);});}
-function applyUiPreferences(){
-  const layout=normalizedLayout(accountProfileData?.ui_preferences?.layout||localUiLayout());
-  reorderChildren($('homeLayoutBlocks'),layout.home);reorderChildren(document.querySelector('.bottom-nav'),layout.nav);reorderChildren($('moreMenuCard'),layout.more);
+function applyUiPreferences(layout){
+ const value=layout||(tileEditing&&pendingUiLayout?pendingUiLayout:currentUiLayout());
+ for(const group of Object.keys(DEFAULT_UI_LAYOUT)){
+  const parent=layoutParent(group);reorderChildren(parent,value[group]);
+  for(const el of parent?.children||[])if(el.dataset.layoutKey)el.classList.toggle('user-tile-hidden',value.hidden[group].includes(el.dataset.layoutKey));
+ }
 }
 function renderLayoutGroup(group,id){
-  const box=$(id),order=pendingUiLayout[group];if(!box)return;
-  box.innerHTML=order.map((key,index)=>{const meta=UI_LAYOUT_META[group][key]||['↕',key];return `<div class="layout-editor-row"><span>${meta[0]}</span><span><b>${esc(meta[1])}</b><small>${index+1} of ${order.length}</small></span><button class="layout-move" type="button" data-layout-move="${group}:${index}:-1" ${index===0?'disabled':''}>↑</button><button class="layout-move" type="button" data-layout-move="${group}:${index}:1" ${index===order.length-1?'disabled':''}>↓</button></div>`;}).join('');
-  box.querySelectorAll('[data-layout-move]').forEach(btn=>btn.onclick=()=>{const [g,i,d]=btn.dataset.layoutMove.split(':');const from=Number(i),to=from+Number(d);[pendingUiLayout[g][from],pendingUiLayout[g][to]]=[pendingUiLayout[g][to],pendingUiLayout[g][from]];renderAllLayoutEditors();});
+ const box=$(id),order=pendingUiLayout[group];if(!box)return;
+ box.innerHTML=order.map((key,index)=>{const meta=UI_LAYOUT_META[group][key]||['↕',key],required=layoutRequired(group,key);return `<div class="layout-editor-row"><span>${meta[0]}</span><span><b>${esc(meta[1])}</b><label class="tile-visibility"><input type="checkbox" data-layout-visible="${group}:${key}" ${!pendingUiLayout.hidden[group].includes(key)?'checked':''} ${required?'disabled':''}> ${required?'Always available':'Show tile'}</label></span><button aria-label="Move ${esc(meta[1])} up" class="layout-move" type="button" data-layout-move="${group}:${index}:-1" ${index===0?'disabled':''}>↑</button><button aria-label="Move ${esc(meta[1])} down" class="layout-move" type="button" data-layout-move="${group}:${index}:1" ${index===order.length-1?'disabled':''}>↓</button></div>`;}).join('');
+ box.querySelectorAll('[data-layout-move]').forEach(btn=>btn.onclick=()=>{const [g,i,d]=btn.dataset.layoutMove.split(':');const from=Number(i),to=from+Number(d);[pendingUiLayout[g][from],pendingUiLayout[g][to]]=[pendingUiLayout[g][to],pendingUiLayout[g][from]];renderAllLayoutEditors();});
+ box.querySelectorAll('[data-layout-visible]').forEach(input=>input.onchange=()=>{const [g,key]=input.dataset.layoutVisible.split(':');pendingUiLayout.hidden[g]=pendingUiLayout.hidden[g].filter(k=>k!==key);if(!input.checked&&!layoutRequired(g,key))pendingUiLayout.hidden[g].push(key);});
 }
-function renderAllLayoutEditors(){renderLayoutGroup('home','homeLayoutEditor');renderLayoutGroup('nav','navLayoutEditor');renderLayoutGroup('more','moreLayoutEditor');}
-function openLayoutEditor(){pendingUiLayout=normalizedLayout(accountProfileData?.ui_preferences?.layout||localUiLayout());renderAllLayoutEditors();closeSheets();openSheet('layoutEditorSheet');}
+function renderAllLayoutEditors(){renderLayoutGroup('home','homeLayoutEditor');renderLayoutGroup('nav','navLayoutEditor');renderLayoutGroup('more','moreLayoutEditor');renderLayoutGroup('quick','quickLayoutEditor');}
+function canEditTiles(){return !!session?.user?.id&&!document.body.classList.contains('kiosk-locked')&&!document.querySelector('#appLockOverlay:not(.hidden)');}
+function openLayoutEditor(){if(!canEditTiles())return;if(tileEditing)finishTileEditing(false);tileEditUser=session.user.id;pendingUiLayout=currentUiLayout();renderAllLayoutEditors();closeSheets();openSheet('layoutEditorSheet');}
 async function saveUiLayout(){
-  if(!pendingUiLayout||!session?.user)return;
-  const preferences={...(accountProfileData?.ui_preferences||{}),layout:pendingUiLayout};localStorage.setItem('wm_ui_layout',JSON.stringify(pendingUiLayout));
-  const btn=$('saveLayoutBtn');btn.disabled=true;btn.textContent='Saving…';
-  const {data,error}=await client.from('profiles').update({ui_preferences:preferences,updated_at:new Date().toISOString()}).eq('id',session.user.id).select('id,display_name,phone,photo_path,ui_preferences').single();
-  btn.disabled=false;btn.textContent='Save My Layout';
-  if(error){accountProfileData={...(accountProfileData||{}),ui_preferences:preferences};applyUiPreferences();message('Layout saved on this device. Apply the database patch to sync it across devices.');closeSheets();return;}
-  accountProfileData=data;applyUiPreferences();closeSheets();message('Your app layout is saved.');
+ if(!pendingUiLayout||!canEditTiles()||tileSaveBusy||tileEditUser!==session.user.id)return;
+ const uid=session.user.id,layout=normalizedLayout(pendingUiLayout),preferences={...(accountProfileData?.ui_preferences||{}),layout};
+ tileSaveBusy=true;const btn=$('saveLayoutBtn');btn.disabled=true;$('tileEditDone').disabled=true;
+ let error=null,data=null;
+ try{({data,error}=await client.from('profiles').update({ui_preferences:preferences,updated_at:new Date().toISOString()}).eq('id',uid).select('id,display_name,phone,photo_path,ui_preferences').single());}catch(e){error=e;}
+ finally{tileSaveBusy=false;btn.disabled=false;$('tileEditDone').disabled=false;}
+ if(session?.user?.id!==uid||tileEditUser!==uid)return;
+ try{localStorage.setItem('wm_ui_layout_'+uid,JSON.stringify({layout,pendingSync:!!error}));}catch{if(error){message('Could not save the layout. Check your connection and try again.',true);return;}}
+ accountProfileData=error?{...(accountProfileData||{}),ui_preferences:preferences}:data;
+ finishTileEditing(true);applyUiPreferences(layout);closeSheets();
+ message(error?'Layout saved on this device. Save again when online to sync it.':'Your layout is saved.');
+}
+function finishTileEditing(saved=false){
+ clearTimeout(tileGesture?.timer);tileGesture=null;tileEditing=false;tileSelected=null;document.body.classList.remove('tile-editing');$('tileEditBar')?.classList.add('hidden');
+ document.querySelectorAll('.tile-selected').forEach(el=>el.classList.remove('tile-selected'));
+ if(!saved)applyUiPreferences();
+}
+function selectEditingTile(el,group){
+ document.querySelectorAll('.tile-selected').forEach(n=>n.classList.remove('tile-selected'));tileSelected={el,group};el.classList.add('tile-selected');
+ $('tileEditLabel').textContent=UI_LAYOUT_META[group][el.dataset.layoutKey]?.[1]||'Tile';
+ $('tileEditHide').disabled=layoutRequired(group,el.dataset.layoutKey);
+}
+function beginTileEditing(el,group){
+ if(!canEditTiles()||tileSaveBusy||document.querySelector('.sheet:not(.hidden)'))return false;
+ tileEditing=true;tileEditUser=session.user.id;pendingUiLayout=currentUiLayout();document.body.classList.add('tile-editing');$('tileEditBar').classList.remove('hidden');
+ if(typeof resetPullRefresh==='function')resetPullRefresh();selectEditingTile(el,group);return true;
+}
+function tileAt(target){
+ const el=target.closest?.('[data-layout-key]');if(!el)return null;
+ const group=Object.keys(DEFAULT_UI_LAYOUT).find(g=>layoutParent(g)===el.parentElement);
+ return group?{el,group}:null;
+}
+function moveSelectedTile(toKey){
+ if(!tileSelected||tileSaveBusy)return;const {el,group}=tileSelected,order=pendingUiLayout[group],from=order.indexOf(el.dataset.layoutKey),to=order.indexOf(toKey);
+ if(from<0||to<0||from===to)return;order.splice(from,1);order.splice(to,0,el.dataset.layoutKey);applyUiPreferences(pendingUiLayout);
+}
+function initTileEditing(){
+ $('tileEditDone').onclick=saveUiLayout;
+ $('tileEditCancel').onclick=()=>{if(!tileSaveBusy)finishTileEditing(false);};
+ $('tileEditHide').onclick=()=>{if(!tileSelected||tileSaveBusy)return;const {el,group}=tileSelected,key=el.dataset.layoutKey;if(layoutRequired(group,key))return;pendingUiLayout.hidden[group].push(key);applyUiPreferences(pendingUiLayout);el.classList.remove('tile-selected');tileSelected=null;$('tileEditLabel').textContent='Tile hidden · choose another';$('tileEditHide').disabled=true;};
+ $('tileEditSettings').onclick=()=>{if(tileSaveBusy)return;tileEditing=false;document.body.classList.remove('tile-editing');$('tileEditBar').classList.add('hidden');applyUiPreferences();document.querySelectorAll('.tile-selected').forEach(el=>el.classList.remove('tile-selected'));tileSelected=null;renderAllLayoutEditors();closeSheets();openSheet('layoutEditorSheet');};
+ $('resetLayoutBtn').onclick=()=>{pendingUiLayout=normalizedLayout();renderAllLayoutEditors();};
+ document.addEventListener('pointerdown',e=>{
+  if(e.button!==0||!canEditTiles()||tileSaveBusy||document.querySelector('.sheet:not(.hidden)'))return;
+  const tile=tileAt(e.target);if(!tile)return;
+  if(!tileEditing&&e.target.closest('input,textarea,select,a,video,audio'))return;
+  if(tileGesture){clearTimeout(tileGesture.timer);tileGesture=null;return;}
+  const gesture={...tile,id:e.pointerId,x:e.clientX,y:e.clientY,drag:tileEditing};tileGesture=gesture;
+  if(tileEditing){e.preventDefault();selectEditingTile(tile.el,tile.group);}
+  else gesture.timer=setTimeout(()=>{if(tileGesture===gesture&&beginTileEditing(tile.el,tile.group)){tileSuppressClickUntil=Date.now()+900;gesture.drag=true;}},550);
+ },true);
+ document.addEventListener('pointermove',e=>{
+  const g=tileGesture;if(!g||g.id!==e.pointerId)return;
+  if(!tileEditing){if(Math.hypot(e.clientX-g.x,e.clientY-g.y)>9){clearTimeout(g.timer);tileGesture=null;}return;}
+  if(!g.drag)return;e.preventDefault();
+  const target=document.elementsFromPoint(e.clientX,e.clientY).map(tileAt).find(t=>t?.group===g.group&&t.el!==g.el);
+  if(target)moveSelectedTile(target.el.dataset.layoutKey);
+  if(g.group!=='nav'){if(e.clientY<110)window.scrollBy(0,-18);else if(e.clientY>innerHeight-170)window.scrollBy(0,18);}
+ },{capture:true,passive:false});
+ const end=e=>{if(tileGesture?.id!==e.pointerId)return;clearTimeout(tileGesture.timer);if(tileEditing)tileSuppressClickUntil=Date.now()+600;tileGesture=null;};
+ document.addEventListener('pointerup',end,true);document.addEventListener('pointercancel',end,true);
+ document.addEventListener('click',e=>{if(tileAt(e.target)&&(tileEditing||Date.now()<tileSuppressClickUntil)){e.preventDefault();e.stopImmediatePropagation();}},true);
+ document.addEventListener('contextmenu',e=>{if(tileAt(e.target))e.preventDefault();});
+ document.addEventListener('dragstart',e=>{if(tileAt(e.target))e.preventDefault();});
+ document.addEventListener('keydown',e=>{if(tileEditing&&e.key==='Escape'&&!tileSaveBusy)finishTileEditing(false);});
+ new MutationObserver(()=>{if(tileEditing&&!canEditTiles())finishTileEditing(false);}).observe(document.body,{attributes:true,attributeFilter:['class']});
+ const lock=$('appLockOverlay');if(lock)new MutationObserver(()=>{if(tileEditing&&!canEditTiles())finishTileEditing(false);}).observe(lock,{attributes:true,attributeFilter:['class']});
+ window.addEventListener('blur',()=>{clearTimeout(tileGesture?.timer);tileGesture=null;});
 }
 
 function message(text, bad=false){
@@ -3362,6 +3457,11 @@ function openTeamSwitcher(){
   refreshTeamSwitcherConnections();
 }
 
+// Give replacements a new topic while Supabase asynchronously removes the old channel.
+let realtimeChannelSequence=0;
+function createRealtimeChannel(topic){
+  return client.channel(`${topic}-instance-${++realtimeChannelSequence}`);
+}
 let accountMembershipChannel=null,accountMembershipUserId=null,accountRefreshTimer=null,accountPollRunning=false;
 function accountMembershipFingerprint(rows){
   return JSON.stringify((rows||[]).map(r=>[r.team_id,r.user_id,r.role,r.athlete_id,r.active,r.notifications_paused,r.permissions||{}]).sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b))));
@@ -3383,7 +3483,7 @@ function subscribeAccountMemberships(){
   accountMembershipChannel=null;accountMembershipUserId=userId;
   clearTimeout(accountRefreshTimer);
   if(!userId)return;
-  accountMembershipChannel=client.channel(`wm-own-memberships-${userId}`)
+  accountMembershipChannel=createRealtimeChannel(`wm-own-memberships-${userId}`)
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'team_memberships',filter:`user_id=eq.${userId}`},scheduleAccountConnectionRefresh)
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'team_memberships',filter:`user_id=eq.${userId}`},scheduleAccountConnectionRefresh)
     .subscribe(status=>{if(status==='SUBSCRIBED')pollAccountMemberships();});
@@ -4457,7 +4557,7 @@ function subscribeAnnouncementRealtime(){
   if(announcementRealtimeChannel)client.removeChannel(announcementRealtimeChannel);
   clearTimeout(announcementRealtimeReconnectTimer);
   const teamId=activeTeam.id;
-  announcementRealtimeChannel=client.channel(`wm-home-announcements-live-${teamId}-${session.user.id}`)
+  announcementRealtimeChannel=createRealtimeChannel(`wm-home-announcements-live-${teamId}-${session.user.id}`)
     .on('postgres_changes',{event:'*',schema:'public',table:'team_posts',filter:`team_id=eq.${teamId}`},payload=>{
       if(activeTeam?.id!==teamId)return;
       if(payload.new?.audience&&payload.new.audience!=='team'&&payload.old?.audience!=='team')return;
@@ -4579,7 +4679,7 @@ function resetPullRefresh(){
   if($('pullRefreshText'))$('pullRefreshText').textContent='Pull to refresh';
 }
 document.addEventListener('touchstart',event=>{
-  if(teamRefreshPromise||!session||!activeTeam||!atTopOfMainPage()||mainSheetIsOpen()||document.body.classList.contains('kiosk-locked'))return;
+  if(tileEditing||teamRefreshPromise||!session||!activeTeam||!atTopOfMainPage()||mainSheetIsOpen()||document.body.classList.contains('kiosk-locked'))return;
   const touch=event.touches?.[0];if(!touch)return;
   pullRefreshStartY=touch.clientY;pullRefreshDistance=0;pullRefreshTracking=true;
 },{passive:true});
@@ -5084,7 +5184,7 @@ async function refreshActiveCommunicationMessages(threadId,{stickToBottom=false,
 
 function subscribeCommunicationRealtime(){
   if(!activeTeam||communicationRealtimeChannels.some(ch=>String(ch?.topic||'').includes(`wm-communication-${activeTeam.id}`)))return;
-  const messageChannel=client.channel(`wm-communication-${activeTeam.id}`)
+  const messageChannel=createRealtimeChannel(`wm-communication-${activeTeam.id}`)
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'communication_messages',filter:`team_id=eq.${activeTeam.id}`},payload=>{
       const isMediaMessage=/^\[(Photo|Video)\]$/i.test(String(payload.new.body||''));
       scheduleActiveCommunicationThreadRefresh(payload.new.thread_id,100,isMediaMessage?[450]:[]);
@@ -5094,14 +5194,14 @@ function subscribeCommunicationRealtime(){
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'communication_attachments',filter:`team_id=eq.${activeTeam.id}`},payload=>{
       scheduleActiveCommunicationThreadRefresh(payload.new.thread_id,60,[400]);
     }).subscribe();
-  const notificationChannel=client.channel(`wm-notifications-${session.user.id}`)
+  const notificationChannel=createRealtimeChannel(`wm-notifications-${session.user.id}`)
     .on('postgres_changes',{event:'*',schema:'public',table:'communication_notifications',filter:`user_id=eq.${session.user.id}`},payload=>{
       loadCommunications(false);
       if(payload.eventType==='INSERT'&&payload.new?.category==='weigh_in'&&payload.new.team_id===activeTeam?.id){
         loadPersonalWeightSnapshots();if(isStaff){loadRoster();loadDashboard();}
       }
     }).subscribe();
-  const threadChannel=client.channel(`wm-thread-state-${activeTeam.id}`)
+  const threadChannel=createRealtimeChannel(`wm-thread-state-${activeTeam.id}`)
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'communication_threads',filter:`team_id=eq.${activeTeam.id}`},payload=>{
       if(!payload.new?.archived_at)return;
       const archivedId=String(payload.new.id||'');
@@ -5110,9 +5210,9 @@ function subscribeCommunicationRealtime(){
       }
       loadCommunications(false);
     }).subscribe();
-  const safetyChannel=client.channel(`wm-safety-state-${activeTeam.id}`)
+  const safetyChannel=createRealtimeChannel(`wm-safety-state-${activeTeam.id}`)
     .on('postgres_changes',{event:'*',schema:'public',table:'communication_safety_flags',filter:`team_id=eq.${activeTeam.id}`},()=>loadCommunications(false)).subscribe();
-  const receiptChannel=client.channel(`wm-message-receipts-${session.user.id}`)
+  const receiptChannel=createRealtimeChannel(`wm-message-receipts-${session.user.id}`)
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'communication_message_receipts'},()=>{
       if(!activeCommunicationThread||$('communicationThreadSheet')?.classList.contains('hidden'))return;
       clearTimeout(communicationReceiptRefreshTimer);
@@ -6638,16 +6738,26 @@ async function showTeamJoin(){
 
 async function loadJoinRequests(){
   if(!isStaff||!activeTeam)return;
-  const {data,error}=await client.from('team_join_requests').select('*').eq('team_id',activeTeam.id).in('status',['pending','more_info_requested']).order('submitted_at',{ascending:true});
-  if(error){return;} joinRequests=data||[];
+  const teamId=activeTeam.id,userId=session?.user?.id;
+  const {data,error}=await client.from('team_join_requests').select('*').eq('team_id',teamId).in('status',['pending','more_info_requested']).order('submitted_at',{ascending:true});
+  if(error||activeTeam?.id!==teamId||session?.user?.id!==userId||!isStaff)return;
+  joinRequests=data||[];
   $('joinRequestCount').innerHTML=joinRequests.length?`<span class="pending-count">${joinRequests.length}</span>`:'›';
 }
 
 function subscribeTeamJoinRealtime(){
-  if(!activeTeam||!isStaff)return;
-  const channel=client.channel(`wm-team-joins-${activeTeam.id}`)
-    .on('postgres_changes',{event:'*',schema:'public',table:'team_join_requests',filter:`team_id=eq.${activeTeam.id}`},async()=>{await loadJoinRequests();renderAttention();message('Team join requests updated.');})
-    .subscribe();
+  if(!activeTeam||!isStaff||!session?.user?.id)return;
+  const teamId=activeTeam.id,userId=session.user.id;
+  const topic=`wm-team-joins-${teamId}-${userId}`;
+  if(communicationRealtimeChannels.some(ch=>ch?.topic?.startsWith(`realtime:${topic}-instance-`)))return;
+  const channel=createRealtimeChannel(topic)
+    .on('postgres_changes',{event:'*',schema:'public',table:'team_join_requests',filter:`team_id=eq.${teamId}`},async()=>{
+      const current=()=>activeTeam?.id===teamId&&session?.user?.id===userId&&isStaff&&communicationRealtimeChannels.includes(channel);
+      if(!current())return;
+      await loadJoinRequests();
+      if(!current())return;
+      renderAttention();message('Team join requests updated.');
+    }).subscribe();
   communicationRealtimeChannels.push(channel);
 }
 
@@ -9256,9 +9366,10 @@ window.addEventListener('online',()=>refreshTeamData({force:true}));
 setInterval(pollAccountMemberships,30000);
 setRememberSession(shouldRememberSession());
 client.auth.onAuthStateChange((event,nextSession)=>{
-  if(session?.user?.id!==nextSession?.user?.id){window.WMProfiles?.reset();window.WMFamily?.reset();resetAthleteCard();nativeCameraScanContext=null;weightCardPhotoCache.clear();}
+  if(session?.user?.id!==nextSession?.user?.id){finishTileEditing(false);tileEditUser=null;pendingUiLayout=null;window.WMProfiles?.reset();window.WMFamily?.reset();resetAthleteCard();nativeCameraScanContext=null;weightCardPhotoCache.clear();}
   if(session?.user?.id!==nextSession?.user?.id&&(myWeightCheckMode==='teammate'||myWeightCheckMode==='test'||!$('weightTestAthleteSheet').classList.contains('hidden')||!$('teammateWeightCheckSheet').classList.contains('hidden')||!$('weightPinSheet').classList.contains('hidden')))closeSheets();
   session=nextSession||null;
+  if(!session)applyUiPreferences(normalizedLayout());
   if(!session)subscribeAccountMemberships();
   if(event==='TOKEN_REFRESHED'){
     if(pendingNativeNotificationPayload&&nativeSecurityStatusReady&&(!securityState.appLockEnabled||securityUnlockedThisLaunch))routeNativeNotification(pendingNativeNotificationPayload);
@@ -9305,7 +9416,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -->
 <script>
-/* v0.18.0 organization operations. All authorization is enforced again by the RPC. */
+/* v0.19.2 organization operations. All authorization is enforced again by the RPC. */
 window.WMOperations=(()=>{
  let hub=null,org=null,division='',tab='home',generation=0,editor=null,feedbackId=null,dialogResolve=null;
  const $o=id=>document.getElementById(id),e=v=>esc(String(v??'')),list=v=>Array.isArray(v)?v:[];
@@ -9525,7 +9636,7 @@ window.WMOperations=(()=>{
  async function calendar(team){try{return await rpc(false,{action:'calendar',team_id:team});}catch(err){console.warn('Organization calendar unavailable:',err.message);return [];}}
  async function feedback(){if(document.body.classList.contains('kiosk-locked'))return;closeSheets();feedbackId=crypto.randomUUID();note('feedbackStatus','');openSheet('feedbackSheet');await feedbackHistory();}
  async function feedbackHistory(){const target=$o('feedbackHistory');target.textContent='Loading…';try{const rows=await rpc(false,{action:'feedback',team_id:activeTeam?.id||null});target.innerHTML=list(rows).map(r=>`<article class="ops-card"><b>${e(r.category)}</b> ${badge(r.status)}<p>${e(r.body)}</p><small>${e(fmtDateTime(r.created_at))} · ${e(r.build)}</small>${r.response?'<p>Response: '+e(r.response)+'</p>':''}${actualIsTeamAdmin&&!managedLogin&&r.team_id===activeTeam?.id?`<div class="ops-actions"><button class="secondary" data-feedback-review="${r.id}">Review</button></div>`:''}</article>`).join('')||'<p>No feedback yet.</p>';target.querySelectorAll('[data-feedback-review]').forEach(b=>b.onclick=async()=>{const row=rows.find(r=>r.id===b.dataset.feedbackReview),result=await dialog({title:'Review feedback',fields:[{id:'status',label:'Status',options:['new','reviewing','planned','resolved'].map(s=>[s,s]),value:row.status},{id:'response',label:'Response',type:'textarea',value:row.response||''}],submit:'Save review'});if(!result)return;const {status,response}=result;try{await rpc(true,{action:'feedback_status',id:row.id,status,response});await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}});}catch(err){target.textContent=err.message;}}
- async function sendFeedback(ev){ev.preventDefault();if(!session?.user)return;$o('feedbackSend').disabled=true;try{await rpc(true,{action:'feedback',id:feedbackId||crypto.randomUUID(),team_id:activeTeam?.id||null,category:value('feedbackCategory'),body:value('feedbackBody'),build:'v0.18.0'});$o('feedbackBody').value='';feedbackId=crypto.randomUUID();note('feedbackStatus','Thanks—your feedback was saved.');await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}finally{$o('feedbackSend').disabled=false}}
+ async function sendFeedback(ev){ev.preventDefault();if(!session?.user)return;$o('feedbackSend').disabled=true;try{await rpc(true,{action:'feedback',id:feedbackId||crypto.randomUUID(),team_id:activeTeam?.id||null,category:value('feedbackCategory'),body:value('feedbackBody'),build:'v0.19.2'});$o('feedbackBody').value='';feedbackId=crypto.randomUUID();note('feedbackStatus','Thanks—your feedback was saved.');await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}finally{$o('feedbackSend').disabled=false}}
  function close(){finishDialog(null);generation++;editor=null;$o('opsRosterContacts')?.replaceChildren();$o('opsFields').replaceChildren();hub=null;['opsHubSheet','opsEditorSheet','feedbackSheet'].forEach(id=>show(id,false));}
  $o('opsDialogCancel').onclick=()=>finishDialog(null);
  $o('opsOrg').onchange=async()=>{org=value('opsOrg');division='';tab='home';hub=null;$o('opsContent').replaceChildren();$o('opsTabs').replaceChildren();$o('opsHubTitle').textContent='Organization Hub';note('opsStatus','Loading organization…');try{await reload()}catch(err){note('opsStatus',err.message,true)}};
@@ -9858,6 +9969,9 @@ document.getElementById('organizationHomeBtn').onclick=()=>WMOperations.open(sel
 <p>An independent team can approve an affiliation with another organization for membership support. Authorized membership-support staff can then see athlete names, sports membership numbers, expiration dates, membership status, uploaded membership cards and recorded credentials. This affiliation does not itself give access to guardian contacts, private weight history, medical records or team administration. Removing the affiliation ends that affiliation-based access.</p>
 <p>Membership cards are stored privately. Membership and credential review labels record a person's review; they do not indicate an automatic check against USA Wrestling or another credential provider.</p>
 <p>Messages and attachments are visible to permitted recipients and, when safety rules apply, connected guardians and authorized safety reviewers. Information published to affiliated clubs is visible to the relevant clubs. Anyone with a calendar subscription link may be able to read the events it contains; keep the link private.</p>
+<h2>Shared wrestling profiles and family invitations</h2>
+<p>Profile discovery starts off. Approved shared fields may include a profile picture, wrestling roles, age division, tournament history and a music link. Following a profile does not grant messaging access or access to private team records. The outside-view preview shows shared member visibility; separately authorized team and family access can differ.</p>
+<p>Family invitations must be claimed by a signed-in account and approved by the profile manager. Approved relatives receive view-only access to the selected shared profile fields and/or individually selected upcoming events, including event times and location names. Family access alone does not grant weights, medical documents, guardian authority, team administration or messaging. Newly created events are not automatically shared. Revoking access prevents future requests but cannot recall information already viewed; an issued profile-photo link can last up to 60 seconds.</p>
 <h2>Services that handle information</h2>
 <ul><li><strong>Supabase</strong> handles accounts, the database, stored files and backend processing.</li>
 <li><strong>GitHub Pages and jsDelivr</strong> deliver the web app and its client library. Requests to hosting services include technical information such as an IP address.</li>
@@ -9954,9 +10068,10 @@ document.getElementById('organizationHomeBtn').onclick=()=>WMOperations.open(sel
 window.WMProfiles=(()=>{
  let mine=[],current=null,generation=0,actor=null;
  const E=esc,$p=id=>document.getElementById(id);
- const fields=[['roles','Wrestling roles'],['affiliation','Team / organization'],['bio','About me / goals'],['age_division','Age division'],['mat_rank','Mat-official classification'],['pairing_rank','Pairing-official classification'],['results','Tournament results'],['music_title','Entrance Song title'],['music_url','Entrance Song link'],['photo','Profile photo'],['corner','My Corner']];
+ const fields=[['roles','About my roles (self-described)'],['affiliation','Team / organization'],['bio','About me / goals'],['age_division','Age division'],['mat_rank','Mat-official classification'],['pairing_rank','Pairing-official classification'],['results','Tournament results'],['music_title','Entrance Song title'],['music_url','Entrance Song link'],['photo','Profile photo'],['corner','My Corner']];
  const status=t=>$p('wpStatus').textContent=t||'';
- const rpc=async(action,data={})=>{const uid=session?.user?.id;const {data:out,error}=await client.rpc('wrestling_profiles_request',{p_action:action,p_data:data});if(uid!==session?.user?.id)throw Error('Account changed. Reopen profiles.');if(error)throw Error(error.message);return out;};
+ const allowed=()=>!!session?.user?.id&&!managedLogin&&!document.body.classList.contains('kiosk-locked')&&!document.querySelector('#appLockOverlay:not(.hidden)');
+ const rpc=async(action,data={},endpoint='wrestling_profiles_request')=>{if(!allowed())throw Error('Unlock the app and use a personal account to open profiles.');const uid=session.user.id;const {data:out,error}=await client.rpc(endpoint,{p_action:action,p_data:data});if(uid!==session?.user?.id||!allowed())throw Error('Account or lock state changed. Reopen profiles.');if(error)throw Error(error.message);return out;};
  const button=(text,attr)=>`<button type="button" class="secondary" ${attr}>${E(text)}</button>`;
  function mount(){
  const sheet=document.createElement('section');sheet.id='wrestlingProfilesSheet';sheet.className='sheet hidden';sheet.setAttribute('aria-modal','true');sheet.setAttribute('role','dialog');sheet.setAttribute('aria-label','Wrestling profiles');
@@ -9965,43 +10080,107 @@ window.WMProfiles=(()=>{
  $p('wpClose').onclick=()=>{generation++;closeSheets();};
  sheet.addEventListener('click',async e=>{const b=e.target.closest('button');if(!b)return;try{await handle(b);}catch(err){status(err.message);}});
  }
- async function open(){if(document.body.classList.contains('kiosk-locked')||document.querySelector('#appLockOverlay:not(.hidden)'))return;if(managedLogin){message('Use a personal account to open wrestling profiles.',true);return;}closeSheets();openSheet('wrestlingProfilesSheet');await home();}
+ async function open(){if(!allowed())return false;const uid=session.user.id;closeSheets();openSheet('wrestlingProfilesSheet');await home();return allowed()&&uid===session?.user?.id&&!$p('wrestlingProfilesSheet').classList.contains('hidden');}
  async function home(){const ticket=++generation;status('Loading profiles…');const uid=session?.user?.id;const rows=await rpc('mine');if(ticket!==generation||session?.user?.id!==uid)return;mine=rows||[];current=null;status('');
- $p('wrestlingProfilesSheet').scrollTop=0;$p('wpBody').innerHTML=`<h3>My profiles</h3><p class="fine">One profile across teams. Minor athlete sharing is managed by a linked parent/guardian. This includes athletes age 13 and under.</p><div class="wp-grid">${mine.map(p=>button(p.name,`data-wp-open="${p.id}"`)).join('')}</div><form id="wpSearchForm"><label for="wpQuery">Find a wrestling profile</label><div class="wp-search"><input id="wpQuery" maxlength="80" placeholder="Search a name" required minlength="2"><button type="submit">Search</button></div></form><p class="fine">Only profiles whose owners approved discovery appear here.</p><div id="wpSearchResults" class="wp-grid"></div>`;
+ $p('wrestlingProfilesSheet').scrollTop=0;$p('wpBody').innerHTML=`<div id="wpRoleReviewEntry" class="wp-actions"></div><h3>My profiles</h3><p class="fine">One profile across teams. Minor athlete sharing is managed by a linked parent/guardian. This includes athletes age 13 and under.</p><div class="wp-grid">${mine.map(p=>button(p.name,`data-wp-open="${p.id}"`)).join('')}</div><form id="wpSearchForm"><label for="wpQuery">Find a wrestling profile</label><div class="wp-search"><input id="wpQuery" maxlength="80" placeholder="Search a name" required minlength="2"><button type="submit">Search</button></div></form><p class="fine">Only profiles whose owners approved discovery appear here.</p><div id="wpSearchResults" class="wp-grid"></div>`;
+ rpc('context',{},'wrestling_roles_request').then(c=>{if(ticket===generation&&c?.can_review)$p('wpRoleReviewEntry').innerHTML=button('Adult role approvals','data-wp-role-queue');}).catch(()=>{});
  $p('wpSearchForm').onsubmit=async e=>{e.preventDefault();const q=$p('wpQuery').value;const t=++generation;try{const found=await rpc('search',{query:q});if(t!==generation)return;$p('wpSearchResults').innerHTML=found.length?found.map(p=>button(p.name,`data-wp-open="${p.id}"`)).join(''):'<p class="fine">No shared profiles found.</p>';}catch(err){status(err.message);}};
  }
  async function view(id,preview=false){const t=++generation;status('Loading profile…');const uid=session?.user?.id,p=await rpc('view',{id,preview});if(t!==generation||session?.user?.id!==uid)return;current={...p,id};status(preview?'Outside view · what another signed-in member can see. Team-only access is separate.':'');const d=p.details||{};if(preview&&(!p.discoverable||p.unavailable)){$p('wrestlingProfilesSheet').scrollTop=0;$p('wpBody').innerHTML=button('Back to my profile',`data-wp-open="${id}"`)+'<section class="wp-panel"><h3>This profile is private</h3><p>Other members cannot discover or open this shared profile. Your authorized team and family access is separate.</p></section>';return;}
- $p('wrestlingProfilesSheet').scrollTop=0;$p('wpBody').innerHTML=`${preview?button('Back to my profile',`data-wp-open="${id}"`):button('All profiles','data-wp-home')}<div class="wp-hero"><div id="wpPhoto" class="wp-photo">👤</div><div><h2>${E(p.name)}</h2><p>${E(d.roles|| (p.athlete?'Athlete':'Wrestling community'))}</p><small>${p.discoverable?'Shared with signed-in members':'Private profile'}</small></div></div><div class="wp-actions">${p.manager&&!preview?button('Edit profile & visibility','data-wp-edit')+button('Follower approvals','data-wp-requests')+button('Family sharing','data-wp-family'):''}${(p.manager||p.self)&&!preview?button('How others view my profile','data-wp-preview'):''}${mine.some(x=>x.id===id)&&!preview?button('Following & My Corner','data-wp-links'):''}${p.discoverable&&!preview?button('Share profile','data-wp-share'):''}</div>${!preview&&!mine.some(x=>x.id===id)&&mine.length?`<label for="wpActor">Request to follow as</label><select id="wpActor">${mine.map(x=>`<option value="${x.id}">${E(x.name)}</option>`).join('')}</select><button class="wide" data-wp-follow>Request to follow</button><p class="fine">Following does not enable messaging or reveal private team information.</p>`:''}
- ${[['affiliation','Affiliation'],['bio','About / goals'],['age_division','Age division'],['mat_rank','Mat-official classification'],['pairing_rank','Pairing-official classification']].filter(([k])=>d[k]).map(([k,label])=>`<section class="wp-panel"><h3>${label}</h3><p>${E(d[k])}</p>${k.includes('rank')?'<small>Self-reported · not verified</small>':''}</section>`).join('')}
- ${Array.isArray(d.results)&&d.results.length?`<section class="wp-panel"><h3>Tournament history</h3><p class="fine">Profile-entered results · not verified tournament imports.</p>${d.results.map(r=>`<article class="wp-result"><b>${E(r.event||'Tournament')}</b><span>${E([r.date,r.style,r.division,r.placement].filter(Boolean).join(' · '))}</span></article>`).join('')}</section>`:''}
+ $p('wrestlingProfilesSheet').scrollTop=0;$p('wpBody').innerHTML=`${preview?button('Back to my profile',`data-wp-open="${id}"`):button('All profiles','data-wp-home')}<div class="wp-hero"><div id="wpPhoto" class="wp-photo">👤</div>${p.manager&&!preview?button('Edit photo','data-wp-edit'):''}<div><h2>${E(p.name)}</h2><p>${E(d.roles|| (p.athlete?'Athlete':'Wrestling community'))}</p>${d.roles?'<small>Role description · self-reported</small><br>':''}<small>${p.discoverable?'Shared with signed-in members':'Private profile'}</small></div></div><div class="wp-actions">${p.manager&&!preview?button('Edit profile & visibility','data-wp-edit')+button('Follower approvals','data-wp-requests')+button('Family sharing','data-wp-family'):''}${(p.manager||p.self)&&!preview?button('How others view my profile','data-wp-preview'):''}${mine.some(x=>x.id===id)&&!preview?button('Following & My Corner','data-wp-links'):''}${p.discoverable&&!preview?button('Share profile','data-wp-share'):''}</div>${!preview&&!mine.some(x=>x.id===id)&&mine.length?`<label for="wpActor">Request to follow as</label><select id="wpActor">${mine.map(x=>`<option value="${x.id}">${E(x.name)}</option>`).join('')}</select><button class="wide" data-wp-follow>Request to follow</button><p class="fine">Following does not enable messaging or reveal private team information.</p>`:''}
+ <section class="wp-panel"><h3>Roles & approvals</h3><div class="wp-grid">${(p.assigned_roles||[]).map(r=>`<article><b>${E(r.label)}</b>${r.scope?`<p>${E(r.scope)}</p>`:''}<small>${E(r.approval_label||'Pending approval')}</small></article>`).join('')||`<p class="fine">${p.athlete?'Athlete profile':'No assigned adult roles shared. You can hold several roles with one account.'}</p>`}</div><p class="fine">Role approval confirms a team or organization assignment. It does not verify age, identity, credentials, or SafeSport completion, and does not grant messaging access.</p></section>
+ ${[['affiliation','Affiliation'],['bio','About / goals'],['age_division','Age division'],['mat_rank','Mat-official classification'],['pairing_rank','Pairing-official classification']].filter(([k])=>d[k]).map(([k,label])=>`<section class="wp-panel"><h3>${label}</h3>${k==='affiliation'?`<div class="wp-actions">${String(d[k]).split(/[,;]/).map(n=>n.trim()).filter(Boolean).map(n=>button(n,`data-wp-affiliation="${E(n)}"`)).join('')}</div>`:`<p>${E(d[k])}</p>`}${k.includes('rank')?'<small>Self-reported · not verified</small>':''}</section>`).join('')}
+ ${Array.isArray(d.results)&&d.results.length?`<section class="wp-panel"><h3>Tournament history</h3><p class="fine">Results shared by the profile owner or parent. Open a linked tournament to check its official results.</p>${d.results.map(r=>`<article class="wp-result"><b>${safeEvent(r.url)?`<a href="${E(r.url)}" target="_blank" rel="noopener noreferrer">${E(r.event||'Tournament')} ↗</a>`:E(r.event||'Tournament')}</b><span>${E([r.date,r.style,r.division,r.placement].filter(Boolean).join(' · '))}</span></article>`).join('')}</section>`:''}
  ${d.music_title||d.music_url?`<section class="wp-panel"><h3>Entrance Song</h3><p>${E(d.music_title||'My song')}</p>${safeMusic(d.music_url)?`<a href="${E(d.music_url)}" target="_blank" rel="noopener noreferrer">Listen on ${new URL(d.music_url).hostname==='music.apple.com'?'Apple Music':'Spotify'}</a>`:''}</section>`:''}
  <section class="wp-panel"><h3>My Corner</h3><div class="wp-grid">${(p.corner||[]).filter(Boolean).map(c=>button(c.name,`data-wp-open="${c.id}"`)).join('')||'<p class="fine">No shared corner members yet.</p>'}</div></section>`;
- if(p.photo_path){const {data}=await client.storage.from('wrestling-profile-photos').createSignedUrl(p.photo_path,60);if(t===generation&&data?.signedUrl)$p('wpPhoto').innerHTML=`<img src="${E(data.signedUrl)}" alt="${E(p.name)}">`;}
+ if(p.photo_path){const {data}=await client.storage.from('wrestling-profile-photos').createSignedUrl(p.photo_path,60);if(t===generation&&uid===session?.user?.id&&allowed()&&data?.signedUrl)$p('wpPhoto').innerHTML=`<img src="${E(data.signedUrl)}" alt="${E(p.name)}">`;}
  }
  function safeMusic(url){try{const u=new URL(url);return u.protocol==='https:'&&['music.apple.com','open.spotify.com'].includes(u.hostname)&&!u.username&&!u.password;}catch{return false;}}
- function edit(){const p=current,d=p.details||{},sh=p.sharing||{};generation++;status('Edit your personal wrestling profile here. Your admin, coach and parent permissions are assigned separately in each organization or team.');
- $p('wrestlingProfilesSheet').scrollTop=0;$p('wpBody').innerHTML=`${button('Back to profile',`data-wp-open="${p.id}"`)}<form id="wpEditForm"><label for="wpName">Display name</label><input id="wpName" maxlength="120" required value="${E(p.name)}">${fields.filter(([k])=>!['photo','corner','results','music_url','music_title'].includes(k)).map(([k,l])=>`<label for="wp_${k}">${l}</label>${k==='bio'?`<textarea id="wp_${k}" maxlength="1200">${E(d[k]||'')}</textarea>`:`<input id="wp_${k}" maxlength="160" ${p.athlete&&k==='roles'?'readonly':''} value="${E(d[k]||'')}">`}`).join('')}<p class="fine">You can list multiple roles, for example: WAWA director · Lyman coach · Wrestling parent. These describe you; each organization or team separately controls your actual access. Official classifications are self-reported.</p><label for="wpPicture">Profile picture</label><input id="wpPicture" type="file" accept="image/jpeg,image/png,image/webp"><p class="fine">Choose a picture specifically for this shared profile.</p><h3>Tournament results</h3><div id="wpResults"></div>${button('Add tournament','id="wpAddResult"')}<h3>Entrance Song</h3><label for="wp_music_title">Song title</label><input id="wp_music_title" maxlength="160" value="${E(d.music_title||'')}"><label for="wp_music_url">Apple Music or Spotify link</label><input id="wp_music_url" type="url" maxlength="1000" value="${E(d.music_url||'')}"><label class="toggle-row"><span>I approve this song and have checked that it is clean.</span><input id="wpMusicApproved" type="checkbox"></label><h3>Visibility</h3><label class="toggle-row"><span><b>Allow profile discovery</b><small>Other signed-in members can see this name and the fields selected below.</small></span><input id="wpDiscover" type="checkbox" ${p.discoverable?'checked':''}></label>${fields.map(([k,l])=>`<label class="toggle-row"><span>Share ${E(l.toLowerCase())}</span><input data-wp-sharefield="${k}" type="checkbox" ${sh[k]?'checked':''}></label>`).join('')}<label class="toggle-row"><span>Accept follow requests for review</span><input data-wp-sharefield="follow" type="checkbox" ${sh.follow?'checked':''}></label><label class="toggle-row"><span><b>Allow this athlete to request follows and arrange My Corner</b><small>Incoming requests still need parent approval for minors.</small></span><input data-wp-sharefield="outgoing_follow" type="checkbox" ${sh.outgoing_follow?'checked':''}></label><button type="submit" class="wide" id="wpSave">Save profile</button></form>`;
+ const choices={mat_rank:['M1','M2','M3'],pairing_rank:['P1','P2','P3'],age_division:['6U','8U','10U','12U','14U','16U','Junior','U15','U17','U20','U23','Senior','Open','Masters'],style:['Folkstyle','Freestyle','Greco-Roman','Beach'],placement:['1st','2nd','3rd','4th','5th','6th','7th','8th','Participant']};
+ function choiceControl(key,value='',attrs=''){
+ const list=choices[key]||[],custom=!!value&&!list.includes(value);
+ return `<select ${attrs} data-choice="${key}"><option value="">Not selected</option>${list.map(v=>`<option ${value===v?'selected':''}>${E(v)}</option>`).join('')}${custom?`<option selected value="${E(value)}">${E(value)}</option>`:''}<option value="__other">Other…</option></select>`;
+ }
+ function wireChoices(box){box.querySelectorAll('[data-choice]').forEach(s=>{s.onchange=()=>{if(s.value==='__other'){const input=document.createElement('input');input.type='text';input.maxLength=120;input.placeholder='Enter your classification or custom value';if(s.id)input.id=s.id;if(s.dataset.field)input.dataset.field=s.dataset.field;s.replaceWith(input);input.focus();}};});}
+ function safeEvent(url){try{const u=new URL(url);return u.protocol==='https:'&&!u.username&&!u.password&&['usabracketing.com','www.usabracketing.com','trackwrestling.com','www.trackwrestling.com','usawrestlingevents.com','www.usawrestlingevents.com','usawmembership.com','www.usawmembership.com','wawawrestling.org','www.wawawrestling.org'].includes(u.hostname);}catch{return false;}}
+ async function affiliation(name,offset=0){const id=current.id,t=++generation;status('Loading shared profiles…');const out=await rpc('affiliation',{name,offset});if(t!==generation)return;$p('wpBody').innerHTML=button('Back to profile',`data-wp-open="${id}"`)+`<h3>${E(name)}</h3><p class="fine">People who share this affiliation on their profile. This is not a verified membership roster; private profiles and hidden affiliations are excluded.</p><div class="wp-grid">${out.rows.map(p=>button(p.name,`data-wp-open="${p.id}"`)).join('')||'<p>No shared profiles found.</p>'}</div><div class="wp-actions">${offset?button('Previous',`data-wp-affiliation="${E(name)}" data-offset="${Math.max(0,offset-30)}"`):''}${out.more?button('Next',`data-wp-affiliation="${E(name)}" data-offset="${offset+30}"`):''}</div>`;$p('wrestlingProfilesSheet').scrollTop=0;status('');}
+ function parseResultsCSV(text){
+ const rows=[];let row=[],cell='',quoted=false;
+ for(let i=0;i<text.length;i++){const c=text[i];if(c==='"'){if(quoted&&text[i+1]==='"'){cell+='"';i++;}else quoted=!quoted;}else if(c===','&&!quoted){row.push(cell);cell='';}else if((c==='\n'||c==='\r')&&!quoted){if(c==='\r'&&text[i+1]==='\n')i++;row.push(cell);if(row.some(v=>v.trim()))rows.push(row);row=[];cell='';}else cell+=c;}
+ if(quoted)throw Error('This CSV has an unclosed quote.');row.push(cell);if(row.some(v=>v.trim()))rows.push(row);
+ const headers=(rows.shift()||[]).map(s=>s.replace(/^\uFEFF/,'').trim().toLowerCase());const names={tournament:'event',event:'event',date:'date',style:'style',division:'division',placement:'placement',place:'placement',url:'url',link:'url'};
+ if(!headers.some(x=>names[x]==='event'))throw Error('The CSV needs a Tournament or Event column.');
+ return rows.map(values=>{const r={};headers.forEach((h,i)=>{if(names[h])r[names[h]]=(values[i]||'').trim();});if(!r.event||r.event.length>120)throw Error('Each row needs a tournament name of up to 120 characters.');if(r.url&&!safeEvent(r.url))throw Error('Use a supported tournament website for each link.');if(r.date&&!/^\d{4}-\d{2}-\d{2}$/.test(r.date))throw Error('Use YYYY-MM-DD dates in the CSV.');return r;});
+ }
+ function photoEditor(p,ticket){
+ let image=null,zoom=1,x=0,y=0,drag=null,dirty=false,sourceURL=null,chosen=false,loadVersion=0;
+ const canvas=$p('wpCropCanvas'),ctx=canvas.getContext('2d'),uid=session.user.id;
+ const valid=()=>allowed()&&uid===session?.user?.id&&ticket===generation&&canvas.isConnected;
+ function draw(){if(!image)return;const scale=Math.max(400/image.width,400/image.height)*zoom,w=image.width*scale,h=image.height*scale;x=Math.max(-(w-400)/2,Math.min((w-400)/2,x));y=Math.max(-(h-400)/2,Math.min((h-400)/2,y));ctx.fillStyle='#fff';ctx.fillRect(0,0,400,400);ctx.drawImage(image,(400-w)/2+x,(400-h)/2+y,w,h);}
+ async function load(blob,changed){const version=++loadVersion;if(blob.size>12000000)throw Error('Choose a picture smaller than 12 MB.');const url=URL.createObjectURL(blob),img=new Image();try{await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(Error('Could not open this picture. Try a JPEG or PNG.'));img.src=url;});if(!valid()||version!==loadVersion)return;image=img;zoom=1;x=y=0;dirty=changed;$p('wpCropZoom').value='1';$p('wpCropArea').classList.remove('hidden');draw();}finally{URL.revokeObjectURL(url);}}
+ $p('wpPicture').onchange=async()=>{const f=$p('wpPicture').files[0];if(!f)return;chosen=true;try{await load(f,true);}catch(e){status(e.message);}};
+ $p('wpChangePhoto').onclick=()=>$p('wpPicture').click();
+ $p('wpCropZoom').oninput=e=>{zoom=Number(e.target.value);dirty=true;draw();};
+ $p('wpCropCenter').onclick=()=>{zoom=1;x=y=0;$p('wpCropZoom').value='1';dirty=true;draw();};
+ canvas.onpointerdown=e=>{if(!image)return;e.preventDefault();drag={x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId);};
+ canvas.onpointermove=e=>{if(!drag)return;const scale=400/canvas.getBoundingClientRect().width;x+=(e.clientX-drag.x)*scale;y+=(e.clientY-drag.y)*scale;drag={x:e.clientX,y:e.clientY};dirty=true;draw();};
+ canvas.onpointerup=canvas.onpointercancel=()=>drag=null;
+ if(p.photo_path)client.storage.from('wrestling-profile-photos').createSignedUrl(p.photo_path,60).then(async({data,error})=>{if(error)throw error;if(!valid()||image||chosen)return;sourceURL=data?.signedUrl;if(sourceURL){const r=await fetch(sourceURL);if(!r.ok)throw Error('Could not load your existing photo.');const blob=await r.blob();if(valid()&&!image&&!chosen)await load(blob,false);}}).catch(()=>{if(valid())status('Your existing photo is saved. Choose a picture to replace it.');});
+ return async()=>{if(!dirty||!image)return null;if(!valid())throw Error('Reopen the profile to update its photo.');return new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.85));};
+ }
+ function editExtras(p,ticket){
+ wireChoices($p('wpEditForm'));
+ const music=$p('wp_music_url'),title=$p('wp_music_title');
+ function musicPreview(){const url=music.value.trim();$p('wpMusicPreview').innerHTML=safeMusic(url)?`<a href="${E(url)}" target="_blank" rel="noopener noreferrer">Open song in ${new URL(url).hostname==='music.apple.com'?'Apple Music':'Spotify'} ↗</a>`:'';}
+ music.oninput=()=>{$p('wpMusicApproved').checked=false;musicPreview();};musicPreview();
+ $p('wpPasteMusic').onclick=async()=>{try{music.value=(await navigator.clipboard.readText()).trim();music.oninput();if(!safeMusic(music.value))status('Paste an Apple Music or Spotify HTTPS sharing link.');}catch{music.focus();status('Paste the song link into the field (⌘V on Mac).');}};
+ $p('wpFindMusic').onclick=()=>{window.open('https://music.apple.com/us/search?term='+encodeURIComponent(title.value||''),'_blank','noopener,noreferrer');};
+ $p('wpImportResults').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>200000)throw Error('Choose a CSV smaller than 200 KB.');const rows=parseResultsCSV(await file.text());if(ticket!==generation||!allowed())return;if(rows.length+$p('wpResults').children.length>30)throw Error('Up to 30 results can be saved. Remove entries before importing.');rows.forEach(addResult);status('Imported into your draft. Review the results, then Save profile.');}catch(err){status(err.message);}finally{e.target.value='';}};
+ $p('wpCSVTemplate').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['Tournament,Date,Style,Division,Placement,Link\n'],{type:'text/csv'}));a.download='tournament-results-template.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);};
+ const known=typeof scheduleRows!=='undefined'?scheduleRows.filter(e=>e.event_type==='tournament'||e.type==='tournament'):[];
+ $p('wpSchedulePick').innerHTML='<option value="">Choose from your loaded team schedule…</option>'+known.map((e,i)=>`<option value="${i}">${E(e.title)} · ${E((e.starts_at||'').slice(0,10))}</option>`).join('');
+ $p('wpSchedulePick').onchange=e=>{if(e.target.value==='')return;const event=known[Number(e.target.value)];addResult({event:event.title,date:(event.starts_at||'').slice(0,10)});e.target.value='';status('Tournament added to your draft. Choose your division and placement.');};
+ const names=typeof availableTeams!=='undefined'?availableTeams.map(x=>x.name).filter(Boolean):[];
+ $p('wpAffiliationChoices').innerHTML=[...new Set(names)].map(n=>`<option value="${E(n)}">${E(n)}</option>`).join('');
+ }
+
+ function edit(){const p=current,d=p.details||{},sh=p.sharing||{};const ticket=++generation;status('Edit your personal wrestling profile here. Your admin, coach and parent permissions are assigned separately in each organization or team.');
+ $p('wrestlingProfilesSheet').scrollTop=0;$p('wpBody').innerHTML=`${button('Back to profile',`data-wp-open="${p.id}"`)}<form id="wpEditForm"><label for="wpName">Display name</label><input id="wpName" maxlength="120" required value="${E(p.name)}">${fields.filter(([k])=>!['photo','corner','results','music_url','music_title'].includes(k)).map(([k,l])=>`<label for="wp_${k}">${l}</label>${choices[k]?choiceControl(k,d[k]||'',`id="wp_${k}"`):k==='bio'?`<textarea id="wp_${k}" maxlength="1200">${E(d[k]||'')}</textarea>`:`<input id="wp_${k}" ${k==='affiliation'?'list="wpAffiliationChoices"':''} maxlength="160" ${p.athlete&&k==='roles'?'readonly':''} value="${E(d[k]||'')}">`}`).join('')}<datalist id="wpAffiliationChoices"></datalist><p class="fine">Separate organizations with commas. You can list multiple roles, for example: WAWA director · Lyman coach · Wrestling parent. These describe you; each organization or team separately controls your actual access. Official classifications are self-reported.</p><h3>Profile picture</h3><input id="wpPicture" type="file" accept="image/jpeg,image/png,image/webp" hidden>${button('Change photo','id="wpChangePhoto"')}<div id="wpCropArea" class="hidden"><p class="fine">Drag your picture to center it. Use the slider to zoom.</p><canvas id="wpCropCanvas" width="400" height="400" aria-label="Adjust profile photo"></canvas><label>Zoom<input id="wpCropZoom" type="range" min="1" max="3" step="0.01" value="1"></label>${button('Center photo','id="wpCropCenter"')}</div><h3>Tournament results</h3><label>Choose a tournament<select id="wpSchedulePick"></select></label><p class="fine">Or add a tournament link below. You can also import results from a CSV and review them before saving.</p><details><summary>Import results from a file</summary><label>Results CSV<input id="wpImportResults" type="file" accept=".csv,text/csv"></label>${button('Download CSV template','id="wpCSVTemplate"')}</details><div id="wpResults"></div>${button('Add tournament','id="wpAddResult"')}<h3>Entrance Song</h3><div class="wp-actions">${button('Find on Apple Music','id="wpFindMusic"')}${button('Paste song link','id="wpPasteMusic"')}</div><p class="fine">In Apple Music, choose Share Song → Copy Link, then paste it here.</p><label for="wp_music_title">Song title (optional)</label><input id="wp_music_title" maxlength="160" value="${E(d.music_title||'')}"><label for="wp_music_url">Apple Music or Spotify link</label><input id="wp_music_url" type="url" maxlength="1000" value="${E(d.music_url||'')}"><div id="wpMusicPreview"></div><label class="toggle-row"><span>I approve this song and have checked that it is clean.</span><input id="wpMusicApproved" type="checkbox"></label><h3>Visibility</h3><label class="toggle-row"><span><b>Allow profile discovery</b><small>Other signed-in members can see this name and the fields selected below.</small></span><input id="wpDiscover" type="checkbox" ${p.discoverable?'checked':''}></label>${fields.map(([k,l])=>`<label class="toggle-row"><span>Share ${E(l.toLowerCase())}</span><input data-wp-sharefield="${k}" type="checkbox" ${sh[k]?'checked':''}></label>`).join('')}<label class="toggle-row"><span>Accept follow requests for review</span><input data-wp-sharefield="follow" type="checkbox" ${sh.follow?'checked':''}></label><label class="toggle-row"><span><b>Allow this athlete to request follows and arrange My Corner</b><small>Incoming requests still need parent approval for minors.</small></span><input data-wp-sharefield="outgoing_follow" type="checkbox" ${sh.outgoing_follow?'checked':''}></label><button type="submit" class="wide" id="wpSave">Save profile</button></form>`;
  for(const r of d.results||[])addResult(r);
+ const croppedPhoto=photoEditor(p,ticket);editExtras(p,ticket);
  $p('wpAddResult').onclick=()=>addResult({});
  $p('wpEditForm').onsubmit=async e=>{e.preventDefault();const btn=$p('wpSave');btn.disabled=true;try{
  const details={};for(const [k]of fields)if($p('wp_'+k))details[k]=$p('wp_'+k).value.trim();
  details.results=[...$p('wpResults').children].map(row=>Object.fromEntries([...row.querySelectorAll('input,select')].map(i=>[i.dataset.field,i.value.trim()])));
+ if(details.music_url&&!safeMusic(details.music_url))throw Error('Use an Apple Music or Spotify HTTPS link.');if(details.results.some(r=>r.url&&!safeEvent(r.url)))throw Error('Use a supported tournament website link.');
  const sharing=Object.fromEntries([...$p('wpEditForm').querySelectorAll('[data-wp-sharefield]')].map(i=>[i.dataset.wpSharefield,i.checked]));
  await rpc('save',{id:p.id,name:$p('wpName').value.trim(),details,sharing,discoverable:$p('wpDiscover').checked,music_approved:$p('wpMusicApproved').checked});
- const file=$p('wpPicture').files[0];if(file)await uploadPhoto(p.id,file);
+ if(ticket!==generation||!allowed())return;const file=await croppedPhoto();if(file)await uploadPhoto(p.id,file);
  await view(p.id);status('Profile saved.');
  }catch(err){status(err.message);btn.disabled=false;}};
  }
- function addResult(r){if($p('wpResults').children.length>=30){status('Up to 30 results per profile.');return;}const row=document.createElement('div');row.className='wp-panel';row.innerHTML=[['event','Tournament'],['date','Date'],['style','Style'],['division','Division'],['placement','Placement']].map(([k,l])=>`<label>${l}<input data-field="${k}" ${k==='event'?'required':''} type="${k==='date'?'date':'text'}" maxlength="120" value="${E(r[k]||'')}"></label>`).join('')+button('Remove','data-wp-remove');$p('wpResults').appendChild(row);}
- async function uploadPhoto(id,file){if(file.size>12000000)throw Error('Choose a picture smaller than 12 MB.');const bitmap=await createImageBitmap(file);const canvas=document.createElement('canvas');canvas.width=canvas.height=400;const ctx=canvas.getContext('2d'),side=Math.min(bitmap.width,bitmap.height);ctx.drawImage(bitmap,(bitmap.width-side)/2,(bitmap.height-side)/2,side,side,0,0,400,400);bitmap.close();const blob=await new Promise(r=>canvas.toBlob(r,'image/jpeg',.85));if(!blob)throw Error('Could not prepare the photo.');const path=id+'/'+crypto.randomUUID()+'.jpg';const {error}=await client.storage.from('wrestling-profile-photos').upload(path,blob,{contentType:'image/jpeg',upsert:false});if(error)throw error;await rpc('photo',{id,path});}
+ function addResult(r){if($p('wpResults').children.length>=30){status('Up to 30 results per profile.');return;}const row=document.createElement('div');row.className='wp-panel';row.innerHTML=`<label>Tournament link (optional)<input data-field="url" type="url" maxlength="1000" placeholder="Paste a USA Bracketing, Trackwrestling or USA Wrestling link" value="${E(r.url||'')}"></label>`+[['event','Tournament'],['date','Date'],['style','Style'],['division','Division'],['placement','Placement']].map(([k,l])=>`<label>${l}${choices[k]?choiceControl(k,r[k]||'',`data-field="${k}"`):`<input data-field="${k}" ${k==='event'?'required':''} type="${k==='date'?'date':'text'}" maxlength="120" value="${E(r[k]||'')}">`}</label>`).join('')+button('Remove','data-wp-remove');$p('wpResults').appendChild(row);wireChoices(row);
+ const link=row.querySelector('[data-field="url"]');link.onchange=()=>{link.setCustomValidity(link.value&&!safeEvent(link.value)?'Use a supported tournament website HTTPS link.':'');if(link.value&&!safeEvent(link.value))link.reportValidity();};
+ }
+ async function uploadPhoto(id,file){const uid=session?.user?.id;if(!allowed())throw Error('Unlock the profile first.');if(file.size>12000000)throw Error('Choose a picture smaller than 12 MB.');const bitmap=await createImageBitmap(file);const canvas=document.createElement('canvas');canvas.width=canvas.height=400;const ctx=canvas.getContext('2d'),side=Math.min(bitmap.width,bitmap.height);ctx.drawImage(bitmap,(bitmap.width-side)/2,(bitmap.height-side)/2,side,side,0,0,400,400);bitmap.close();const blob=await new Promise(r=>canvas.toBlob(r,'image/jpeg',.85));if(!blob)throw Error('Could not prepare the photo.');if(uid!==session?.user?.id||!allowed())throw Error('Account changed. Reopen the profile.');const path=id+'/'+crypto.randomUUID()+'.jpg';const {error}=await client.storage.from('wrestling-profile-photos').upload(path,blob,{contentType:'image/jpeg',upsert:false});if(error)throw error;if(uid!==session?.user?.id||!allowed())throw Error('Account changed. Reopen the profile.');await rpc('photo',{id,path});}
  async function requests(){const p=current,t=++generation,rows=await rpc('requests',{id:p.id});if(t!==generation)return;status('These approvals control following only. Existing messaging permissions remain separate.');$p('wrestlingProfilesSheet').scrollTop=0;$p('wpBody').innerHTML=button('Back to profile',`data-wp-open="${p.id}"`)+rows.map(r=>`<article class="wp-panel"><b>${E(r.name)}</b><p>${E(r.status)}</p><div class="wp-actions">${['approved','denied','blocked'].map(s=>button(s==='approved'?'Approve follow':s==='denied'?'Deny / remove follow':'Block profile connection',`data-wp-review="${s}" data-source="${r.source}"`)).join('')}</div></article>`).join('')+(rows.length?'':'<p>No follow requests yet.</p>');}
  async function links(){const p=current,t=++generation,rows=await rpc('links',{id:p.id});if(t!==generation)return;status('My Corner needs mutual approved teammates. Enter positions 1–8 to arrange them.');$p('wrestlingProfilesSheet').scrollTop=0;$p('wpBody').innerHTML=button('Back to profile',`data-wp-open="${p.id}"`)+`<div id="wpLinks">${rows.filter(r=>r.profile).map(r=>`<article class="wp-panel"><b>${E(r.profile.name)}</b><p>${E(r.status)}</p>${button('Open',`data-wp-open="${r.id}"`)} ${button('Unfollow',`data-wp-unfollow="${r.id}"`)}${r.status==='approved'?`<label>Corner position (optional)<input data-corner="${r.id}" type="number" min="1" max="8" value="${(p.corner||[]).findIndex(c=>c?.id===r.id)>=0?(p.corner||[]).findIndex(c=>c?.id===r.id)+1:''}"></label>`:''}</article>`).join('')}</div><button type="button" class="wide" data-wp-corner>Save My Corner</button>`;}
  async function share(){const url=new URL(location.origin+location.pathname);url.hash='wrestling-profile='+current.id;const text=current.name+' · Wrestling Manager';if(navigator.share)try{await navigator.share({title:text,url:url.href});return;}catch(e){if(e.name==='AbortError')return;}
  const box=document.createElement('div');box.className='wp-panel';box.innerHTML='<label>Profile link<input readonly></label><p class="fine">Sign-in and profile visibility still apply.</p><div class="wp-qr"></div>';box.querySelector('input').value=url.href;$p('wpBody').prepend(box);new QRCode(box.querySelector('.wp-qr'),{text:url.href,width:200,height:200});box.querySelector('input').select();}
- async function handle(b){if(b.hasAttribute('data-wp-family'))return WMFamily.open(current.id);if(b.hasAttribute('data-wp-home'))return home();if(b.dataset.wpOpen)return view(b.dataset.wpOpen);if(b.hasAttribute('data-wp-edit'))return edit();if(b.hasAttribute('data-wp-preview'))return view(current.id,true);if(b.hasAttribute('data-wp-requests'))return requests();if(b.hasAttribute('data-wp-links'))return links();if(b.hasAttribute('data-wp-remove'))return b.closest('.wp-panel').remove();if(b.hasAttribute('data-wp-share'))return share();if(b.hasAttribute('data-wp-follow')){await rpc('follow',{id:$p('wpActor').value,target:current.id});status('Follow request sent for approval.');}if(b.dataset.wpReview){await rpc('review',{id:current.id,source:b.dataset.source,status:b.dataset.wpReview});return requests();}if(b.dataset.wpUnfollow){await rpc('unfollow',{id:current.id,target:b.dataset.wpUnfollow});return links();}if(b.hasAttribute('data-wp-corner')){const values=[...$p('wpLinks').querySelectorAll('[data-corner]')].filter(i=>i.value).map(i=>({id:i.dataset.corner,n:Number(i.value)}));if(values.some(x=>!Number.isInteger(x.n)||x.n<1||x.n>8)||new Set(values.map(x=>x.n)).size!==values.length)throw Error('Use unique positions from 1 through 8.');await rpc('corner',{id:current.id,members:values.sort((a,b)=>a.n-b.n).map(x=>x.id)});await view(current.id);status('My Corner saved.');}}
- async function sharedLink(){const match=location.hash.match(/^#wrestling-profile=([a-f0-9-]{36})$/i);if(!match||!session?.user||managedLogin||document.body.classList.contains('kiosk-locked')||document.querySelector('#appLockOverlay:not(.hidden)'))return;await open();await view(match[1]);}
+ let roleRows=[],roleQuery='';
+ async function roleQueue(offset=0){
+ const t=++generation;status('Loading assigned roles…');const out=await rpc('queue',{offset,query:roleQuery},'wrestling_roles_request');if(t!==generation)return;
+ roleRows=(out.rows||[]).slice(0,30);current=null;status('');$p('wrestlingProfilesSheet').scrollTop=0;
+ $p('wpBody').innerHTML=button('All profiles','data-wp-home')+`<h3>Adult role approvals</h3><p class="fine">Head coaches review parents, team leaders, and assistant coaches on their team. Organization admins review their organization’s assignments. Current organization admins can confirm their own assigned team roles. Everyone else needs an authorized reviewer.</p><form id="wpRoleSearch"><label for="wpRoleQuery">Find a member</label><div class="wp-search"><input id="wpRoleQuery" maxlength="80" value="${E(roleQuery)}" placeholder="Search a name"><button>Search</button></div></form><div id="wpRoleConfirm"></div>${roleRows.map((r,i)=>`<article class="wp-panel"><h3>${E(r.name)}</h3><p>${E(r.label)} · ${E(r.scope)}</p><p>${r.status==='approved'?'Approved':'Pending approval'}</p>${button(r.status==='approved'?'Remove approval':'Review role',`data-wp-role-review="${i}"`)}</article>`).join('')||'<p>No roles available for you to review.</p>'}<div class="wp-actions">${offset?button('Previous',`data-wp-role-page="${Math.max(0,offset-30)}"`):''}${(out.rows||[]).length>30?button('Next',`data-wp-role-page="${offset+30}"`):''}</div>`;
+ $p('wpRoleSearch').onsubmit=e=>{e.preventDefault();roleQuery=$p('wpRoleQuery').value;roleQueue().catch(e=>status(e.message));};
+ }
+ function reviewRole(index){const r=roleRows[index];if(!r)return;const revoke=r.status==='approved';
+ $p('wpRoleConfirm').innerHTML=`<section class="wp-panel"><h3>${revoke?'Remove approval':'Approve assigned role'}</h3><p>${E(r.name)} · ${E(r.label)} · ${E(r.scope)}</p><p class="fine">${revoke?'This removes the role badge approval. Membership and existing permissions stay unchanged.':'Confirm you recognize this member and their assigned role. This approval does not grant additional access or verify credentials.'}</p><label><input id="wpRoleAcknowledged" type="checkbox"> ${revoke?'I want to remove this approval.':'I confirm this assigned role.'}</label><div class="wp-actions">${button(revoke?'Remove approval':'Approve role',`data-wp-role-save="${index}"`)}${button('Cancel','data-wp-role-cancel')}</div></section>`;$p('wpRoleConfirm').scrollIntoView({block:'center'});$p('wpRoleAcknowledged').focus();
+ }
+ async function handle(b){if(!allowed())return;if(b.hasAttribute('data-wp-role-queue')){roleQuery='';return roleQueue();}if(b.hasAttribute('data-wp-role-page'))return roleQueue(Number(b.dataset.wpRolePage)||0);if(b.hasAttribute('data-wp-role-review'))return reviewRole(Number(b.dataset.wpRoleReview));if(b.hasAttribute('data-wp-role-cancel'))return $p('wpRoleConfirm').replaceChildren();if(b.hasAttribute('data-wp-role-save')){if(!$p('wpRoleAcknowledged')?.checked)throw Error('Confirm the assigned role first.');const r=roleRows[Number(b.dataset.wpRoleSave)];if(!r)return;b.disabled=true;try{await rpc(r.status==='approved'?'revoke':'approve',{source:r.source,id:r.id,revision:r.revision},'wrestling_roles_request');await roleQueue();status('Role approval updated.');}finally{b.disabled=false;}return;}if(b.dataset.wpAffiliation)return affiliation(b.dataset.wpAffiliation,Number(b.dataset.offset)||0);if(b.hasAttribute('data-wp-family'))return WMFamily.open(current.id);if(b.hasAttribute('data-wp-home'))return home();if(b.dataset.wpOpen)return view(b.dataset.wpOpen);if(b.hasAttribute('data-wp-edit'))return edit();if(b.hasAttribute('data-wp-preview'))return view(current.id,true);if(b.hasAttribute('data-wp-requests'))return requests();if(b.hasAttribute('data-wp-links'))return links();if(b.hasAttribute('data-wp-remove'))return b.closest('.wp-panel').remove();if(b.hasAttribute('data-wp-share'))return share();if(b.hasAttribute('data-wp-follow')){await rpc('follow',{id:$p('wpActor').value,target:current.id});status('Follow request sent for approval.');}if(b.dataset.wpReview){await rpc('review',{id:current.id,source:b.dataset.source,status:b.dataset.wpReview});return requests();}if(b.dataset.wpUnfollow){await rpc('unfollow',{id:current.id,target:b.dataset.wpUnfollow});return links();}if(b.hasAttribute('data-wp-corner')){const values=[...$p('wpLinks').querySelectorAll('[data-corner]')].filter(i=>i.value).map(i=>({id:i.dataset.corner,n:Number(i.value)}));if(values.some(x=>!Number.isInteger(x.n)||x.n<1||x.n>8)||new Set(values.map(x=>x.n)).size!==values.length)throw Error('Use unique positions from 1 through 8.');await rpc('corner',{id:current.id,members:values.sort((a,b)=>a.n-b.n).map(x=>x.id)});await view(current.id);status('My Corner saved.');}}
+ async function sharedLink(){const match=location.hash.match(/^#wrestling-profile=([a-f0-9-]{36})$/i);if(!match||!session?.user||managedLogin||document.body.classList.contains('kiosk-locked')||document.querySelector('#appLockOverlay:not(.hidden)'))return;if(await open())await view(match[1]);}
  mount();window.addEventListener('hashchange',()=>sharedLink().catch(e=>status(e.message)));
- return {open,sharedLink,safeMusic,async openProfile(id){await open();if(!managedLogin&&!document.querySelector('#appLockOverlay:not(.hidden)'))await view(id);},reset(){generation++;mine=[];current=null;$p('wpBody').replaceChildren();$p('wrestlingProfilesSheet').classList.add('hidden');}};
+ return {open,sharedLink,safeMusic,async openProfile(id){if(await open())await view(id);},reset(){generation++;mine=[];current=null;$p('wpBody').replaceChildren();$p('wrestlingProfilesSheet').classList.add('hidden');}};
 })();
 
 </script><script>
@@ -10027,5 +10206,6 @@ window.WMFamily=(()=>{
  return{open,home,reset};
 })();
 
-</script></body>
+</script><div id="tileEditBar" class="hidden" role="region" aria-label="Arrange tiles"><span id="tileEditLabel" aria-live="polite">Arrange tiles</span><button id="tileEditHide" type="button">Hide selected</button><button id="tileEditSettings" type="button">All tiles</button><button id="tileEditCancel" type="button">Cancel</button><button id="tileEditDone" type="button">Done</button></div><script>initTileEditing();</script>
+</body>
 </html>
