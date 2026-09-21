@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.15.32: shared Team Login profile photos and team logos. -->
+<!-- Wrestling Manager v0.20.7: Password AutoFill and remembered personal email. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -577,6 +577,9 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @media(max-width:600px){.practice-age-list{grid-template-columns:minmax(0,1fr)}.wp-hero{gap:14px;padding:18px 12px}.wp-photo-block .wp-photo{width:76px;height:76px}.wp-hero h2{font-size:24px}}
 </style>
+<style>
+.auth-remember-email{margin:12px 0 0}.auth-remember-email small{display:block;font-weight:400}.auth-password-help{line-height:1.45}.auth-options{display:grid;grid-template-columns:minmax(0,1fr);justify-content:stretch;gap:10px}.auth-options .toggle-row{width:100%}.auth-options .link-button{justify-self:end;box-shadow:none}
+</style>
 </head>
 <body>
   <div id="message"></div>
@@ -604,26 +607,28 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
     <div class="card auth-card">
       <h2>Sign In</h2>
       <div class="view-mode-switch" style="margin-bottom:18px"><button id="personalSignInTab" type="button" aria-pressed="true">Personal Login</button><button id="teamSignInTab" class="secondary" type="button" aria-pressed="false">Team Login</button></div>
-      <div id="personalSignInFields">
+      <form id="personalSignInFields" method="post" autocomplete="on" onsubmit="event.preventDefault()">
       <label for="email">Email</label>
-      <input id="email" type="email" autocomplete="email" placeholder="you@example.com">
+      <input id="email" name="username" type="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="email" enterkeyhint="next" required placeholder="you@example.com">
       <label for="password">Password</label>
-      <input id="password" type="password" autocomplete="current-password" placeholder="Password">
-      </div>
-      <div id="teamSignInFields" class="hidden">
-        <label for="teamSignInCode">Team code</label><input id="teamSignInCode" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="24" placeholder="Your team’s login code">
-        <label for="teamSignInUsername">Username</label><input id="teamSignInUsername" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="32" placeholder="Your team login username">
-        <label for="teamSignInPassword">Password</label><input id="teamSignInPassword" type="password" autocomplete="current-password" placeholder="Account password">
-      </div>
+      <input id="password" name="password" type="password" autocomplete="current-password" enterkeyhint="go" required placeholder="Password">
+      </form>
+      <form id="teamSignInFields" class="hidden" method="post" autocomplete="on" onsubmit="event.preventDefault()">
+        <label for="teamSignInCode">Team code</label><input id="teamSignInCode" name="team-code" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="next" maxlength="24" required disabled placeholder="Your team’s login code">
+        <label for="teamSignInUsername">Username</label><input id="teamSignInUsername" name="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="next" maxlength="32" required disabled placeholder="Your team login username">
+        <label for="teamSignInPassword">Password</label><input id="teamSignInPassword" name="password" type="password" autocomplete="current-password" enterkeyhint="go" required disabled placeholder="Account password">
+      </form>
+      <label id="rememberEmailRow" class="toggle-row auth-remember-email"><span><b>Remember my email</b><small>Fill it in next time on this device.</small></span><input id="rememberEmail" type="checkbox"></label>
       <div class="auth-options">
         <label class="toggle-row"><span><b>Stay signed in</b></span><input id="staySignedIn" type="checkbox" checked></label>
         <button id="forgotPasswordBtn" class="link-button" type="button">Forgot password?</button>
       </div>
       <div class="stack-actions">
-        <button id="teamSignInBtn" class="hidden" type="button">Sign In to Team</button>
-        <button id="signInBtn">Sign In</button>
-        <button id="signUpBtn" class="secondary">Create Account</button>
+        <button id="teamSignInBtn" class="hidden" type="submit" form="teamSignInFields">Sign In to Team</button>
+        <button id="signInBtn" type="submit" form="personalSignInFields">Sign In</button>
+        <button id="signUpBtn" class="secondary" type="button">Create Account</button>
       </div>
+      <p class="fine auth-password-help">Use your saved password from AutoFill or the keyboard’s Passwords button. Leave Stay signed in on for your personal device.</p>
       <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <a class="button" href="./mat-mode.html">Mat Mode · no account needed</a>
 <p id="signInHelp" class="fine">Coaches, athletes, parents and limited staff can sign in with their personal account.</p>
@@ -1802,7 +1807,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.5</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.7</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -1885,7 +1890,8 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
     <div class="sheet-head"><div><div class="eyebrow">YOUR ACCOUNT</div><h2>Sign-In & App Security</h2><p class="muted">These settings protect this device without changing team permissions.</p></div><button class="icon-close" data-close-sheet>×</button></div>
     <div class="security-status"><div class="security-status-icon">🔐</div><div><b id="deviceSecurityTitle">Checking device security…</b><small id="deviceSecurityDetail">Face ID, Touch ID, or the phone passcode can protect your saved session.</small></div></div>
     <div class="feature-card">
-      <label class="toggle-row"><span><b>Stay signed in</b><small>Keep your Supabase session on this device. Turn this off on a shared device.</small></span><input id="securityStaySignedIn" type="checkbox"></label>
+      <label class="toggle-row"><span><b>Stay signed in</b><small>Keep your account signed in on this device. Turn this off on a shared device.</small></span><input id="securityStaySignedIn" type="checkbox"></label>
+      <label id="securityRememberEmailRow" class="toggle-row"><span><b>Remember my email</b><small>Fill in your email after signing out. Turn off to forget it on this device.</small></span><input id="securityRememberEmail" type="checkbox"></label>
       <label id="appLockToggleRow" class="toggle-row"><span><b>Require device unlock when opening the app</b><small id="appLockToggleHelp">Uses Face ID, Touch ID, or the phone passcode.</small></span><input id="appLockEnabled" type="checkbox"></label>
       <button id="lockAppNowBtn" class="wide secondary" type="button">Lock App Now</button>
     </div>
@@ -2066,6 +2072,26 @@ const SUPABASE_URL = 'https://vfocpoyexnjsjpxhhyqr.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_aX7mx8Myn8sok3bhPPmphQ_fWN8o38P';
 const RESET_REDIRECT_URL = 'wrestlingmanager://password-reset';
 const AUTH_REMEMBER_KEY = 'wm_remember_session';
+// Only the email hint is saved here. Passwords belong to the system password manager.
+const AUTH_EMAIL_KEY = 'wm_login_email';
+const AUTH_EMAIL_PREFERENCE_KEY = 'wm_remember_email';
+function remembersLoginEmail(){try{return localStorage.getItem(AUTH_EMAIL_PREFERENCE_KEY)==='true';}catch{return false;}}
+function savedLoginEmail(){try{return remembersLoginEmail()?(localStorage.getItem(AUTH_EMAIL_KEY)||''):'';}catch{return '';}}
+function updateRememberEmail(remember,email=''){
+  try{
+    localStorage.setItem(AUTH_EMAIL_PREFERENCE_KEY,String(!!remember));
+    if(!remember)localStorage.removeItem(AUTH_EMAIL_KEY);
+    else if(email.trim())localStorage.setItem(AUTH_EMAIL_KEY,email.trim());
+  }catch{/* A blocked email preference must never prevent sign-in. */}
+  if($('rememberEmail'))$('rememberEmail').checked=!!remember;
+  if($('securityRememberEmail'))$('securityRememberEmail').checked=!!remember;
+}
+function restoreLoginEmail(){
+  const remember=remembersLoginEmail();
+  $('rememberEmail').checked=remember;$('securityRememberEmail').checked=remember;
+  // Preserve any value already supplied by AutoFill.
+  if(!$('email').value)$('email').value=savedLoginEmail();
+}
 const authStorageKeys = new Set();
 const shouldRememberSession = () => localStorage.getItem(AUTH_REMEMBER_KEY) !== 'false';
 const authStorage = {
@@ -2640,7 +2666,7 @@ window.wrestlingManagerHandleAuthURL=async function(urlString){
   }catch(error){message(error.message||'The password recovery link could not be opened.',true);}
 };
 function openSecuritySheet(){
-  closeSheets();openSheet('securitySheet');$('securityStaySignedIn').checked=shouldRememberSession();requestSecurityStatus();updateSecurityUi();
+  closeSheets();openSheet('securitySheet');$('securityStaySignedIn').checked=shouldRememberSession();$('securityRememberEmail').checked=remembersLoginEmail();requestSecurityStatus();updateSecurityUi();
 }
 
 function normalizePhoneDigits(value){
@@ -3071,6 +3097,9 @@ async function signOutCurrentPhone(){
 function managedMessagesEnabled(){return !managedLogin||(managedLogin.kind==='team_device'&&managedLogin.permissions?.messages===true);}
 function chooseSignInMode(team){
   show('personalSignInFields',!team);show('teamSignInFields',team);
+  $('personalSignInFields').querySelectorAll('input').forEach(el=>el.disabled=team);
+  $('teamSignInFields').querySelectorAll('input').forEach(el=>el.disabled=!team);
+  show('rememberEmailRow',!team);
   show('signInBtn',!team);show('signUpBtn',!team);show('teamSignInBtn',team);show('forgotPasswordBtn',!team);
   $('personalSignInTab').classList.toggle('secondary',team);$('teamSignInTab').classList.toggle('secondary',!team);
   $('personalSignInTab').setAttribute('aria-pressed',String(!team));$('teamSignInTab').setAttribute('aria-pressed',String(team));
@@ -3310,6 +3339,7 @@ async function refreshAccountView(){
   show('switchTeamProfileBtn',!!managedLogin?.shared_login_id);
   $('managedProfileLabel').textContent=managedLogin?`Using ${teamProfileLabel(managedLogin.kind)}`:'Team Login';
   show('securityPasswordResetBtn',!managedLogin);
+  show('securityRememberEmailRow',!managedLogin);
   requestSecurityStatus();
   subscribeAccountMemberships();
   if(nativeNotificationsAvailable())postNativeNotification('status');
@@ -8983,7 +9013,7 @@ async function exitKiosk(){if(!(await verifyKioskPin('Enter the weigh-in kiosk P
 
 $('personalSignInTab').onclick=()=>chooseSignInMode(false);
 $('teamSignInTab').onclick=()=>chooseSignInMode(true);
-$('teamSignInBtn').onclick=signInWithTeamLogin;
+$('teamSignInFields').onsubmit=e=>{e.preventDefault();signInWithTeamLogin();};
 // Login keyboard events are handled centrally below.
 $('teamLoginsBtn').onclick=openTeamLogins;
 $('newTeamLoginBtn').onclick=()=>resetTeamLoginEditor();
@@ -9004,20 +9034,24 @@ $('signUpBtn').onclick=async()=>{
   if(!email||password.length<8){message('Enter an email and a password of at least 8 characters.',true);return;}
   setRememberSession($('staySignedIn').checked);
   const {data,error}=await client.auth.signUp({email,password}); if(error){message(error.message,true);return;}
+  if(data.session)updateRememberEmail($('rememberEmail').checked,email);
   message(data.session?'Account created and signed in.':'Account created. Check your email if confirmation is required.'); await refresh();
 };
-$('signInBtn').onclick=async()=>{
+async function signInPersonalAccount(){
  const button=$('signInBtn');if(button.disabled)return;button.disabled=true;button.textContent='Signing in…';message('');
+ const email=$('email').value.trim();
  const waitNotice=setTimeout(()=>message('Still connecting. Check your internet connection; your sign-in is not lost.',true),15000);
  try{setRememberSession($('staySignedIn').checked);securityUnlockedThisLaunch=false;
- const {error}=await client.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});
+ const {error}=await client.auth.signInWithPassword({email,password:$('password').value});
  if(error)throw error;
+ updateRememberEmail($('rememberEmail').checked,email);
  // Finish any startup refresh, then explicitly refresh the authenticated view.
  if(accountRefreshFlight)await accountRefreshFlight;
  await refresh();
  }catch(error){message(error.message||'Could not finish sign-in. Please try again.',true);}
  finally{clearTimeout(waitNotice);button.disabled=false;button.textContent='Sign In';}
-};
+}
+$('personalSignInFields').onsubmit=e=>{e.preventDefault();signInPersonalAccount();};
 $('signOutBtn').onclick=signOutCurrentPhone;
 $('forgotPasswordBtn').onclick=()=>{$('recoveryEmail').value=$('email').value.trim();closeSheets();openSheet('forgotPasswordSheet');};
 $('sendRecoveryEmailBtn').onclick=()=>requestPasswordReset($('recoveryEmail').value);
@@ -9025,6 +9059,8 @@ $('saveRecoveryPasswordBtn').onclick=saveRecoveryPassword;
 $('securityBtn').onclick=openSecuritySheet;
 $('securityStaySignedIn').onchange=e=>{setRememberSession(e.target.checked);message(e.target.checked?'This device will keep you signed in.':'Your sign-in will be cleared when this app session ends.');};
 $('staySignedIn').onchange=e=>setRememberSession(e.target.checked);
+$('rememberEmail').onchange=e=>updateRememberEmail(e.target.checked);
+$('securityRememberEmail').onchange=e=>updateRememberEmail(e.target.checked,!managedLogin?session?.user?.email||'':'');
 $('appLockEnabled').onchange=e=>{
   if(!postNativeSecurity('configure',{appLockEnabled:e.target.checked})){e.target.checked=false;message('Face ID and device passcode lock require the iPhone/iPad app bridge.',true);}
 };
@@ -9492,6 +9528,7 @@ window.addEventListener('pageshow',()=>{recoverInteractionLayer();refreshTeamDat
 window.addEventListener('online',()=>refreshTeamData({force:true}));
 setInterval(pollAccountMemberships,30000);
 setRememberSession(shouldRememberSession());
+restoreLoginEmail();
 client.auth.onAuthStateChange((event,nextSession)=>{
  // Run UI/auth-dependent work outside Supabase's synchronous auth notification.
  setTimeout(()=>handleAuthViewChange(event,nextSession).catch(e=>message(e.message,true)),0);
@@ -9768,7 +9805,7 @@ window.WMOperations=(()=>{
  async function calendar(team){try{return await rpc(false,{action:'calendar',team_id:team});}catch(err){console.warn('Organization calendar unavailable:',err.message);return [];}}
  async function feedback(){if(document.body.classList.contains('kiosk-locked'))return;closeSheets();feedbackId=crypto.randomUUID();note('feedbackStatus','');openSheet('feedbackSheet');await feedbackHistory();}
  async function feedbackHistory(){const target=$o('feedbackHistory');target.textContent='Loading…';try{const rows=await rpc(false,{action:'feedback',team_id:activeTeam?.id||null});target.innerHTML=list(rows).map(r=>`<article class="ops-card"><b>${e(r.category)}</b> ${badge(r.status)}<p>${e(r.body)}</p><small>${e(fmtDateTime(r.created_at))} · ${e(r.build)}</small>${r.response?'<p>Response: '+e(r.response)+'</p>':''}${actualIsTeamAdmin&&!managedLogin&&r.team_id===activeTeam?.id?`<div class="ops-actions"><button class="secondary" data-feedback-review="${r.id}">Review</button></div>`:''}</article>`).join('')||'<p>No feedback yet.</p>';target.querySelectorAll('[data-feedback-review]').forEach(b=>b.onclick=async()=>{const row=rows.find(r=>r.id===b.dataset.feedbackReview),result=await dialog({title:'Review feedback',fields:[{id:'status',label:'Status',options:['new','reviewing','planned','resolved'].map(s=>[s,s]),value:row.status},{id:'response',label:'Response',type:'textarea',value:row.response||''}],submit:'Save review'});if(!result)return;const {status,response}=result;try{await rpc(true,{action:'feedback_status',id:row.id,status,response});await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}});}catch(err){target.textContent=err.message;}}
- async function sendFeedback(ev){ev.preventDefault();if(!session?.user)return;$o('feedbackSend').disabled=true;try{await rpc(true,{action:'feedback',id:feedbackId||crypto.randomUUID(),team_id:activeTeam?.id||null,category:value('feedbackCategory'),body:value('feedbackBody'),build:'v0.20.5'});$o('feedbackBody').value='';feedbackId=crypto.randomUUID();note('feedbackStatus','Thanks—your feedback was saved.');await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}finally{$o('feedbackSend').disabled=false}}
+ async function sendFeedback(ev){ev.preventDefault();if(!session?.user)return;$o('feedbackSend').disabled=true;try{await rpc(true,{action:'feedback',id:feedbackId||crypto.randomUUID(),team_id:activeTeam?.id||null,category:value('feedbackCategory'),body:value('feedbackBody'),build:'v0.20.7'});$o('feedbackBody').value='';feedbackId=crypto.randomUUID();note('feedbackStatus','Thanks—your feedback was saved.');await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}finally{$o('feedbackSend').disabled=false}}
  function close(){finishDialog(null);generation++;editor=null;$o('opsRosterContacts')?.replaceChildren();$o('opsFields').replaceChildren();hub=null;['opsHubSheet','opsEditorSheet','feedbackSheet'].forEach(id=>show(id,false));}
  $o('opsDialogCancel').onclick=()=>finishDialog(null);
  $o('opsOrg').onchange=async()=>{org=value('opsOrg');division='';tab='home';hub=null;$o('opsContent').replaceChildren();$o('opsTabs').replaceChildren();$o('opsHubTitle').textContent='Organization Hub';note('opsStatus','Loading organization…');try{await reload()}catch(err){note('opsStatus',err.message,true)}};
