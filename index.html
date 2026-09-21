@@ -562,7 +562,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
 }
 
 </style><style>
-/* v0.20.4: readable profile cards and practice group selectors */
+/* v0.20.5: readable profile cards and practice group selectors */
 .wp-person{display:flex;gap:12px;min-width:0;color:#172b45!important;background:white;text-align:left;align-items:center;white-space:normal!important}
 .wp-person>span:last-child{min-width:0;overflow-wrap:anywhere}.wp-person b,.wp-person small{display:block}.wp-person b{color:#172b45!important}.wp-person small{margin-top:4px;color:#607086;font-weight:500}
 .wp-initials{width:56px;height:56px;flex:0 0 56px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#e6edf6;color:#244263}
@@ -1391,7 +1391,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
   <section id="athleteProfileSheet" class="sheet hidden" aria-modal="true">
     <div class="sheet-handle"></div>
     <div class="sheet-head"><div><div class="eyebrow">EDIT ATHLETE PROFILE</div><h2 id="profileAthleteName">Athlete</h2><p class="muted">Edit profile, family contacts, gear sizing, privacy and age divisions</p></div><button class="icon-close" data-close-sheet>×</button></div>
-    <div class="profile-photo-row"><div id="profilePhotoBox" class="profile-photo-placeholder">👤</div><div><label style="margin-top:0">Profile photo</label><input id="profilePhotoInput" type="file" accept="image/*"><div class="tiny">Athlete, parent or authorized team staff can update the picture.</div></div></div>
+    <div class="profile-photo-row"><div id="profilePhotoBox" class="profile-photo-placeholder">👤</div><div><label style="margin-top:0">Profile photo</label><input id="profilePhotoInput" type="file" accept="image/*"><div class="tiny">The profile owner or linked parent/guardian can change this photo across the athlete’s profiles and teams.</div></div></div>
     <div id="profileAgeDivisions" class="join-summary"></div>
     <div id="profileWeightSnapshot" class="join-summary"><b>Latest team weight</b><small>Loading weight history…</small></div>
     <button id="profileAthleteCardBtn" class="wide secondary" type="button">Athlete Card · QR / Barcode / NFC</button>
@@ -1802,7 +1802,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.4</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.5</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -4127,6 +4127,7 @@ async function setViewMode(mode){
 }
 
 async function renderFamilyAthletes(){
+  const photoUser=session?.user?.id,photoTeam=activeTeam?.id;
   const containers=[$('myAthletesHomeList'),$('accountMyAthletesList')].filter(Boolean);
   show('myAthletesHomeSection',familyAthletes.length>0);
   show('accountMyAthletes',familyAthletes.length>0);
@@ -4140,6 +4141,7 @@ async function renderFamilyAthletes(){
     if(a.photo_path){const {data}=await client.storage.from('athlete-photos').createSignedUrl(a.photo_path,3600);photo=data?.signedUrl||'';}
     rows.push(`<button class="family-athlete-card" type="button" data-family-athlete="${a.athlete_id}">${photo?`<img class="family-athlete-photo" src="${esc(photo)}" alt="${esc(a.first_name)}">`:`<div class="family-athlete-placeholder">👤</div>`}<div><b>${esc(a.first_name)} ${esc(a.last_name)}</b><small>${esc(a.relationship||'Child')}${a.roster_status?' · '+esc(String(a.roster_status).replace('_',' ')):''}</small></div><span>›</span></button>`);
   }
+  if(photoUser!==session?.user?.id||photoTeam!==activeTeam?.id||document.body.classList.contains('kiosk-locked')||document.querySelector('#appLockOverlay:not(.hidden)'))return;
   containers.forEach(c=>{c.innerHTML=rows.join('');c.querySelectorAll('[data-family-athlete]').forEach(b=>b.onclick=()=>openAthleteOverview(b.dataset.familyAthlete));});
 }
 
@@ -4873,7 +4875,7 @@ async function resolveStoredPhotoUrl(path,preferredBuckets=[]){
   if(!ref.path)return null;
   const candidates=[ref.bucket,...preferredBuckets,...WRESTLING_MANAGER_PHOTO_BUCKETS]
     .filter((bucket,index,rows)=>WRESTLING_MANAGER_PHOTO_BUCKETS.includes(bucket)&&rows.indexOf(bucket)===index);
-  const cacheKey=`${ref.path}|${candidates.join(',')}`;
+  const cacheKey=`${session?.user?.id||''}|${ref.path}|${candidates.join(',')}`;
   const cached=resolvedPhotoUrlCache.get(cacheKey);
   if(cached&&cached.expiresAt>Date.now())return cached.url;
   for(const bucket of candidates){
@@ -7190,7 +7192,7 @@ function staffProfilePayload(photoPathOverride=undefined){
     p_title:$('staffTitle').value.trim()||null,
     p_contact_email:$('staffEmail').value.trim()||null,
     p_phone:$('staffPhone').value.trim()||null,
-    p_photo_path:photoPathOverride===undefined?(staffProfileData?.photo_path||null):photoPathOverride,
+    p_photo_path:photoPathOverride===undefined?null:photoPathOverride,
     p_share_email_with_athletes:$('staffShareEmailAthletes').checked,
     p_share_phone_with_athletes:$('staffSharePhoneAthletes').checked,
     p_share_email_with_parents:$('staffShareEmailParents').checked,
@@ -7198,54 +7200,68 @@ function staffProfilePayload(photoPathOverride=undefined){
   };
 }
 
+// One photo per person. New objects stay unreferenced until the atomic commit.
+async function saveUnifiedProfilePhoto(blob,target,isCurrent=()=>true){
+  const uid=session?.user?.id;
+  const valid=()=>!!uid&&uid===session?.user?.id&&!managedLogin&&isCurrent()&&!document.body.classList.contains('kiosk-locked')&&!document.querySelector('#appLockOverlay:not(.hidden)');
+  const check=()=>{if(!valid())throw Error('Account or screen changed. Reopen the profile to change its picture.');};
+  check();
+  if(blob?.type!=='image/jpeg'||!blob.size||blob.size>12000000)throw Error('Choose a photo smaller than 12 MB.');
+  const request=async(action,data)=>{check();const r=await client.rpc('wm_profile_photo_request',{p_action:action,p_data:data});if(r.error)throw r.error;check();return r.data;};
+  const draft=await request('prepare',target);
+  const uploadID=crypto.randomUUID(),legacyPath=draft.prefix+'/'+uploadID+'.jpg',socialPath=draft.id+'/'+uploadID+'.jpg';
+  const uploaded=[];let commitStarted=false;
+  try{
+    for(const [bucket,path] of [[draft.bucket,legacyPath],['wrestling-profile-photos',socialPath]]){
+      check();const {error}=await client.storage.from(bucket).upload(path,blob,{contentType:'image/jpeg',upsert:false});
+      if(error)throw error;uploaded.push([bucket,path]);check();
+    }
+    check();commitStarted=true;
+    await request('commit',{id:draft.id,athlete_id:draft.athlete_id,expected:draft.expected,legacy_path:legacyPath,social_path:socialPath});
+  }catch(error){
+    // A lost response can mean the commit succeeded. Never delete its photos.
+    if(commitStarted&&!error.code)error.photoSaveUncertain=true;
+    if(!commitStarted&&valid())for(const [bucket,path] of uploaded){try{await client.storage.from(bucket).remove([path]);}catch{}}
+    throw error;
+  }
+  try{
+  resolvedPhotoUrlCache.clear();
+  // Fetch fresh paths instead of reusing the account/header cache.
+  accountProfileData=null;staffProfileData=null;
+  await loadAccountProfile();check();
+  await refreshHeaderAvatar();check();
+  const photoTeam=activeTeam?.id;
+  if(photoTeam){
+    const family=await client.rpc('get_my_family_athletes',{p_team_id:photoTeam});check();
+    if(activeTeam?.id===photoTeam&&!family.error){familyAthletes=[...new Map((family.data||[]).map(a=>[a.athlete_id,a])).values()];await renderFamilyAthletes();}
+  }
+  if(window.WMFamily)await WMFamily.home();
+  return draft.id;
+  }catch(error){error.photoCommitted=true;throw error;}
+}
+
 async function saveCroppedProfilePhoto(){
   if(!photoCropImage||!session?.user||teamLoginPhotoBusy||$('savePhotoCropBtn').disabled)return;
-  const cropTarget=photoCropTarget,loginPhotoContext=teamLoginPhotoContext;
+  const cropTarget=photoCropTarget,loginPhotoContext=teamLoginPhotoContext,athleteId=profileAthleteId,teamId=activeTeam?.id,uid=session.user.id,cropImage=photoCropImage;
   const btn=$('savePhotoCropBtn');btn.disabled=true;btn.textContent='Saving…';
-  drawPhotoCrop();
-  const canvas=$('photoCropCanvas');
-  const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',0.9));
-  if(!blob){btn.disabled=false;btn.textContent='Use Photo';message('Could not prepare the cropped photo.',true);return;}
-
-  if(cropTarget==='team_login'){btn.disabled=false;btn.textContent='Use Photo';await saveTeamLoginPhoto(blob,loginPhotoContext);return;}
-
-  if(photoCropTarget==='account'){
-    const path=`${session.user.id}/${Date.now()}-profile.jpg`;
-    const {error}=await client.storage.from('profile-photos').upload(path,blob,{contentType:'image/jpeg'});
-    if(error){btn.disabled=false;btn.textContent='Use Photo';message(error.message,true);return;}
-    const {data,error:saveErr}=await client.from('profiles').update({photo_path:path,updated_at:new Date().toISOString()}).eq('id',session.user.id).select('id,display_name,phone,photo_path,ui_preferences').single();
-    btn.disabled=false;btn.textContent='Use Photo';
-    if(saveErr){message(saveErr.message,true);return;}
-    accountProfileData=data;photoCropImage=null;photoCropSourceFile=null;$('accountPhotoInput').value='';
-    await refreshHeaderAvatar();
-    await openAccountSheet();
-    message('Account photo cropped and updated.');
-    return;
-  }
-
-  if(photoCropTarget==='staff'){
-    const path=`${activeTeam.id}/staff/${session.user.id}/${Date.now()}-profile.jpg`;
-    const {error}=await client.storage.from('team-media').upload(path,blob,{upsert:true,contentType:'image/jpeg'});
-    if(error){btn.disabled=false;btn.textContent='Use Photo';message(error.message,true);return;}
-    const {data,error:saveErr}=await client.rpc('update_my_team_staff_profile',staffProfilePayload(path));
-    btn.disabled=false;btn.textContent='Use Photo';
-    if(saveErr){message(saveErr.message,true);return;}
-    staffProfileData=data;photoCropImage=null;photoCropSourceFile=null;$('staffPhotoInput').value='';
-    await openStaffProfile();
-    message('Coach / staff photo cropped and updated.');
-    return;
-  }
-
-  if(!profileAthleteId){btn.disabled=false;btn.textContent='Use Photo';return;}
-  const path=`${profileAthleteId}/${Date.now()}-profile.jpg`;
-  const {error}=await client.storage.from('athlete-photos').upload(path,blob,{upsert:true,contentType:'image/jpeg'});
-  if(error){btn.disabled=false;btn.textContent='Use Photo';message(error.message,true);return;}
-  const {error:saveErr}=await client.rpc('update_athlete_profile_v2',{p_athlete_id:profileAthleteId,p_team_id:activeTeam.id,p_profile:{photo_path:path}});
-  btn.disabled=false;btn.textContent='Use Photo';
-  if(saveErr){message(saveErr.message,true);return;}
-  photoCropImage=null;photoCropSourceFile=null;$('profilePhotoInput').value='';
-  await openAthleteProfile(profileAthleteId);
-  message('Profile photo cropped and updated.');
+  const current=()=>uid===session?.user?.id&&photoCropTarget===cropTarget&&photoCropImage===cropImage&&activeTeam?.id===teamId&&(cropTarget!=='athlete'||profileAthleteId===athleteId);
+  try{
+    drawPhotoCrop();
+    const blob=await new Promise(resolve=>$('photoCropCanvas').toBlob(resolve,'image/jpeg',0.9));
+    if(!blob)throw Error('Could not prepare the cropped photo.');
+    if(cropTarget==='team_login'){btn.disabled=false;btn.textContent='Use Photo';await saveTeamLoginPhoto(blob,loginPhotoContext);return;}
+    const target=cropTarget==='account'||cropTarget==='staff'?{kind:'account'}:{kind:'athlete',id:athleteId};
+    if(target.kind==='athlete'&&!athleteId)throw Error('Reopen the athlete profile.');
+    await saveUnifiedProfilePhoto(blob,target,current);
+    if(!current())return;
+    photoCropImage=null;photoCropSourceFile=null;
+    const input=$(cropTarget==='account'?'accountPhotoInput':cropTarget==='staff'?'staffPhotoInput':'profilePhotoInput');if(input)input.value='';
+    if(cropTarget==='account')await openAccountSheet();
+    else if(cropTarget==='staff')await openStaffProfile();
+    else await openAthleteProfile(athleteId);
+    message('Photo updated across this person’s profile and teams.');
+  }catch(error){message(error.photoCommitted?'Photo saved. Reopen the profile to refresh it.':error.photoSaveUncertain?'The photo update could not be confirmed. Reopen the profile to check before trying again.':error.message||'Photo could not be saved. Please try again.',!error.photoCommitted);}
+  finally{btn.disabled=false;btn.textContent='Use Photo';}
 }
 
 async function staffPhotoUrl(path,userId=session?.user?.id){
@@ -9532,7 +9548,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -->
 <script>
-/* v0.20.4 organization operations. All authorization is enforced again by the RPC. */
+/* v0.20.5 organization operations. All authorization is enforced again by the RPC. */
 window.WMOperations=(()=>{
  let hub=null,org=null,division='',tab='home',generation=0,editor=null,feedbackId=null,dialogResolve=null;
  const $o=id=>document.getElementById(id),e=v=>esc(String(v??'')),list=v=>Array.isArray(v)?v:[];
@@ -9752,7 +9768,7 @@ window.WMOperations=(()=>{
  async function calendar(team){try{return await rpc(false,{action:'calendar',team_id:team});}catch(err){console.warn('Organization calendar unavailable:',err.message);return [];}}
  async function feedback(){if(document.body.classList.contains('kiosk-locked'))return;closeSheets();feedbackId=crypto.randomUUID();note('feedbackStatus','');openSheet('feedbackSheet');await feedbackHistory();}
  async function feedbackHistory(){const target=$o('feedbackHistory');target.textContent='Loading…';try{const rows=await rpc(false,{action:'feedback',team_id:activeTeam?.id||null});target.innerHTML=list(rows).map(r=>`<article class="ops-card"><b>${e(r.category)}</b> ${badge(r.status)}<p>${e(r.body)}</p><small>${e(fmtDateTime(r.created_at))} · ${e(r.build)}</small>${r.response?'<p>Response: '+e(r.response)+'</p>':''}${actualIsTeamAdmin&&!managedLogin&&r.team_id===activeTeam?.id?`<div class="ops-actions"><button class="secondary" data-feedback-review="${r.id}">Review</button></div>`:''}</article>`).join('')||'<p>No feedback yet.</p>';target.querySelectorAll('[data-feedback-review]').forEach(b=>b.onclick=async()=>{const row=rows.find(r=>r.id===b.dataset.feedbackReview),result=await dialog({title:'Review feedback',fields:[{id:'status',label:'Status',options:['new','reviewing','planned','resolved'].map(s=>[s,s]),value:row.status},{id:'response',label:'Response',type:'textarea',value:row.response||''}],submit:'Save review'});if(!result)return;const {status,response}=result;try{await rpc(true,{action:'feedback_status',id:row.id,status,response});await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}});}catch(err){target.textContent=err.message;}}
- async function sendFeedback(ev){ev.preventDefault();if(!session?.user)return;$o('feedbackSend').disabled=true;try{await rpc(true,{action:'feedback',id:feedbackId||crypto.randomUUID(),team_id:activeTeam?.id||null,category:value('feedbackCategory'),body:value('feedbackBody'),build:'v0.20.4'});$o('feedbackBody').value='';feedbackId=crypto.randomUUID();note('feedbackStatus','Thanks—your feedback was saved.');await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}finally{$o('feedbackSend').disabled=false}}
+ async function sendFeedback(ev){ev.preventDefault();if(!session?.user)return;$o('feedbackSend').disabled=true;try{await rpc(true,{action:'feedback',id:feedbackId||crypto.randomUUID(),team_id:activeTeam?.id||null,category:value('feedbackCategory'),body:value('feedbackBody'),build:'v0.20.5'});$o('feedbackBody').value='';feedbackId=crypto.randomUUID();note('feedbackStatus','Thanks—your feedback was saved.');await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}finally{$o('feedbackSend').disabled=false}}
  function close(){finishDialog(null);generation++;editor=null;$o('opsRosterContacts')?.replaceChildren();$o('opsFields').replaceChildren();hub=null;['opsHubSheet','opsEditorSheet','feedbackSheet'].forEach(id=>show(id,false));}
  $o('opsDialogCancel').onclick=()=>finishDialog(null);
  $o('opsOrg').onchange=async()=>{org=value('opsOrg');division='';tab='home';hub=null;$o('opsContent').replaceChildren();$o('opsTabs').replaceChildren();$o('opsHubTitle').textContent='Organization Hub';note('opsStatus','Loading organization…');try{await reload()}catch(err){note('opsStatus',err.message,true)}};
@@ -10209,7 +10225,7 @@ window.WMProfiles=(()=>{
  const allowed=()=>!!session?.user?.id&&!managedLogin&&!document.body.classList.contains('kiosk-locked')&&!document.querySelector('#appLockOverlay:not(.hidden)');
  const rpc=async(action,data={},endpoint='wrestling_profiles_request')=>{if(!allowed())throw Error('Unlock the app and use a personal account to open profiles.');const uid=session.user.id;const {data:out,error}=await client.rpc(endpoint,{p_action:action,p_data:data});if(uid!==session?.user?.id||!allowed())throw Error('Account or lock state changed. Reopen profiles.');if(error)throw Error(error.message);return out;};
  const button=(text,attr)=>`<button type="button" class="secondary" ${attr}>${E(text)}</button>`;
- const photoRef=p=>{const r=p.photo_source|| (p.photo_path?{bucket:'wrestling-profile-photos',path:p.photo_path}:null);return r&&['wrestling-profile-photos','athlete-photos','profile-photos'].includes(r.bucket)&&typeof r.path==='string'&&r.path.length?r:null;};
+ const photoRef=p=>{const r=p.photo_source|| (p.photo_path?{bucket:'wrestling-profile-photos',path:p.photo_path}:null);return r&&['wrestling-profile-photos','athlete-photos','profile-photos','team-media'].includes(r.bucket)&&typeof r.path==='string'&&r.path.length?r:null;};
  const profileTile=(p,options={})=>{const photo=photoRef(p);return `<button type="button" class="wp-person" ${options.home?'data-corner-profile':'data-wp-open'}="${E(p.id)}"><span class="wp-initials" ${photo?`data-wp-photo="${E(photo.path)}" data-wp-photo-bucket="${E(photo.bucket)}"`:''} aria-hidden="true">${E(String(p.name||'?').trim().split(/\s+/).slice(0,2).map(x=>x[0]).join(''))}</span><span><b>${E(p.name)}</b><small>${E(options.caption||'View profile')}</small></span></button>`;};
  function hydratePhotos(root){if(!root||!allowed())return;const uid=session.user.id;for(const el of root.querySelectorAll('[data-wp-photo]')){if(el.dataset.photoLoading)continue;const path=el.dataset.wpPhoto,bucket=el.dataset.wpPhotoBucket;if(!['wrestling-profile-photos','athlete-photos','profile-photos'].includes(bucket))continue;el.dataset.photoLoading='true';const valid=()=>allowed()&&session?.user?.id===uid&&el.isConnected&&el.dataset.wpPhoto===path&&el.dataset.wpPhotoBucket===bucket;client.storage.from(bucket).createSignedUrl(path,60).then(({data,error})=>{if(error||!data?.signedUrl||!valid())return;const img=new Image();img.alt='';img.onload=()=>{if(valid())el.replaceChildren(img);};img.src=data.signedUrl;}).catch(()=>{/* Initials remain if a photo is unavailable. */});}}
 
@@ -10295,7 +10311,7 @@ window.WMProfiles=(()=>{
  }
 
  function edit(){const p=current,d=p.details||{},sh=p.sharing||{};const ticket=++generation;status('Edit your personal wrestling profile here. Your admin, coach and parent permissions are assigned separately in each organization or team.');
- $p('wrestlingProfilesSheet').scrollTop=0;$p('wpBody').innerHTML=`${button('Back to profile',`data-wp-open="${p.id}"`)}<form id="wpEditForm"><label for="wpName">Display name</label><input id="wpName" maxlength="120" required value="${E(p.name)}">${fields.filter(([k])=>!['photo','corner','results','music_url','music_title'].includes(k)).map(([k,l])=>`<label for="wp_${k}">${l}</label>${choices[k]?choiceControl(k,d[k]||'',`id="wp_${k}"`):k==='bio'?`<textarea id="wp_${k}" maxlength="1200">${E(d[k]||'')}</textarea>`:`<input id="wp_${k}" ${k==='affiliation'?'list="wpAffiliationChoices"':''} maxlength="160" ${p.athlete&&k==='roles'?'readonly':''} value="${E(d[k]||'')}">`}`).join('')}<datalist id="wpAffiliationChoices"></datalist><p class="fine">Separate organizations with commas. You can list multiple roles, for example: WAWA director · Lyman coach · Wrestling parent. These describe you; each organization or team separately controls your actual access. Official classifications are self-reported.</p><h3>Profile picture</h3><input id="wpPicture" type="file" accept="image/jpeg,image/png,image/webp" hidden>${button('Change photo','id="wpChangePhoto"')}<div id="wpCropArea" class="hidden"><p class="fine">Drag your picture to position it, or use the position sliders. Zoom in to make more room to move.</p><canvas id="wpCropCanvas" width="400" height="400" aria-label="Adjust profile photo"></canvas><label>Zoom<input id="wpCropZoom" type="range" min="1" max="3" step="0.01" value="1"></label><label>Move left / right<input id="wpCropX" type="range" min="-100" max="100" value="0"></label><label>Move up / down<input id="wpCropY" type="range" min="-100" max="100" value="0"></label>${button('Center photo','id="wpCropCenter"')}</div><h3>Tournament results</h3><label>Choose a tournament<select id="wpSchedulePick"></select></label><p class="fine">Or add a tournament link below. You can also import results from a CSV and review them before saving.</p><details><summary>Import results from a file</summary><label>Results CSV<input id="wpImportResults" type="file" accept=".csv,text/csv"></label>${button('Download CSV template','id="wpCSVTemplate"')}</details><div id="wpResults"></div>${button('Add tournament','id="wpAddResult"')}<h3>Entrance Song</h3><div class="wp-actions">${button('Find on Apple Music','id="wpFindMusic"')}${button('Paste song link','id="wpPasteMusic"')}</div><p class="fine">In Apple Music, choose Share Song → Copy Link, then paste it here.</p><label for="wp_music_title">Song title (optional)</label><input id="wp_music_title" maxlength="160" value="${E(d.music_title||'')}"><label for="wp_music_url">Apple Music or Spotify link</label><input id="wp_music_url" type="url" maxlength="1000" value="${E(d.music_url||'')}"><p id="wpMusicHelp" class="fine" role="status"></p><div id="wpMusicPreview"></div><label class="toggle-row"><span>I approve this song and have checked that it is clean.</span><input id="wpMusicApproved" type="checkbox" ${safeMusic(d.music_url)?'checked':''}></label><h3>Visibility</h3><label class="toggle-row"><span><b>Allow profile discovery</b><small>Other signed-in members can see this name and the fields selected below.</small></span><input id="wpDiscover" type="checkbox" ${p.discoverable?'checked':''}></label>${fields.map(([k,l])=>`<label class="toggle-row"><span>Share ${E(l.toLowerCase())}</span><input data-wp-sharefield="${k}" type="checkbox" ${sh[k]?'checked':''}></label>`).join('')}<label class="toggle-row"><span>Accept follow requests for review</span><input data-wp-sharefield="follow" type="checkbox" ${sh.follow?'checked':''}></label>${p.athlete?`<label class="toggle-row"><span><b>Allow this athlete to request follows and arrange My Corner</b><small>Incoming requests still need parent approval for minors.</small></span><input data-wp-sharefield="outgoing_follow" type="checkbox" ${sh.outgoing_follow?'checked':''}></label>`:'<p class="fine">Manage who you follow and arrange My Corner from your profile. Other people approve incoming follow requests.</p>'}<p id="wpEditStatus" role="status" aria-live="polite"></p><button type="submit" class="wide" id="wpSave">Save profile</button></form>`;
+ $p('wrestlingProfilesSheet').scrollTop=0;$p('wpBody').innerHTML=`${button('Back to profile',`data-wp-open="${p.id}"`)}<form id="wpEditForm"><label for="wpName">Display name</label><input id="wpName" maxlength="120" required value="${E(p.name)}">${fields.filter(([k])=>!['photo','corner','results','music_url','music_title'].includes(k)).map(([k,l])=>`<label for="wp_${k}">${l}</label>${choices[k]?choiceControl(k,d[k]||'',`id="wp_${k}"`):k==='bio'?`<textarea id="wp_${k}" maxlength="1200">${E(d[k]||'')}</textarea>`:`<input id="wp_${k}" ${k==='affiliation'?'list="wpAffiliationChoices"':''} maxlength="160" ${p.athlete&&k==='roles'?'readonly':''} value="${E(d[k]||'')}">`}`).join('')}<datalist id="wpAffiliationChoices"></datalist><p class="fine">Separate organizations with commas. You can list multiple roles, for example: WAWA director · Lyman coach · Wrestling parent. These describe you; each organization or team separately controls your actual access. Official classifications are self-reported.</p><h3>Profile picture</h3><p class="fine">One photo across your profile and teams. Changing it here updates it everywhere it is shared.</p><input id="wpPicture" type="file" accept="image/jpeg,image/png,image/webp" hidden>${button('Change photo','id="wpChangePhoto"')}<div id="wpCropArea" class="hidden"><p class="fine">Drag your picture to position it, or use the position sliders. Zoom in to make more room to move.</p><canvas id="wpCropCanvas" width="400" height="400" aria-label="Adjust profile photo"></canvas><label>Zoom<input id="wpCropZoom" type="range" min="1" max="3" step="0.01" value="1"></label><label>Move left / right<input id="wpCropX" type="range" min="-100" max="100" value="0"></label><label>Move up / down<input id="wpCropY" type="range" min="-100" max="100" value="0"></label>${button('Center photo','id="wpCropCenter"')}</div><h3>Tournament results</h3><label>Choose a tournament<select id="wpSchedulePick"></select></label><p class="fine">Or add a tournament link below. You can also import results from a CSV and review them before saving.</p><details><summary>Import results from a file</summary><label>Results CSV<input id="wpImportResults" type="file" accept=".csv,text/csv"></label>${button('Download CSV template','id="wpCSVTemplate"')}</details><div id="wpResults"></div>${button('Add tournament','id="wpAddResult"')}<h3>Entrance Song</h3><div class="wp-actions">${button('Find on Apple Music','id="wpFindMusic"')}${button('Paste song link','id="wpPasteMusic"')}</div><p class="fine">In Apple Music, choose Share Song → Copy Link, then paste it here.</p><label for="wp_music_title">Song title (optional)</label><input id="wp_music_title" maxlength="160" value="${E(d.music_title||'')}"><label for="wp_music_url">Apple Music or Spotify link</label><input id="wp_music_url" type="url" maxlength="1000" value="${E(d.music_url||'')}"><p id="wpMusicHelp" class="fine" role="status"></p><div id="wpMusicPreview"></div><label class="toggle-row"><span>I approve this song and have checked that it is clean.</span><input id="wpMusicApproved" type="checkbox" ${safeMusic(d.music_url)?'checked':''}></label><h3>Visibility</h3><label class="toggle-row"><span><b>Allow profile discovery</b><small>Other signed-in members can see this name and the fields selected below.</small></span><input id="wpDiscover" type="checkbox" ${p.discoverable?'checked':''}></label>${fields.map(([k,l])=>`<label class="toggle-row"><span>Share ${E(l.toLowerCase())}</span><input data-wp-sharefield="${k}" type="checkbox" ${sh[k]?'checked':''}></label>`).join('')}<label class="toggle-row"><span>Accept follow requests for review</span><input data-wp-sharefield="follow" type="checkbox" ${sh.follow?'checked':''}></label>${p.athlete?`<label class="toggle-row"><span><b>Allow this athlete to request follows and arrange My Corner</b><small>Incoming requests still need parent approval for minors.</small></span><input data-wp-sharefield="outgoing_follow" type="checkbox" ${sh.outgoing_follow?'checked':''}></label>`:'<p class="fine">Manage who you follow and arrange My Corner from your profile. Other people approve incoming follow requests.</p>'}<p id="wpEditStatus" role="status" aria-live="polite"></p><button type="submit" class="wide" id="wpSave">Save profile</button></form>`;
  for(const r of d.results||[])addResult(r);
  const croppedPhoto=photoEditor(p,ticket);editExtras(p,ticket);
  $p('wpAddResult').onclick=()=>addResult({});
@@ -10311,12 +10327,12 @@ window.WMProfiles=(()=>{
  await rpc('save',{id:p.id,name:$p('wpName').value.trim(),details,sharing,discoverable:$p('wpDiscover').checked,music_approved:$p('wpMusicApproved').checked});
  detailsSaved=true;if(ticket!==generation||!allowed())return;if(file)await uploadPhoto(p.id,file);photoSaved=true;if(ticket!==generation||!allowed())return;
  await view(p.id);status('Profile saved.');
- }catch(err){if(ticket!==generation||!allowed())return;status((detailsSaved?(photoSaved?'Your changes were saved, but the profile could not reload. ':'Your profile details were saved, but the photo was not saved. '):'Profile not saved. ')+(err.message||'Please try again.'));btn.disabled=false;btn.textContent='Save profile';}};
+ }catch(err){if(ticket!==generation||!allowed())return;status((detailsSaved?(photoSaved||err.photoCommitted?'Your changes were saved, but the profile could not reload. ':err.photoSaveUncertain?'Your details were saved. Reopen the profile to check whether the photo finished saving. ':'Your profile details were saved, but the photo was not saved. '):'Profile not saved. ')+(err.message||'Please try again.'));btn.disabled=false;btn.textContent='Save profile';}};
  }
  function addResult(r){if($p('wpResults').children.length>=30){status('Up to 30 results per profile.');return;}const row=document.createElement('div');row.className='wp-panel';row.innerHTML=`<label>Tournament link (optional)<input data-field="url" type="url" maxlength="1000" placeholder="Paste a USA Bracketing, Trackwrestling or USA Wrestling link" value="${E(r.url||'')}"></label>`+[['event','Tournament'],['date','Date'],['style','Style'],['division','Division'],['placement','Placement']].map(([k,l])=>`<label>${l}${choices[k]?choiceControl(k,r[k]||'',`data-field="${k}"`):`<input data-field="${k}" ${k==='event'?'required':''} type="${k==='date'?'date':'text'}" maxlength="120" value="${E(r[k]||'')}">`}</label>`).join('')+button('Remove','data-wp-remove');$p('wpResults').appendChild(row);wireChoices(row);
  const link=row.querySelector('[data-field="url"]');link.onchange=()=>{link.setCustomValidity(link.value&&!safeEvent(link.value)?'Use a supported tournament website HTTPS link.':'');if(link.value&&!safeEvent(link.value))link.reportValidity();};
  }
- async function uploadPhoto(id,file){const uid=session?.user?.id;if(!allowed())throw Error('Unlock the profile first.');if(file.size>12000000)throw Error('Choose a picture smaller than 12 MB.');const blob=file;if(blob.type!=='image/jpeg'||!blob.size)throw Error('Could not prepare the photo.');if(uid!==session?.user?.id||!allowed())throw Error('Account changed. Reopen the profile.');const path=id+'/'+crypto.randomUUID()+'.jpg';const {error}=await client.storage.from('wrestling-profile-photos').upload(path,blob,{contentType:'image/jpeg',upsert:false});if(error)throw error;if(uid!==session?.user?.id||!allowed())throw Error('Account changed. Reopen the profile.');await rpc('photo',{id,path});}
+ async function uploadPhoto(id,file){const ticket=generation;if(!allowed())throw Error('Unlock the profile first.');await saveUnifiedProfilePhoto(file,{kind:'social',id},()=>ticket===generation&&allowed());}
  async function requests(){const p=current,t=++generation,rows=await rpc('requests',{id:p.id});if(t!==generation)return;status('These approvals control following only. Existing messaging permissions remain separate.');$p('wrestlingProfilesSheet').scrollTop=0;$p('wpBody').innerHTML=button('Back to profile',`data-wp-open="${p.id}"`)+rows.map(r=>`<article class="wp-panel"><b>${E(r.name)}</b><p>${E(r.status)}</p><div class="wp-actions">${['approved','denied','blocked'].map(s=>button(s==='approved'?'Approve follow':s==='denied'?'Deny / remove follow':'Block profile connection',`data-wp-review="${s}" data-source="${r.source}"`)).join('')}</div></article>`).join('')+(rows.length?'':'<p>No follow requests yet.</p>');}
  async function links(){const p=current,t=++generation,rows=await rpc('links',{id:p.id});if(t!==generation)return;
  status('Choose up to eight people to show in My Corner.');$p('wrestlingProfilesSheet').scrollTop=0;
@@ -10350,7 +10366,7 @@ window.WMProfiles=(()=>{
 
  async function sharedLink(){const match=location.hash.match(/^#(wrestling-profile|spouse-invite)=([a-f0-9-]{36})$/i);if(!match||!allowed())return;if(await open()){if(match[1]==='wrestling-profile')await view(match[2]);else{const own=mine.find(x=>x.self&&!x.athlete);if(!own){status('A personal adult profile is needed to link a spouse.');return;}await view(own.id);if(current?.id===own.id&&allowed())await spouse();}}}
  mount();window.addEventListener('hashchange',()=>sharedLink().catch(e=>status(e.message)));
- return {open,sharedLink,safeMusic,tile:profileTile,hydratePhotos,async openCorner(id){if(await open()){await view(id);if(current?.id===id&&allowed())await links();}},async openProfile(id){if(await open())await view(id);},reset(){generation++;mine=[];current=null;$p('wpBody').replaceChildren();$p('wrestlingProfilesSheet').classList.add('hidden');}};
+ return {open,sharedLink,safeMusic,tile:profileTile,hydratePhotos,photoRef,async openCorner(id){if(await open()){await view(id);if(current?.id===id&&allowed())await links();}},async openProfile(id){if(await open())await view(id);},reset(){generation++;mine=[];current=null;$p('wpBody').replaceChildren();$p('wrestlingProfilesSheet').classList.add('hidden');}};
 })();
 
 </script><script>
@@ -10367,7 +10383,7 @@ window.WMFamily=(()=>{
  $('familyEvents').onsubmit=async e=>{e.preventDefault();try{await call({action:'events_save',profile_id:id,events:[...$('familyEvents').querySelectorAll('input:checked')].map(x=>x.value)});note('Shared events saved.');}catch(e){note(e.message);}};
  }
  async function received(){const t=++revision;const rows=await call({action:'received'});if(t!==revision)return;const token=location.hash.match(/^#family-invite=([a-f0-9-]{36})$/i)?.[1];render(`<h3>Invitations and family profiles</h3><form id="familyClaim"><label>Invitation link or code<input id="familyCode" value="${E(token||'')}" required></label><button type="submit">Request family access</button></form><p>The profile owner or parent reviews your request before you can see anything.</p>${rows.map(r=>`<article class="wp-panel"><b>${E(r.name)}</b><p>${E(r.relationship)} · ${E(r.status)}</p>${r.status==='accepted'?`<button data-family-view="${r.id}">Profile & schedule</button>`:''}</article>`).join('')}`);$('familyClaim').onsubmit=async e=>{e.preventDefault();try{const raw=$('familyCode').value.trim(),token=raw.match(/(?:family-invite=)?([a-f0-9-]{36})$/i)?.[1];if(!token)throw Error('Use the invitation link or code.');await call({action:'claim',token});await received();note('Request sent. Your relative must approve your account.');}catch(e){note(e.message);}};}
- async function view(id){const t=++revision,r=await call({action:'view',id});if(t!==revision)return;render(`<button data-family-inbox>Back to family</button><div id="familyPhoto" class="wp-photo"></div><h3>${E(r.name)}</h3>${Object.entries(r.details||{}).filter(([k,v])=>v&&k!=='results'&&!k.startsWith('music_')).map(([k,v])=>`<section class="wp-panel"><b>${E(k.replaceAll('_',' '))}</b><p>${E(v)}</p></section>`).join('')}${WMProfiles.safeMusic(r.details?.music_url)?`<p><a href="${E(r.details.music_url)}" target="_blank" rel="noopener noreferrer">${E(r.details.music_title||'Entrance Song')}</a></p>`:''}${(r.details?.results||[]).map(x=>`<p>${E([x.event,x.date,x.placement].filter(Boolean).join(' · '))}</p>`).join('')}<h3>Shared schedule</h3>${r.events.map(x=>`<article class="wp-panel"><b>${E(x.title)}</b><p>${E(new Date(x.starts_at).toLocaleString())}</p><p>${E(x.location||'')}</p></article>`).join('')||'<p>No upcoming events shared.</p>'}`);if(r.photo_path){const {data}=await client.storage.from('wrestling-profile-photos').createSignedUrl(r.photo_path,60);if(t===revision&&data?.signedUrl)$('familyPhoto').innerHTML=`<img src="${E(data.signedUrl)}" alt="Profile picture">`;}}
+ async function view(id){const t=++revision,r=await call({action:'view',id});if(t!==revision)return;render(`<button data-family-inbox>Back to family</button><div id="familyPhoto" class="wp-photo"></div><h3>${E(r.name)}</h3>${Object.entries(r.details||{}).filter(([k,v])=>v&&k!=='results'&&!k.startsWith('music_')).map(([k,v])=>`<section class="wp-panel"><b>${E(k.replaceAll('_',' '))}</b><p>${E(v)}</p></section>`).join('')}${WMProfiles.safeMusic(r.details?.music_url)?`<p><a href="${E(r.details.music_url)}" target="_blank" rel="noopener noreferrer">${E(r.details.music_title||'Entrance Song')}</a></p>`:''}${(r.details?.results||[]).map(x=>`<p>${E([x.event,x.date,x.placement].filter(Boolean).join(' · '))}</p>`).join('')}<h3>Shared schedule</h3>${r.events.map(x=>`<article class="wp-panel"><b>${E(x.title)}</b><p>${E(new Date(x.starts_at).toLocaleString())}</p><p>${E(x.location||'')}</p></article>`).join('')||'<p>No upcoming events shared.</p>'}`);const ref=WMProfiles.photoRef(r),photoUid=session?.user?.id;if(ref){const {data}=await client.storage.from(ref.bucket).createSignedUrl(ref.path,60);if(t===revision&&photoUid===session?.user?.id&&!document.body.classList.contains('kiosk-locked')&&!document.querySelector('#appLockOverlay:not(.hidden)')&&data?.signedUrl)$('familyPhoto').innerHTML=`<img src="${E(data.signedUrl)}" alt="Profile picture">`;}}
  sheet.onclick=async e=>{const b=e.target.closest('button');if(!b)return;try{if(b.hasAttribute('data-family-inbox'))await received();if(b.dataset.familyView)await view(b.dataset.familyView);if(b.dataset.familyApprove){await call({action:'review',id:b.dataset.familyApprove,decision:'approve'});await manage();}if(b.dataset.familyRevoke){await call({action:'revoke',id:b.dataset.familyRevoke});await manage();}}catch(e){note(e.message);}};
  for(const anchor of ['personalAccountProfileCard','setupFeedbackBtn']){const b=document.createElement('button');b.type='button';b.className='wide secondary';b.textContent='Family circle · invitations & schedules';b.onclick=()=>open().catch(e=>message(e.message,true));$(anchor)?.after(b);}
  let homeGeneration=0;
