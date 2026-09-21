@@ -461,7 +461,7 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
       <div id="personalSignInFields">
       <label for="email">Email</label>
       <input id="email" type="email" autocomplete="email" placeholder="you@example.com">
-      <label>Password</label>
+      <label for="password">Password</label>
       <input id="password" type="password" autocomplete="current-password" placeholder="Password">
       </div>
       <div id="teamSignInFields" class="hidden">
@@ -1653,7 +1653,7 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.16.6</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.16.9</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -8704,7 +8704,7 @@ async function exitKiosk(){if(!(await verifyKioskPin('Enter the weigh-in kiosk P
 $('personalSignInTab').onclick=()=>chooseSignInMode(false);
 $('teamSignInTab').onclick=()=>chooseSignInMode(true);
 $('teamSignInBtn').onclick=signInWithTeamLogin;
-$('teamSignInPassword').addEventListener('keydown',e=>{if(e.key==='Enter')signInWithTeamLogin();});
+// Login keyboard events are handled centrally below.
 $('teamLoginsBtn').onclick=openTeamLogins;
 $('newTeamLoginBtn').onclick=()=>resetTeamLoginEditor();
 $('switchTeamProfileBtn').onclick=openTeamProfileChoice;
@@ -9250,7 +9250,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -->
 <script>
-/* v0.16.6 organization operations. All authorization is enforced again by the RPC. */
+/* v0.16.9 organization operations. All authorization is enforced again by the RPC. */
 window.WMOperations=(()=>{
  let hub=null,org=null,division='',tab='home',generation=0,editor=null,feedbackId=null,dialogResolve=null;
  const $o=id=>document.getElementById(id),e=v=>esc(String(v??'')),list=v=>Array.isArray(v)?v:[];
@@ -9470,7 +9470,7 @@ window.WMOperations=(()=>{
  async function calendar(team){try{return await rpc(false,{action:'calendar',team_id:team});}catch(err){console.warn('Organization calendar unavailable:',err.message);return [];}}
  async function feedback(){if(document.body.classList.contains('kiosk-locked'))return;closeSheets();feedbackId=crypto.randomUUID();note('feedbackStatus','');openSheet('feedbackSheet');await feedbackHistory();}
  async function feedbackHistory(){const target=$o('feedbackHistory');target.textContent='Loading…';try{const rows=await rpc(false,{action:'feedback',team_id:activeTeam?.id||null});target.innerHTML=list(rows).map(r=>`<article class="ops-card"><b>${e(r.category)}</b> ${badge(r.status)}<p>${e(r.body)}</p><small>${e(fmtDateTime(r.created_at))} · ${e(r.build)}</small>${r.response?'<p>Response: '+e(r.response)+'</p>':''}${actualIsTeamAdmin&&!managedLogin&&r.team_id===activeTeam?.id?`<div class="ops-actions"><button class="secondary" data-feedback-review="${r.id}">Review</button></div>`:''}</article>`).join('')||'<p>No feedback yet.</p>';target.querySelectorAll('[data-feedback-review]').forEach(b=>b.onclick=async()=>{const row=rows.find(r=>r.id===b.dataset.feedbackReview),result=await dialog({title:'Review feedback',fields:[{id:'status',label:'Status',options:['new','reviewing','planned','resolved'].map(s=>[s,s]),value:row.status},{id:'response',label:'Response',type:'textarea',value:row.response||''}],submit:'Save review'});if(!result)return;const {status,response}=result;try{await rpc(true,{action:'feedback_status',id:row.id,status,response});await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}});}catch(err){target.textContent=err.message;}}
- async function sendFeedback(ev){ev.preventDefault();if(!session?.user)return;$o('feedbackSend').disabled=true;try{await rpc(true,{action:'feedback',id:feedbackId||crypto.randomUUID(),team_id:activeTeam?.id||null,category:value('feedbackCategory'),body:value('feedbackBody'),build:'v0.16.6'});$o('feedbackBody').value='';feedbackId=crypto.randomUUID();note('feedbackStatus','Thanks—your feedback was saved.');await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}finally{$o('feedbackSend').disabled=false}}
+ async function sendFeedback(ev){ev.preventDefault();if(!session?.user)return;$o('feedbackSend').disabled=true;try{await rpc(true,{action:'feedback',id:feedbackId||crypto.randomUUID(),team_id:activeTeam?.id||null,category:value('feedbackCategory'),body:value('feedbackBody'),build:'v0.16.9'});$o('feedbackBody').value='';feedbackId=crypto.randomUUID();note('feedbackStatus','Thanks—your feedback was saved.');await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}finally{$o('feedbackSend').disabled=false}}
  function close(){finishDialog(null);generation++;editor=null;$o('opsRosterContacts')?.replaceChildren();$o('opsFields').replaceChildren();hub=null;['opsHubSheet','opsEditorSheet','feedbackSheet'].forEach(id=>show(id,false));}
  $o('opsDialogCancel').onclick=()=>finishDialog(null);
  $o('opsOrg').onchange=async()=>{org=value('opsOrg');division='';tab='home';hub=null;$o('opsContent').replaceChildren();$o('opsTabs').replaceChildren();$o('opsHubTitle').textContent='Organization Hub';note('opsStatus','Loading organization…');try{await reload()}catch(err){note('opsStatus',err.message,true)}};
@@ -9851,5 +9851,34 @@ document.getElementById('organizationHomeBtn').onclick=()=>WMOperations.open(sel
  },true);
  new MutationObserver(()=>{if(!overlay.hidden&&locked())close(false);}).observe(document.body,{attributes:true,subtree:true,attributeFilter:['class']});
 })();</script>
+<script>
+// Login keyboard navigation for desktop browsers and the Mac wrapper.
+(function installLoginKeyboardNavigation(){
+  const auth=document.getElementById('authView');
+  if(!auth)return;
+  const personal=['email','password'];
+  const team=['teamSignInCode','teamSignInUsername','teamSignInPassword'];
+  auth.addEventListener('keydown',event=>{
+    if(event.defaultPrevented||event.isComposing||event.keyCode===229||event.altKey||event.ctrlKey||event.metaKey)return;
+    const visible=el=>el&&!el.disabled&&el.getClientRects().length>0;
+    if(event.key==='Tab'){
+      const controls=Array.from(auth.querySelectorAll('input,button,select,textarea,a[href],[tabindex]'))
+        .filter(el=>visible(el)&&el.tabIndex>=0);
+      const index=controls.indexOf(event.target);
+      const next=controls[index+(event.shiftKey?-1:1)];
+      if(index>=0&&next){event.preventDefault();next.focus();}
+      return;
+    }
+    if(event.key!=='Enter'||event.shiftKey||event.repeat)return;
+    const fields=personal.includes(event.target.id)?personal:team.includes(event.target.id)?team:null;
+    if(!fields)return;
+    event.preventDefault();
+    const index=fields.indexOf(event.target.id);
+    if(index<fields.length-1){document.getElementById(fields[index+1])?.focus();return;}
+    const button=document.getElementById(fields===personal?'signInBtn':'teamSignInBtn');
+    if(visible(button))button.click();
+  });
+})();
+</script>
 </body>
 </html>
