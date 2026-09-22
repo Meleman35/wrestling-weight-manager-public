@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.12: Weigh-in start time, keyboard navigation and wrestling mat icon. -->
+<!-- Wrestling Manager v0.20.14: Locker Room and Toolbox UI refresh on top of the 0.20.13 native Tab fix. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -580,6 +580,20 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
 <style>
 .auth-remember-email{margin:12px 0 0}.auth-remember-email small{display:block;font-weight:400}.auth-password-help{line-height:1.45}.auth-options{display:grid;grid-template-columns:minmax(0,1fr);justify-content:stretch;gap:10px}.auth-options .toggle-row{width:100%}.auth-options .link-button{justify-self:end;box-shadow:none}
 </style>
+
+<style id="wmLockerRoomRefresh014">
+/* 0.20.14 presentation refresh. Existing routing IDs intentionally remain unchanged. */
+.locker-room-heading{align-items:flex-end;margin-bottom:10px}.locker-room-heading h2{font-size:30px;letter-spacing:-.7px}.locker-room-heading p{max-width:560px}
+.locker-room-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:0 0 14px;position:sticky;top:0;z-index:6;background:linear-gradient(180deg,var(--surface,#fff) 72%,rgba(255,255,255,0));backdrop-filter:blur(10px)}
+.locker-room-tab{border:1px solid #dce3ec!important;background:#fff!important;color:#344054!important;border-radius:999px!important;padding:10px 12px!important;font-weight:800!important;box-shadow:none!important;min-height:42px}.locker-room-tab.active{background:var(--team-primary,#c8202f)!important;border-color:var(--team-primary,#c8202f)!important;color:#fff!important;box-shadow:0 6px 16px rgba(0,0,0,.10)!important}
+.locker-pane.hidden{display:none!important}.locker-feature-hero{display:flex;gap:14px;align-items:center;background:#fff;border:1px solid #e2e8f0;border-radius:20px;padding:18px;margin:4px 0 14px;box-shadow:0 8px 24px rgba(15,23,42,.06)}.locker-feature-hero h3{margin:2px 0 4px;font-size:24px}.locker-feature-hero p{margin:0;color:#667085}.locker-feature-icon{width:54px;height:54px;border-radius:16px;background:#f2f4f7;display:grid;place-items:center;font-size:27px;flex:none}
+.locker-card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}.locker-empty-card{display:flex;flex-direction:column;gap:5px;background:#fff;border:1px dashed #cbd5e1;border-radius:18px;padding:20px;color:#475467}.locker-empty-card b{color:#101828;font-size:17px}.locker-coming-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}.locker-coming-row span{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:12px 8px;text-align:center;font-weight:750;font-size:13px}
+.locker-team-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.locker-team-actions button{display:grid;grid-template-columns:38px 1fr;grid-template-rows:auto auto;column-gap:8px;text-align:left;background:#fff!important;color:#101828!important;border:1px solid #e2e8f0!important;border-radius:17px!important;padding:14px!important;box-shadow:0 5px 15px rgba(15,23,42,.04)!important}.locker-team-actions button>span{grid-row:1/3;font-size:24px;align-self:center}.locker-team-actions button>b{font-size:15px}.locker-team-actions button>small{color:#667085}.locker-team-preview{margin-bottom:12px}.locker-roster-strip{display:flex;gap:8px;overflow:auto;padding:2px 0 8px}.locker-roster-chip{white-space:nowrap;border-radius:999px;background:#fff;border:1px solid #e2e8f0;padding:8px 11px;font-weight:700;font-size:13px}
+.toolbox-title{align-items:flex-start}.toolbox-title p{margin:5px 0 0}.toolbox-groups{display:grid;gap:16px}.toolbox-group{display:grid;gap:8px}.toolbox-group-head{display:flex;gap:10px;align-items:center;padding:0 4px}.toolbox-group-head>span{font-size:22px}.toolbox-group-head>div{display:flex;flex-direction:column}.toolbox-group-head b{font-size:15px}.toolbox-group-head small{color:#667085;font-size:12px}.toolbox-group .menu-card{margin:0;overflow:hidden;border-radius:18px;border:1px solid #e2e8f0;background:#fff;box-shadow:0 5px 18px rgba(15,23,42,.05)}
+.bottom-nav .nav-btn span{font-size:19px}.bottom-nav .nav-btn small{font-size:10px;letter-spacing:-.1px}.bottom-nav .nav-btn[data-tab="home"] small{font-size:9.5px}
+.home-feed-block,.feature-card,.menu-card{box-shadow:0 5px 18px rgba(15,23,42,.045)}
+@media(max-width:560px){.locker-room-tabs{gap:5px}.locker-room-tab{font-size:12px!important;padding:9px 5px!important}.locker-coming-row{grid-template-columns:repeat(2,1fr)}.locker-team-actions{grid-template-columns:1fr}.locker-room-heading h2{font-size:27px}}
+</style>
 </head>
 <body>
   <div id="message"></div>
@@ -719,13 +733,18 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
     <main class="content">
       <section id="homeTab" class="tabview">
         <div id="teamBanner" class="team-banner hidden"><img id="teamBannerImg" alt="Team banner"></div>
-        <div class="home-feed-heading">
-          <div><div class="eyebrow">YOUR TEAM</div><h2>Team Feed</h2><p>Updates, athletes and the next things that matter.</p></div>
+        <div class="home-feed-heading locker-room-heading">
+          <div><div class="eyebrow">YOUR TEAM</div><h2>Locker Room</h2><p>Your team, your people, and what matters today.</p></div>
           <span class="feed-live-chip"><span class="feed-live-dot"></span> LIVE</span>
+        </div>
+        <div class="locker-room-tabs" role="tablist" aria-label="Locker Room sections">
+          <button type="button" class="locker-room-tab active" data-locker-section="board" role="tab" aria-selected="true">📌 Team Board</button>
+          <button type="button" class="locker-room-tab" data-locker-section="trophy" role="tab" aria-selected="false">🏆 Trophy Case</button>
+          <button type="button" class="locker-room-tab" data-locker-section="team" role="tab" aria-selected="false">👥 Team</button>
         </div>
         
         <button id="organizationHomeBtn" class="hidden" type="button">Organization tools</button>
-        <div id="homeLayoutBlocks">
+        <div id="lockerBoardPane" class="locker-pane" data-locker-pane="board"><div id="homeLayoutBlocks">
 <section id="myCornerHome" class="home-feed-block wp-panel layout-block" data-layout-key="my_corner" aria-label="My Corner"></section>
         <section id="importantAnnouncementsSection" class="important-announcements home-feed-block layout-block" data-layout-key="important">
           <div class="section-head"><div class="feed-author"><span class="feed-author-icon">📣</span><span><h3>Important Announcements</h3><small>Coaches & team leaders</small></span></div><button id="newAnnouncementBtn" class="link-btn coach-only">＋ Post</button></div>
@@ -745,7 +764,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
             <button class="quick-card" data-layout-key="attendance" data-go="schedule"><span>✓</span><b>Attendance</b><small>RSVPs and check-in</small></button>
             <button class="quick-card" data-layout-key="weight" data-go="weight"><span>⚖️</span><b>Weight Room</b><small>Weigh-ins and eligibility</small></button>
             <button class="quick-card" data-layout-key="messages" data-go="messages"><span>💬</span><b>Messages</b><small>Team and group chats</small></button>
-            <button class="quick-card" data-layout-key="tools" data-go="more"><span>☰</span><b>Team tools</b><small>Roster, join, equipment</small></button>
+            <button class="quick-card" data-layout-key="tools" data-go="more"><span>🧰</span><b>Toolbox</b><small>Program tools & forms</small></button>
           </div>
         </section>
 
@@ -774,11 +793,28 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
           <button type="button" class="metric metric-btn" data-go="weight"><span>Newly eligible</span><strong id="eligible">0</strong></button>
           <button type="button" class="metric metric-btn" data-go="weight"><span>Challenges</span><strong id="challenges">0</strong></button>
         </div><div id="homeCoachWeightSnapshot" class="coach-weight-snapshot hidden"></div><div id="homePersonalWeightList" class="personal-weight-list hidden"></div></section>
-        </div>
+        </div></div>
+        <section id="lockerTrophyPane" class="locker-pane hidden" data-locker-pane="trophy">
+          <div class="locker-feature-hero"><span class="locker-feature-icon">🏆</span><div><div class="eyebrow">TEAM HISTORY</div><h3>Trophy Case</h3><p>Highlights, tournament results, milestones and team memories live here.</p></div></div>
+          <div id="lockerTrophyList" class="locker-card-grid">
+            <div class="locker-empty-card"><b>Build the story of your season.</b><span>Highlight reels, podium finishes and tournament results will collect here without changing the official match or weigh-in records.</span></div>
+          </div>
+          <div class="locker-coming-row"><span>🎥 Highlights</span><span>🥇 Results</span><span>⭐ Milestones</span><span>📸 Memories</span></div>
+        </section>
+        <section id="lockerTeamPane" class="locker-pane hidden" data-locker-pane="team">
+          <div class="locker-feature-hero"><span class="locker-feature-icon">👥</span><div><div class="eyebrow">OUR PEOPLE</div><h3>Team</h3><p>Quick access to athletes, coaches, family connections and shared wrestling profiles.</p></div></div>
+          <div id="lockerTeamPreview" class="locker-team-preview"></div>
+          <div class="locker-team-actions">
+            <button type="button" data-locker-action="profiles"><span>🔎</span><b>Find Profiles</b><small>Shared wrestling profiles</small></button>
+            <button type="button" data-locker-action="staff"><span>📇</span><b>Coaches & Staff</b><small>Team directory</small></button>
+            <button type="button" class="coach-only" data-locker-action="roster"><span>🤼</span><b>Roster</b><small>Athletes and status</small></button>
+            <button type="button" class="coach-only" data-locker-action="join"><span>🔗</span><b>Team Join</b><small>Invite athletes & parents</small></button>
+          </div>
+        </section>
       </section>
 
       <section id="scheduleTab" class="tabview hidden">
-        <button type="button" class="tab-back-btn" data-back-home><span>←</span> Back to Home</button>
+        <button type="button" class="tab-back-btn" data-back-home><span>←</span> Back to Locker Room</button>
         <div class="section-head top-space">
           <div><div class="eyebrow">TEAM CALENDAR</div><h2>Schedule</h2></div>
           <button id="newEventBtn" class="primary-small">＋ New</button>
@@ -817,7 +853,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
       </section>
 
       <section id="messagesTab" class="tabview hidden">
-        <button type="button" class="tab-back-btn" data-back-home><span>←</span> Back to Home</button>
+        <button type="button" class="tab-back-btn" data-back-home><span>←</span> Back to Locker Room</button>
         <div class="communication-head top-space"><div><div class="eyebrow">SAFEGUARDED COMMUNICATION</div><h2 style="margin:3px 0 0">Messages</h2></div><div class="communication-actions"><button id="openNotificationsBtn" type="button" class="secondary">🔔 <span id="communicationUnreadCount">0</span></button><button id="newCommunicationBtn" type="button">+ New</button></div></div>
         <div class="safesport-banner"><span>🛡️</span><div><b>Guardian-safe by design</b><small>Adults cannot privately message a minor without a connected parent or guardian receiving silent read access. Messages remain in the audit history after edits or removal. Automated checks flag secrecy, sexual-image requests, threats, off-app contact attempts and adult-to-minor phone-number sharing for human review.</small></div></div>
         <button id="athleteChatPermissionsBtn" type="button" class="wide secondary hidden">👨‍👩‍👧 Manage My Athlete’s Chat Access</button>
@@ -832,7 +868,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
       </section>
 
       <section id="weightTab" class="tabview hidden">
-        <button type="button" class="tab-back-btn" data-back-home><span>←</span> Back to Home</button>
+        <button type="button" class="tab-back-btn" data-back-home><span>←</span> Back to Locker Room</button>
         <div class="section-head top-space"><div><div class="eyebrow">WRESTLING-SPECIFIC</div><h2>Weight Room</h2></div></div>
         <div id="teamWeightRoomMetrics" class="metric-grid">
           <button type="button" class="metric metric-btn" data-weight-metric="weighed"><span data-weighed-label>Weighed today</span><strong id="weighed2">0</strong></button>
@@ -869,34 +905,43 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
       </section>
 
       <section id="moreTab" class="tabview hidden">
-        <button type="button" class="tab-back-btn" data-back-home><span>←</span> Back to Home</button>
-        <div class="section-head top-space"><div><div class="eyebrow">TEAM MANAGEMENT</div><h2>More</h2></div></div>
-        <div id="moreMenuCard" class="menu-card"><button id="findProfilesBtn" class="menu-row" data-layout-key="find_profiles"><span>🔎</span><div><b>Find Profiles</b><small>Search and browse shared wrestling profiles</small></div><i>›</i></button>
-<button id="organizationHubBtn" class="menu-row" data-layout-key="organization_hub"><span>🏛️</span><div><b>Organization Hub</b><small>Divisions, calendars, officials, budgets and contracts</small></div><i>›</i></button>
-<button id="matchBookBtn" class="menu-row coach-only" data-layout-key="match_book"><span>⏱️</span><div><b>Match Book</b><small>Challenges, scoring, clocks and results</small></div><i>›</i></button>
-<button id="feedbackBtn" class="menu-row" data-layout-key="feedback"><span>💬</span><div><b>Feedback</b><small>Share ideas, problems and what you like</small></div><i>›</i></button>
-          <button id="rosterBtn" class="menu-row coach-only" data-layout-key="roster"><span>👥</span><div><b>Roster</b><small>Athletes, profiles, standby and team transfers</small></div><i>›</i></button>
-          <button id="joinBtn" class="menu-row coach-only" data-layout-key="join"><span>🔗</span><div><b>Team Join</b><small>QR code, text, email and team code</small></div><i>›</i></button>
-          <button id="joinRequestsBtn" class="menu-row coach-only" data-layout-key="join_requests"><span>✅</span><div><b>Join Requests</b><small>Approve or deny athletes and parents</small></div><i id="joinRequestCount">›</i></button>
-          <button id="agreementsBtn" class="menu-row" data-layout-key="agreements"><span>✍️</span><div><b>Team Agreement</b><small>Expectations, signatures and social-media permissions</small></div><i id="agreementMenuCount">›</i></button>
-          <button id="medicalClearanceBtn" class="menu-row" data-layout-key="medical"><span>🩺</span><div><b>Medical Clearance</b><small>NFHS skin forms, doctor notes and return-to-participation status</small></div><i id="medicalMenuCount">›</i></button>
-          <button id="memberProfilesBtn" class="menu-row member-only" data-layout-key="member_profiles"><span>👤</span><div><b>My Athlete Profiles</b><small>Photo, sizes, contact permissions and age divisions</small></div><i>›</i></button>
-          <button id="familyBtn" class="menu-row member-only" data-layout-key="family"><span>👨‍👩‍👧</span><div><b>Family</b><small>Invite a parent or add another child</small></div><i>›</i></button>
-          <button id="staffDirectoryBtn" class="menu-row" data-layout-key="staff_directory"><span>📇</span><div><b>Coaches & Staff</b><small>Team staff photos and the contact information they choose to share</small></div><i>›</i></button>
-          <button id="staffAccessBtn" class="menu-row admin-only" data-layout-key="staff_access"><span>🪪</span><div><b>Adult Roles & Admins</b><small>Assign coaches, team leaders, volunteers and multiple administrators</small></div><i>›</i></button>
-          <button class="menu-row disabled" data-layout-key="equipment"><span>🎽</span><div><b>Equipment</b><small>Singlets, shoes, headgear and more</small></div><i>›</i></button>
-          <button class="menu-row disabled" data-layout-key="files"><span>📁</span><div><b>Files & Photos</b><small>Team documents and albums</small></div><i>›</i></button>
-          <button id="accountBtn" class="menu-row" data-layout-key="account"><span>⚙️</span><div><b>Account & Team</b><small>Profile, team and sign out</small></div><i>›</i></button>
+        <button type="button" class="tab-back-btn" data-back-home><span>←</span> Back to Locker Room</button>
+        <div class="section-head top-space toolbox-title"><div><div class="eyebrow">PROGRAM TOOLS</div><h2>Toolbox</h2><p class="muted">The fixes, forms and management tools that keep your program moving.</p></div></div>
+        <div id="moreMenuCard" class="toolbox-groups">
+          <section class="toolbox-group"><div class="toolbox-group-head"><span>🤼</span><div><b>Competition</b><small>Match day, eligibility and required forms</small></div></div><div class="menu-card">
+            <button id="matchBookBtn" class="menu-row coach-only" data-layout-key="match_book"><span>⏱️</span><div><b>Match Book</b><small>Challenges, scoring, clocks and results</small></div><i>›</i></button>
+            <button id="medicalClearanceBtn" class="menu-row" data-layout-key="medical"><span>🩺</span><div><b>Medical Clearance</b><small>NFHS skin forms, doctor notes and return-to-participation status</small></div><i id="medicalMenuCount">›</i></button>
+            <button id="agreementsBtn" class="menu-row" data-layout-key="agreements"><span>✍️</span><div><b>Team Agreement</b><small>Expectations, signatures and social-media permissions</small></div><i id="agreementMenuCount">›</i></button>
+          </div></section>
+          <section class="toolbox-group"><div class="toolbox-group-head"><span>👥</span><div><b>Team Management</b><small>People, access and connections</small></div></div><div class="menu-card">
+            <button id="rosterBtn" class="menu-row coach-only" data-layout-key="roster"><span>👥</span><div><b>Roster</b><small>Athletes, profiles, standby and team transfers</small></div><i>›</i></button>
+            <button id="joinBtn" class="menu-row coach-only" data-layout-key="join"><span>🔗</span><div><b>Team Join</b><small>QR code, text, email and team code</small></div><i>›</i></button>
+            <button id="joinRequestsBtn" class="menu-row coach-only" data-layout-key="join_requests"><span>✅</span><div><b>Join Requests</b><small>Approve or deny athletes and parents</small></div><i id="joinRequestCount">›</i></button>
+            <button id="staffDirectoryBtn" class="menu-row" data-layout-key="staff_directory"><span>📇</span><div><b>Coaches & Staff</b><small>Team staff photos and shared contact information</small></div><i>›</i></button>
+            <button id="memberProfilesBtn" class="menu-row member-only" data-layout-key="member_profiles"><span>👤</span><div><b>My Athlete Profiles</b><small>Photo, sizes, contact permissions and age divisions</small></div><i>›</i></button>
+            <button id="familyBtn" class="menu-row member-only" data-layout-key="family"><span>👨‍👩‍👧</span><div><b>Family</b><small>Invite a parent or add another child</small></div><i>›</i></button>
+            <button id="findProfilesBtn" class="menu-row" data-layout-key="find_profiles"><span>🔎</span><div><b>Find Profiles</b><small>Search and browse shared wrestling profiles</small></div><i>›</i></button>
+          </div></section>
+          <section class="toolbox-group"><div class="toolbox-group-head"><span>🎒</span><div><b>Gear & Files</b><small>Team resources in one place</small></div></div><div class="menu-card">
+            <button class="menu-row disabled" data-layout-key="equipment"><span>🎽</span><div><b>Equipment</b><small>Singlets, shoes, headgear and more</small></div><i>›</i></button>
+            <button class="menu-row disabled" data-layout-key="files"><span>📁</span><div><b>Files & Photos</b><small>Team documents and albums</small></div><i>›</i></button>
+          </div></section>
+          <section class="toolbox-group"><div class="toolbox-group-head"><span>🧰</span><div><b>Program</b><small>Organization, admin and app settings</small></div></div><div class="menu-card">
+            <button id="organizationHubBtn" class="menu-row" data-layout-key="organization_hub"><span>🏛️</span><div><b>Organization Hub</b><small>Divisions, calendars, officials, budgets and contracts</small></div><i>›</i></button>
+            <button id="staffAccessBtn" class="menu-row admin-only" data-layout-key="staff_access"><span>🪪</span><div><b>Adult Roles & Admins</b><small>Assign coaches, team leaders, volunteers and administrators</small></div><i>›</i></button>
+            <button id="feedbackBtn" class="menu-row" data-layout-key="feedback"><span>💬</span><div><b>Feedback</b><small>Share ideas, problems and what you like</small></div><i>›</i></button>
+            <button id="accountBtn" class="menu-row" data-layout-key="account"><span>⚙️</span><div><b>Account & Team</b><small>Profile, team and sign out</small></div><i>›</i></button>
+          </div></section>
         </div>
       </section>
     </main>
 
     <nav class="bottom-nav">
-      <button class="nav-btn active" data-tab="home" data-layout-key="home"><span>⌂</span><small>Home</small><i class="nav-count-badge" data-nav-badge="home" aria-label="0 unseen home alerts">0</i></button>
-      <button class="nav-btn" data-tab="schedule" data-layout-key="schedule"><span>▣</span><small>Schedule</small><i class="nav-count-badge" data-nav-badge="schedule" aria-label="0 unseen schedule changes">0</i></button>
-      <button class="nav-btn" data-tab="messages" data-layout-key="messages"><span>◯</span><small>Messages</small><i class="nav-count-badge" data-nav-badge="messages" aria-label="0 unread messages">0</i></button>
+      <button class="nav-btn active" data-tab="home" data-layout-key="home"><span>🏠</span><small>Locker Room</small><i class="nav-count-badge" data-nav-badge="home" aria-label="0 unseen locker room alerts">0</i></button>
+      <button class="nav-btn" data-tab="messages" data-layout-key="messages"><span>💬</span><small>Messages</small><i class="nav-count-badge" data-nav-badge="messages" aria-label="0 unread messages">0</i></button>
+      <button class="nav-btn" data-tab="schedule" data-layout-key="schedule"><span>📅</span><small>Schedule</small><i class="nav-count-badge" data-nav-badge="schedule" aria-label="0 unseen schedule changes">0</i></button>
       <button class="nav-btn" data-tab="weight" data-layout-key="weight"><span>⚖</span><small>Weight Room</small><i class="nav-count-badge" data-nav-badge="weight" aria-label="0 unread weigh-ins">0</i></button>
-      <button class="nav-btn" data-tab="more" data-layout-key="more"><span>☰</span><small>More</small></button>
+      <button class="nav-btn" data-tab="more" data-layout-key="more"><span>🧰</span><small>Toolbox</small></button>
     </nav>
   </section>
 
@@ -1808,7 +1853,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.12</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.14</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -2975,6 +3020,25 @@ function updateBottomNavBadges(){
   setNavBadge('weight',0,'unread weigh-ins');
 }
 
+let lockerRoomSection='board';
+function renderLockerTeamPreview(){
+  const box=$('lockerTeamPreview');if(!box)return;
+  if(isStaff){
+    const active=(rosterRows||[]).filter(r=>r.active!==false&&!['standby','removed','inactive'].includes(r.roster_status));
+    box.innerHTML=active.length?`<div class="section-head"><div><h3>Active Roster</h3><small class="section-sub">${active.length} athlete${active.length===1?'':'s'}</small></div></div><div class="locker-roster-strip">${active.slice(0,20).map(r=>`<button type="button" class="locker-roster-chip" data-locker-athlete="${esc(r.athlete_id)}">${esc(r.first_name)} ${esc(r.last_name)}</button>`).join('')}</div>`:'<div class="locker-empty-card"><b>No active athletes yet.</b><span>Use Team Join or Roster to start building this team.</span></div>';
+    box.querySelectorAll('[data-locker-athlete]').forEach(btn=>btn.onclick=()=>openAthleteOverview(btn.dataset.lockerAthlete));
+  }else{
+    const personal=personalWeightAthletes();
+    box.innerHTML=personal.length?`<div class="section-head"><div><h3>My Team Connections</h3><small class="section-sub">Profiles connected to you on this team</small></div></div><div class="locker-roster-strip">${personal.map(r=>`<span class="locker-roster-chip">${esc(r.first_name)} ${esc(r.last_name)}</span>`).join('')}</div>`:'<div class="locker-empty-card"><b>Your team directory is ready.</b><span>Use Find Profiles for shared wrestling profiles or Coaches & Staff for your team directory.</span></div>';
+  }
+}
+function setLockerRoomSection(name){
+  const next=['board','trophy','team'].includes(name)?name:'board';lockerRoomSection=next;
+  document.querySelectorAll('[data-locker-pane]').forEach(p=>p.classList.toggle('hidden',p.dataset.lockerPane!==next));
+  document.querySelectorAll('[data-locker-section]').forEach(b=>{const active=b.dataset.lockerSection===next;b.classList.toggle('active',active);b.setAttribute('aria-selected',String(active));});
+  if(next==='team')renderLockerTeamPreview();
+}
+
 function setTab(name){
  if(name==='home')window.WMFamily?.home();
   if(!managedLogin&&selectedHomeOrganization()&&activeTeam?.organization_id!==selectedHomeOrganization()&&name!=='home'){message('Choose a team in this organization first.');name='home';}
@@ -2986,7 +3050,7 @@ function setTab(name){
   if(name==='home'||name==='schedule')markNavSeen(name);
   updateBottomNavBadges();
   window.scrollTo(0,0);
-  if (name==='home') refreshTeamData();
+  if (name==='home'){setLockerRoomSection(lockerRoomSection);refreshTeamData();}
   if (name==='schedule') loadSchedule();
   if (name==='messages') loadCommunications();
   if (name==='weight'){
@@ -6419,6 +6483,7 @@ async function loadRoster(){
     bindRosterManagementActions($('inactiveRosterList'));
   }
   await Promise.all([loadCoachWeightClassBoard(),loadCoachWeightSnapshot()]);
+  renderLockerTeamPreview();
 }
 
 function athleteTeamRow(athleteId){
@@ -9203,6 +9268,8 @@ $('weightTrendRetryBtn').onclick=()=>loadWeightTrend();
 document.querySelectorAll('.type-btn').forEach(btn=>btn.onclick=()=>applyEventTypeDefaults(btn.dataset.type));
 document.querySelectorAll('.nav-btn').forEach(btn=>btn.onclick=()=>setTab(btn.dataset.tab));
 document.querySelectorAll('[data-go]').forEach(btn=>btn.onclick=()=>{setTab(btn.dataset.go);if(btn.dataset.action==='create-event')setTimeout(prepareEventForm,0);});
+document.querySelectorAll('[data-locker-section]').forEach(btn=>btn.onclick=()=>setLockerRoomSection(btn.dataset.lockerSection));
+document.querySelectorAll('[data-locker-action]').forEach(btn=>btn.onclick=()=>{const map={profiles:'findProfilesBtn',staff:'staffDirectoryBtn',roster:'rosterBtn',join:'joinBtn'};const target=$(map[btn.dataset.lockerAction]);target?.click();});
 document.querySelectorAll('[data-back-home]').forEach(btn=>btn.onclick=()=>setTab('home'));
 document.querySelectorAll('[data-weight-metric]').forEach(btn=>btn.onclick=async()=>{
   const metric=btn.dataset.weightMetric;
@@ -9811,7 +9878,7 @@ window.WMOperations=(()=>{
  async function calendar(team){try{return await rpc(false,{action:'calendar',team_id:team});}catch(err){console.warn('Organization calendar unavailable:',err.message);return [];}}
  async function feedback(){if(document.body.classList.contains('kiosk-locked'))return;closeSheets();feedbackId=crypto.randomUUID();note('feedbackStatus','');openSheet('feedbackSheet');await feedbackHistory();}
  async function feedbackHistory(){const target=$o('feedbackHistory');target.textContent='Loading…';try{const rows=await rpc(false,{action:'feedback',team_id:activeTeam?.id||null});target.innerHTML=list(rows).map(r=>`<article class="ops-card"><b>${e(r.category)}</b> ${badge(r.status)}<p>${e(r.body)}</p><small>${e(fmtDateTime(r.created_at))} · ${e(r.build)}</small>${r.response?'<p>Response: '+e(r.response)+'</p>':''}${actualIsTeamAdmin&&!managedLogin&&r.team_id===activeTeam?.id?`<div class="ops-actions"><button class="secondary" data-feedback-review="${r.id}">Review</button></div>`:''}</article>`).join('')||'<p>No feedback yet.</p>';target.querySelectorAll('[data-feedback-review]').forEach(b=>b.onclick=async()=>{const row=rows.find(r=>r.id===b.dataset.feedbackReview),result=await dialog({title:'Review feedback',fields:[{id:'status',label:'Status',options:['new','reviewing','planned','resolved'].map(s=>[s,s]),value:row.status},{id:'response',label:'Response',type:'textarea',value:row.response||''}],submit:'Save review'});if(!result)return;const {status,response}=result;try{await rpc(true,{action:'feedback_status',id:row.id,status,response});await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}});}catch(err){target.textContent=err.message;}}
- async function sendFeedback(ev){ev.preventDefault();if(!session?.user)return;$o('feedbackSend').disabled=true;try{await rpc(true,{action:'feedback',id:feedbackId||crypto.randomUUID(),team_id:activeTeam?.id||null,category:value('feedbackCategory'),body:value('feedbackBody'),build:'v0.20.12'});$o('feedbackBody').value='';feedbackId=crypto.randomUUID();note('feedbackStatus','Thanks—your feedback was saved.');await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}finally{$o('feedbackSend').disabled=false}}
+ async function sendFeedback(ev){ev.preventDefault();if(!session?.user)return;$o('feedbackSend').disabled=true;try{await rpc(true,{action:'feedback',id:feedbackId||crypto.randomUUID(),team_id:activeTeam?.id||null,category:value('feedbackCategory'),body:value('feedbackBody'),build:'v0.20.14'});$o('feedbackBody').value='';feedbackId=crypto.randomUUID();note('feedbackStatus','Thanks—your feedback was saved.');await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}finally{$o('feedbackSend').disabled=false}}
  function close(){finishDialog(null);generation++;editor=null;$o('opsRosterContacts')?.replaceChildren();$o('opsFields').replaceChildren();hub=null;['opsHubSheet','opsEditorSheet','feedbackSheet'].forEach(id=>show(id,false));}
  $o('opsDialogCancel').onclick=()=>finishDialog(null);
  $o('opsOrg').onchange=async()=>{org=value('opsOrg');division='';tab='home';hub=null;$o('opsContent').replaceChildren();$o('opsTabs').replaceChildren();$o('opsHubTitle').textContent='Organization Hub';note('opsStatus','Loading organization…');try{await reload()}catch(err){note('opsStatus',err.message,true)}};
@@ -10233,8 +10300,10 @@ document.getElementById('organizationHomeBtn').onclick=()=>WMOperations.open(sel
 /* Wrestling Manager: keyboard navigation for static and dynamically opened forms. */
 (() => {
   'use strict';
-  if (window.WMKeyboardNavigation) return;
-  window.WMKeyboardNavigation = true;
+  if (window.WMKeyboardNavigation?.version >= 213) return;
+  // Publish immediately, even at document start, so an older website/native
+  // injection cannot install a second Return handler over this one.
+  window.WMKeyboardNavigation = {version:213,moveFocus};
   const controls = 'input,select,textarea,button,a[href],summary,[tabindex],[contenteditable="true"]';
   const panels = 'dialog[open],.ows-modal,[role="dialog"],.sheet,#wmOfficialSheets,#authView,#appLockOverlay';
   const handledEnter = new Set(['appLockPin','editWeightClassAdd','teammateWeightPin','weightPinConfirm','weighScanToken']);
@@ -10258,6 +10327,43 @@ document.getElementById('organizationHomeBtn').onclick=()=>WMOperations.open(sel
   }
   function nextField(el) { const list=fields(el);return list[list.indexOf(el)+1]; }
   function focus(el) { el.focus();el.scrollIntoView({block:'nearest',inline:'nearest'}); }
+  function moveFocus(direction=1, native=false) {
+    const el=document.activeElement;
+    if (!document.body || !(el instanceof HTMLElement) || el.closest('[data-keyboard-native]')) return false;
+    const step=direction<0?-1:1;
+    // A native Tab command may arrive before the first field has been clicked.
+    // Start within the visible dialog, lock screen or sign-in panel in that case.
+    const container=el===document.body || !visible(el)
+      ? [...document.querySelectorAll(panels)].filter(visible).at(-1)||document.body
+      : scope(el);
+    const list=[...container.querySelectorAll(controls)]
+      .filter(n=>visible(n)&&n.tabIndex>=0)
+      .sort((a,b)=>(a.tabIndex||Infinity)-(b.tabIndex||Infinity));
+    if (!list.length) return false;
+    const current=el.closest(controls),index=list.indexOf(current);
+    let target;
+    if (index<0) target=step<0?list.at(-1):list[0];
+    else target=list[index+step];
+    if (!target && (native || container.matches('dialog[open],.ows-modal,[role="dialog"],.sheet,#wmOfficialSheets,#appLockOverlay'))) target=step<0?list.at(-1):list[0];
+    if (!target) return false;
+    focus(target);
+    return document.activeElement===target;
+  }
+  // Run Tab in capture phase so a form's bubbling listener cannot swallow it.
+  // In WKWebView, the native key command calls moveFocus directly because UIKit
+  // can consume Tab without producing any DOM keyboard event.
+  document.addEventListener('keydown',event=>{
+    if (event.key!=='Tab' || event.defaultPrevented || event.isComposing || event.keyCode===229 || event.altKey || event.ctrlKey || event.metaKey) return;
+    const el=event.target;
+    if (!(el instanceof HTMLElement) || !visible(el) || el.closest('[data-keyboard-native]')) return;
+    // Browser date/time controls retain native segment navigation. The native
+    // app command advances to the next whole control; arrow keys edit segments.
+    if (el.matches('input[type="date"],input[type="time"],input[type="datetime-local"]')) return;
+    if (moveFocus(event.shiftKey?-1:1)) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+  },true);
   function enter(el) {
     if (!el.reportValidity()) return;
     const next=nextField(el);
@@ -10271,18 +10377,6 @@ document.getElementById('organizationHomeBtn').onclick=()=>WMOperations.open(sel
     if (event.defaultPrevented || event.isComposing || event.keyCode===229 || event.altKey || event.ctrlKey || event.metaKey) return;
     const el=event.target;
     if (!(el instanceof HTMLElement) || !visible(el) || el.closest('[data-keyboard-native]')) return;
-    if (event.key==='Tab') {
-      // Keep native date/time segment navigation and picker behavior.
-      if (el.matches('input[type="date"],input[type="time"],input[type="datetime-local"]')) return;
-      const container=scope(el);
-      const list=[...container.querySelectorAll(controls)].filter(n=>visible(n)&&n.tabIndex>=0);
-      const index=list.indexOf(el),next=list[index+(event.shiftKey?-1:1)];
-      if (index>=0 && next) { event.preventDefault();focus(next); }
-      else if (container.matches('dialog[open],.ows-modal,[role="dialog"],.sheet,#wmOfficialSheets,#appLockOverlay') && list.length) {
-        event.preventDefault();focus(event.shiftKey?list.at(-1):list[0]);
-      }
-      return;
-    }
     if (event.key!=='Enter' || !(el instanceof HTMLInputElement) || !textTypes.has(el.type) || el.readOnly || handledEnter.has(el.id)) return;
     event.preventDefault();
     if (!event.repeat && !event.shiftKey) enter(el);
@@ -10303,10 +10397,14 @@ document.getElementById('organizationHomeBtn').onclick=()=>WMOperations.open(sel
   let pending=false;
   function refresh() { if (pending) return;pending=true;queueMicrotask(()=>{pending=false;hints();}); }
   document.addEventListener('focusin',refresh);
-  new MutationObserver(records=>{
-    if (records.some(r=>[...r.addedNodes,...r.removedNodes].some(n=>n instanceof HTMLElement && (n.matches('input,select,textarea,button') || n.querySelector('input,select,textarea,button'))))) refresh();
-  }).observe(document.body,{childList:true,subtree:true});
-  hints();
+  function ready() {
+    new MutationObserver(records=>{
+      if (records.some(r=>[...r.addedNodes,...r.removedNodes].some(n=>n instanceof HTMLElement && (n.matches('input,select,textarea,button') || n.querySelector('input,select,textarea,button'))))) refresh();
+    }).observe(document.body,{childList:true,subtree:true});
+    hints();
+  }
+  if (document.body) ready();
+  else document.addEventListener('DOMContentLoaded',ready,{once:true});
 })();
 
 </script>
@@ -10483,7 +10581,7 @@ window.WMFamily=(()=>{
  sheet.onclick=async e=>{const b=e.target.closest('button');if(!b)return;try{if(b.hasAttribute('data-family-inbox'))await received();if(b.dataset.familyView)await view(b.dataset.familyView);if(b.dataset.familyApprove){await call({action:'review',id:b.dataset.familyApprove,decision:'approve'});await manage();}if(b.dataset.familyRevoke){await call({action:'revoke',id:b.dataset.familyRevoke});await manage();}}catch(e){note(e.message);}};
  for(const anchor of ['personalAccountProfileCard','setupFeedbackBtn']){const b=document.createElement('button');b.type='button';b.className='wide secondary';b.textContent='Family circle · invitations & schedules';b.onclick=()=>open().catch(e=>message(e.message,true));$(anchor)?.after(b);}
  let homeGeneration=0;
- async function home(){const t=++homeGeneration,uid=session?.user?.id,box=$('myCornerHome');box.replaceChildren();if(!uid||managedLogin)return;try{const {data:rows,error}=await client.rpc('wrestling_profiles_request',{p_action:'mine',p_data:{}});if(error)throw error;if(t!==homeGeneration||uid!==session?.user?.id)return;box.innerHTML='<div class="section-head"><h3>My Corner</h3><button type="button" id="cornerHomeFamily">Family</button></div><label>Profile<select id="cornerHomeProfile">'+opts((rows||[]).map(p=>[p.id,p.name]))+'</select></label><div id="cornerHomeMembers" class="wp-grid"></div>';const select=$('cornerHomeProfile');const own=(rows||[]).find(p=>p.self&&!p.athlete);if(own)select.value=own.id;$('cornerHomeFamily').onclick=()=>open().catch(e=>message(e.message,true));async function load(){const id=select.value;const {data:p,error}=await client.rpc('wrestling_profiles_request',{p_action:'view',p_data:{id}});if(t!==homeGeneration||uid!==session?.user?.id||id!==select.value)return;if(error)throw error;$('cornerHomeMembers').innerHTML=[...(p.family_corner||[]).map(c=>({...c,family:true})),...(p.corner||[])].filter(Boolean).map(c=>WMProfiles.tile(c,{home:true,caption:c.family?'Your child · Only you':'View profile'})).join('')||'<p>Choose who appears in your corner.</p>';$('cornerHomeMembers').insertAdjacentHTML('beforeend','<button type="button" class="wide secondary" id="cornerHomeManage">Choose My Corner</button>');WMProfiles.hydratePhotos($('cornerHomeMembers'));$('cornerHomeManage').onclick=()=>WMProfiles.openCorner(id).catch(e=>message(e.message,true));$('cornerHomeMembers').querySelectorAll('[data-corner-profile]').forEach(b=>b.onclick=()=>WMProfiles.openProfile(b.dataset.cornerProfile));}select.onchange=()=>load().catch(e=>message(e.message,true));if(rows?.length)await load();}catch(e){if(t===homeGeneration)box.textContent='My Corner could not load. Reopen Home to retry.';}}
+ async function home(){const t=++homeGeneration,uid=session?.user?.id,box=$('myCornerHome');box.replaceChildren();if(!uid||managedLogin)return;try{const {data:rows,error}=await client.rpc('wrestling_profiles_request',{p_action:'mine',p_data:{}});if(error)throw error;if(t!==homeGeneration||uid!==session?.user?.id)return;box.innerHTML='<div class="section-head"><h3>My Corner</h3><button type="button" id="cornerHomeFamily">Family</button></div><label>Profile<select id="cornerHomeProfile">'+opts((rows||[]).map(p=>[p.id,p.name]))+'</select></label><div id="cornerHomeMembers" class="wp-grid"></div>';const select=$('cornerHomeProfile');const own=(rows||[]).find(p=>p.self&&!p.athlete);if(own)select.value=own.id;$('cornerHomeFamily').onclick=()=>open().catch(e=>message(e.message,true));async function load(){const id=select.value;const {data:p,error}=await client.rpc('wrestling_profiles_request',{p_action:'view',p_data:{id}});if(t!==homeGeneration||uid!==session?.user?.id||id!==select.value)return;if(error)throw error;$('cornerHomeMembers').innerHTML=[...(p.family_corner||[]).map(c=>({...c,family:true})),...(p.corner||[])].filter(Boolean).map(c=>WMProfiles.tile(c,{home:true,caption:c.family?'Your child · Only you':'View profile'})).join('')||'<p>Choose who appears in your corner.</p>';$('cornerHomeMembers').insertAdjacentHTML('beforeend','<button type="button" class="wide secondary" id="cornerHomeManage">Choose My Corner</button>');WMProfiles.hydratePhotos($('cornerHomeMembers'));$('cornerHomeManage').onclick=()=>WMProfiles.openCorner(id).catch(e=>message(e.message,true));$('cornerHomeMembers').querySelectorAll('[data-corner-profile]').forEach(b=>b.onclick=()=>WMProfiles.openProfile(b.dataset.cornerProfile));}select.onchange=()=>load().catch(e=>message(e.message,true));if(rows?.length)await load();}catch(e){if(t===homeGeneration)box.textContent='My Corner could not load. Reopen Locker Room to retry.';}}
  function reset(){revision++;homeGeneration++;profile=null;$('familyBody').replaceChildren();$('myCornerHome').replaceChildren();sheet.classList.add('hidden');}
  return{open,home,reset};
 })();
@@ -10589,7 +10687,7 @@ window.WMPracticeGroups=(()=>{
 })();
 
 </script>
-<!-- Official weigh-in sheets 0.20.12; embedded templates work without form downloads. -->
+<!-- Official weigh-in sheets 0.20.13; embedded templates work without form downloads. -->
 <style>#wmOfficialSheets{position:fixed;inset:0;z-index:9500;background:#eef3f8;color:#122c49;overflow:auto;overscroll-behavior:contain;font:16px/1.45 system-ui,-apple-system,sans-serif;padding-bottom:calc(30px + env(safe-area-inset-bottom));isolation:isolate}
 body:has(#appLockOverlay:not(.hidden)) #wmOfficialSheets,body.kiosk-locked #wmOfficialSheets{visibility:hidden;pointer-events:none}
 #wmOfficialSheets *,#wmOfficialSheets *:before,#wmOfficialSheets *:after{box-sizing:border-box}
@@ -10857,7 +10955,7 @@ function updateReading(){if(!capture||!valid())return;const fresh=connection&&la
 function recordWeight(r,value,source){r.weight=value===null?null:Math.round(value*10)/10;r.capturedAt=value===null?null:now();r.source=value===null?null:source;assignClass(sheet,r);sheet.weighInAt=sheet.rows.filter(x=>x.capturedAt).map(x=>x.capturedAt).sort()[0]||null;}
 async function action(button){ensure();const a=button.dataset.action;if(a==='choose'){choose(button);return;}if(a==='new'){newSheet(button.dataset.sex);return;}if(a==='load'){await queue.catch(()=>{});ensure();const d=await transaction('readonly',s=>s.get(button.dataset.id));ensure();if(!d||d.scope!==scope)throw Error('This sheet is not available to the current team and account.');sheet=d;render();return;}if(a==='list'){await save();ensure();renderHome();return;}if(a==='add-row'){addRow();return;}if(a==='roster'){roster();return;}if(a==='roster-add'){const athlete=(ctx().roster||[]).find(r=>r.id===button.dataset.id);if(!athlete)throw Error('Roster changed. Reopen the roster.');if(sheet.rows.some(r=>r.athleteId===athlete.id))return;addRow(athlete);roster();return;}if(a==='remove-row'){if(!confirm('Remove this athlete from this draft?'))return;edit(d=>{d.rows=d.rows.filter(r=>r.id!==button.dataset.id);d.weighInAt=d.rows.filter(r=>r.capturedAt).map(r=>r.capturedAt).sort()[0]||null;});render();return;}if(a==='save'){await save();return;}if(a==='dismiss'){dismissModal();return;}if(a==='signature'){signature(button.dataset.role);return;}if(a==='clear-signature'){pad?.canvas.getContext('2d').clearRect(0,0,pad.canvas.width,pad.canvas.height);if(pad){pad.strokes=0;pad.distance=0;}return;}if(a==='save-signature'){if(!pad||pad.distance<30||!$('owsConsent').checked){$('owsSignError').textContent='Draw your signature and confirm the checkbox.';return;}const errors=complete(sheet);if(errors.length)throw Error(errors.join(' '));const role=button.dataset.role;sheet.signatures[role]={name:role==='official'?sheet.officialName:sheet.coachName,image:signatureImage(pad.canvas),signedAt:now()};sheet.locked=!!(sheet.signatures.official&&sheet.signatures.coach);sheet.updatedAt=now();dismissModal();render();await save();return;}if(a==='capture'){startCapture(button.dataset.id);return;}if(a==='use-reading'){updateReading();if(capture?.value==null)throw Error('Wait for a current scale reading.');const id=capture.id,value=capture.value;edit(d=>recordWeight(d.rows.find(r=>r.id===id),value,'scale'));lastCapturedRow=id;zeroRequired=true;dismissModal();render();await save();return;}if(a==='revision'){await save();ensure();const old=sheet;sheet={...clone(old),id:uid(),parentId:old.id,revision:old.revision+1,signatures:{},locked:false,reviewed:false,createdAt:now(),updatedAt:now()};render();await save();return;}if(a==='pdf'){await preparePDF();return;}if(a==='share'){await sharePDF();return;}if(a==='preview-pdf'){previewPDF();return;}if(a==='download-pdf'){downloadPDF();return;}}
 function input(e){if(!valid()||!sheet||sheet.locked)return;const el=e.target;if(el.id==='owsReviewed'){sheet.reviewed=el.checked;sheet.updatedAt=now();invalidatePDF();clearTimeout(timer);timer=setTimeout(()=>save().catch(()=>{}),250);return;}if(el.dataset.field){const key=el.dataset.field;edit(d=>{if(key==='sex'&&d.sex!==el.value){if(d.rows.some(r=>r.weightClass)&&!confirm('Switch forms? Existing class selections will be cleared. Athlete names and actual weights will stay.')){el.value=d.sex;return;}d.rows.forEach(r=>r.weightClass='');}d[key]=['growth','consecutive'].includes(key)?Number(el.value):el.value;if(key==='officialName'&&d.inspectorLinked)d.inspectorName=el.value;if(key==='inspectorName')d.inspectorLinked=false;if(key==='date'){const up=d.rows.map(r=>r.classSelection==='up'||(!r.classSelection&&classChoices(d,r)[1]===Number(r.weightClass)));d.growth=Number(el.value.slice(5,7))<=6?2:0;d.rows.forEach((r,i)=>assignClass(d,r,up[i]));}});if(['sex','date','growth','consecutive'].includes(key))render();else if(key==='officialName'&&sheet.inspectorLinked)root.querySelector('[data-field="inspectorName"]').value=sheet.inspectorName;return;}if(el.dataset.rowField){const row=sheet.rows.find(r=>r.id===el.closest('[data-row]').dataset.row);if(!row)return;const key=el.dataset.rowField;edit(()=>{if(key==='weight'){const n=el.value===''?null:Number(el.value);recordWeight(row,n!==null&&Number.isFinite(n)&&n>0?n:null,'manual');}else if(key==='weightClass'){const options=classChoices(sheet,row),selected=Number(el.value);if(!options.includes(selected))throw Error('Choose the class for this actual weight or one class up.');row.weightClass=selected;row.classSelection=selected===options[1]?'up':'auto';}else row[key]=el.value;});if(['weight','weightClass'].includes(key))refreshClassRow(row);const node=root.querySelector(`[data-row="${row.id}"] [data-row-time]`);if(node)node.textContent=row.capturedAt?`${row.source==='scale'?'Scale':'Manual'} · ${stamp(row.capturedAt)}`:'Weight has not been recorded.';}}
-async function open(){if(root){ensure();return;}generation++;const c=ctx();scope=contextScope(c);if(!scope)throw Error('Sign in with weigh-in access and choose your team first.');oldOverflow=document.body.style.overflow;document.body.style.overflow='hidden';root=document.createElement('section');root.id='wmOfficialSheets';root.setAttribute('aria-label','Official weigh-in sheets');root.innerHTML='<header class="ows-header"><div><h2>Official weigh-in sheets</h2><small>Wrestling Manager · 0.20.12</small></div><button id="owsClose">Done</button></header><main class="ows-main" id="owsMain"></main>';document.body.append(root);root.onclick=e=>{if(e.target.closest('#owsClose')){save().then(()=>close()).catch(()=>{});return;}const b=e.target.closest('[data-action]');if(!b||b.disabled)return;action(b).catch(report);};root.onchange=e=>{if(e.target.matches('input[data-field]:not([type=date]),input[data-row-field]'))return;try{input(e);}catch(error){report(error);}};root.oninput=e=>{if(e.target.matches('input[data-field]:not([type=date]),input[data-row-field]')){try{input(e);}catch(error){report(error);}}};root.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('owsModal')){e.preventDefault();dismissModal();}if(e.key==='Tab'&&$('owsModal')){const nodes=[...$('owsModal').querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),[tabindex="0"]')];if(!nodes.length)return;const first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&(document.activeElement===first||!nodes.includes(document.activeElement))){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}});securityWatch=new MutationObserver(()=>{if(root&&!valid())close(true);});securityWatch.observe(document.body,{attributes:true,attributeFilter:['class']});const lock=document.getElementById('appLockOverlay');if(lock)securityWatch.observe(lock,{attributes:true,attributeFilter:['class','hidden']});connection=!!c.scaleConnected;zeroRequired=false;lastCapturedRow=null;host.scale?.('acquire');poll=setInterval(()=>{if(!valid())return;host.scale?.('status');updateReading();},650);watch=setInterval(()=>{if(root&&!valid())close(true);},300);await renderHome();}
+async function open(){if(root){ensure();return;}generation++;const c=ctx();scope=contextScope(c);if(!scope)throw Error('Sign in with weigh-in access and choose your team first.');oldOverflow=document.body.style.overflow;document.body.style.overflow='hidden';root=document.createElement('section');root.id='wmOfficialSheets';root.setAttribute('aria-label','Official weigh-in sheets');root.innerHTML='<header class="ows-header"><div><h2>Official weigh-in sheets</h2><small>Wrestling Manager · 0.20.13</small></div><button id="owsClose">Done</button></header><main class="ows-main" id="owsMain"></main>';document.body.append(root);root.onclick=e=>{if(e.target.closest('#owsClose')){save().then(()=>close()).catch(()=>{});return;}const b=e.target.closest('[data-action]');if(!b||b.disabled)return;action(b).catch(report);};root.onchange=e=>{if(e.target.matches('input[data-field]:not([type=date]),input[data-row-field]'))return;try{input(e);}catch(error){report(error);}};root.oninput=e=>{if(e.target.matches('input[data-field]:not([type=date]),input[data-row-field]')){try{input(e);}catch(error){report(error);}}};root.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('owsModal')){e.preventDefault();dismissModal();}if(e.key==='Tab'&&$('owsModal')){const nodes=[...$('owsModal').querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),[tabindex="0"]')];if(!nodes.length)return;const first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&(document.activeElement===first||!nodes.includes(document.activeElement))){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}});securityWatch=new MutationObserver(()=>{if(root&&!valid())close(true);});securityWatch.observe(document.body,{attributes:true,attributeFilter:['class']});const lock=document.getElementById('appLockOverlay');if(lock)securityWatch.observe(lock,{attributes:true,attributeFilter:['class','hidden']});connection=!!c.scaleConnected;zeroRequired=false;lastCapturedRow=null;host.scale?.('acquire');poll=setInterval(()=>{if(!valid())return;host.scale?.('status');updateReading();},650);watch=setInterval(()=>{if(root&&!valid())close(true);},300);await renderHome();}
 function close(forced=false){
   if(!root)return;generation++;
   if(sheet){const finalSnapshot=clone(sheet);queue=queue.catch(()=>{}).then(()=>saveRecord(finalSnapshot));queue.catch(()=>{});}
