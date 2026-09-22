@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.14: Locker Room and Toolbox UI refresh on top of the 0.20.13 native Tab fix. -->
+<!-- Wrestling Manager v0.20.15: role-aware Clipboard coach hub and Whistle announcements on top of the 0.20.14 UI refresh. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -590,6 +590,9 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
 .locker-card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}.locker-empty-card{display:flex;flex-direction:column;gap:5px;background:#fff;border:1px dashed #cbd5e1;border-radius:18px;padding:20px;color:#475467}.locker-empty-card b{color:#101828;font-size:17px}.locker-coming-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}.locker-coming-row span{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:12px 8px;text-align:center;font-weight:750;font-size:13px}
 .locker-team-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.locker-team-actions button{display:grid;grid-template-columns:38px 1fr;grid-template-rows:auto auto;column-gap:8px;text-align:left;background:#fff!important;color:#101828!important;border:1px solid #e2e8f0!important;border-radius:17px!important;padding:14px!important;box-shadow:0 5px 15px rgba(15,23,42,.04)!important}.locker-team-actions button>span{grid-row:1/3;font-size:24px;align-self:center}.locker-team-actions button>b{font-size:15px}.locker-team-actions button>small{color:#667085}.locker-team-preview{margin-bottom:12px}.locker-roster-strip{display:flex;gap:8px;overflow:auto;padding:2px 0 8px}.locker-roster-chip{white-space:nowrap;border-radius:999px;background:#fff;border:1px solid #e2e8f0;padding:8px 11px;font-weight:700;font-size:13px}
 .toolbox-title{align-items:flex-start}.toolbox-title p{margin:5px 0 0}.toolbox-groups{display:grid;gap:16px}.toolbox-group{display:grid;gap:8px}.toolbox-group-head{display:flex;gap:10px;align-items:center;padding:0 4px}.toolbox-group-head>span{font-size:22px}.toolbox-group-head>div{display:flex;flex-direction:column}.toolbox-group-head b{font-size:15px}.toolbox-group-head small{color:#667085;font-size:12px}.toolbox-group .menu-card{margin:0;overflow:hidden;border-radius:18px;border:1px solid #e2e8f0;background:#fff;box-shadow:0 5px 18px rgba(15,23,42,.05)}
+
+.clipboard-panel{display:grid;gap:14px;margin-bottom:18px}.clipboard-whistle{background:linear-gradient(135deg,#fff7df,#fffdf7);border:1px solid #ecd28b;border-radius:20px;padding:15px;display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center}.clipboard-whistle-icon{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:#f6c94f;font-size:24px}.clipboard-whistle b,.clipboard-whistle small{display:block}.clipboard-whistle small{color:#725d1b;margin-top:3px;line-height:1.35}.clipboard-whistle button{white-space:nowrap;background:#8c6810}.clipboard-snapshot{background:#fff;border:1px solid #e2e8f0;border-radius:20px;padding:14px;box-shadow:0 5px 18px rgba(15,23,42,.045)}.clipboard-snapshot .section-head{margin:0 0 10px}.clipboard-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.clipboard-tile{display:flex;align-items:center;gap:11px;text-align:left;background:#f8fafc;color:var(--ink);border:1px solid #e2e8f0;border-radius:16px;padding:12px;min-height:72px}.clipboard-tile>span{font-size:22px}.clipboard-tile b,.clipboard-tile small{display:block}.clipboard-tile small{color:var(--muted);margin-top:2px;line-height:1.25}.clipboard-metrics{margin-top:0}.clipboard-metrics .metric{min-height:78px}.clipboard-metrics strong{font-size:24px}.clipboard-section-label{display:flex;justify-content:space-between;align-items:end;gap:10px;margin:2px 4px 0}.clipboard-section-label h3{margin:0}.clipboard-section-label small{color:var(--muted)}
+@media(max-width:520px){.clipboard-whistle{grid-template-columns:auto 1fr}.clipboard-whistle button{grid-column:1/-1;width:100%}.clipboard-grid{grid-template-columns:1fr 1fr}.clipboard-tile{padding:10px;min-height:68px}.clipboard-tile>span{font-size:20px}}
 .bottom-nav .nav-btn span{font-size:19px}.bottom-nav .nav-btn small{font-size:10px;letter-spacing:-.1px}.bottom-nav .nav-btn[data-tab="home"] small{font-size:9.5px}
 .home-feed-block,.feature-card,.menu-card{box-shadow:0 5px 18px rgba(15,23,42,.045)}
 @media(max-width:560px){.locker-room-tabs{gap:5px}.locker-room-tab{font-size:12px!important;padding:9px 5px!important}.locker-coming-row{grid-template-columns:repeat(2,1fr)}.locker-team-actions{grid-template-columns:1fr}.locker-room-heading h2{font-size:27px}}
@@ -747,8 +750,8 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
         <div id="lockerBoardPane" class="locker-pane" data-locker-pane="board"><div id="homeLayoutBlocks">
 <section id="myCornerHome" class="home-feed-block wp-panel layout-block" data-layout-key="my_corner" aria-label="My Corner"></section>
         <section id="importantAnnouncementsSection" class="important-announcements home-feed-block layout-block" data-layout-key="important">
-          <div class="section-head"><div class="feed-author"><span class="feed-author-icon">📣</span><span><h3>Important Announcements</h3><small>Coaches & team leaders</small></span></div><button id="newAnnouncementBtn" class="link-btn coach-only">＋ Post</button></div>
-          <div id="importantAnnouncementsList"><div class="announcement-empty">No important announcements right now.</div></div>
+          <div class="section-head"><div class="feed-author"><span class="feed-author-icon">📣</span><span><h3>Whistle Announcements</h3><small>Important updates from coaches & team leaders</small></span></div><button id="newAnnouncementBtn" class="link-btn coach-only">📣 Blow Whistle</button></div>
+          <div id="importantAnnouncementsList"><div class="announcement-empty">No Whistle announcements right now.</div></div>
         </section>
 
         <section id="myAthletesHomeSection" class="family-athlete-home home-feed-block hidden layout-block" data-layout-key="my_athletes">
@@ -906,7 +909,34 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
 
       <section id="moreTab" class="tabview hidden">
         <button type="button" class="tab-back-btn" data-back-home><span>←</span> Back to Locker Room</button>
-        <div class="section-head top-space toolbox-title"><div><div class="eyebrow">PROGRAM TOOLS</div><h2>Toolbox</h2><p class="muted">The fixes, forms and management tools that keep your program moving.</p></div></div>
+        <div class="section-head top-space toolbox-title"><div><div id="moreTabEyebrow" class="eyebrow">PROGRAM TOOLS</div><h2 id="moreTabTitle">Toolbox</h2><p id="moreTabDescription" class="muted">The fixes, forms and management tools that keep your program moving.</p></div></div>
+        <div id="clipboardPanel" class="clipboard-panel hidden">
+          <div class="clipboard-whistle coach-only">
+            <div class="clipboard-whistle-icon">📣</div><div><b>Whistle</b><small>When the whistle blows, the team knows it matters. Send an urgent pinned announcement.</small></div><button id="clipboardWhistleBtn" type="button">Blow the Whistle</button>
+          </div>
+          <section id="clipboardWeightSnapshotCard" class="clipboard-snapshot">
+            <div class="section-head"><div><div class="eyebrow">TODAY AT A GLANCE</div><h3>Weight Room Snapshot</h3></div><button type="button" class="link-btn" data-go="weight">Open Weight Room</button></div>
+            <div class="metric-grid clipboard-metrics">
+              <button type="button" class="metric metric-btn" data-weight-metric="weighed"><span data-weighed-label>Weighed today</span><strong id="clipboardWeighed">0</strong></button>
+              <button type="button" class="metric metric-btn" data-weight-metric="not-weighed"><span>Not weighed</span><strong id="clipboardNotWeighed">0</strong></button>
+              <button type="button" class="metric metric-btn" data-weight-metric="eligible"><span>Newly eligible</span><strong id="clipboardEligible">0</strong></button>
+              <button type="button" class="metric metric-btn" data-weight-metric="challenges"><span>Challenges</span><strong id="clipboardChallenges">0</strong></button>
+            </div>
+          </section>
+          <div class="clipboard-section-label"><div><div class="eyebrow">COACH DESK</div><h3>Quick Clipboard</h3></div><small>Permission-aware shortcuts</small></div>
+          <div class="clipboard-grid">
+            <button id="clipboardRosterBtn" class="clipboard-tile coach-only" type="button"><span>👥</span><span><b>Roster</b><small>Quick athlete access</small></span></button>
+            <button id="clipboardLineupBtn" class="clipboard-tile coach-only" type="button"><span>🤼</span><span><b>Lineup + Challenges</b><small>Requests & wrestle-offs</small></span></button>
+            <button id="clipboardAttendanceBtn" class="clipboard-tile" type="button"><span>✓</span><span><b>Attendance</b><small>Events, RSVPs & check-in</small></span></button>
+            <button id="clipboardMatchBookBtn" class="clipboard-tile coach-only" type="button"><span>⏱️</span><span><b>Match Book</b><small>Score matches & results</small></span></button>
+            <button id="clipboardMedicalBtn" class="clipboard-tile" type="button"><span>🩺</span><span><b>Medical Alerts</b><small>Clearance & return status</small></span></button>
+            <button id="clipboardFormsBtn" class="clipboard-tile" type="button"><span>✍️</span><span><b>Forms</b><small>Agreements & signatures</small></span></button>
+            <button id="clipboardEquipmentBtn" class="clipboard-tile" type="button"><span>🎽</span><span><b>Equipment</b><small>Gear tracking</small></span></button>
+            <button id="clipboardFilesBtn" class="clipboard-tile" type="button"><span>📁</span><span><b>Files</b><small>Documents & photos</small></span></button>
+            <button id="clipboardOfficialsBtn" class="clipboard-tile" type="button"><span>🧑‍⚖️</span><span><b>Officials / Events</b><small>Organization event tools</small></span></button>
+            <button id="clipboardAdminBtn" class="clipboard-tile" type="button"><span>⚙️</span><span><b>Admin</b><small>Your allowed team controls</small></span></button>
+          </div>
+        </div>
         <div id="moreMenuCard" class="toolbox-groups">
           <section class="toolbox-group"><div class="toolbox-group-head"><span>🤼</span><div><b>Competition</b><small>Match day, eligibility and required forms</small></div></div><div class="menu-card">
             <button id="matchBookBtn" class="menu-row coach-only" data-layout-key="match_book"><span>⏱️</span><div><b>Match Book</b><small>Challenges, scoring, clocks and results</small></div><i>›</i></button>
@@ -941,7 +971,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
       <button class="nav-btn" data-tab="messages" data-layout-key="messages"><span>💬</span><small>Messages</small><i class="nav-count-badge" data-nav-badge="messages" aria-label="0 unread messages">0</i></button>
       <button class="nav-btn" data-tab="schedule" data-layout-key="schedule"><span>📅</span><small>Schedule</small><i class="nav-count-badge" data-nav-badge="schedule" aria-label="0 unseen schedule changes">0</i></button>
       <button class="nav-btn" data-tab="weight" data-layout-key="weight"><span>⚖</span><small>Weight Room</small><i class="nav-count-badge" data-nav-badge="weight" aria-label="0 unread weigh-ins">0</i></button>
-      <button class="nav-btn" data-tab="more" data-layout-key="more"><span>🧰</span><small>Toolbox</small></button>
+      <button class="nav-btn" data-tab="more" data-layout-key="more"><span id="moreNavIcon">🧰</span><small id="moreNavLabel">Toolbox</small></button>
     </nav>
   </section>
 
@@ -1121,12 +1151,12 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
 
   <section id="announcementSheet" class="sheet hidden" aria-modal="true">
     <div class="sheet-handle"></div>
-    <div class="sheet-head"><div><div class="eyebrow">TEAM ALERT</div><h2>Important Announcement</h2><p class="muted">Pinned announcements stay at the top of Home for the whole team.</p></div><button class="icon-close" data-close-sheet>×</button></div>
+    <div class="sheet-head"><div><div class="eyebrow">📣 WHISTLE</div><h2>Blow the Whistle</h2><p class="muted">Whistle announcements are pinned at the top of the Locker Room so the team knows this matters.</p></div><button class="icon-close" data-close-sheet>×</button></div>
     <div class="announcement-compose">
-      <label for="announcementBody">Announcement</label>
+      <label for="announcementBody">Whistle announcement</label>
       <textarea id="announcementBody" placeholder="Practice moved to 6 PM…"></textarea>
       <p class="fine">This posts in Wrestling Manager and queues push, SMS and email according to each team member’s notification settings. SMS alerts never include private message content.</p>
-      <button id="saveAnnouncementBtn" class="wide">Post Important Announcement</button>
+      <button id="saveAnnouncementBtn" class="wide">📣 Blow the Whistle</button>
     </div>
   </section>
 
@@ -4243,6 +4273,22 @@ async function renderFamilyAthletes(){
   containers.forEach(c=>{c.innerHTML=rows.join('');c.querySelectorAll('[data-family-athlete]').forEach(b=>b.onclick=()=>openAthleteOverview(b.dataset.familyAthlete));});
 }
 
+function syncClipboardSnapshot(){
+  const pairs=[['weighed','clipboardWeighed'],['notWeighed','clipboardNotWeighed'],['eligible','clipboardEligible'],['challenges','clipboardChallenges']];
+  pairs.forEach(([source,target])=>{if($(source)&&$(target))$(target).textContent=$(source).textContent;});
+}
+function applyMoreTabMode(){
+  const clipboardMode=isStaff||isManager;
+  const icon=$('moreNavIcon'),label=$('moreNavLabel'),eyebrow=$('moreTabEyebrow'),title=$('moreTabTitle'),description=$('moreTabDescription');
+  if(icon)icon.textContent=clipboardMode?'📋':'🧰';
+  if(label)label.textContent=clipboardMode?'Clipboard':'Toolbox';
+  if(eyebrow)eyebrow.textContent=clipboardMode?'COACH / LEADER':'PROGRAM TOOLS';
+  if(title)title.textContent=clipboardMode?'Clipboard':'Toolbox';
+  if(description)description.textContent=clipboardMode?'Today’s team operations, alerts and coach tools in one place.':'The fixes, forms and management tools that keep your program moving.';
+  show('clipboardPanel',clipboardMode);
+  syncClipboardSnapshot();
+}
+
 function applyRoleUI(){
   show('switchTeamProfileBtn',!!managedLogin?.shared_login_id);
   show('teamLoginsBtn',!managedLogin&&actualIsTeamAdmin&&viewMode!=='parent');
@@ -4284,6 +4330,11 @@ function applyRoleUI(){
   show('textRepliesBtn',canMassText||smsUnreadReplies>0);
   show('athleteChatPermissionsBtn',familyAthletes.length>0);
   show('guardianSafetyTestBtn',actualIsTeamAdmin&&viewMode!=='parent');
+  show('clipboardWeightSnapshotCard',isStaff);
+  show('clipboardAttendanceBtn',canAttendance);
+  show('clipboardMedicalBtn',!managedLogin&&isStaff);
+  show('clipboardFormsBtn',!managedLogin&&isStaff);
+  applyMoreTabMode();
 }
 
 async function loadMemberAthletes(){
@@ -4710,7 +4761,7 @@ function renderImportantAnnouncements(){
   if(!section||!list)return;
   section.classList.remove('hidden');
   if(!importantAnnouncements.length){
-    list.innerHTML='<div class="announcement-empty">No important announcements right now.</div>';
+    list.innerHTML='<div class="announcement-empty">No Whistle announcements right now.</div>';
     return;
   }
   list.innerHTML=importantAnnouncements.map(p=>{const authorName=p.author_name||'Team Leader';const authorAvatar=p.author_photo_url?`<img class="feed-author-photo" src="${esc(p.author_photo_url)}" alt="${esc(authorName)} profile photo">`:`<span class="feed-author-icon">${esc(communicationInitials(authorName))}</span>`;return `<article class="announcement-card" data-open-announcement="${p.id}" role="button" tabindex="0" aria-label="Open announcement from ${esc(authorName)}">
@@ -4916,10 +4967,10 @@ async function saveImportantAnnouncement(){
   if(!body){message('Enter an announcement.',true);return;}
   const btn=$('saveAnnouncementBtn');btn.disabled=true;btn.textContent='Posting…';
   const {error}=await client.rpc('post_team_announcement_v2',{p_team_id:activeTeam.id,p_season_id:activeSeason.id,p_body:body});
-  btn.disabled=false;btn.textContent='Post Important Announcement';
+  btn.disabled=false;btn.textContent='📣 Blow the Whistle';
   if(error){message(error.message,true);return;}
   await dispatchCommunicationNotifications();
-  closeSheets();await Promise.all([loadImportantAnnouncements(),loadCommunications(false)]);message('Important announcement posted and notifications queued.');
+  closeSheets();await Promise.all([loadImportantAnnouncements(),loadCommunications(false)]);message('Whistle announcement posted and notifications queued.');
 }
 
 async function resolveImportantAnnouncement(postId){
@@ -6212,6 +6263,7 @@ async function loadDashboard(){
     dashboardCounts=c;activeTeam.weight_check_frequency=c.frequency;activeTeam.weight_check_days=c.days;
     const values={weighed:`${c.weighed_today}/${c.expected_to_weigh}`,notWeighed:c.not_weighed_today,eligible:c.newly_eligible,challenges:c.challenge_queue};
     Object.entries(values).forEach(([k,v])=>{if($(k))$(k).textContent=v;if($(k+'2'))$(k+'2').textContent=v;});
+    syncClipboardSnapshot();
   }
   renderWeightSchedule();renderAttention();
 }
@@ -9309,6 +9361,17 @@ $('kioskUnlockTab').onclick=unlockKiosk;
 $('kioskExitTab').onclick=exitKiosk;
 
 $('newAnnouncementBtn').onclick=openAnnouncementComposer;
+$('clipboardWhistleBtn')?.addEventListener('click',openAnnouncementComposer);
+$('clipboardRosterBtn')?.addEventListener('click',()=>{if($('rosterBtn')&&!$('rosterBtn').classList.contains('hidden-role'))$('rosterBtn').click();});
+$('clipboardLineupBtn')?.addEventListener('click',()=>window.WMMatch?.open());
+$('clipboardAttendanceBtn')?.addEventListener('click',()=>setTab('schedule'));
+$('clipboardMatchBookBtn')?.addEventListener('click',()=>window.WMMatch?.open());
+$('clipboardMedicalBtn')?.addEventListener('click',()=>{if(!$('medicalClearanceBtn')?.classList.contains('hidden'))$('medicalClearanceBtn')?.click();});
+$('clipboardFormsBtn')?.addEventListener('click',()=>{if(!$('agreementsBtn')?.classList.contains('hidden'))$('agreementsBtn')?.click();});
+$('clipboardEquipmentBtn')?.addEventListener('click',()=>message('Equipment tracking is already reserved in Clipboard and will activate when the equipment module is connected.'));
+$('clipboardFilesBtn')?.addEventListener('click',()=>message('Files & Photos is reserved in Clipboard and will activate when the file module is connected.'));
+$('clipboardOfficialsBtn')?.addEventListener('click',()=>WMOperations.open(selectedHomeOrganization()));
+$('clipboardAdminBtn')?.addEventListener('click',()=>$('accountBtn')?.click());
 $('saveAnnouncementBtn').onclick=saveImportantAnnouncement;
 $('communicationThreadList').addEventListener('click',event=>{
   const pin=event.target.closest('[data-thread-pin]');
@@ -9405,7 +9468,7 @@ function weightScheduleActiveToday(){
 function renderWeightSchedule(){
   const current=dashboardCounts?.local_date===teamTodayDateString();
   const active=isStaff&&(current?dashboardCounts.schedule_active===true:weightScheduleActiveToday());
-  ['weighed','notWeighed','weighed2','notWeighed2'].forEach(id=>{
+  ['weighed','notWeighed','weighed2','notWeighed2','clipboardWeighed','clipboardNotWeighed'].forEach(id=>{
     const button=$(id)?.closest('button');if(button)button.classList.toggle('hidden',!active);
   });
   document.querySelectorAll('[data-weighed-label]').forEach(el=>el.textContent=activeTeam?.weight_check_frequency==='weekly'?'Weighed · weekly check':'Weighed today');
