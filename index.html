@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.11: PDF return controls and automatic weigh-in classes. -->
+<!-- Wrestling Manager v0.20.12: Weigh-in start time, keyboard navigation and wrestling mat icon. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -1808,7 +1808,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.11</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.12</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -9811,7 +9811,7 @@ window.WMOperations=(()=>{
  async function calendar(team){try{return await rpc(false,{action:'calendar',team_id:team});}catch(err){console.warn('Organization calendar unavailable:',err.message);return [];}}
  async function feedback(){if(document.body.classList.contains('kiosk-locked'))return;closeSheets();feedbackId=crypto.randomUUID();note('feedbackStatus','');openSheet('feedbackSheet');await feedbackHistory();}
  async function feedbackHistory(){const target=$o('feedbackHistory');target.textContent='Loading…';try{const rows=await rpc(false,{action:'feedback',team_id:activeTeam?.id||null});target.innerHTML=list(rows).map(r=>`<article class="ops-card"><b>${e(r.category)}</b> ${badge(r.status)}<p>${e(r.body)}</p><small>${e(fmtDateTime(r.created_at))} · ${e(r.build)}</small>${r.response?'<p>Response: '+e(r.response)+'</p>':''}${actualIsTeamAdmin&&!managedLogin&&r.team_id===activeTeam?.id?`<div class="ops-actions"><button class="secondary" data-feedback-review="${r.id}">Review</button></div>`:''}</article>`).join('')||'<p>No feedback yet.</p>';target.querySelectorAll('[data-feedback-review]').forEach(b=>b.onclick=async()=>{const row=rows.find(r=>r.id===b.dataset.feedbackReview),result=await dialog({title:'Review feedback',fields:[{id:'status',label:'Status',options:['new','reviewing','planned','resolved'].map(s=>[s,s]),value:row.status},{id:'response',label:'Response',type:'textarea',value:row.response||''}],submit:'Save review'});if(!result)return;const {status,response}=result;try{await rpc(true,{action:'feedback_status',id:row.id,status,response});await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}});}catch(err){target.textContent=err.message;}}
- async function sendFeedback(ev){ev.preventDefault();if(!session?.user)return;$o('feedbackSend').disabled=true;try{await rpc(true,{action:'feedback',id:feedbackId||crypto.randomUUID(),team_id:activeTeam?.id||null,category:value('feedbackCategory'),body:value('feedbackBody'),build:'v0.20.11'});$o('feedbackBody').value='';feedbackId=crypto.randomUUID();note('feedbackStatus','Thanks—your feedback was saved.');await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}finally{$o('feedbackSend').disabled=false}}
+ async function sendFeedback(ev){ev.preventDefault();if(!session?.user)return;$o('feedbackSend').disabled=true;try{await rpc(true,{action:'feedback',id:feedbackId||crypto.randomUUID(),team_id:activeTeam?.id||null,category:value('feedbackCategory'),body:value('feedbackBody'),build:'v0.20.12'});$o('feedbackBody').value='';feedbackId=crypto.randomUUID();note('feedbackStatus','Thanks—your feedback was saved.');await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}finally{$o('feedbackSend').disabled=false}}
  function close(){finishDialog(null);generation++;editor=null;$o('opsRosterContacts')?.replaceChildren();$o('opsFields').replaceChildren();hub=null;['opsHubSheet','opsEditorSheet','feedbackSheet'].forEach(id=>show(id,false));}
  $o('opsDialogCancel').onclick=()=>finishDialog(null);
  $o('opsOrg').onchange=async()=>{org=value('opsOrg');division='';tab='home';hub=null;$o('opsContent').replaceChildren();$o('opsTabs').replaceChildren();$o('opsHubTitle').textContent='Organization Hub';note('opsStatus','Loading organization…');try{await reload()}catch(err){note('opsStatus',err.message,true)}};
@@ -10230,34 +10230,87 @@ document.getElementById('organizationHomeBtn').onclick=()=>WMOperations.open(sel
  new MutationObserver(()=>{if(!overlay.hidden&&locked())close(false);}).observe(document.body,{attributes:true,subtree:true,attributeFilter:['class']});
 })();</script>
 <script>
-// Login keyboard navigation for desktop browsers and the Mac wrapper.
-(function installLoginKeyboardNavigation(){
-  const auth=document.getElementById('authView');
-  if(!auth)return;
-  const personal=['email','password'];
-  const team=['teamSignInCode','teamSignInUsername','teamSignInPassword'];
-  auth.addEventListener('keydown',event=>{
-    if(event.defaultPrevented||event.isComposing||event.keyCode===229||event.altKey||event.ctrlKey||event.metaKey)return;
-    const visible=el=>el&&!el.disabled&&el.getClientRects().length>0;
-    if(event.key==='Tab'){
-      const controls=Array.from(auth.querySelectorAll('input,button,select,textarea,a[href],[tabindex]'))
-        .filter(el=>visible(el)&&el.tabIndex>=0);
-      const index=controls.indexOf(event.target);
-      const next=controls[index+(event.shiftKey?-1:1)];
-      if(index>=0&&next){event.preventDefault();next.focus();}
+/* Wrestling Manager: keyboard navigation for static and dynamically opened forms. */
+(() => {
+  'use strict';
+  if (window.WMKeyboardNavigation) return;
+  window.WMKeyboardNavigation = true;
+  const controls = 'input,select,textarea,button,a[href],summary,[tabindex],[contenteditable="true"]';
+  const panels = 'dialog[open],.ows-modal,[role="dialog"],.sheet,#wmOfficialSheets,#authView,#appLockOverlay';
+  const handledEnter = new Set(['appLockPin','editWeightClassAdd','teammateWeightPin','weightPinConfirm','weighScanToken']);
+  const textTypes = new Set(['text','email','password','search','tel','url','number']);
+  function visible(el) {
+    if (!(el instanceof HTMLElement) || el.matches(':disabled,[disabled],[type="hidden"]') || el.closest('[hidden],.hidden,[inert],[aria-hidden="true"]')) return false;
+    if (!el.getClientRects().length || ['hidden','collapse'].includes(getComputedStyle(el).visibility)) return false;
+    for (let d=el.closest('details');d;d=d.parentElement?.closest('details')) {
+      if (!d.open && !d.querySelector(':scope > summary')?.contains(el)) return false;
+    }
+    return true;
+  }
+  function scope(el) { return el.closest(panels) || document.body; }
+  function fields(el) {
+    const container=el.form || el.closest('[data-keyboard-group]') || scope(el);
+    const candidates=el.form ? Array.from(el.form.elements) : [...container.querySelectorAll('input,select,textarea')];
+    return candidates.filter(n=>visible(n) && !n.readOnly && (n.matches('textarea,select') || (n instanceof HTMLInputElement && (textTypes.has(n.type)||['date','time','datetime-local'].includes(n.type)))));
+  }
+  function submitter(form) {
+    return Array.from(form.elements).find(n=>visible(n) && ((n instanceof HTMLButtonElement && n.type==='submit') || (n instanceof HTMLInputElement && ['submit','image'].includes(n.type))));
+  }
+  function nextField(el) { const list=fields(el);return list[list.indexOf(el)+1]; }
+  function focus(el) { el.focus();el.scrollIntoView({block:'nearest',inline:'nearest'}); }
+  function enter(el) {
+    if (!el.reportValidity()) return;
+    const next=nextField(el);
+    if (next) { focus(next);return; }
+    const button=el.form && submitter(el.form);
+    if (button) { el.form.requestSubmit(button);return; }
+    // No form action: close the soft keyboard, keeping edits saved by the field handler.
+    el.blur();
+  }
+  document.addEventListener('keydown',event=>{
+    if (event.defaultPrevented || event.isComposing || event.keyCode===229 || event.altKey || event.ctrlKey || event.metaKey) return;
+    const el=event.target;
+    if (!(el instanceof HTMLElement) || !visible(el) || el.closest('[data-keyboard-native]')) return;
+    if (event.key==='Tab') {
+      // Keep native date/time segment navigation and picker behavior.
+      if (el.matches('input[type="date"],input[type="time"],input[type="datetime-local"]')) return;
+      const container=scope(el);
+      const list=[...container.querySelectorAll(controls)].filter(n=>visible(n)&&n.tabIndex>=0);
+      const index=list.indexOf(el),next=list[index+(event.shiftKey?-1:1)];
+      if (index>=0 && next) { event.preventDefault();focus(next); }
+      else if (container.matches('dialog[open],.ows-modal,[role="dialog"],.sheet,#wmOfficialSheets,#appLockOverlay') && list.length) {
+        event.preventDefault();focus(event.shiftKey?list.at(-1):list[0]);
+      }
       return;
     }
-    if(event.key!=='Enter'||event.shiftKey||event.repeat)return;
-    const fields=personal.includes(event.target.id)?personal:team.includes(event.target.id)?team:null;
-    if(!fields)return;
+    if (event.key!=='Enter' || !(el instanceof HTMLInputElement) || !textTypes.has(el.type) || el.readOnly || handledEnter.has(el.id)) return;
     event.preventDefault();
-    const index=fields.indexOf(event.target.id);
-    if(index<fields.length-1){document.getElementById(fields[index+1])?.focus();return;}
-    const button=document.getElementById(fields===personal?'signInBtn':'teamSignInBtn');
-    if(visible(button))button.click();
+    if (!event.repeat && !event.shiftKey) enter(el);
   });
+  // Some iOS keyboards express Return as beforeinput instead of a keydown.
+  document.addEventListener('beforeinput',event=>{
+    const el=event.target;
+    if (event.defaultPrevented || event.isComposing || !['insertLineBreak','insertParagraph'].includes(event.inputType) || !(el instanceof HTMLInputElement) || !textTypes.has(el.type) || el.readOnly || handledEnter.has(el.id) || !visible(el)) return;
+    event.preventDefault();enter(el);
+  });
+  function hints() {
+    for (const el of document.querySelectorAll('input')) {
+      if (!visible(el) || !textTypes.has(el.type) || el.readOnly || handledEnter.has(el.id)) continue;
+      const hint=nextField(el)?'next':el.form&&submitter(el.form)?(el.type==='search'?'search':'go'):'done';
+      if (el.getAttribute('enterkeyhint')!==hint) el.setAttribute('enterkeyhint',hint);
+    }
+  }
+  let pending=false;
+  function refresh() { if (pending) return;pending=true;queueMicrotask(()=>{pending=false;hints();}); }
+  document.addEventListener('focusin',refresh);
+  new MutationObserver(records=>{
+    if (records.some(r=>[...r.addedNodes,...r.removedNodes].some(n=>n instanceof HTMLElement && (n.matches('input,select,textarea,button') || n.querySelector('input,select,textarea,button'))))) refresh();
+  }).observe(document.body,{childList:true,subtree:true});
+  hints();
 })();
+
 </script>
+
 <script>
 /* Shared wrestling profiles. All access decisions are returned by the server. */
 window.WMProfiles=(()=>{
@@ -10536,7 +10589,7 @@ window.WMPracticeGroups=(()=>{
 })();
 
 </script>
-<!-- Official weigh-in sheets 0.20.11; embedded templates work without form downloads. -->
+<!-- Official weigh-in sheets 0.20.12; embedded templates work without form downloads. -->
 <style>#wmOfficialSheets{position:fixed;inset:0;z-index:9500;background:#eef3f8;color:#122c49;overflow:auto;overscroll-behavior:contain;font:16px/1.45 system-ui,-apple-system,sans-serif;padding-bottom:calc(30px + env(safe-area-inset-bottom));isolation:isolate}
 body:has(#appLockOverlay:not(.hidden)) #wmOfficialSheets,body.kiosk-locked #wmOfficialSheets{visibility:hidden;pointer-events:none}
 #wmOfficialSheets *,#wmOfficialSheets *:before,#wmOfficialSheets *:after{box-sizing:border-box}
@@ -10632,30 +10685,31 @@ function rect(page,x,top,width,height,color=white){page.drawRectangle({x,y:792-t
 function line(page,x1,top,x2){page.drawLine({start:{x:x1,y:792-top},end:{x:x2,y:792-top},thickness:.5,color:rgb(.62,.67,.72)});}
 const time=iso=>iso?new Date(iso).toLocaleTimeString('en-US',{timeZone:d.timeZone,hour:'2-digit',minute:'2-digit'}):'Not recorded';
 const dateTime=iso=>iso?new Date(iso).toLocaleString('en-US',{timeZone:d.timeZone,hour12:false}):'Not recorded';
+const startTime=()=>{const m=/^([01]\d|2[0-3]):([0-5]\d)$/.exec(d.startTime||'');if(!m)return time(d.weighInAt);const h=Number(m[1]);return `${String(h%12||12).padStart(2,'0')}:${m[2]} ${h<12?'AM':'PM'}`;};
 const eventType=d.eventType==='dual'?'Dual / Tri-dual':d.eventType==='tournament'?'Tournament':'';
 const pages=plan(d);const signed=!!(d.locked&&d.signatures.official&&d.signatures.coach);
-async function foot(page,number){await text(page,d.school,82,62,490,11,true);await text(page,d.event,170,90,401,11);await text(page,`${d.date} | Class allowance +${Number(d.growth)+Number(d.consecutive)} lb (growth +${d.growth}; consecutive +${d.consecutive})`,36,642.3,538,7.5);await text(page,time(d.weighInAt),102,652,65,9);await text(page,d.inspectorName,281,652,290,9);
+async function foot(page,number){await text(page,d.school,82,62,490,11,true);await text(page,d.event,170,90,401,11);await text(page,`${d.date} | Class allowance +${Number(d.growth)+Number(d.consecutive)} lb (growth +${d.growth}; consecutive +${d.consecutive})`,36,642.3,538,7.5);await text(page,startTime(),102,652,65,9);await text(page,d.inspectorName,281,652,290,9);
 // The original has name lines. Sign above each line and print the name below it.
 rect(page,124,688,177,14);rect(page,399,688,175,14);
-for(const [role,x,w] of [['coach',125,172],['official',401,170]]){const image=images[role];if(image){const dim=image.scaleToFit(w,18);page.drawImage(image,{x,y:792-685,width:dim.width,height:dim.height});}await text(page,role==='coach'?d.coachName:d.officialName,x,689,w,8);}
+for(const [role,x,w] of [['coach',125,172],['official',401,170]]){const image=images[role];if(image){const dim=image.scaleToFit(w,18);page.drawImage(image,{x,y:792-685,width:dim.width,height:dim.height});}await text(page,role==='coach'?d.coachName:d.officialName,x,689,w,8);if(d.signatures[role]?.signedAt)await text(page,`Signed ${dateTime(d.signatures[role].signedAt)}`,x,700,w,6.5);}
 await text(page,`${signed?'SIGNED COPY':'DRAFT - NOT FULLY SIGNED'} ${eventType?' | '+eventType:''} | Revision ${d.revision} | Form ${number+1} of ${pages.length}`,36,735,540,8,true);await text(page,`Record ${d.id} | Times: ${d.timeZone}`,36,750,540,7);if(!signed){page.drawText('DRAFT',{x:240,y:45,size:20,font:bold,color:rgb(.75,.2,.2),opacity:.25});}}
 for(let pi=0;pi<pages.length;pi++){const [page]=await pdf.copyPages(template,[0]);pdf.addPage(page);if(pi>0){rect(page,35,134.6,542,507.5);for(const x of [36,108,198,464,575])page.drawLine({start:{x,y:792-135},end:{x,y:792-615},thickness:.5,color:rgb(.6,.65,.7)});for(let i=0;i<=30;i++)line(page,36,135+i*16,575);await text(page,'CONTINUATION - additional athletes',36,618,539,9,true);}for(const {r,top,extra} of pages[pi]){if(extra)await text(page,r.weightClass||'—',45,top+2,56,9);await text(page,r.weight==null?'—':Number(r.weight).toFixed(1),116,top+2,63,9,true);await text(page,r.name,203,top+2,241,9);await text(page,r.skin==='pass'?'Pass':r.skin==='fail'?'Did not pass':'Not checked',469,top+2,101,9);}await foot(page,pi);}
 // A separate recording log preserves full names, timestamps, scale/manual source,
 // and signer intent. It is part of the signed revision, not a clinical record.
 let page=null,y=0;
-async function logPage(){page=pdf.addPage([612,792]);await text(page,'WEIGH-IN RECORDING LOG',36,32,540,16,true);await text(page,`${d.school} | ${d.event}`,36,57,540,10);await text(page,`${d.date} · ${d.sex}${eventType?' · '+eventType:''} · Revision ${d.revision} · ${signed?'Signed':'Draft'}`,36,76,540,9);await text(page,`Record ${d.id} | ${d.timeZone}`,36,94,540,8);line(page,36,114,576);y=130;}
+async function logPage(){page=pdf.addPage([612,792]);await text(page,'WEIGH-IN RECORDING LOG',36,32,540,16,true);await text(page,`${d.school} | ${d.event}`,36,57,540,10);await text(page,`${d.date} · ${d.sex}${eventType?' · '+eventType:''} · Revision ${d.revision} · ${signed?'Signed':'Draft'}`,36,76,540,9);await text(page,`Record ${d.id} | ${d.timeZone}`,36,94,540,8);await text(page,`Weigh-in start: ${startTime()}${d.startTime?' (entered)':' (first weight)'} | First weight recorded: ${dateTime(d.weighInAt)}`,36,108,540,8);line(page,36,125,576);y=141;}
 await logPage();
 for(let i=0;i<d.rows.length;i++){const r=d.rows[i];if(y>657)await logPage();const name=String(r.name||'(name missing)');const chunks=name.match(/.{1,70}/gu)||[''];for(let ci=0;ci<chunks.length;ci++){await text(page,(ci===0?`${i+1}. `:'    ')+chunks[ci],36,y,540,10,true);y+=15;}await text(page,`Class ${r.weightClass||'not selected'} | Actual ${r.weight==null?'not recorded':Number(r.weight).toFixed(1)+' lb'} | Skin: ${r.skin==='pass'?'Pass':r.skin==='fail'?'Did not pass':'Not checked'}`,48,y,528,9);y+=15;await text(page,`${r.source==='scale'?'Connected scale':r.source==='manual'?'Manual entry':'Not recorded'} | ${dateTime(r.capturedAt)}`,48,y,528,9);y+=25;}
 if(y>560)await logPage();await text(page,'SIGNER RECORD',36,y,540,11,true);y+=20;for(const role of ['official','coach']){const s=d.signatures[role];await text(page,`${role==='official'?'Administrator / official':'Certified coach'}: ${s?.name||'Not signed'}`,36,y,540,9,true);y+=15;await text(page,s?`Signed ${dateTime(s.signedAt)}; approved all athletes, form pages and this log.`:'Signature pending.',36,y,540,8);y+=20;}
 await text(page,`Skin check certified by: ${d.inspectorName}`,36,y,540,9);y+=20;await text(page,`Recorded allowance: growth +${d.growth} lb; consecutive-day +${d.consecutive} lb.`,36,y,540,9);y+=15;await text(page,'Eligibility, certified minimum weights and descent plans require the official’s review.',36,y,540,8);y+=15;await text(page,'Electronic signatures record signer intent; they do not verify identity or certification.',36,y,540,8);y+=15;await text(page,d.parentId?`Corrects record ${d.parentId}; the prior signed copy remains unchanged.`:'Local device record. No automatic governing-body submission.',36,y,540,8);
 const all=pdf.getPages();for(let i=pages.length;i<all.length;i++){await text(all[i],`${signed?'SIGNED COPY':'DRAFT'} | Recording log ${i-pages.length+1} | Document page ${i+1} of ${all.length}`,36,752,540,8);}
-pdf.setTitle(`${d.school} - ${d.sex}${eventType?' '+eventType:''} weigh-in - ${d.date}`);pdf.setSubject(`Official sheet revision ${d.revision}; ${d.id}`);pdf.setCreator('Wrestling Manager 0.20.11');return await pdf.save();}
+pdf.setTitle(`${d.school} - ${d.sex}${eventType?' '+eventType:''} weigh-in - ${d.date}`);pdf.setSubject(`Official sheet revision ${d.revision}; ${d.id}`);pdf.setCreator('Wrestling Manager 0.20.12');return await pdf.save();}
 window.WMOfficialSheetPDF={make,plan};
 })();
 
 </script>
 <script>
-/* Wrestling Manager 0.20.11 — local official sheets, never a public roster. */
+/* Wrestling Manager 0.20.12 — local official sheets, never a public roster. */
 (() => {
 'use strict';
 const CLASSES={girls:[100,105,110,115,120,125,130,135,140,145,155,170,190,235],boys:[106,113,120,126,132,138,144,150,157,165,175,190,215,285]};
@@ -10681,7 +10735,7 @@ async function saveRecord(snapshot){const d=await db();return new Promise((resol
 async function save(){if(!sheet)return Promise.resolve();ensure();clearTimeout(timer);const snapshot=clone(sheet);const owner=scope;message('Saving on this device…');queue=queue.catch(()=>{}).then(()=>saveRecord(snapshot));return queue.then(()=>{storageError=null;if(valid()&&scope===owner&&sheet?.id===snapshot.id)message('Saved on this device · Export a PDF to keep a separate copy.');},e=>{storageError=e;report(e);throw e;});}
 function invalidatePDF(){if(prepared?.url)URL.revokeObjectURL(prepared.url);prepared=null;const p=$('owsDownload');if(p)p.hidden=true;}
 function edit(fn){ensure();if(!sheet||sheet.locked)throw Error('This copy is signed. Choose Create correction to make a new revision.');const signed=Object.keys(sheet.signatures).length>0;if(signed)sheet.signatures={};fn(sheet);sheet.updatedAt=now();sheet.reviewed=false;if($('owsReviewed'))$('owsReviewed').checked=false;invalidatePDF();if(signed){render();message('The sheet changed. Both people must sign the updated copy again.');}clearTimeout(timer);timer=setTimeout(()=>save().catch(()=>{}),250);}
-function field(label,key,type='text',extra=''){return `<label>${label}<input data-field="${key}" type="${type}" value="${esc(sheet[key])}" ${extra} ${sheet.locked?'disabled':''}></label>`;}
+function field(label,key,type='text',extra=''){return `<label>${label}<input data-field="${key}" type="${type}" value="${esc(sheet[key]??'')}" ${extra} ${sheet.locked?'disabled':''}></label>`;}
 
 function typeLabel(d){return d.eventType==='dual'?'Dual':d.eventType==='tournament'?'Tournament':'Type not set';}
 function eventLabel(d){return d.eventType==='dual'?'Opponent(s)':d.eventType==='tournament'?'Tournament name':'Opponent(s) / tournament name';}
@@ -10752,7 +10806,7 @@ function rowHTML(r,index){return `<article class="ows-athlete" data-row="${esc(r
   <div><label>Weight class<select data-row-field="weightClass" ${sheet.locked||!classChoices(sheet,r).length?'disabled':''}>${classOptions(r)}</select></label><small data-class-hint>${esc(classHint(r))}</small></div>
   ${choices('Medical / skin check','skin',r.skin,[['pass','Pass'],['fail','Did not pass']],r.id)}</div>
   <p class="ows-muted" data-row-time>${esc(r.capturedAt?`${r.source==='scale'?'Scale':'Manual'} · ${stamp(r.capturedAt)}`:'Weight has not been recorded.')}</p></article>`;}
-function signatureHTML(role,title){const sig=sheet.signatures[role];return `<div><h3>${title}</h3>${sig?`<img class="ows-sign-preview" src="${sig.image}" alt="${esc(title)}"><small>${esc(sig.name)} · ${esc(stamp(sig.signedAt))}</small>`:'<p class="ows-muted">Not signed yet</p>'}${!sheet.locked?`<div class="ows-actions"><button data-action="signature" data-role="${role}">${sig?'Sign again':title}</button></div>`:''}</div>`;}
+function signatureHTML(role,title){const sig=sheet.signatures[role];return `<div><h3>${title}</h3>${sig?`<img class="ows-sign-preview" src="${sig.image}" alt="${esc(title)}"><small>${esc(sig.name)} · Signed ${esc(stamp(sig.signedAt))}</small>`:'<p class="ows-muted">Not signed yet</p>'}${!sheet.locked?`<div class="ows-actions"><button data-action="signature" data-role="${role}">${sig?'Sign again':title}</button></div>`:''}</div>`;}
 function render(){
   if(!valid())return;invalidatePDF();const main=$('owsMain');if(!sheet){renderHome();return;}
   const dis=sheet.locked?'disabled':'';
@@ -10767,11 +10821,12 @@ function render(){
     ${field('School','school','text','maxlength="120"')}
     <div>${field(eventLabel(sheet),'event','text',`maxlength="150" placeholder="${sheet.eventType==='dual'?'School B, School C':sheet.eventType==='tournament'?'Tournament name':'Opponent schools or tournament'}"`)}${sheet.eventType==='dual'?'<small>For a tri-dual, enter both opposing schools separated by a comma.</small>':''}</div>
     ${field('Event date','date','date')}
+    <div>${field('Weigh-in start time','startTime','time','step="60"')}<small>Enter the scheduled start. Leave blank to use the first recorded weight time.</small></div>
     ${field('Administrator / official name','officialName','text','maxlength="100"')}
     ${field('Skin check certified by','inspectorName','text','maxlength="100"')}
     ${field('Certified coach name','coachName','text','maxlength="100"')}
   </div>
-  <p class="ows-muted">The skin-check name follows the official’s name until you change it. The first recorded weight sets the weigh-in time.</p>
+  <p class="ows-muted">The skin-check name follows the official’s name until you change it. Signature times and each recorded weight’s timestamp are saved automatically.</p>
   <details data-section="allowance" ${allowanceOpen?'open':''}><summary>Weight allowances</summary><div class="ows-grid" style="margin-top:14px">
     ${choices('Season growth allowance','growth',sheet.growth,[[0,'None'],[2,'+2 lb']])}
     ${choices('Approved consecutive-day allowance','consecutive',sheet.consecutive,[[0,'None'],[1,'+1 lb'],[2,'+2 lb']])}
@@ -10787,9 +10842,9 @@ function render(){
   <div id="owsDownload" hidden></div><p class="ows-muted">Sheets stay on this device under your current account and team. They are not yet uploaded or submitted to a governing body. Export before deleting the app or clearing its data.</p></section>`;
 }
 async function renderHome(){ensure();sheet=null;invalidatePDF();$('owsMain').innerHTML=`<section class="ows-card"><h2>Official weigh-in sheets</h2><p>Record weights, complete skin checks and sign your school’s form.</p><p class="ows-note">Saved on this device. Export PDFs for your records. These sheets do not create athlete accounts or update certification databases.</p><div class="ows-actions"><button class="primary" data-action="new" data-sex="girls">New girls sheet</button><button data-action="new" data-sex="boys">New boys sheet</button></div></section><section class="ows-card"><h3>Saved sheets</h3><div id="owsStatus" role="status" class="ows-status"></div><div id="owsHistory">Loading…</div></section>`;const owner=scope;try{const docs=await transaction('readonly',s=>s.index('scope').getAll(owner));if(!valid()||scope!==owner||sheet)return;$('owsHistory').innerHTML=docs.sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)).map(d=>`<div class="ows-history"><div><strong>${esc(d.school||'Unnamed school')}</strong><br><small>${esc(d.date)} · ${esc(d.event||'Untitled event')} · ${d.rows.length} athletes<br>${d.locked?'Signed':'Draft'} · ${d.sex} · ${typeLabel(d)} · Revision ${d.revision}</small></div><button data-action="load" data-id="${esc(d.id)}">Open</button></div>`).join('')||'<p>No sheets yet.</p>';}catch(e){report(e);$('owsHistory').textContent='';}}
-function newSheet(sex){ensure();const c=ctx(),date=localDate();sheet={id:uid(),scope,revision:1,parentId:null,school:c.school||'',event:c.event||'',eventType:'',date,timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone||'UTC',sex,officialName:c.officialName||'',inspectorName:c.officialName||'',inspectorLinked:true,coachName:'',growth:Number(date.slice(5,7))<=6?2:0,consecutive:0,rows:[],signatures:{},reviewed:false,locked:false,createdAt:now(),updatedAt:now(),weighInAt:null};zeroRequired=false;lastCapturedRow=null;render();save().catch(()=>{});}
+function newSheet(sex){ensure();const c=ctx(),date=localDate();sheet={id:uid(),scope,revision:1,parentId:null,school:c.school||'',event:c.event||'',eventType:'',date,timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone||'UTC',sex,officialName:c.officialName||'',inspectorName:c.officialName||'',inspectorLinked:true,coachName:'',growth:Number(date.slice(5,7))<=6?2:0,consecutive:0,rows:[],signatures:{},reviewed:false,locked:false,createdAt:now(),updatedAt:now(),startTime:'',weighInAt:null};zeroRequired=false;lastCapturedRow=null;render();save().catch(()=>{});}
 function addRow(athlete){edit(d=>{d.rows.push({id:uid(),athleteId:athlete?.id||null,name:athlete?.name||'',weight:null,weightClass:'',classSelection:'auto',skin:'',capturedAt:null,source:null});});render();const inputs=root.querySelectorAll('[data-row-field="name"]');inputs[inputs.length-1]?.focus();}
-function complete(d){const errors=[];if(!['dual','tournament'].includes(d.eventType))errors.push('Choose Dual or Tournament.');if(!d.school.trim())errors.push('Enter the school.');if(!d.event.trim())errors.push('Enter the opponent or tournament.');if(!/^\d{4}-\d{2}-\d{2}$/.test(d.date))errors.push('Choose the event date.');if(!d.officialName.trim()||!d.inspectorName.trim()||!d.coachName.trim())errors.push('Enter the official, skin-check inspector and certified coach names.');if(!d.rows.length)errors.push('Add at least one athlete.');d.rows.forEach((r,i)=>{if(!r.name.trim()||!(r.weight>0&&r.weight<=1000)||!classChoices(d,r).includes(Number(r.weightClass))||!['pass','fail'].includes(r.skin)||!r.capturedAt)errors.push(`Complete athlete ${i+1}: name, actual weight, a class for this weight or one class up, and skin-check result.`);});if(!d.reviewed)errors.push('Review the sheet and check the review box before signing.');return errors;}
+function complete(d){const errors=[];if(!['dual','tournament'].includes(d.eventType))errors.push('Choose Dual or Tournament.');if(!d.school.trim())errors.push('Enter the school.');if(!d.event.trim())errors.push('Enter the opponent or tournament.');if(!/^\d{4}-\d{2}-\d{2}$/.test(d.date))errors.push('Choose the event date.');if(d.startTime&&!/^([01]\d|2[0-3]):[0-5]\d$/.test(d.startTime))errors.push('Choose a valid weigh-in start time.');if(!d.officialName.trim()||!d.inspectorName.trim()||!d.coachName.trim())errors.push('Enter the official, skin-check inspector and certified coach names.');if(!d.rows.length)errors.push('Add at least one athlete.');d.rows.forEach((r,i)=>{if(!r.name.trim()||!(r.weight>0&&r.weight<=1000)||!classChoices(d,r).includes(Number(r.weightClass))||!['pass','fail'].includes(r.skin)||!r.capturedAt)errors.push(`Complete athlete ${i+1}: name, actual weight, a class for this weight or one class up, and skin-check result.`);});if(!d.reviewed)errors.push('Review the sheet and check the review box before signing.');return errors;}
 function modal(html){dismissModal();modalReturnFocus=document.activeElement;const div=document.createElement('div');div.className='ows-modal';div.id='owsModal';div.innerHTML=`<div class="ows-dialog" role="dialog" aria-modal="true" tabindex="-1">${html}</div>`;root.append(div);div.querySelector('.ows-dialog').focus();return div;}
 function dismissModal(){const back=modalReturnFocus;modalReturnFocus=null;pad=null;capture=null;$('owsModal')?.remove();if(back?.isConnected)back.focus({preventScroll:true});}
 function roster(){ensure();const rows=ctx().roster||[];modal(`<h2>Choose team athletes</h2><p class="ows-muted">${esc(ctx().school||'Current team')} roster. For a visiting school, use “Type an athlete.”</p><input id="owsRosterSearch" type="search" placeholder="Search a name" aria-label="Search roster"><div id="owsRosterList"></div><div class="ows-actions"><button data-action="dismiss">Done</button></div>`);const update=()=>{const search=$('owsRosterSearch').value.toLowerCase();$('owsRosterList').innerHTML=rows.filter(r=>r.name.toLowerCase().includes(search)).map(r=>`<div class="ows-history"><span>${esc(r.name)}</span><button data-action="roster-add" data-id="${esc(r.id)}" ${sheet.rows.some(x=>x.athleteId===r.id)?'disabled':''}>${sheet.rows.some(x=>x.athleteId===r.id)?'Added':'Add'}</button></div>`).join('')||'<p>No matching roster entries. You can type the athlete’s name.</p>';};$('owsRosterSearch').oninput=update;update();}
@@ -10802,7 +10857,7 @@ function updateReading(){if(!capture||!valid())return;const fresh=connection&&la
 function recordWeight(r,value,source){r.weight=value===null?null:Math.round(value*10)/10;r.capturedAt=value===null?null:now();r.source=value===null?null:source;assignClass(sheet,r);sheet.weighInAt=sheet.rows.filter(x=>x.capturedAt).map(x=>x.capturedAt).sort()[0]||null;}
 async function action(button){ensure();const a=button.dataset.action;if(a==='choose'){choose(button);return;}if(a==='new'){newSheet(button.dataset.sex);return;}if(a==='load'){await queue.catch(()=>{});ensure();const d=await transaction('readonly',s=>s.get(button.dataset.id));ensure();if(!d||d.scope!==scope)throw Error('This sheet is not available to the current team and account.');sheet=d;render();return;}if(a==='list'){await save();ensure();renderHome();return;}if(a==='add-row'){addRow();return;}if(a==='roster'){roster();return;}if(a==='roster-add'){const athlete=(ctx().roster||[]).find(r=>r.id===button.dataset.id);if(!athlete)throw Error('Roster changed. Reopen the roster.');if(sheet.rows.some(r=>r.athleteId===athlete.id))return;addRow(athlete);roster();return;}if(a==='remove-row'){if(!confirm('Remove this athlete from this draft?'))return;edit(d=>{d.rows=d.rows.filter(r=>r.id!==button.dataset.id);d.weighInAt=d.rows.filter(r=>r.capturedAt).map(r=>r.capturedAt).sort()[0]||null;});render();return;}if(a==='save'){await save();return;}if(a==='dismiss'){dismissModal();return;}if(a==='signature'){signature(button.dataset.role);return;}if(a==='clear-signature'){pad?.canvas.getContext('2d').clearRect(0,0,pad.canvas.width,pad.canvas.height);if(pad){pad.strokes=0;pad.distance=0;}return;}if(a==='save-signature'){if(!pad||pad.distance<30||!$('owsConsent').checked){$('owsSignError').textContent='Draw your signature and confirm the checkbox.';return;}const errors=complete(sheet);if(errors.length)throw Error(errors.join(' '));const role=button.dataset.role;sheet.signatures[role]={name:role==='official'?sheet.officialName:sheet.coachName,image:signatureImage(pad.canvas),signedAt:now()};sheet.locked=!!(sheet.signatures.official&&sheet.signatures.coach);sheet.updatedAt=now();dismissModal();render();await save();return;}if(a==='capture'){startCapture(button.dataset.id);return;}if(a==='use-reading'){updateReading();if(capture?.value==null)throw Error('Wait for a current scale reading.');const id=capture.id,value=capture.value;edit(d=>recordWeight(d.rows.find(r=>r.id===id),value,'scale'));lastCapturedRow=id;zeroRequired=true;dismissModal();render();await save();return;}if(a==='revision'){await save();ensure();const old=sheet;sheet={...clone(old),id:uid(),parentId:old.id,revision:old.revision+1,signatures:{},locked:false,reviewed:false,createdAt:now(),updatedAt:now()};render();await save();return;}if(a==='pdf'){await preparePDF();return;}if(a==='share'){await sharePDF();return;}if(a==='preview-pdf'){previewPDF();return;}if(a==='download-pdf'){downloadPDF();return;}}
 function input(e){if(!valid()||!sheet||sheet.locked)return;const el=e.target;if(el.id==='owsReviewed'){sheet.reviewed=el.checked;sheet.updatedAt=now();invalidatePDF();clearTimeout(timer);timer=setTimeout(()=>save().catch(()=>{}),250);return;}if(el.dataset.field){const key=el.dataset.field;edit(d=>{if(key==='sex'&&d.sex!==el.value){if(d.rows.some(r=>r.weightClass)&&!confirm('Switch forms? Existing class selections will be cleared. Athlete names and actual weights will stay.')){el.value=d.sex;return;}d.rows.forEach(r=>r.weightClass='');}d[key]=['growth','consecutive'].includes(key)?Number(el.value):el.value;if(key==='officialName'&&d.inspectorLinked)d.inspectorName=el.value;if(key==='inspectorName')d.inspectorLinked=false;if(key==='date'){const up=d.rows.map(r=>r.classSelection==='up'||(!r.classSelection&&classChoices(d,r)[1]===Number(r.weightClass)));d.growth=Number(el.value.slice(5,7))<=6?2:0;d.rows.forEach((r,i)=>assignClass(d,r,up[i]));}});if(['sex','date','growth','consecutive'].includes(key))render();else if(key==='officialName'&&sheet.inspectorLinked)root.querySelector('[data-field="inspectorName"]').value=sheet.inspectorName;return;}if(el.dataset.rowField){const row=sheet.rows.find(r=>r.id===el.closest('[data-row]').dataset.row);if(!row)return;const key=el.dataset.rowField;edit(()=>{if(key==='weight'){const n=el.value===''?null:Number(el.value);recordWeight(row,n!==null&&Number.isFinite(n)&&n>0?n:null,'manual');}else if(key==='weightClass'){const options=classChoices(sheet,row),selected=Number(el.value);if(!options.includes(selected))throw Error('Choose the class for this actual weight or one class up.');row.weightClass=selected;row.classSelection=selected===options[1]?'up':'auto';}else row[key]=el.value;});if(['weight','weightClass'].includes(key))refreshClassRow(row);const node=root.querySelector(`[data-row="${row.id}"] [data-row-time]`);if(node)node.textContent=row.capturedAt?`${row.source==='scale'?'Scale':'Manual'} · ${stamp(row.capturedAt)}`:'Weight has not been recorded.';}}
-async function open(){if(root){ensure();return;}generation++;const c=ctx();scope=contextScope(c);if(!scope)throw Error('Sign in with weigh-in access and choose your team first.');oldOverflow=document.body.style.overflow;document.body.style.overflow='hidden';root=document.createElement('section');root.id='wmOfficialSheets';root.setAttribute('aria-label','Official weigh-in sheets');root.innerHTML='<header class="ows-header"><div><h2>Official weigh-in sheets</h2><small>Wrestling Manager · 0.20.11</small></div><button id="owsClose">Done</button></header><main class="ows-main" id="owsMain"></main>';document.body.append(root);root.onclick=e=>{if(e.target.closest('#owsClose')){save().then(()=>close()).catch(()=>{});return;}const b=e.target.closest('[data-action]');if(!b||b.disabled)return;action(b).catch(report);};root.onchange=e=>{if(e.target.matches('input[data-field]:not([type=date]),input[data-row-field]'))return;try{input(e);}catch(error){report(error);}};root.oninput=e=>{if(e.target.matches('input[data-field]:not([type=date]),input[data-row-field]')){try{input(e);}catch(error){report(error);}}};root.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('owsModal')){e.preventDefault();dismissModal();}if(e.key==='Tab'&&$('owsModal')){const nodes=[...$('owsModal').querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),[tabindex="0"]')];if(!nodes.length)return;const first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&(document.activeElement===first||!nodes.includes(document.activeElement))){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}});securityWatch=new MutationObserver(()=>{if(root&&!valid())close(true);});securityWatch.observe(document.body,{attributes:true,attributeFilter:['class']});const lock=document.getElementById('appLockOverlay');if(lock)securityWatch.observe(lock,{attributes:true,attributeFilter:['class','hidden']});connection=!!c.scaleConnected;zeroRequired=false;lastCapturedRow=null;host.scale?.('acquire');poll=setInterval(()=>{if(!valid())return;host.scale?.('status');updateReading();},650);watch=setInterval(()=>{if(root&&!valid())close(true);},300);await renderHome();}
+async function open(){if(root){ensure();return;}generation++;const c=ctx();scope=contextScope(c);if(!scope)throw Error('Sign in with weigh-in access and choose your team first.');oldOverflow=document.body.style.overflow;document.body.style.overflow='hidden';root=document.createElement('section');root.id='wmOfficialSheets';root.setAttribute('aria-label','Official weigh-in sheets');root.innerHTML='<header class="ows-header"><div><h2>Official weigh-in sheets</h2><small>Wrestling Manager · 0.20.12</small></div><button id="owsClose">Done</button></header><main class="ows-main" id="owsMain"></main>';document.body.append(root);root.onclick=e=>{if(e.target.closest('#owsClose')){save().then(()=>close()).catch(()=>{});return;}const b=e.target.closest('[data-action]');if(!b||b.disabled)return;action(b).catch(report);};root.onchange=e=>{if(e.target.matches('input[data-field]:not([type=date]),input[data-row-field]'))return;try{input(e);}catch(error){report(error);}};root.oninput=e=>{if(e.target.matches('input[data-field]:not([type=date]),input[data-row-field]')){try{input(e);}catch(error){report(error);}}};root.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('owsModal')){e.preventDefault();dismissModal();}if(e.key==='Tab'&&$('owsModal')){const nodes=[...$('owsModal').querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),[tabindex="0"]')];if(!nodes.length)return;const first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&(document.activeElement===first||!nodes.includes(document.activeElement))){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}});securityWatch=new MutationObserver(()=>{if(root&&!valid())close(true);});securityWatch.observe(document.body,{attributes:true,attributeFilter:['class']});const lock=document.getElementById('appLockOverlay');if(lock)securityWatch.observe(lock,{attributes:true,attributeFilter:['class','hidden']});connection=!!c.scaleConnected;zeroRequired=false;lastCapturedRow=null;host.scale?.('acquire');poll=setInterval(()=>{if(!valid())return;host.scale?.('status');updateReading();},650);watch=setInterval(()=>{if(root&&!valid())close(true);},300);await renderHome();}
 function close(forced=false){
   if(!root)return;generation++;
   if(sheet){const finalSnapshot=clone(sheet);queue=queue.catch(()=>{}).then(()=>saveRecord(finalSnapshot));queue.catch(()=>{});}
