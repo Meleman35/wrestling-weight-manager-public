@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.16: visible NFC diagnostics plus hide/delete controls for locally saved official weigh-in sheets. -->
+<!-- Wrestling Manager v0.20.19: Mat Mode crew/offline stability fixes plus mobile layout and notification targeting cleanup. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -18,7 +18,7 @@
 }
 *{box-sizing:border-box}
 html{background:var(--bg);-webkit-text-size-adjust:100%;text-size-adjust:100%}
-body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink);overflow-x:hidden}\n.app,.content,.tabview{width:100%;max-width:100%;min-width:0}\nimg,video,canvas{max-width:100%}\nbutton,input,select,textarea{min-width:0;max-width:100%}
 button,input,select,textarea{font:inherit}
 button{cursor:pointer}
 .hidden{display:none!important}
@@ -48,7 +48,7 @@ button.wide{width:100%;margin-top:16px}.stack-actions{display:grid;gap:9px;margi
 @media(max-width:420px){.profile-view-grid{grid-template-columns:1fr}.profile-view-actions{grid-template-columns:1fr}}
 .team-banner{position:relative;width:100%;aspect-ratio:4/1;overflow:hidden;border-radius:0 0 22px 22px;background:linear-gradient(135deg,var(--team-primary),var(--team-secondary));box-shadow:var(--shadow);margin:-14px 0 14px}.team-banner img{display:block;width:100%;height:100%;object-fit:cover;object-position:center var(--team-banner-y)}
 .team-banner::after{content:"";position:absolute;inset:0;box-shadow:inset 0 -28px 45px rgba(0,0,0,.08);pointer-events:none}
-.content{max-width:760px;margin:auto;padding:14px 15px 30px}.top-space{margin-top:4px}
+.content{max-width:760px;margin:auto;padding:14px 15px 30px;overflow-x:hidden}.top-space{margin-top:4px}
 .hero-card{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;background:linear-gradient(135deg,var(--team-primary),var(--team-secondary));color:#fff;border-radius:24px;padding:20px;box-shadow:var(--shadow)}
 .hero-card h2{font-size:26px;margin:5px 0}.hero-card p{margin:0;opacity:.82}.eyebrow{font-size:11px;font-weight:900;letter-spacing:.12em;color:#6983a1}.hero-card .eyebrow{color:#bfd3ec}.live-pill{background:#e6f6ed;color:#166c44;border-radius:999px;padding:6px 9px;font-size:11px;font-weight:900}
 .quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 18px}.quick-card{background:#fff;color:var(--ink);border:1px solid var(--line);text-align:left;min-height:116px;padding:15px;box-shadow:0 2px 10px rgba(0,0,0,.025)}.quick-card span{display:block;font-size:22px;margin-bottom:9px}.quick-card b{display:block;font-size:16px}.quick-card small{display:block;color:var(--muted);margin-top:4px;line-height:1.3}
@@ -595,6 +595,16 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
 @media(max-width:520px){.clipboard-whistle{grid-template-columns:auto 1fr}.clipboard-whistle button{grid-column:1/-1;width:100%}.clipboard-grid{grid-template-columns:1fr 1fr}.clipboard-tile{padding:10px;min-height:68px}.clipboard-tile>span{font-size:20px}}
 .bottom-nav .nav-btn span{font-size:19px}.bottom-nav .nav-btn small{font-size:10px;letter-spacing:-.1px}.bottom-nav .nav-btn[data-tab="home"] small{font-size:9.5px}
 .home-feed-block,.feature-card,.menu-card{box-shadow:0 5px 18px rgba(15,23,42,.045)}
+
+@media(max-width:560px){
+  .section-head,.clipboard-section-label{flex-wrap:wrap}
+  .section-head>*,.clipboard-section-label>*{min-width:0}
+  .hero-card,.clipboard-whistle{max-width:100%;min-width:0}
+  .hero-card>*{min-width:0}
+  .app-header{max-width:100vw;overflow:hidden}
+  .team-switcher{min-width:0;max-width:calc(100vw - 76px)}
+  .team-switcher>span:not(.chev){min-width:0}
+}
 @media(max-width:560px){.locker-room-tabs{gap:5px}.locker-room-tab{font-size:12px!important;padding:9px 5px!important}.locker-coming-row{grid-template-columns:repeat(2,1fr)}.locker-team-actions{grid-template-columns:1fr}.locker-room-heading h2{font-size:27px}}
 </style>
 </head>
@@ -788,7 +798,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
         <div id="upcomingHome" class="card-list"><div class="empty-card">No upcoming events yet.</div></div>
         </section>
 
-        <section id="weightSnapshotSection" class="home-feed-block layout-block" data-layout-key="weight_snapshot"><div class="section-head"><div class="feed-author"><span class="feed-author-icon">⚖️</span><span><h3>Weight Room Snapshot</h3><small id="weightSnapshotSubtitle">Today’s private team totals</small></span></div></div>
+        <section id="weightSnapshotSection" class="home-feed-block layout-block" data-layout-key="weight_snapshot"><div class="section-head"><div class="feed-author"><span class="feed-author-icon">⚖️</span><span><h3>Weight Room Snapshot</h3><small id="weightSnapshotSubtitle">Today’s private team totals</small></span></div><span id="weightSnapshotAlertCount" class="count-pill hidden" aria-label="0 new weigh-ins">0</span></div>
         <div id="homeWeightNotification" class="weight-snapshot-alert hidden" aria-live="polite"><button id="openHomeWeightNotificationBtn" type="button" class="weight-alert-open"><b>New weigh-ins</b><small id="homeWeightNotificationSummary"></small></button><button id="markWeightNotificationsReadBtn" type="button" class="link-btn">Mark All Read</button></div>
         <div id="teamWeightSnapshotMetrics" class="metric-grid">
           <button type="button" class="metric metric-btn" data-weight-metric="weighed"><span data-weighed-label>Weighed today</span><strong id="weighed">0</strong></button>
@@ -1883,7 +1893,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.16</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.19</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -6078,6 +6088,7 @@ function renderCommunicationNotifications(){
   $('markCommunicationNotificationsReadBtn').disabled=!messages.length;
   show('homeWeightNotification',weights.length>0);
   $('homeWeightNotificationSummary').textContent=weights.length?`${weights.length} new ${weights.length===1?'weigh-in':'weigh-ins'} · Tap to view and clear`:'';
+  const weightBadge=$('weightSnapshotAlertCount');if(weightBadge){weightBadge.textContent=weights.length>99?'99+':String(weights.length);weightBadge.classList.toggle('hidden',!weights.length);weightBadge.setAttribute('aria-label',`${weights.length} new ${weights.length===1?'weigh-in':'weigh-ins'}`);}
   updateBottomNavBadges();
 }
 async function markNotificationRowsRead(rows){
@@ -9941,7 +9952,7 @@ window.WMOperations=(()=>{
  async function calendar(team){try{return await rpc(false,{action:'calendar',team_id:team});}catch(err){console.warn('Organization calendar unavailable:',err.message);return [];}}
  async function feedback(){if(document.body.classList.contains('kiosk-locked'))return;closeSheets();feedbackId=crypto.randomUUID();note('feedbackStatus','');openSheet('feedbackSheet');await feedbackHistory();}
  async function feedbackHistory(){const target=$o('feedbackHistory');target.textContent='Loading…';try{const rows=await rpc(false,{action:'feedback',team_id:activeTeam?.id||null});target.innerHTML=list(rows).map(r=>`<article class="ops-card"><b>${e(r.category)}</b> ${badge(r.status)}<p>${e(r.body)}</p><small>${e(fmtDateTime(r.created_at))} · ${e(r.build)}</small>${r.response?'<p>Response: '+e(r.response)+'</p>':''}${actualIsTeamAdmin&&!managedLogin&&r.team_id===activeTeam?.id?`<div class="ops-actions"><button class="secondary" data-feedback-review="${r.id}">Review</button></div>`:''}</article>`).join('')||'<p>No feedback yet.</p>';target.querySelectorAll('[data-feedback-review]').forEach(b=>b.onclick=async()=>{const row=rows.find(r=>r.id===b.dataset.feedbackReview),result=await dialog({title:'Review feedback',fields:[{id:'status',label:'Status',options:['new','reviewing','planned','resolved'].map(s=>[s,s]),value:row.status},{id:'response',label:'Response',type:'textarea',value:row.response||''}],submit:'Save review'});if(!result)return;const {status,response}=result;try{await rpc(true,{action:'feedback_status',id:row.id,status,response});await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}});}catch(err){target.textContent=err.message;}}
- async function sendFeedback(ev){ev.preventDefault();if(!session?.user)return;$o('feedbackSend').disabled=true;try{await rpc(true,{action:'feedback',id:feedbackId||crypto.randomUUID(),team_id:activeTeam?.id||null,category:value('feedbackCategory'),body:value('feedbackBody'),build:'v0.20.16'});$o('feedbackBody').value='';feedbackId=crypto.randomUUID();note('feedbackStatus','Thanks—your feedback was saved.');await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}finally{$o('feedbackSend').disabled=false}}
+ async function sendFeedback(ev){ev.preventDefault();if(!session?.user)return;$o('feedbackSend').disabled=true;try{await rpc(true,{action:'feedback',id:feedbackId||crypto.randomUUID(),team_id:activeTeam?.id||null,category:value('feedbackCategory'),body:value('feedbackBody'),build:'v0.20.19'});$o('feedbackBody').value='';feedbackId=crypto.randomUUID();note('feedbackStatus','Thanks—your feedback was saved.');await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}finally{$o('feedbackSend').disabled=false}}
  function close(){finishDialog(null);generation++;editor=null;$o('opsRosterContacts')?.replaceChildren();$o('opsFields').replaceChildren();hub=null;['opsHubSheet','opsEditorSheet','feedbackSheet'].forEach(id=>show(id,false));}
  $o('opsDialogCancel').onclick=()=>finishDialog(null);
  $o('opsOrg').onchange=async()=>{org=value('opsOrg');division='';tab='home';hub=null;$o('opsContent').replaceChildren();$o('opsTabs').replaceChildren();$o('opsHubTitle').textContent='Organization Hub';note('opsStatus','Loading organization…');try{await reload()}catch(err){note('opsStatus',err.message,true)}};
