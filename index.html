@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.31: Clear email confirmation and team access status; Mat PDF exports. -->
+<!-- Wrestling Manager v0.20.32: Live team claims, linked notification reads, and signup team continuity. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -2052,7 +2052,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.31</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.32</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -2733,6 +2733,12 @@ async function performNativeNotificationRoute(rawPayload={}){
   if(!activeTeam||!activeSeason)return;
   pendingNativeNotificationPayload=null;
   try{sessionStorage.removeItem('wm_pending_native_notification');}catch{}
+  if(payload.notification_id&&payload.category==='system'){
+    const uid=session.user.id;
+    const {data}=await client.from('communication_notifications').select('id,team_id,category,title,join_request_id').eq('id',payload.notification_id).eq('user_id',uid).maybeSingle();
+    if(session?.user?.id!==uid)return;
+    if(data)Object.assign(payload,data);
+  }
   if(payload.notification_id){
     await client.rpc('mark_communication_notifications_read',{p_notification_ids:[payload.notification_id]});
     window.WMNotificationSync?.readChanged();
@@ -2741,6 +2747,7 @@ async function performNativeNotificationRoute(rawPayload={}){
   if(payload.team_id&&activeTeam?.id!==payload.team_id&&availableTeams.some(team=>team.id===payload.team_id)){
     await activateTeam(payload.team_id);
   }
+  if(window.WMJoinSync?.isNotification(payload)){await WMJoinSync.openNotification(payload);await syncNativeNotificationBadge();return;}
   if(payload.category==='weigh_in'){
     await openWeighInNotification(payload);
     return;
@@ -2778,6 +2785,7 @@ window.wrestlingManagerNotificationResponse=function(payload={}){
       scheduleActiveCommunicationThreadRefresh(notificationPayload.thread_id,80,[450]);
     }
     loadCommunications(false);syncNativeNotificationBadge();
+    if(notificationPayload.category==='system')window.WMJoinSync?.schedule();
     if(notificationPayload.category==='weigh_in'){
       loadPersonalWeightSnapshots();if(isStaff){loadRoster();loadDashboard();}
     }
@@ -3657,7 +3665,7 @@ async function createPersonalAccount(event){
   try{
     setRememberSession($('staySignedIn').checked);
     WMOnboarding.bind(email);
-    const {data,error}=await client.auth.signUp({email,password,options:{emailRedirectTo:EMAIL_CONFIRM_REDIRECT_URL,data:{wm_onboarding_role:role}}});
+    const {data,error}=await client.auth.signUp({email,password,options:{emailRedirectTo:EMAIL_CONFIRM_REDIRECT_URL,data:{wm_onboarding_role:role,...WMOnboarding.signupHint(email)}}});
     if(error)throw error;
     $('email').value=email;$('password').value='';$('signUpPassword').value='';
     if(data.session)updateRememberEmail($('rememberEmail').checked,email);else WMOnboarding.confirmation(email);
@@ -3690,6 +3698,14 @@ window.WMOnboarding=(()=>{
  function write(r){try{r?localStorage.setItem(KEY,JSON.stringify(r)):localStorage.removeItem(KEY);}catch{message('This device could not remember your invitation. Keep the original invitation link.',true);}}
  function remember(join='',invite=''){write({join:String(join).slice(0,300),invite:String(invite).slice(0,1000),email:'',at:Date.now()});pendingJoinCode=join;pendingInviteToken=invite;attempted.clear();}
  function bind(email){const r=read();if(r&&!r.email){r.email=norm(email);write(r);}}
+ function signupHint(email){const r=read();if(!r?.join||r.invite||r.email&&r.email!==norm(email))return {};return {wm_onboarding_team:{code:r.join,at:r.at}};}
+ function accountTeamHint(){
+  const h=session?.user?.user_metadata?.wm_onboarding_team;
+  if(!h||typeof h.code!=='string'||!/^WMW-[A-Z0-9-]{1,80}$/i.test(h.code)||!Number.isFinite(h.at)||Date.now()<h.at||Date.now()-h.at>=TTL)return null;
+  return h;
+ }
+ function rememberTeam(code){const r=read();if(r?.invite)return;write({join:String(code).slice(0,300),invite:'',email:norm(session?.user?.email),at:r?.join===code?r.at:Date.now()});if(session?.user?.id)attempted.add(session.user.id+':'+code);}
+
  function restore(){const r=read(),email=norm(session?.user?.email);if(r&&(!r.email||r.email===email||!session)){pendingJoinCode=r.join||'';pendingInviteToken=r.invite||'';}else{pendingJoinCode='';pendingInviteToken='';}if(session){show('confirmationNotice',false);if(r&&!r.email)bind(email);} }
  function clear(kind){const r=read();if(kind==='invite')pendingInviteToken='';if(kind==='join')pendingJoinCode='';if(r){r[kind]='';write(r.join||r.invite||r.awaitingEmail?r:null);}}
  function signOut(){write(null);pendingJoinCode='';pendingInviteToken='';requests=[];requestOwner='';++loadVersion;attempted.clear();}
@@ -3708,7 +3724,11 @@ window.WMOnboarding=(()=>{
  }
  function hasPending(teamId){return requestOwner===session?.user?.id&&requests.some(r=>r.team_id===teamId&&['pending','more_info_requested'].includes(r.status));}
  function resume(){if(!session||managedLogin)return;const uid=session.user.id,email=norm(session.user.email),r=read();if(r?.email&&r.email!==email)return;
-  const invite=pendingInviteToken,join=pendingJoinCode,k=uid+':'+(invite||join);if(!invite&&!join||attempted.has(k))return;attempted.add(k);
+  let invite=pendingInviteToken,join=pendingJoinCode||(r?.join&&(!r.email||r.email===email)?r.join:'');
+  if(!invite&&!join&&!teamMemberships.some(m=>m.active!==false)&&!organizationMemberships.length&&!requests.length){
+   const h=accountTeamHint();if(h){remember(h.code,'');bind(email);join=h.code;}
+  }
+  const k=uid+':'+(invite||join);if(!invite&&!join||attempted.has(k))return;attempted.add(k);
   setTimeout(()=>{if(session?.user?.id!==uid||managedLogin)return;if(invite){$('inviteToken').value=invite;acceptInvite(invite);}else{pendingJoinCode='';startJoinFlow(join);}},120);
  }
  async function submitted(){clear('join');await render();if(requests.some(r=>['pending','more_info_requested'].includes(r.status)))$('setupChoices').open=false;}
@@ -3716,7 +3736,7 @@ window.WMOnboarding=(()=>{
  const r=read();if(r?.awaitingEmail)confirmation(r.awaitingEmail);
  $('resendConfirmationBtn').onclick=resend;$('setupCheckAccessBtn').onclick=async()=>{const b=$('setupCheckAccessBtn');b.disabled=true;try{await refresh();}finally{b.disabled=false;}};$('setupSignOutBtn').onclick=signOutCurrentPhone;
  if(new URLSearchParams(location.search).has('email-confirmed')){const u=new URL(location.href);u.searchParams.delete('email-confirmed');history.replaceState(null,'',u);setTimeout(confirmedLink,100);}
- return {remember,bind,restore,clear,signOut,confirmation,confirmedLink,resend,render,resume,submitted,hasPending};
+ return {remember,rememberTeam,signupHint,bind,restore,clear,signOut,confirmation,confirmedLink,resend,render,resume,submitted,hasPending};
 })();
 
 let accountRefreshFlight=null;
@@ -5784,7 +5804,7 @@ async function refreshActiveCommunicationMessages(threadId,{stickToBottom=false,
       activeCommunicationMessages=hydrated.value;
       renderCommunicationMessages(activeCommunicationMessages,{preserveScroll:!shouldStick,distanceFromBottom,scrollTop:savedScrollTop,stickToBottom:shouldStick});
     }
-    if(markRead)settleWithin(client.rpc('mark_communication_thread_read',{p_thread_id:threadId}),6000,'Read status').then(()=>{window.WMNotificationSync?.readChanged();loadCommunications(false);});
+    if(markRead)settleWithin(client.rpc('mark_communication_thread_read',{p_thread_id:threadId}),6000,'Read status').then(()=>{window.WMNotificationSync?.readChanged();loadCommunications(false);window.WMJoinSync?.changed(payload);});
   })();
   communicationLiveRefreshPromise=task;
   try{return await task;}
@@ -7182,6 +7202,7 @@ async function startJoinFlow(code,teamId=null,parentExisting=false){
     const {data,error}=await client.rpc('preview_team_join_code',{p_join_code:code});
     if(error||!data?.length){message(error?.message||'That team code is not valid or has expired.',true);return;}
     joinPreview=data[0];
+    WMOnboarding.rememberTeam(code);
     if(WMOnboarding.hasPending(joinPreview.team_id)){WMOnboarding.clear('join');message('Your request is already waiting for coach approval. You are signed in.');return;}
     $('joinRequestCode').value=code; $('joinRequestTeamId').value=joinPreview.team_id;
     $('joinRequestTeam').textContent=`${joinPreview.organization_name} · ${joinPreview.team_name}`;
@@ -7442,57 +7463,131 @@ async function showTeamJoin(){
   $('joinCodeBox').querySelector('[data-team-share="share"]').onclick=()=>systemShare(`Join ${activeTeam.name}`,'Wrestling Manager team registration',url);
 }
 
+/* Request updates are invalidation signals; current server rows remain authoritative. */
+let joinRequestLoadVersion=0,joinRequestPaintVersion=0;
+window.WMJoinSync=(()=>{
+ let timer=null,reconnect=null,polling=false;
+ const context=()=>({userId:session?.user?.id,teamId:activeTeam?.id});
+ const unlocked=()=>!document.hidden&&!managedLogin&&!document.body.classList.contains('kiosk-locked')&&!document.querySelector('#appLockOverlay:not(.hidden)');
+ const current=c=>!!c?.userId&&c.userId===session?.user?.id&&c.teamId===activeTeam?.id&&isStaff&&unlocked();
+ const visible=()=>!$('coachJoinRequestsSheet').classList.contains('hidden');
+ function schedule(){clearTimeout(timer);timer=setTimeout(()=>tick(),150);}
+ async function tick(){
+  const c=context();if(polling||!current(c))return;
+  polling=true;
+  try{subscribeTeamJoinRealtime();await loadJoinRequests();}catch{}finally{polling=false;}
+ }
+ async function markRequestsRead(ids,c=context(),stillViewed=()=>true){
+  if(!current(c)||!stillViewed()||!ids.length)return;
+  const wanted=[...new Set(ids)],notifications=[];
+  // The server read RPC is self-scoped; explicit filters keep reads narrow too.
+  for(let i=0;i<wanted.length;i+=100){
+   let cursor=null;
+   do{
+    let q=client.from('communication_notifications').select('id,read_at').eq('user_id',c.userId).eq('team_id',c.teamId).in('join_request_id',wanted.slice(i,i+100)).is('read_at',null).order('id',{ascending:true}).limit(200);
+    if(cursor)q=q.gt('id',cursor);
+    const {data,error}=await q;
+    if(!current(c)||!stillViewed()||error)return;
+    notifications.push(...(data||[]));cursor=data?.length===200?data.at(-1).id:null;
+   }while(cursor);
+  }
+  if(!current(c)||!stillViewed()||!notifications.length)return;
+  await window.WMNotificationSync?.markRecords(notifications);
+ }
+ function isNotification(row){return !!row?.join_request_id||row?.category==='system'&&['New team join request','Team access approved','Team request update','More information requested'].includes(row.title);}
+ async function openNotification(row){
+  if(!isNotification(row)||!unlocked())return false;
+  if(row.title==='New team join request'){if(row.team_id!==activeTeam?.id||!isStaff){message('This request is not available in your current team access.');return true;}await openJoinRequests();return true;}
+  await refresh();return true;
+ }
+ function changed(payload){if(payload?.new?.team_id===activeTeam?.id&&isNotification(payload.new))schedule();}
+ function channelStatus(status,channel,c){
+  if(!current(c)||!communicationRealtimeChannels.includes(channel))return;
+  if(status==='SUBSCRIBED'){schedule();return;}
+  if(['CHANNEL_ERROR','TIMED_OUT','CLOSED'].includes(status)){
+   communicationRealtimeChannels=communicationRealtimeChannels.filter(ch=>ch!==channel);client.removeChannel(channel);
+   clearTimeout(reconnect);reconnect=setTimeout(()=>{if(current(c)){subscribeTeamJoinRealtime();schedule();}},2000);
+  }
+ }
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule();});
+ window.addEventListener('focus',schedule);window.addEventListener('online',schedule);
+ setInterval(()=>tick(),15000);
+ return {context,current,visible,schedule,markRequestsRead,isNotification,openNotification,changed,channelStatus};
+})();
+
 async function loadJoinRequests(){
-  if(!isStaff||!activeTeam)return;
-  const teamId=activeTeam.id,userId=session?.user?.id;
-  const {data,error}=await client.from('team_join_requests').select('*').eq('team_id',teamId).in('status',['pending','more_info_requested']).order('submitted_at',{ascending:true});
-  if(error||activeTeam?.id!==teamId||session?.user?.id!==userId||!isStaff)return;
-  joinRequests=data||[];
-  $('joinRequestCount').innerHTML=joinRequests.length?`<span class="pending-count">${joinRequests.length}</span>`:'›';
+ const c=WMJoinSync.context();if(!WMJoinSync.current(c))return false;
+ const version=++joinRequestLoadVersion;
+ const {data,error}=await client.from('team_join_requests').select('*').eq('team_id',c.teamId).in('status',['pending','more_info_requested']).order('submitted_at',{ascending:true});
+ if(version!==joinRequestLoadVersion||!WMJoinSync.current(c))return false;
+ if(error)return false;
+ joinRequests=data||[];
+ $('joinRequestCount').innerHTML=joinRequests.length?`<span class="pending-count">${joinRequests.length}</span>`:'›';
+ renderAttention();updateBottomNavBadges();
+ if(WMJoinSync.visible())await renderJoinRequests(c,version);
+ return true;
 }
 
 function subscribeTeamJoinRealtime(){
-  if(!activeTeam||!isStaff||!session?.user?.id)return;
-  const teamId=activeTeam.id,userId=session.user.id;
-  const topic=`wm-team-joins-${teamId}-${userId}`;
-  if(communicationRealtimeChannels.some(ch=>ch?.topic?.startsWith(`realtime:${topic}-instance-`)))return;
-  const channel=createRealtimeChannel(topic)
-    .on('postgres_changes',{event:'*',schema:'public',table:'team_join_requests',filter:`team_id=eq.${teamId}`},async()=>{
-      const current=()=>activeTeam?.id===teamId&&session?.user?.id===userId&&isStaff&&communicationRealtimeChannels.includes(channel);
-      if(!current())return;
-      await loadJoinRequests();
-      if(!current())return;
-      renderAttention();message('Team join requests updated.');
-    }).subscribe();
-  communicationRealtimeChannels.push(channel);
+ const c=WMJoinSync.context();if(!WMJoinSync.current(c))return;
+ const topic=`wm-team-joins-${c.teamId}-${c.userId}`;
+ if(communicationRealtimeChannels.some(ch=>ch?.topic?.startsWith(`realtime:${topic}-instance-`)))return;
+ const channel=createRealtimeChannel(topic)
+  .on('postgres_changes',{event:'*',schema:'public',table:'team_join_requests',filter:`team_id=eq.${c.teamId}`},()=>{
+   if(WMJoinSync.current(c)&&communicationRealtimeChannels.includes(channel))WMJoinSync.schedule();
+  });
+ communicationRealtimeChannels.push(channel);
+ channel.subscribe(status=>WMJoinSync.channelStatus(status,channel,c));
 }
 
 async function loadGuardianConnectionRequests(){
-  if(!isStaff||!activeTeam){pendingGuardianRequests=[];return;}
-  const {data,error}=await client.rpc('get_pending_guardian_connection_requests',{p_team_id:activeTeam.id});
-  pendingGuardianRequests=error?[]:(data||[]);
-  renderAttention();
+ if(!isStaff||!activeTeam){pendingGuardianRequests=[];return;}
+ const teamId=activeTeam.id,userId=session?.user?.id;
+ const {data,error}=await client.rpc('get_pending_guardian_connection_requests',{p_team_id:teamId});
+ if(activeTeam?.id!==teamId||session?.user?.id!==userId||!isStaff)return;
+ pendingGuardianRequests=error?[]:(data||[]);renderAttention();
+}
+
+async function renderJoinRequests(c,version){
+ const paint=++joinRequestPaintVersion,rows=[...joinRequests];
+ const valid=()=>paint===joinRequestPaintVersion&&version===joinRequestLoadVersion&&WMJoinSync.current(c)&&WMJoinSync.visible();
+ const box=$('coachJoinRequestsList');if(!valid())return;
+ if(!rows.length){box.innerHTML='<div class="empty-card">No pending requests.</div>';return;}
+ const ids=rows.map(x=>x.id);
+ const {data:guardians,error}=await client.from('join_request_guardians').select('*').in('join_request_id',ids);
+ if(!valid())return;
+ if(error){box.innerHTML='<div class="empty-card">Could not refresh request details. Close and reopen to retry.</div>';return;}
+ const gmap=new Map();(guardians||[]).forEach(g=>{if(!gmap.has(g.join_request_id))gmap.set(g.join_request_id,[]);gmap.get(g.join_request_id).push(g);});
+ box.innerHTML=rows.map(r=>{const p=r.profile_data||{},gs=gmap.get(r.id)||[],med=p.medical_conditions||[];const isClaim=!!r.claim_athlete_id||p.join_intent==='claim_existing',athleteClaim=isClaim&&r.requester_role==='athlete',isImport=p.family_import===true;const lead=isImport?'Parent bringing an existing child to this team':athleteClaim?'Athlete claiming existing profile':isClaim?'Parent / guardian claiming existing athlete':'Parent creating athlete profile';const detail=isImport?'Approve only this selected child. Reuse their existing profile and keep their other teams unchanged.':isClaim?(athleteClaim?'Connect this login to the existing athlete profile':'Link this parent/guardian to the athlete already on the roster'):`${esc(p.school_level?schoolLabel(p.school_level):'School level not entered')}${p.grade_level?' · Grade '+esc(p.grade_level):''}`;return `<div class="request-card"><h3>${esc(r.athlete_first_name)} ${esc(r.athlete_last_name)}</h3><p><b>${esc(lead)}</b> · ${detail}</p><p>Birthday: ${esc(r.athlete_birth_date||'not entered')}${isClaim?'':' · Contact: '+esc(r.athlete_email||r.athlete_phone||'none')}</p><p>Guardian: ${esc(gs.map(g=>g.name).join(', ')||'—')}</p>${med.length?'<p><span class="badge-alert">Medical info disclosed</span> '+esc(med.join(', '))+'</p>':''}<div class="request-actions"><button data-approve-request="${r.id}">${isClaim?'Approve Claim':'Approve'}</button><button class="deny" data-deny-request="${r.id}">Deny</button></div></div>`;}).join('');
+ box.querySelectorAll('[data-approve-request]').forEach(b=>b.onclick=()=>reviewJoinRequest(b.dataset.approveRequest,true));
+ box.querySelectorAll('[data-deny-request]').forEach(b=>b.onclick=()=>reviewJoinRequest(b.dataset.denyRequest,false));
+ // Only notifications for the requests actually displayed are marked read.
+ if(valid())await WMJoinSync.markRequestsRead(ids,c,valid);
 }
 
 async function openJoinRequests(){
-  await loadJoinRequests();
-  const box=$('coachJoinRequestsList');
-  if(!joinRequests.length){box.innerHTML='<div class="empty-card">No pending requests.</div>';closeSheets();openSheet('coachJoinRequestsSheet');return;}
-  const ids=joinRequests.map(x=>x.id);
-  const {data:guardians}=await client.from('join_request_guardians').select('*').in('join_request_id',ids);
-  const gmap=new Map(); (guardians||[]).forEach(g=>{if(!gmap.has(g.join_request_id))gmap.set(g.join_request_id,[]);gmap.get(g.join_request_id).push(g);});
-  box.innerHTML=joinRequests.map(r=>{const p=r.profile_data||{};const gs=gmap.get(r.id)||[];const med=(p.medical_conditions||[]);const isClaim=!!r.claim_athlete_id||p.join_intent==='claim_existing';const athleteClaim=isClaim&&r.requester_role==='athlete';const isImport=p.family_import===true;const lead=isImport?'Parent bringing an existing child to this team':athleteClaim?'Athlete claiming existing profile':(isClaim?'Parent / guardian claiming existing athlete':'Parent creating athlete profile');const detail=isImport?'Approve only this selected child. Reuse their existing profile and keep their other teams unchanged.':isClaim?(athleteClaim?'Connect this login to the existing athlete profile':'Link this parent/guardian to the athlete already on the roster'):`${esc(p.school_level?schoolLabel(p.school_level):'School level not entered')}${p.grade_level?' · Grade '+esc(p.grade_level):''}`;return `<div class="request-card"><h3>${esc(r.athlete_first_name)} ${esc(r.athlete_last_name)}</h3><p><b>${esc(lead)}</b> · ${detail}</p><p>Birthday: ${esc(r.athlete_birth_date||'not entered')}${isClaim?'':' · Contact: '+esc(r.athlete_email||r.athlete_phone||'none')}</p><p>Guardian: ${esc(gs.map(g=>g.name).join(', ')||'—')}</p>${med.length?`<p><span class="badge-alert">Medical info disclosed</span> ${esc(med.join(', '))}</p>`:''}<div class="request-actions"><button data-approve-request="${r.id}">${isClaim?'Approve Claim':'Approve'}</button><button class="deny" data-deny-request="${r.id}">Deny</button></div></div>`}).join('');
-  box.querySelectorAll('[data-approve-request]').forEach(b=>b.onclick=()=>reviewJoinRequest(b.dataset.approveRequest,true));
-  box.querySelectorAll('[data-deny-request]').forEach(b=>b.onclick=()=>reviewJoinRequest(b.dataset.denyRequest,false));
-  closeSheets();openSheet('coachJoinRequestsSheet');
+ const c=WMJoinSync.context();if(!WMJoinSync.current(c))return;
+ closeSheets();openSheet('coachJoinRequestsSheet');$('coachJoinRequestsList').innerHTML='<div class="empty-card">Checking team requests…</div>';
+ const ok=await loadJoinRequests();
+ if(!ok&&WMJoinSync.current(c)&&WMJoinSync.visible())$('coachJoinRequestsList').innerHTML='<div class="empty-card">Could not refresh requests. Close and reopen to retry.</div>';
 }
 
+const joinRequestReviewBusy=new Set();
 async function reviewJoinRequest(id,approve){
-  const req=joinRequests.find(x=>x.id===id);const isClaim=!!req?.claim_athlete_id||(req?.profile_data||{}).join_intent==='claim_existing';
+ const c=WMJoinSync.context(),req=joinRequests.find(x=>x.id===id);
+ if(!req||req.team_id!==c.teamId||!WMJoinSync.current(c)||joinRequestReviewBusy.has(id))return;
+ joinRequestReviewBusy.add(id);
+ const isClaim=!!req.claim_athlete_id||req.profile_data?.join_intent==='claim_existing';
+ try{
   const result=approve?await client.rpc('approve_team_join_request_v2',{p_request_id:id}):await client.rpc('deny_team_join_request',{p_request_id:id,p_note:null});
+  if(!WMJoinSync.current(c))return;
   if(result.error){message(result.error.message,true);return;}
-  message(approve?(isClaim?(req?.requester_role==='athlete'?'Athlete login linked to the existing profile.':'Parent/guardian linked to the existing athlete.'):'Athlete approved and added to the roster.'):'Join request denied.');
-  await Promise.all([loadJoinRequests(),loadRoster(),loadDashboard()]); await openJoinRequests();
+  message(approve?(isClaim?(req.requester_role==='athlete'?'Athlete login linked to the existing profile.':'Parent/guardian linked to the existing athlete.'):'Athlete approved and added to the roster.'):'Join request denied.');
+  await WMJoinSync.markRequestsRead([id],c);
+  window.WMNotificationSync?.readChanged();
+  await Promise.all([loadJoinRequests(),loadRoster(),loadDashboard()]);
+  if(WMJoinSync.current(c)){renderAttention();updateBottomNavBadges();}
+ }finally{joinRequestReviewBusy.delete(id);}
 }
 
 function mean(nums){return nums.length?nums.reduce((a,b)=>a+b,0)/nums.length:null;}
@@ -11924,7 +12019,7 @@ window.WMTravel = (() => {
 })();
 
 </script>
-<script id="wm-notification-sync-027">
+<script id="wm-notification-sync-032">
 /* One unread inbox across teams; server read state drives every device badge. */
 window.WMNotificationSync = (() => {
   let rows=[],owner='',loading=null,generation=0,badge=null,remoteCount=null,lastRemote=0,remoteBusy=false,retryTimer=null;
@@ -12010,6 +12105,7 @@ window.WMNotificationSync = (() => {
       await activateTeam(row.team_id);
     }
     if(current()!==userId)return;
+    if(window.WMJoinSync?.isNotification(row)){await WMJoinSync.openNotification(row);return;}
     if(row.category==='weigh_in'){await openWeighInNotification({...row,notification_id:row.id});return;}
     if(row.category==='sms_reply'){await openTextReplies();return;}
     if(row.category==='safety'&&isStaff){await openCommunicationSafetyReview();return;}
@@ -12021,7 +12117,7 @@ window.WMNotificationSync = (() => {
   document.addEventListener('visibilitychange',foreground);window.addEventListener('focus',foreground);window.addEventListener('online',foreground);
   setInterval(()=>{if(!document.hidden&&available())refresh();else if(owner!==current())reset();},15000);
   $n('refreshAllNotificationsBtn').onclick=()=>refresh();
-  return {refresh,render,reset,open:openInbox,markAll:()=>mark([...rows]),readChanged:()=>{generation++;loading=null;return refresh();}};
+  return {refresh,render,reset,open:openInbox,markRecords:mark,markAll:()=>mark([...rows]),readChanged:()=>{generation++;loading=null;return refresh();}};
 })();
 
 </script>
