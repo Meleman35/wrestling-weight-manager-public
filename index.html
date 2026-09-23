@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.32: Live team claims, linked notification reads, and signup team continuity. -->
+<!-- Wrestling Manager v0.20.33: Visible selected tabs, linked staff names, and coach/admin group members. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -661,7 +661,11 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
 #agreementPdfSheet{width:min(980px,100%)}#agreementPdfFrame{display:block;width:100%;height:62vh;border:1px solid var(--line);margin-top:14px;background:#f0f3f7}.agreement-record-row{display:block;text-align:left;width:100%;margin:10px 0;padding:16px}.agreement-record-row b,.agreement-record-row small{display:block;overflow-wrap:anywhere}.agreement-record-row small{margin-top:6px}
 </style>
 <style id="wm-team-people-029">
-#clipboardCategories{display:grid;gap:14px;margin:0 0 20px;min-width:0}.clipboard-leaders{width:100%;background:#edf3ff;border-color:#9bb6dc;margin-bottom:2px}#clipboardSnapshotDisclosure{background:white;border:1px solid #d9e2ed;border-radius:18px;padding:12px}#clipboardSnapshotDisclosure>summary{font-weight:800;cursor:pointer;padding:8px}#clipboardCategoryTools .menu-row{grid-template-columns:32px minmax(0,1fr) 18px}#clipboardCategoryTools .menu-row>div{min-width:0}#clipboardCategoryTools small{overflow-wrap:anywhere}.people-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:14px 0}.people-tabs button{white-space:normal;min-height:56px;padding:10px 6px;font-size:.86rem;line-height:1.25;background:#edf2f7;color:#243c59;box-shadow:none}.people-tabs button.active{background:var(--navy);color:white;outline:2px solid #91aed2;outline-offset:1px}#staffAccessSheet .adult-access-card{grid-template-columns:minmax(0,1fr) auto;gap:10px}#staffAccessSheet .adult-access-card>div{min-width:0}#staffAccessSheet .adult-access-card small{overflow-wrap:anywhere}#peopleEditor{border-top:2px solid #e2e8f0;margin-top:18px;padding-top:10px}#peopleStatus:empty{display:none}#peopleStatus.error{color:#a51c24}#peopleReview{margin-top:16px}#peopleReview p{overflow-wrap:anywhere}#peopleReview button{white-space:normal}#staffAccessSheet .sheet-head h2{font-size:clamp(1.45rem,5vw,2rem)}#staffAccessSheet .sheet-head>div{min-width:0}#staffAccessSheet .icon-close{flex-shrink:0}#staffAccessSheet .toggle-row{gap:12px}#staffAccessSheet .toggle-row span{min-width:0}#staffAccessSheet .toggle-row input{flex-shrink:0}#staffAccessSheet select{min-width:0;max-width:100%}
+#clipboardCategories{display:grid;gap:14px;margin:0 0 20px;min-width:0}.clipboard-leaders{width:100%;background:#edf3ff;border-color:#9bb6dc;margin-bottom:2px}#clipboardSnapshotDisclosure{background:white;border:1px solid #d9e2ed;border-radius:18px;padding:12px}#clipboardSnapshotDisclosure>summary{font-weight:800;cursor:pointer;padding:8px}#clipboardCategoryTools .menu-row{grid-template-columns:32px minmax(0,1fr) 18px}#clipboardCategoryTools .menu-row>div{min-width:0}#clipboardCategoryTools small{overflow-wrap:anywhere}.people-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:14px 0}.people-tabs button{white-space:normal;min-height:56px;padding:10px 6px;font-size:.86rem;line-height:1.25;background:#edf2f7;color:#243c59;box-shadow:none}.people-tabs button.active{background:var(--team-primary,#163a67);color:var(--team-primary-text,#fff);outline:2px solid #91aed2;outline-offset:1px}#staffAccessSheet .adult-access-card{grid-template-columns:minmax(0,1fr) auto;gap:10px}#staffAccessSheet .adult-access-card>div{min-width:0}#staffAccessSheet .adult-access-card small{overflow-wrap:anywhere}#peopleEditor{border-top:2px solid #e2e8f0;margin-top:18px;padding-top:10px}#peopleStatus:empty{display:none}#peopleStatus.error{color:#a51c24}#peopleReview{margin-top:16px}#peopleReview p{overflow-wrap:anywhere}#peopleReview button{white-space:normal}#staffAccessSheet .sheet-head h2{font-size:clamp(1.45rem,5vw,2rem)}#staffAccessSheet .sheet-head>div{min-width:0}#staffAccessSheet .icon-close{flex-shrink:0}#staffAccessSheet .toggle-row{gap:12px}#staffAccessSheet .toggle-row span{min-width:0}#staffAccessSheet .toggle-row input{flex-shrink:0}#staffAccessSheet select{min-width:0;max-width:100%}
+</style>
+
+<style id="wm-chat-members-033">
+#communicationThreadIdentity.members-enabled{cursor:pointer;border-radius:12px;-webkit-tap-highlight-color:transparent}#communicationThreadIdentity.members-enabled:focus-visible{outline:3px solid var(--team-primary);outline-offset:4px}#communicationMembersHint{display:block;color:#24568b;font-size:12px;font-weight:700;margin-top:4px}#communicationMembersSheet{z-index:110;max-height:85%}#communicationMembersSheet .sheet-head>div{min-width:0}#communicationMembersSheet h2{overflow-wrap:anywhere;font-size:clamp(1.3rem,5vw,1.8rem)}#communicationMembersSheet .chat-member-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:14px 0;border-bottom:1px solid var(--line)}#communicationMembersSheet .chat-member-row b,#communicationMembersSheet .chat-member-row small{display:block;overflow-wrap:anywhere}#communicationMembersSheet .chat-member-row small{color:var(--muted);margin-top:4px}#communicationMembersSheet .chat-member-row button{min-height:44px;padding:10px 13px;white-space:normal}#communicationMembersStatus{min-height:1.5em;overflow-wrap:anywhere}#communicationMembersStatus:empty{display:none}#communicationMembersStatus.error{color:#a51c24}#communicationMembersSheet .member-note{line-height:1.4}#communicationMembersSheet h3{margin-top:24px}#communicationMembersBack{flex-shrink:0;min-height:44px}#communicationMembersSheet .sheet-head{align-items:center}
 </style>
 </head>
 <body>
@@ -1277,7 +1281,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
 
   <section id="communicationThreadSheet" class="sheet hidden" aria-modal="true">
     <div class="sheet-handle"></div>
-    <div class="chat-thread-header"><button class="chat-back" type="button" data-close-sheet aria-label="Back to messages">‹</button><div class="chat-thread-identity"><div id="communicationThreadAvatar" class="chat-thread-avatar-placeholder">WM</div><div id="communicationThreadKind" class="eyebrow">CONVERSATION</div><h2 id="communicationThreadTitle">Messages</h2><p id="communicationThreadParticipants" class="muted"></p></div><div class="chat-header-spacer" aria-hidden="true"></div></div>
+    <div class="chat-thread-header"><button class="chat-back" type="button" data-close-sheet aria-label="Back to messages">‹</button><div id="communicationThreadIdentity" class="chat-thread-identity"><div id="communicationThreadAvatar" class="chat-thread-avatar-placeholder">WM</div><div id="communicationThreadKind" class="eyebrow">CONVERSATION</div><h2 id="communicationThreadTitle">Messages</h2><p id="communicationThreadParticipants" class="muted"></p><small id="communicationMembersHint" class="hidden">View members ›</small></div><div class="chat-header-spacer" aria-hidden="true"></div></div>
     <div id="communicationGuardianMirror" class="guardian-mirror-note hidden"><b>🛡️ Guardian mirror is active.</b> Connected parents or legal guardians can read this adult-to-minor conversation without appearing as chat participants.</div>
     <div id="communicationSafetyTestBanner" class="sms-safety-note hidden"><b>🧪 Guardian Safety Test — simulation only.</b> Connected guardians can read it. SMS, email and external push are disabled.</div>
     <div id="communicationMessageList" class="message-list"><div class="empty-inline">Loading messages…</div></div>
@@ -1286,6 +1290,18 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
     <div id="communicationComposer" class="message-composer"><button id="addCommunicationMediaBtn" class="composer-media-btn" type="button" aria-label="Add photo or video">＋</button><input id="communicationMediaInput" class="hidden" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,video/mp4,video/quicktime"><textarea id="communicationMessageBody" rows="1" aria-label="Message" placeholder="Message"></textarea><button id="sendCommunicationMessageBtn" type="button" aria-label="Send message">↑</button></div>
     <button id="scheduleCommunicationMessageBtn" type="button" class="wide secondary">🕒 Send Later</button>
     <div class="inline-actions"><button id="endGuardianSafetyTestBtn" type="button" class="danger-outline hidden">End Test</button></div>
+  </section>
+
+
+  <section id="communicationMembersSheet" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="communicationMembersTitle">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><div><div class="eyebrow">GROUP MEMBERS</div><h2 id="communicationMembersTitle">Group members</h2><p id="communicationMembersCount" class="muted"></p></div><button id="communicationMembersBack" type="button" class="secondary">Back to chat</button></div>
+    <p class="fine member-note">Coaches and administrators can manage participants. Chat history and required guardian read access stay protected.</p>
+    <button id="communicationMembersReload" type="button" class="secondary">Reload members</button>
+    <p id="communicationMembersStatus" role="status" aria-live="polite"></p>
+    <div id="communicationMemberList"></div>
+    <h3>Add people</h3><label for="communicationMemberSearch">Find a team member</label><input id="communicationMemberSearch" type="search" placeholder="Search by name" autocomplete="off">
+    <div id="communicationMemberCandidates"></div>
   </section>
 
   <div id="communicationMediaLightbox" class="communication-media-lightbox hidden" role="dialog" aria-modal="true" aria-label="Photo preview">
@@ -2052,7 +2068,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.32</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.33</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -2838,6 +2854,7 @@ async function renderAppLockIdentity(){
 function lockApp(){
   if(!session||!securityState.appLockEnabled)return;
   window.WMOfficialSheets?.close(true);
+  window.WMChatMembers?.reset();
   renderAppLockIdentity();
   show('appLockOverlay',true);document.body.style.overflow='hidden';
   if($('appLockPin'))$('appLockPin').value='';
@@ -2847,6 +2864,7 @@ function unlockApp(){securityUnlockedThisLaunch=true;shouldLockWhenVisible=false
 function prepareAppLockForBackground(){
   if(!session||!securityState.appLockEnabled)return;
   window.WMOfficialSheets?.close(true);
+  window.WMChatMembers?.reset();
   shouldLockWhenVisible=true;securityUnlockedThisLaunch=false;automaticUnlockRequested=false;
 }
 window.wrestlingManagerAppDidEnterBackground=function(){
@@ -3300,6 +3318,7 @@ function openSheet(id){
 function closeSheets(){
   if(document.body.classList.contains('kiosk-locked')) return;
   window.WMTeamPeople?.reset();
+  window.WMChatMembers?.reset();
   ++joinMatchVersion;clearTimeout(joinMatchTimer);$('joinMatchDialog')?.close();
   ++newTeamSetupGeneration;
   window.WMKioskScan?.reset();
@@ -5957,6 +5976,7 @@ async function performOpenCommunicationThread(threadId,{keepOpen=false,preserveS
   show('endGuardianSafetyTestBtn',safetyTest&&!!activeCommunicationThread.can_post);
   const mutedUntil=activeCommunicationThread.muted_until&&new Date(activeCommunicationThread.muted_until)>new Date()?activeCommunicationThread.muted_until:null;
   $('muteCommunicationThreadBtn').textContent=mutedUntil?`Muted until ${fmtTime(mutedUntil)} · Change`:'Mute conversation';
+  window.WMChatMembers?.sync();
   const headerAvatar=$('communicationThreadAvatar');
   if(safetyTest){
     headerAvatar.className='chat-thread-avatar-placeholder';
@@ -9972,6 +9992,7 @@ $('communicationThreadList').addEventListener('selectstart',event=>{if(event.tar
 $('communicationThreadList').addEventListener('contextmenu',event=>{const thread=event.target.closest('[data-communication-thread]');if(!thread)return;event.preventDefault();clearCommunicationTextSelection();suppressedCommunicationThreadId=String(thread.dataset.communicationThread);suppressCommunicationClickUntil=Date.now()+450;openCommunicationActions(thread.dataset.communicationThread);});
 const chatThreadIdentity=document.querySelector('.chat-thread-identity');
 if(chatThreadIdentity){
+  bindReliableMessageTap('communicationThreadIdentity',()=>{if(Date.now()>=suppressCommunicationClickUntil)window.WMChatMembers?.open();});
   chatThreadIdentity.addEventListener('pointerdown',event=>beginCommunicationLongPress(event,null));
   chatThreadIdentity.addEventListener('pointermove',moveCommunicationLongPress);
   ['pointerup','pointercancel','pointerleave'].forEach(type=>chatThreadIdentity.addEventListener(type,cancelCommunicationLongPress));
@@ -12510,6 +12531,84 @@ window.WMProfilePIN=(()=>{
  verifyKioskPin=async()=>{try{const owner=localStorage.getItem('wm_kiosk_profile_owner');const pin=prompt(owner?'Enter the profile PIN to unlock this kiosk:':'Enter the previous kiosk PIN to unlock this older session:');if(pin===null)return false;if(owner)await api.verify(owner,pin);else if(await kioskPinHash(pin)!==localStorage.getItem('wm_kiosk_pin_hash'))throw Error('Incorrect PIN.');return true;}catch(e){message(e.message,true);return false;}};
  window.WMProfilePINUI={refresh:refreshPIN};
  refreshPIN();
+})();
+
+</script>
+<script id="wm-chat-members-0.20.33">
+/* Coach/admin group membership. Server authorization is authoritative. */
+(() => {
+ const el=id=>document.getElementById(id);
+ let generation=0,context=null,data=null,busy=false;
+ const allowed=()=>!!activeTeam&&!!session?.user?.id&&(isStaff||isTeamAdmin)&&!managedLogin&&viewMode!=='parent'&&el('appLockOverlay').classList.contains('hidden')&&(!securityState.appLockEnabled||securityUnlockedThisLaunch);
+ const eligible=t=>!!t&&['group','team','staff','parents','all_members'].includes(t.kind)&&!t.is_safety_test&&!String(t.title||'').startsWith('🧪 TEST:');
+ const current=g=>g===generation&&context&&allowed()&&activeTeam.id===context.team&&session.user.id===context.user&&activeCommunicationThread?.thread_id===context.thread&&!el('communicationMembersSheet').classList.contains('hidden');
+ function status(text,error=false){el('communicationMembersStatus').textContent=text;el('communicationMembersStatus').classList.toggle('error',error);}
+ function reset(){++generation;context=null;data=null;busy=false;el('communicationMemberList').replaceChildren();el('communicationMemberCandidates').replaceChildren();el('communicationMemberSearch').value='';show('communicationMembersSheet',false);}
+ function sync(){
+  const enabled=allowed()&&eligible(activeCommunicationThread),header=el('communicationThreadIdentity');
+  header.classList.toggle('members-enabled',enabled);header.tabIndex=enabled?0:-1;
+  if(enabled){header.setAttribute('role','button');header.setAttribute('aria-label','View and manage group members');}
+  else{header.removeAttribute('role');header.removeAttribute('aria-label');}
+  show('communicationMembersHint',enabled);
+ }
+ function render(){
+  if(!data)return;
+  const members=data.members||[],q=el('communicationMemberSearch').value.trim().toLocaleLowerCase();
+  el('communicationMembersTitle').textContent=data.title||'Group members';
+  el('communicationMembersCount').textContent=`${members.length} ${members.length===1?'member':'members'}`;
+  el('communicationMemberList').innerHTML=members.length?members.map(p=>`<article class="chat-member-row"><div><b>${esc(p.display_name||'Team member')}</b>${p.is_self?'<small>You</small>':''}</div>${p.is_self?'':`<button type="button" class="danger-outline" data-chat-remove="${esc(p.user_id)}" ${busy?'disabled':''}>Remove</button>`}</article>`).join(''):'<p class="empty-card">No participants found.</p>';
+  const choices=(data.candidates||[]).filter(p=>String(p.display_name||'').toLocaleLowerCase().includes(q));
+  el('communicationMemberCandidates').innerHTML=choices.length?choices.map(p=>`<article class="chat-member-row"><div><b>${esc(p.display_name||'Team member')}</b></div><button type="button" data-chat-add="${esc(p.user_id)}" ${busy?'disabled':''}>Add</button></article>`).join(''):`<p class="empty-card">${q?'No matching people.':'No other eligible team members to add.'}</p>`;
+  el('communicationMembersReload').disabled=busy;
+  el('communicationMemberList').querySelectorAll('[data-chat-remove]').forEach(b=>b.onclick=()=>change('remove',b.dataset.chatRemove));
+  el('communicationMemberCandidates').querySelectorAll('[data-chat-add]').forEach(b=>b.onclick=()=>change('add',b.dataset.chatAdd));
+ }
+ async function load(g){
+  const c=context;status('Loading members…');
+  el('communicationMembersReload').disabled=true;
+  try{
+   const {data:result,error}=await client.rpc('communication_members_request',{p_action:'list',p_data:{team_id:c.team,thread_id:c.thread}});
+   if(!current(g))return;if(error)throw error;
+   if(result?.thread_id!==c.thread||result?.team_id!==c.team)throw Error('Chat changed. Reopen its member list.');
+   data=result;render();status('');
+  }catch(e){if(current(g)){data=null;el('communicationMemberList').replaceChildren();el('communicationMemberCandidates').replaceChildren();status(e.message||'Could not load members. Tap Reload.',true);}}
+  finally{if(current(g))el('communicationMembersReload').disabled=false;}
+ }
+ async function open(){
+  if(busy||context||!allowed()||!eligible(activeCommunicationThread))return;
+  const c={team:activeTeam.id,user:session.user.id,thread:activeCommunicationThread.thread_id};
+  // Keep the composer and any unsent text/media underneath this member sheet.
+  reset();context=c;const g=generation;el('communicationMembersTitle').textContent=activeCommunicationThread.title||'Group members';
+  el('communicationMembersCount').textContent='';openSheet('communicationMembersSheet');el('communicationMembersBack').focus({preventScroll:true});await load(g);
+ }
+ async function change(action,id){
+  const g=generation;if(busy||!current(g)||!data)return;
+  const person=(action==='add'?data.candidates:data.members)?.find(p=>p.user_id===id);if(!person||person.is_self)return;
+  const prompt=action==='remove'?`Remove ${person.display_name} from this chat?\n\nPast messages stay saved. Required parent/guardian read access remains.`:`Add ${person.display_name} to this chat?\n\nThey will be able to read this chat’s existing messages.`;
+  if(!confirm(prompt)||!current(g))return;
+  busy=true;render();status(action==='add'?'Adding member…':'Removing member…');
+  const c=context;
+  try{
+   const {data:result,error}=await client.rpc('communication_members_request',{p_action:action,p_data:{team_id:c.team,thread_id:c.thread,user_id:id,revision:data.revision}});
+   if(!current(g))return;if(error)throw error;
+   if(result?.thread_id!==c.thread||result?.team_id!==c.team)throw Error('Chat changed. Reload to check the saved members.');
+   data=result;
+   activeCommunicationThread.participant_names=(result.members||[]).map(p=>p.display_name).join(', ');
+   el('communicationThreadParticipants').textContent=activeCommunicationThread.participant_names;
+   activeCommunicationParticipants=new Map();activeCommunicationReceipts=new Map();
+   status(result.kept_guardian_access?'Removed as a participant. Required guardian read access remains.':action==='add'?'Member added.':'Member removed.');
+  }catch(e){if(current(g))status((e.message||'Could not confirm the change.')+' Reload to check the current members.',true);}
+  finally{if(current(g)){busy=false;render();}}
+ }
+ function back(){
+  const c=context,g=generation;if(!current(g)){reset();return;}
+  reset();show('communicationThreadSheet',true);openCommunicationThread(c.thread,{keepOpen:true,preserveScroll:true});
+ }
+ el('communicationMembersBack').onclick=back;
+ el('communicationMembersReload').onclick=()=>{if(!busy&&context&&current(generation)){data=null;el('communicationMemberList').replaceChildren();el('communicationMemberCandidates').replaceChildren();load(++generation);}};
+ el('communicationMemberSearch').oninput=render;
+ el('communicationThreadIdentity').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&allowed()&&eligible(activeCommunicationThread)){e.preventDefault();open();}});
+ window.WMChatMembers={open,reset,sync,allowed};
 })();
 
 </script>
