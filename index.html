@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.22: Includes Clipboard/Toolbox fit and matching 0.20.22 native Mat Mode live-scoring layout. -->
+<!-- Wrestling Manager v0.20.23: Includes Clipboard/Toolbox fit and matching 0.20.23 native Mat Mode live-scoring layout. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -1923,7 +1923,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.22</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.23</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -9982,7 +9982,7 @@ window.WMOperations=(()=>{
  async function calendar(team){try{return await rpc(false,{action:'calendar',team_id:team});}catch(err){console.warn('Organization calendar unavailable:',err.message);return [];}}
  async function feedback(){if(document.body.classList.contains('kiosk-locked'))return;closeSheets();feedbackId=crypto.randomUUID();note('feedbackStatus','');openSheet('feedbackSheet');await feedbackHistory();}
  async function feedbackHistory(){const target=$o('feedbackHistory');target.textContent='Loading…';try{const rows=await rpc(false,{action:'feedback',team_id:activeTeam?.id||null});target.innerHTML=list(rows).map(r=>`<article class="ops-card"><b>${e(r.category)}</b> ${badge(r.status)}<p>${e(r.body)}</p><small>${e(fmtDateTime(r.created_at))} · ${e(r.build)}</small>${r.response?'<p>Response: '+e(r.response)+'</p>':''}${actualIsTeamAdmin&&!managedLogin&&r.team_id===activeTeam?.id?`<div class="ops-actions"><button class="secondary" data-feedback-review="${r.id}">Review</button></div>`:''}</article>`).join('')||'<p>No feedback yet.</p>';target.querySelectorAll('[data-feedback-review]').forEach(b=>b.onclick=async()=>{const row=rows.find(r=>r.id===b.dataset.feedbackReview),result=await dialog({title:'Review feedback',fields:[{id:'status',label:'Status',options:['new','reviewing','planned','resolved'].map(s=>[s,s]),value:row.status},{id:'response',label:'Response',type:'textarea',value:row.response||''}],submit:'Save review'});if(!result)return;const {status,response}=result;try{await rpc(true,{action:'feedback_status',id:row.id,status,response});await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}});}catch(err){target.textContent=err.message;}}
- async function sendFeedback(ev){ev.preventDefault();if(!session?.user)return;$o('feedbackSend').disabled=true;try{await rpc(true,{action:'feedback',id:feedbackId||crypto.randomUUID(),team_id:activeTeam?.id||null,category:value('feedbackCategory'),body:value('feedbackBody'),build:'v0.20.22'});$o('feedbackBody').value='';feedbackId=crypto.randomUUID();note('feedbackStatus','Thanks—your feedback was saved.');await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}finally{$o('feedbackSend').disabled=false}}
+ async function sendFeedback(ev){ev.preventDefault();if(!session?.user)return;$o('feedbackSend').disabled=true;try{await rpc(true,{action:'feedback',id:feedbackId||crypto.randomUUID(),team_id:activeTeam?.id||null,category:value('feedbackCategory'),body:value('feedbackBody'),build:'v0.20.23'});$o('feedbackBody').value='';feedbackId=crypto.randomUUID();note('feedbackStatus','Thanks—your feedback was saved.');await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}finally{$o('feedbackSend').disabled=false}}
  function close(){finishDialog(null);generation++;editor=null;$o('opsRosterContacts')?.replaceChildren();$o('opsFields').replaceChildren();hub=null;['opsHubSheet','opsEditorSheet','feedbackSheet'].forEach(id=>show(id,false));}
  $o('opsDialogCancel').onclick=()=>finishDialog(null);
  $o('opsOrg').onchange=async()=>{org=value('opsOrg');division='';tab='home';hub=null;$o('opsContent').replaceChildren();$o('opsTabs').replaceChildren();$o('opsHubTitle').textContent='Organization Hub';note('opsStatus','Loading organization…');try{await reload()}catch(err){note('opsStatus',err.message,true)}};
@@ -10019,10 +10019,11 @@ window.WMScoring = (() => {
     add('beach1','Ground contact (not hands)',1,'neutral');add('beach3','Back-exposure throw',3,'neutral');add('beachout','Out of bounds',1,'neutral');add('beachcaution','Opponent illegal-action caution',1,'neutral');add('beachchallenge','Opponent failed challenge',1,'neutral');add('beachwarning','Opponent verbal passivity warning',0,'neutral');
    } else {
     if(['neutral','grounded'].includes(p))add('td','Takedown',2,c);
+    // Officials can record a reversal even when the stored position lags the action.
+    add('reversal','Reversal',1,c);
     if(p!=='unknown'){
      add('exposure','Exposure / counter',2);
-     if(p==='neutral'||p==='grounded'||p===c){add('hold2','Correct hold / lift',2);add('action4','Action',4);add('action5','Grand amplitude',5);}
-     if(p===other(c))add('reversal','Reversal',1,c);
+     if(p==='neutral'||p==='grounded'||p===c){add('hold2','Correct hold / lift',2);add('action4','Action',4);add('action5','Grand amplitude',5,c);}
      if(p==='neutral'||p==='grounded')add('stepout','Step out',1,'neutral');
     }
    }
