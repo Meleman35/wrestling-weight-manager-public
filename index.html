@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.27: Travel ETA, synchronized unread notifications, profile layout, and typed/drawn agreements. -->
+<!-- Wrestling Manager v0.20.30: Team people, grouped Clipboard, and device profile PIN. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -660,6 +660,9 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
 <style>
 #agreementPdfSheet{width:min(980px,100%)}#agreementPdfFrame{display:block;width:100%;height:62vh;border:1px solid var(--line);margin-top:14px;background:#f0f3f7}.agreement-record-row{display:block;text-align:left;width:100%;margin:10px 0;padding:16px}.agreement-record-row b,.agreement-record-row small{display:block;overflow-wrap:anywhere}.agreement-record-row small{margin-top:6px}
 </style>
+<style id="wm-team-people-029">
+#clipboardCategories{display:grid;gap:14px;margin:0 0 20px;min-width:0}.clipboard-leaders{width:100%;background:#edf3ff;border-color:#9bb6dc;margin-bottom:2px}#clipboardSnapshotDisclosure{background:white;border:1px solid #d9e2ed;border-radius:18px;padding:12px}#clipboardSnapshotDisclosure>summary{font-weight:800;cursor:pointer;padding:8px}#clipboardCategoryTools .menu-row{grid-template-columns:32px minmax(0,1fr) 18px}#clipboardCategoryTools .menu-row>div{min-width:0}#clipboardCategoryTools small{overflow-wrap:anywhere}.people-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:14px 0}.people-tabs button{white-space:normal;min-height:56px;padding:10px 6px;font-size:.86rem;line-height:1.25;background:#edf2f7;color:#243c59;box-shadow:none}.people-tabs button.active{background:var(--navy);color:white;outline:2px solid #91aed2;outline-offset:1px}#staffAccessSheet .adult-access-card{grid-template-columns:minmax(0,1fr) auto;gap:10px}#staffAccessSheet .adult-access-card>div{min-width:0}#staffAccessSheet .adult-access-card small{overflow-wrap:anywhere}#peopleEditor{border-top:2px solid #e2e8f0;margin-top:18px;padding-top:10px}#peopleStatus:empty{display:none}#peopleStatus.error{color:#a51c24}#peopleReview{margin-top:16px}#peopleReview p{overflow-wrap:anywhere}#peopleReview button{white-space:normal}#staffAccessSheet .sheet-head h2{font-size:clamp(1.45rem,5vw,2rem)}#staffAccessSheet .sheet-head>div{min-width:0}#staffAccessSheet .icon-close{flex-shrink:0}#staffAccessSheet .toggle-row{gap:12px}#staffAccessSheet .toggle-row span{min-width:0}#staffAccessSheet .toggle-row input{flex-shrink:0}#staffAccessSheet select{min-width:0;max-width:100%}
+</style>
 </head>
 <body>
   <div id="message"></div>
@@ -779,7 +782,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
     <div class="card">
       <h2 id="setupInviteTitle">Accept a Private Invitation</h2>
       <p id="setupInviteHelp" class="muted">Use your athlete, parent/guardian, or coach/staff invitation here.</p>
-      <div id="setupLeaderHelp" class="privacy-note hidden"><b>Joining an existing team?</b><br>Ask its administrator for a Coach / Team Leader invitation from Clipboard → Adult Roles &amp; Admins. Use the same email they invite. They choose your role and tools; no athlete profile or child connection is required.</div>
+      <div id="setupLeaderHelp" class="privacy-note hidden"><b>Joining an existing team?</b><br>Ask its administrator for a Coach / Team Leader invitation from Clipboard → Edit Team Leaders. Use the same email they invite. They choose your role and tools; no athlete profile or child connection is required.</div>
       <label for="inviteToken">Invitation token</label>
       <input id="inviteToken" placeholder="WMWA-… / WMWG-… / WMM-…">
       <button id="acceptInviteBtn" class="wide">Accept Invitation</button>
@@ -998,7 +1001,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
           <div class="feature-card operator-only" id="kioskSettingsCard">
             <div class="section-head" style="margin-top:0"><div><div class="eyebrow">DEVICE SECURITY</div><h3>Kiosk Settings</h3></div><span id="kioskPinStatus" class="operator-chip">PIN not set</span></div>
             <p>The kiosk PIN belongs to this iPhone/iPad or browser. Use it to unlock or exit a locked weigh-in screen.</p>
-            <button id="changeKioskPinBtn" class="wide secondary">Set / Change Kiosk PIN</button>
+            <button id="changeKioskPinBtn" class="wide secondary">Edit Profile PIN</button>
           </div>
           <div class="hardware-note">American Scale Bluetooth is supported in the native iPhone/iPad app. Connect with the scale button in the app header before starting a kiosk session.</div>
           <div class="section-head"><div><div class="eyebrow">ACTIVE</div><h3>Weigh-In Sessions</h3></div></div>
@@ -1017,7 +1020,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
           <div class="clipboard-whistle coach-only">
             <div class="clipboard-whistle-icon">📣</div><div><b>Whistle</b><small>When the whistle blows, the team knows it matters. Send an urgent pinned announcement.</small></div><button id="clipboardWhistleBtn" type="button">Blow the Whistle</button>
           </div>
-          <section id="clipboardWeightSnapshotCard" class="clipboard-snapshot">
+          <details id="clipboardSnapshotDisclosure" class="coach-only"><summary>Weight Room Snapshot</summary><section id="clipboardWeightSnapshotCard" class="clipboard-snapshot">
             <div class="section-head"><div><div class="eyebrow">TODAY AT A GLANCE</div><h3>Weight Room Snapshot</h3></div><button type="button" class="link-btn" data-go="weight">Open Weight Room</button></div>
             <div class="metric-grid clipboard-metrics">
               <button type="button" class="metric metric-btn" data-weight-metric="weighed"><span data-weighed-label>Weighed today</span><strong id="clipboardWeighed">0</strong></button>
@@ -1026,8 +1029,8 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
               <button type="button" class="metric metric-btn" data-weight-metric="challenges"><span>Challenges</span><strong id="clipboardChallenges">0</strong></button>
             </div>
           </section>
-          <div class="clipboard-section-label"><div><div class="eyebrow">COACH DESK</div><h3>Quick Clipboard</h3></div><small>Permission-aware shortcuts</small></div>
-          <div class="clipboard-grid">
+          </details><div id="clipboardQuickHeading" class="clipboard-section-label"><div><div class="eyebrow">COACH DESK</div><h3>Quick Clipboard</h3></div><small>Permission-aware shortcuts</small></div>
+          <div id="clipboardQuickTools" class="clipboard-grid">
             <button id="clipboardRosterBtn" class="clipboard-tile coach-only" type="button"><span>👥</span><span><b>Roster</b><small>Quick athlete access</small></span></button>
             <button id="clipboardLineupBtn" class="clipboard-tile coach-only" type="button"><span>🤼</span><span><b>Lineup + Challenges</b><small>Requests & wrestle-offs</small></span></button>
             <button id="clipboardAttendanceBtn" class="clipboard-tile" type="button"><span>✓</span><span><b>Attendance</b><small>Events, RSVPs & check-in</small></span></button>
@@ -1040,6 +1043,11 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
             <button id="clipboardAdminBtn" class="clipboard-tile" type="button"><span>⚙️</span><span><b>Admin</b><small>Your allowed team controls</small></span></button>
           </div>
         </div>
+<div id="clipboardCategories">
+ <button type="button" id="clipboardLeadersBtn" class="clipboard-tile clipboard-leaders admin-only"><span>🪪</span><span><b>Edit Team Leaders</b><small>Coaches, parents who help &amp; signup corrections</small></span></button>
+ <div id="clipboardCategoryGrid" class="clipboard-grid"></div>
+ <section id="clipboardCategoryPanel" class="hidden"><button type="button" id="clipboardCategoryBack" class="secondary">← All Clipboard Categories</button><h3 id="clipboardCategoryTitle" tabindex="-1"></h3><div id="clipboardCategoryTools" class="menu-card"></div></section>
+</div>
         <div id="moreMenuCard" class="toolbox-groups">
           <section class="toolbox-group"><div class="toolbox-group-head"><span>🤼</span><div><b>Competition</b><small>Match day, eligibility and required forms</small></div></div><div class="menu-card">
             <button id="matchBookBtn" class="menu-row coach-only" data-layout-key="match_book"><span>⏱️</span><div><b>Match Book</b><small>Challenges, scoring, clocks and results</small></div><i>›</i></button>
@@ -1062,7 +1070,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
           </div></section>
           <section class="toolbox-group"><div class="toolbox-group-head"><span>🧰</span><div><b>Program</b><small>Organization, admin and app settings</small></div></div><div class="menu-card">
             <button id="organizationHubBtn" class="menu-row" data-layout-key="organization_hub"><span>🏛️</span><div><b>Organization Hub</b><small>Divisions, calendars, officials, budgets and contracts</small></div><i>›</i></button>
-            <button id="staffAccessBtn" class="menu-row admin-only" data-layout-key="staff_access"><span>🪪</span><div><b>Adult Roles & Admins</b><small>Assign coaches, team leaders, volunteers and administrators</small></div><i>›</i></button>
+            <button id="staffAccessBtn" class="menu-row admin-only" data-layout-key="staff_access"><span>🪪</span><div><b>Edit Team Leaders</b><small>Assign coaches, team leaders, volunteers and administrators</small></div><i>›</i></button>
             <button id="feedbackBtn" class="menu-row" data-layout-key="feedback"><span>💬</span><div><b>Feedback</b><small>Share ideas, problems and what you like</small></div><i>›</i></button>
             <button id="accountBtn" class="menu-row" data-layout-key="account"><span>⚙️</span><div><b>Account & Team</b><small>Profile, team and sign out</small></div><i>›</i></button>
           </div></section>
@@ -1482,7 +1490,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
     </div>
     <div id="joinLeaderPanel" class="hidden">
       <h3>Join as a Coach / Team Leader</h3>
-      <p>No athlete profile or child connection is needed. Ask this team’s administrator for a private staff invitation from Clipboard → Adult Roles &amp; Admins.</p>
+      <p>No athlete profile or child connection is needed. Ask this team’s administrator for a private staff invitation from Clipboard → Edit Team Leaders.</p>
       <p class="fine">The team code is for athlete and family registration. Your staff invitation assigns the role and tools approved by the administrator. Sign in with the email they invited.</p>
       <label for="joinLeaderToken">Staff invitation link or token</label><input id="joinLeaderToken" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="WMM-…">
       <button id="acceptLeaderInviteBtn" class="wide" type="button">Accept Staff Invitation</button>
@@ -1601,7 +1609,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
     </div>
     <div class="profile-view-actions">
       <button id="viewAthleteTrendBtn" class="secondary" type="button">📈 Weight Trend</button>
-      <button id="viewAthleteEditBtn" type="button">Edit Profile</button>
+      <button id="viewAthleteEditBtn" type="button">Edit Profile</button><button id="viewAdultRoleBtn" type="button" class="secondary admin-only">Change to Adult Team Leader / Coach</button>
       <button id="viewAthleteGuardiansBtn" class="secondary wide-span hidden" type="button">Manage Parent / Guardian Contacts</button>
       <button id="viewAthleteTeamsBtn" class="secondary wide-span hidden" type="button">Teams / Transfer</button>
     </div>
@@ -1650,6 +1658,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
 
     <div class="medical-box"><h3 style="margin-top:0">Medical / Emergency</h3><div class="medical-checks"><label><input type="checkbox" class="profile-med" value="Diabetes">Diabetes</label><label><input type="checkbox" class="profile-med" value="Asthma">Asthma</label><label><input type="checkbox" class="profile-med" value="Severe allergy / Anaphylaxis">Severe allergy</label><label><input type="checkbox" class="profile-med" value="Seizure disorder">Seizure disorder</label></div><label>Notes</label><textarea id="profileMedicalNote"></textarea><label>Rescue item location</label><input id="profileRescueLocation"><label class="toggle-row"><span><b>Share medical information with coaching staff</b><small>Parent-controlled for minors</small></span><input id="profileMedicalShare" type="checkbox"></label></div>
     <div id="profileSensitiveNote" class="privacy-note hidden"></div>
+    <button id="profileAdultRoleBtn" type="button" class="wide secondary admin-only">Change to Adult Team Leader / Coach</button>
     <div id="profileTeamTransferBox" class="profile-portability-note admin-only">
       <b>Teams & Transfer</b><br>Move this athlete to another team you administer, or add them to another team while keeping this team active. Their permanent Wrestling Manager profile stays with them.
       <button id="profileTeamsBtn" class="wide" style="margin-top:10px">Teams / Transfer</button>
@@ -1827,16 +1836,19 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
 
   <section id="staffAccessSheet" class="sheet hidden" aria-modal="true">
     <div class="sheet-handle"></div>
-    <div class="sheet-head"><div><div class="eyebrow">TEAM ACCESS</div><h2>Adult Roles & Admins</h2><p class="muted">Use clear titles while giving each adult only the access their job needs.</p></div><button class="icon-close" data-close-sheet>×</button></div>
-    <h3 class="subhead">Connected Adults</h3>
+    <div class="sheet-head"><div><div class="eyebrow">TEAM ACCESS</div><h2>Edit Team Leaders</h2><p id="peopleTeamName" class="muted"></p></div><button class="icon-close" data-close-sheet>×</button></div>
+    <div class="people-tabs" role="group" aria-label="People to manage"><button type="button" data-people-filter="staff">Team Leaders &amp; Coaches</button><button type="button" data-people-filter="parents">Parents / Guardians</button><button type="button" data-people-filter="athletes">Fix Athlete Signup</button></div>
+    <p id="peopleListHelp" class="muted"></p><label for="peopleSearch">Find a person</label><input id="peopleSearch" type="search" placeholder="Name or email">
+    <div class="two-col"><button id="peopleInvite" type="button">Invite New Adult</button><button id="peopleReload" type="button" class="secondary">Reload</button></div>
+    <p id="peopleStatus" role="status" aria-live="polite"></p>
     <div id="adultAccessList" class="adult-access-list"><div class="empty-card">Loading adults…</div></div>
-    <div class="adult-form-head"><h3 id="adultAccessFormTitle">Invite an Adult</h3><button id="cancelAdultEditBtn" class="hidden" type="button">Cancel Edit</button></div>
+    <div id="peopleEditor" class="hidden"><p id="peopleSelectedSummary" class="privacy-note"></p><div class="adult-form-head"><h3 id="adultAccessFormTitle">Invite an Adult</h3><button id="cancelAdultEditBtn" class="hidden" type="button">Cancel Edit</button></div>
     <label>Email</label><input id="managerEmail" type="email" placeholder="adult@example.com">
     <label>Team role</label><select id="adultRole"><option value="team_leader">Team Leader</option><option value="volunteer_coach">Volunteer Coach</option><option value="team_mom">Team Mom</option><option value="assistant_coach">Assistant Coach</option><option value="head_coach">Head Coach</option><option value="club_president">Club President</option><option value="limited_staff">Other Limited Staff</option></select>
-    <label>Displayed title</label><input id="adultTitle" type="text" value="Team Leader" placeholder="Title shown in the staff directory">
-    <label class="toggle-row"><span><b>Team Administrator</b><small>Can manage the roster, schedule, agreements, settings and other adult roles for this team.</small></span><input id="adultTeamAdmin" type="checkbox"></label>
+    <div id="peopleTitleField"><label>Displayed title</label><input id="adultTitle" type="text" maxlength="100" value="Team Leader" placeholder="Title shown in the staff directory"></div>
+    <label id="peopleAdminRow" class="toggle-row"><span><b>Team Administrator</b><small>Can manage the roster, schedule, agreements, settings and other adult roles for this team.</small></span><input id="adultTeamAdmin" type="checkbox"></label>
     <div id="adultRoleAccessNote" class="role-access-note"></div>
-    <h3 class="subhead">Operational Permissions</h3>
+    <div id="peoplePermissions"><h3 class="subhead">Operational Permissions</h3>
     <div class="staff-permissions">
       <label class="toggle-row"><span><b>Take Attendance</b><small>Roster names, RSVP and attendance only.</small></span><input id="managerAttendance" type="checkbox" checked></label>
       <label class="toggle-row"><span><b>Operate Weigh-In</b><small>Kiosk, dual, tournament and open scale modes. No athlete weight history browsing.</small></span><input id="managerWeighIn" type="checkbox" checked></label>
@@ -1844,9 +1856,9 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
       <label class="toggle-row"><span><b>Event Checkout</b><small>Reserved for ride-home/check-out workflow.</small></span><input id="managerCheckout" type="checkbox"></label>
       <label class="toggle-row"><span><b>Mass Text & Reply Inbox</b><small>Can send important team texts and be selected to receive private adult replies.</small></span><input id="managerMassText" type="checkbox"></label>
     </div>
-    <button id="saveAdultAccessBtn" class="wide">Create Adult Invite</button>
-    <div id="adultInviteBox"></div>
-    <p class="fine">Club President becomes an organization administrator and can administer every team in the club. You may have multiple organization or team administrators.</p>
+    </div><label id="peopleAdultConfirm" class="toggle-row hidden"><span><b>This is the adult’s own account</b><small>I verified this person is at least 18. This is not a child’s account or their parent’s separate login.</small></span><input id="peopleConfirmAdult" type="checkbox"></label><label id="peopleRetireRow" class="toggle-row hidden"><span><b>Take off active athlete rosters</b><small>For this team only. Keep their profile, past bouts and weight records.</small></span><input id="peopleRetireAthlete" type="checkbox" checked></label><button id="saveAdultAccessBtn" class="wide">Create Adult Invite</button>
+    <div id="peopleReview" class="privacy-note hidden"></div><div id="adultInviteBox"></div></div>
+    <p class="fine">Parents can also be coaches or team leaders. Staff roles change team access; they do not replace family connections.</p>
   </section>
 
   <section id="weighedTodaySheet" class="sheet hidden" aria-modal="true">
@@ -2032,12 +2044,12 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
     <button id="weightScheduleSettingsBtn" class="wide secondary admin-only" type="button">Weigh-in Schedule</button>
     <button id="athleteCardsSettingsBtn" class="wide secondary" type="button">Athlete Cards</button>
     <button id="customizeLayoutBtn" class="wide secondary" type="button">↕ Customize App Layout</button>
-    <button id="securityBtn" class="wide secondary" type="button">🔒 Sign-In & App Security</button>
+    <button id="securityBtn" class="wide secondary" type="button">🔒 Profile Security & PIN</button>
     <button id="weightPinSettingsBtn" class="wide secondary hidden" type="button">Weight Check PIN</button>
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.27</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.30</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -2126,10 +2138,10 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
       <button id="lockAppNowBtn" class="wide secondary" type="button">Lock App Now</button>
     </div>
     <div class="feature-card">
-      <b>Optional Wrestling Manager PIN</b>
-      <p class="muted">A separate 4–8 digit PIN can be used if you prefer. It is stored securely in the iPhone or iPad Keychain.</p>
-      <div class="two-col"><div><label>New PIN</label><input id="securityPin" type="password" inputmode="numeric" maxlength="8" autocomplete="new-password"></div><div><label>Confirm PIN</label><input id="securityPinConfirm" type="password" inputmode="numeric" maxlength="8" autocomplete="new-password"></div></div>
-      <div class="two-col"><button id="saveSecurityPinBtn" type="button">Save PIN</button><button id="removeSecurityPinBtn" class="secondary" type="button">Remove PIN</button></div>
+      <b>Your Profile PIN</b>
+      <p class="muted">Set one 4–8 digit PIN for this profile on this device. Use it for app unlock, weigh-in kiosk and Mat Mode. Other devices have their own PIN. Changing it requires your current PIN.</p>
+      <div id="securityCurrentPinWrap" hidden><label id="securityCurrentPinLabel" for="securityCurrentPin">Current profile PIN</label><input id="securityCurrentPin" type="password" inputmode="numeric" maxlength="8" autocomplete="current-password"></div><div class="two-col"><div><label>New PIN</label><input id="securityPin" type="password" inputmode="numeric" maxlength="8" autocomplete="new-password"></div><div><label>Confirm PIN</label><input id="securityPinConfirm" type="password" inputmode="numeric" maxlength="8" autocomplete="new-password"></div></div>
+      <div class="two-col"><button id="saveSecurityPinBtn" type="button">Save PIN</button><button id="removeSecurityPinBtn" class="secondary hidden" hidden type="button">Remove PIN</button></div>
       <p id="securityPinStatus" class="fine">No app PIN is set.</p>
     </div>
     <div id="quickSecurityCard" class="feature-card" hidden>
@@ -2591,7 +2603,7 @@ const UI_LAYOUT_META={
   home:{my_corner:['👥','My Corner'],important:['📣','Important Announcements'],my_athletes:['👨‍👩‍👧','My Athletes'],quick_actions:['⚡','Quick Actions'],coach_weight_board:['🤼','Lineup by Weight Class'],attention:['✅','Needs Attention'],upcoming:['📅','Upcoming'],weight_snapshot:['⚖️','Weight Room Snapshot']},
   quick:{create_event:['＋','Create event'],attendance:['✓','Attendance'],weight:['⚖','Weight Room'],messages:['💬','Messages'],tools:['☰','Team tools']},
   nav:{home:['⌂','Home'],schedule:['▣','Schedule'],messages:['◯','Messages'],weight:['⚖','Weight Room'],more:['☰','More']},
-  more:{organization_hub:['🏛️','Organization Hub'],match_book:['⏱️','Match Book'],feedback:['💬','Feedback'],roster:['👥','Roster'],join:['🔗','Team Join'],join_requests:['✅','Join Requests'],agreements:['✍️','Team Agreement'],medical:['🩺','Medical Clearance'],member_profiles:['👤','My Athlete Profiles'],family:['👨‍👩‍👧','Family'],staff_directory:['📇','Coaches & Staff'],staff_access:['🪪','Adult Roles & Admins'],equipment:['🎽','Equipment'],files:['📁','Files & Photos'],account:['⚙️','Account & Team']}
+  more:{organization_hub:['🏛️','Organization Hub'],match_book:['⏱️','Match Book'],feedback:['💬','Feedback'],roster:['👥','Roster'],join:['🔗','Team Join'],join_requests:['✅','Join Requests'],agreements:['✍️','Team Agreement'],medical:['🩺','Medical Clearance'],member_profiles:['👤','My Athlete Profiles'],family:['👨‍👩‍👧','Family'],staff_directory:['📇','Coaches & Staff'],staff_access:['🪪','Edit Team Leaders'],equipment:['🎽','Equipment'],files:['📁','Files & Photos'],account:['⚙️','Account & Team']}
 };
 const DEFAULT_UI_LAYOUT={home:Object.keys(UI_LAYOUT_META.home),nav:Object.keys(UI_LAYOUT_META.nav),quick:Object.keys(UI_LAYOUT_META.quick),more:Object.keys(UI_LAYOUT_META.more)};
 let pendingUiLayout=null;
@@ -3240,6 +3252,7 @@ function setLockerRoomSection(name){
 }
 
 function setTab(name){
+ if(name==='more')window.WMClipboard?.reset();
  if(name==='home')window.WMFamily?.home();
   if(!managedLogin&&selectedHomeOrganization()&&activeTeam?.organization_id!==selectedHomeOrganization()&&name!=='home'){message('Choose a team in this organization first.');name='home';}
   if(name==='messages'&&!managedMessagesEnabled())name='home';
@@ -3270,6 +3283,7 @@ function openSheet(id){
 }
 function closeSheets(){
   if(document.body.classList.contains('kiosk-locked')) return;
+  window.WMTeamPeople?.reset();
   ++joinMatchVersion;clearTimeout(joinMatchTimer);$('joinMatchDialog')?.close();
   ++newTeamSetupGeneration;
   window.WMKioskScan?.reset();
@@ -3672,6 +3686,7 @@ async function refreshAccountView(){
   ++staffWeightLoadVersion;$('staffPersonalWeightList').textContent='';show('staffPersonalWeightSection',false);
   show('authView', !session);
   if (!session){
+    window.WMProfilePIN?.select().catch(()=>{});
     managedLogin=null;
     document.body.classList.remove('kiosk-locked');notifyNativeKioskState(false);closeSheets();
     if(activeWeighInSession){clearWeighConsole(false);activeWeighInSession=null;}
@@ -4547,6 +4562,7 @@ function applyMoreTabMode(){
   if(description)description.textContent=clipboardMode?'Today’s team operations, alerts and coach tools in one place.':'The fixes, forms and management tools that keep your program moving.';
   show('clipboardPanel',clipboardMode);
   syncClipboardSnapshot();
+  window.WMClipboard?.sync();
 }
 
 function applyRoleUI(){
@@ -6754,6 +6770,7 @@ function rosterStatusLabel(status){
 function rosterManageButtons(athleteId){
   if(!isTeamAdmin) return '';
   return `<div class="roster-manage-buttons">
+    <button class="secondary" data-adult-from-athlete="${athleteId}">Change Adult Role</button>
     <button class="standby-btn" data-team-status="standby" data-status-athlete="${athleteId}">Standby</button>
     <button class="remove-btn" data-team-status="removed" data-status-athlete="${athleteId}">Remove from Team</button>
   </div>`;
@@ -6761,6 +6778,7 @@ function rosterManageButtons(athleteId){
 
 function bindRosterManagementActions(container){
   if(!container)return;
+  container.querySelectorAll('[data-adult-from-athlete]').forEach(btn=>btn.onclick=()=>window.WMTeamPeople?.open(btn.dataset.adultFromAthlete));
   container.querySelectorAll('[data-status-athlete]').forEach(btn=>btn.onclick=()=>changeAthleteTeamStatus(btn.dataset.statusAthlete,btn.dataset.teamStatus));
 }
 
@@ -9000,6 +9018,7 @@ async function loadAdultAccess(){
 }
 
 async function openStaffAccess(){
+  if(window.WMTeamPeople)return window.WMTeamPeople.open();
   if(!activeTeam||!isTeamAdmin){message('Team admin access required.',true);return;}
   resetAdultAccessForm();
   closeSheets();openSheet('staffAccessSheet');
@@ -9533,8 +9552,13 @@ async function changeKioskPin(){
   message(existing?'Kiosk PIN changed on this device.':'Kiosk PIN created on this device.');
 }
 async function lockKiosk(){
-  let pin=prompt(localStorage.getItem('wm_kiosk_pin_hash')?'Enter the current PIN to lock this device to the weigh-in console:':'Create a 4–6 digit PIN for this weigh-in kiosk:');if(pin===null)return;if(!/^\d{4,6}$/.test(pin)){message('Use a 4–6 digit PIN.',true);return;}
-  const hash=await kioskPinHash(pin);const existing=localStorage.getItem('wm_kiosk_pin_hash');if(existing&&existing!==hash){message('Incorrect PIN.',true);return;}if(!existing)localStorage.setItem('wm_kiosk_pin_hash',hash);
+  try {
+    const api=window.WMProfilePIN,owner=api.profile(),state=await api.status();
+    if(!state.exists){openSecuritySheet();message('Set your profile PIN once, then return to lock this kiosk.');return;}
+    const pin=prompt('Enter your profile PIN to lock this device to the weigh-in console:');if(pin===null)return;
+    await api.verify(owner,pin);if(owner!==api.profile())throw Error('Your profile changed. Reopen the weigh-in console.');
+    localStorage.setItem('wm_kiosk_profile_owner',owner);
+  }catch(e){message(e.message,true);return;}
   $('kioskModeTitle').textContent=weighModeLabel(activeWeighInSession?.mode||pendingWeighMode);
   $('kioskSessionTitle').textContent=activeWeighInSession?.official_name?`${activeWeighInSession.name} · ${activeWeighInSession.official_name}`:(activeWeighInSession?.name||'Locked weigh-in screen');
   if(activeWeighInSession?.mode!=='open_scale'&&!selectedWeighInEntry){
@@ -10091,6 +10115,7 @@ async function handleAuthViewChange(event,nextSession){
   if(session?.user?.id!==nextSession?.user?.id){finishTileEditing(false);tileEditUser=null;pendingUiLayout=null;window.WMKioskScan?.reset();window.WMGoals?.reset();window.WMProfiles?.reset();window.WMFamily?.reset();resetAthleteCard();nativeCameraScanContext=null;weightCardPhotoCache.clear();}
   if(session?.user?.id!==nextSession?.user?.id&&(myWeightCheckMode==='teammate'||myWeightCheckMode==='test'||myWeightCheckMode==='staff'||!$('weightTestAthleteSheet').classList.contains('hidden')||!$('teammateWeightCheckSheet').classList.contains('hidden')||!$('weightPinSheet').classList.contains('hidden')))closeSheets();
   session=nextSession||null;
+  window.WMProfilePIN?.select().catch(()=>{});window.WMProfilePINUI?.refresh();
   if(!session)applyUiPreferences(normalizedLayout());
   if(!session)subscribeAccountMemberships();
   if(event==='TOKEN_REFRESHED'){
@@ -12169,6 +12194,177 @@ window.WMAgreementPDF = (() => {
   $p('saveAgreementPdfBtn').onclick=save;$p('savedAgreementRecordsBtn').onclick=()=>records();$p('moreAgreementRecordsBtn').onclick=()=>records(true);
   setInterval(()=>{if(recordContext&&recordContext!==actor()){dispose();show('agreementPdfSheet',false);show('agreementRecordsSheet',false);recordContext='';}},500);
   return {open,records,makeRecord,dispose};
+})();
+
+</script>
+<script id="wm-team-people-0.20.29">
+/* Team-scoped people editor; staff and guardian roles can coexist. */
+(() => {
+ const el=id=>document.getElementById(id);
+ let rows=[],filter='staff',selected=null,team=null,user=null,generation=0,busy=false,orgAdmin=false;
+ const allowed=()=>!!activeTeam&&!!session?.user?.id&&isTeamAdmin&&!managedLogin&&viewMode!=='parent';
+ const current=(g,t=team,u=user)=>g===generation&&allowed()&&activeTeam.id===t&&session.user.id===u&&!el('staffAccessSheet').classList.contains('hidden');
+ const note=(text,error=false)=>{el('peopleStatus').textContent=text;el('peopleStatus').classList.toggle('error',error);};
+ function reset(){++generation;rows=[];selected=null;team=null;user=null;busy=false;el('peopleSearch').value='';el('adultAccessList').replaceChildren();el('adultInviteBox').replaceChildren();el('peopleReview').replaceChildren();show('peopleEditor',false);show('peopleReview',false);}
+ function options(){
+  const keys=['team_leader','volunteer_coach','assistant_coach','head_coach','team_mom','limited_staff'];
+  if(orgAdmin||selected?.staff_role==='club_president')keys.push('club_president');
+  if(selected?.is_parent_guardian&&!selected?.is_organization_admin)keys.push('parent_only');
+  el('adultRole').innerHTML=keys.map(k=>`<option value="${k}">${esc(k==='parent_only'?'Parent / Guardian only':adultRoleLabel(k))}</option>`).join('');
+ }
+ function roleUI(defaults=true){
+  const parent=el('adultRole').value==='parent_only';
+  if(!parent)updateAdultRoleForm(defaults);
+  else{el('adultTitle').value='Parent / Guardian';el('adultTeamAdmin').checked=false;el('adultRoleAccessNote').textContent='Remove this team’s staff access and keep their existing parent / guardian connections.';}
+  show('peoplePermissions',!parent);show('peopleTitleField',!parent);show('peopleAdminRow',!parent);show('peopleAdultConfirm',!!selected?.has_active_athlete&&!parent);show('peopleRetireRow',!!selected?.has_active_athlete&&!parent);
+  el('adultTeamAdmin').disabled=parent||!!ADULT_ROLE_INFO[el('adultRole').value]?.forcedAdmin;
+  el('peopleReview').replaceChildren();show('peopleReview',false);
+ }
+ function setFilter(next){if(busy)return;filter=next;selected=null;show('peopleEditor',false);note('');render();}
+ function render(){
+  const q=el('peopleSearch').value.trim().toLowerCase();
+  const matches=r=>filter==='parents'?r.is_parent_guardian:filter==='athletes'?r.has_active_athlete:!!r.staff_role||r.is_organization_admin;
+  document.querySelectorAll('[data-people-filter]').forEach(b=>{const active=b.dataset.peopleFilter===filter;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});
+  const list=rows.filter(matches).filter(r=>[r.display_name,r.email,...(r.athletes||[]).map(a=>a.name)].join(' ').toLowerCase().includes(q));
+  el('peopleListHelp').textContent=filter==='parents'?'Choose a parent to add Volunteer Coach or another staff role. Their child connections stay in place.':filter==='athletes'?'Choose an adult who signed up as an athlete. Review the account before changing their role.':'Choose a team leader or coach to edit their role and permissions.';
+  el('adultAccessList').innerHTML=list.length?list.map(r=>`<article class="adult-access-card"><div><b>${esc(r.display_name||'Team member')}</b><small>${esc(r.email||'')}</small><div class="adult-role-badges">${r.staff_role?`<span class="adult-role-badge">${esc(adultRoleLabel(r.staff_role))}</span>`:''}${r.is_parent_guardian?'<span class="adult-role-badge">Parent / Guardian</span>':''}${r.is_team_admin?'<span class="adult-role-badge admin">Team Admin</span>':''}${r.has_active_athlete?'<span class="adult-role-badge">Athlete signup</span>':''}${r.known_minor?'<span class="adult-role-badge">Under 18</span>':''}</div></div><button type="button" data-person="${esc(r.user_id)}" ${r.known_minor?'disabled':''}>${r.staff_role?'Edit':r.has_active_athlete?'Change Role':'Add Staff Role'}</button></article>`).join(''):`<div class="empty-card">${q?'No matching people.':filter==='athletes'?'No connected athlete accounts to correct.':filter==='parents'?'No connected parent accounts yet.':'No team leaders or coaches found.'}</div>`;
+  el('adultAccessList').querySelectorAll('[data-person]').forEach(b=>b.onclick=()=>edit(b.dataset.person));
+ }
+ async function load(g){
+  const t=team,u=user;el('adultAccessList').innerHTML='<div class="empty-card">Loading people…</div>';note('');
+  try{const {data,error}=await client.rpc('team_people_request',{p_action:'list',p_data:{team_id:t}});if(!current(g,t,u))return;if(error)throw error;rows=data?.people||[];orgAdmin=!!data?.organization_admin;render();}
+  catch(e){if(current(g,t,u)){rows=[];el('adultAccessList').replaceChildren();note(e.message||'Could not load people. Tap Reload.',true);}}
+ }
+ async function open(athleteId=null){
+  if(!allowed()){message('A team administrator can edit team leaders and adult roles.',true);return;}
+  closeSheets();reset();team=activeTeam.id;user=session.user.id;filter=athleteId?'athletes':'staff';const g=generation;
+  el('peopleTeamName').textContent=activeTeam.name;openSheet('staffAccessSheet');await load(g);
+  if(athleteId&&current(g)){
+   const matches=rows.filter(r=>(r.athletes||[]).some(a=>a.athlete_id===athleteId));
+   if(matches.length===1)edit(matches[0].user_id);
+   else{el('peopleSearch').value=athleteTeamRow(athleteId)?.first_name||'';render();note(matches.length?'Select the correct connected account.':'This athlete has no connected personal account. Invite the adult using their own email; do not change a parent’s account in place of the athlete.');}
+  }
+ }
+ function edit(id){
+  if(busy||!current(generation))return;selected=rows.find(r=>r.user_id===id);if(!selected||selected.known_minor)return;
+  options();el('adultRole').value=selected.staff_role||'team_leader';roleUI(true);
+  el('adultAccessFormTitle').textContent=`Edit ${selected.display_name||'team member'}`;el('peopleSelectedSummary').textContent=selected.is_parent_guardian?'Parent / guardian access and child connections will be retained.':selected.has_active_athlete?'Keep this same account and profile history. Choose their adult role below.':'Changes apply to this team.';
+  if(selected.is_organization_admin)el('peopleSelectedSummary').textContent+=' Organization administrator access is managed separately and remains in place.';
+  el('managerEmail').value=selected.email||'';el('managerEmail').readOnly=true;
+  if(selected.staff_role){const p=selected.permissions||{};el('adultTitle').value=selected.title||adultRoleLabel(selected.staff_role);el('adultTeamAdmin').checked=!!selected.is_team_admin;for(const [id,k] of [['managerAttendance','attendance'],['managerWeighIn','weigh_in'],['managerEquipment','equipment'],['managerCheckout','checkout'],['managerMassText','mass_text']])el(id).checked=!!p[k];roleUI(false);}
+  el('peopleConfirmAdult').checked=false;el('peopleRetireAthlete').checked=true;
+  el('saveAdultAccessBtn').textContent='Review Changes';el('saveAdultAccessBtn').disabled=false;el('adultInviteBox').replaceChildren();show('peopleEditor',true);show('cancelAdultEditBtn',true);note('');el('peopleEditor').scrollIntoView({block:'start',behavior:'smooth'});
+ }
+ function invite(){
+  if(busy||!current(generation))return;selected=null;options();el('adultRole').value='team_leader';roleUI(true);el('adultAccessFormTitle').textContent='Invite a New Adult';el('peopleSelectedSummary').textContent='Already on this team? Choose them from the lists above to update the same account.';el('managerEmail').value='';el('managerEmail').readOnly=false;el('saveAdultAccessBtn').textContent='Review Invitation';el('saveAdultAccessBtn').disabled=false;el('adultInviteBox').replaceChildren();show('peopleEditor',true);show('cancelAdultEditBtn',true);el('peopleEditor').scrollIntoView({block:'start',behavior:'smooth'});
+ }
+ function payload(){return {team_id:team,user_id:selected?.user_id,revision:selected?.revision,role_key:el('adultRole').value,title:el('adultTitle').value.trim()||null,permissions:{attendance:el('managerAttendance').checked,weigh_in:el('managerWeighIn').checked,equipment:el('managerEquipment').checked,checkout:el('managerCheckout').checked,mass_text:el('managerMassText').checked||el('adultTeamAdmin').checked},team_admin:el('adultTeamAdmin').checked,confirm_adult:el('peopleConfirmAdult').checked,retire_athlete:!!selected?.has_active_athlete&&el('peopleRetireAthlete').checked};}
+ function review(){
+  if(busy||!current(generation))return;const p=payload(),email=el('managerEmail').value.trim();
+  if(!selected&&(!email||!el('managerEmail').checkValidity())){note('Enter the adult’s email address.',true);return;}
+  if(selected?.has_active_athlete&&p.role_key!=='parent_only'&&!p.confirm_adult){note('Confirm this is the adult’s own account and they are at least 18.',true);return;}
+  if(p.role_key==='club_president'&&!orgAdmin){note('An organization administrator must manage Club President access.',true);return;}
+  const label=p.role_key==='parent_only'?'Parent / Guardian only':adultRoleLabel(p.role_key);
+  el('peopleReview').innerHTML=`<h3>Review ${selected?'Role Change':'Invitation'}</h3><p><b>${esc(selected?.display_name||email)}</b><br>${esc(email)}<br>${esc(activeTeam.name)}</p><p>Role: <b>${esc(label)}</b>${p.role_key!=='parent_only'?`<br>Team administrator: <b>${p.team_admin?'Yes':'No'}</b>`:''}</p>${selected?.has_active_athlete&&p.role_key!=='parent_only'?`<p>${p.retire_athlete?'Take this person off active athlete rosters for this team. Their profile, past bouts and weight records stay saved.':'Keep their active athlete role as well as the new staff role.'}</p>`:''}${selected?.is_parent_guardian?'<p>Keep their parent / guardian access and child connections.</p>':''}<div class="two-col"><button type="button" id="peopleConfirmSave">${selected?'Save Role':'Create Invitation'}</button><button type="button" id="peopleBackToEdit" class="secondary">Keep Editing</button></div>`;
+  show('peopleReview',true);el('peopleConfirmSave').onclick=()=>save(p,email,selected,generation);el('peopleBackToEdit').onclick=()=>show('peopleReview',false);el('peopleReview').scrollIntoView({block:'nearest',behavior:'smooth'});note('');
+ }
+ async function save(p,email,person,g){
+  if(busy||!current(g))return;busy=true;el('peopleConfirmSave').disabled=true;el('peopleConfirmSave').textContent='Saving…';el('saveAdultAccessBtn').disabled=true;
+  const t=team,u=user;
+  try{
+   let result;
+   if(person)result=await client.rpc('team_people_request',{p_action:'save',p_data:p});
+   else result=await client.rpc('create_adult_staff_invitation',{p_team_id:t,p_email:email,p_role_key:p.role_key,p_title:p.title,p_permissions:p.permissions,p_team_admin:p.team_admin,p_expires_in_days:14});
+   if(!current(g,t,u))return;if(result.error)throw result.error;
+   if(person){selected=null;show('peopleEditor',false);show('peopleReview',false);filter=p.role_key==='parent_only'?'parents':'staff';await load(g);if(!current(g,t,u))return;note('Role saved. Profile history and parent connections are retained.');if(person.user_id===u){closeSheets();await refresh();}else{refreshTeamData({force:true});}}
+   else{const token=result.data?.[0]?.invitation_token||result.data?.invitation_token;if(!token)throw Error('Invitation response missing. Reload before trying again.');const url=inviteUrl(token);el('adultInviteBox').innerHTML='<p class="fine">Invitation ready. They must sign in with the invited email.</p><button type="button" id="peopleCopyInvite">Copy Invitation Link</button><button type="button" id="peopleShareInvite" class="secondary">Share Invitation</button>';el('peopleCopyInvite').onclick=()=>copyText(url);el('peopleShareInvite').onclick=()=>systemShare(`${activeTeam.name} staff invitation`,adultRoleLabel(p.role_key),url);show('peopleReview',false);note('Invitation created. Share it with the intended adult.');}
+  }catch(e){if(current(g,t,u)){note(e.message||'Could not save. Reload to check the current role before retrying.',true);show('peopleReview',false);}}
+  finally{if(g===generation)busy=false;if(current(g,t,u))el('saveAdultAccessBtn').disabled=false;}
+ }
+ el('peopleSearch').oninput=render;el('peopleReload').onclick=()=>{if(!busy){selected=null;show('peopleEditor',false);load(++generation);}};
+ document.querySelectorAll('[data-people-filter]').forEach(b=>b.onclick=()=>setFilter(b.dataset.peopleFilter));
+ el('peopleInvite').onclick=invite;el('adultRole').onchange=()=>roleUI(true);el('adultTeamAdmin').onchange=()=>roleUI(false);
+ el('cancelAdultEditBtn').onclick=()=>{if(!busy){selected=null;show('peopleEditor',false);show('peopleReview',false);}};
+ el('saveAdultAccessBtn').onclick=review;el('staffAccessBtn').onclick=()=>open();el('clipboardLeadersBtn').onclick=()=>open();
+ el('profileAdultRoleBtn').onclick=()=>open(profileAthleteId);el('viewAdultRoleBtn').onclick=()=>open(viewAthleteId);
+ window.WMTeamPeople={open,reset,allowed};
+})();
+
+</script>
+<script id="wm-clipboard-0.20.29">
+/* Categories use existing tool actions and their role gates. */
+(() => {
+ const groups=[
+  {id:'people',icon:'👥',name:'People & Roles',detail:'Roster, leaders, parents & goals',ids:['staffAccessBtn','rosterBtn','joinRequestsBtn','joinBtn','staffDirectoryBtn','teamGoalsBtn','memberProfilesBtn','familyBtn','findProfilesBtn']},
+  {id:'practice',icon:'🤼',name:'Practice & Competition',detail:'Attendance, lineup & Match Book',ids:['clipboardAttendanceBtn','clipboardLineupBtn','matchBookBtn']},
+  {id:'health',icon:'✍️',name:'Forms & Health',detail:'Agreements & medical clearance',ids:['agreementsBtn','medicalClearanceBtn']},
+  {id:'gear',icon:'🎒',name:'Gear & Files',detail:'Equipment & team resources',ids:['clipboardEquipmentBtn','clipboardFilesBtn']},
+  {id:'settings',icon:'⚙️',name:'Settings & Organization',detail:'Events, account & team settings',ids:['organizationHubBtn','accountBtn','feedbackBtn']}
+ ];
+ let selected=null,context='';const e=id=>document.getElementById(id);
+ const mode=()=>isStaff||isManager;
+ function accessible(node){return node&&!node.disabled&&!node.classList.contains('hidden')&&!node.classList.contains('hidden-role')&&!node.classList.contains('user-tile-hidden')&&(!node.classList.contains('member-only')||node.classList.contains('show'));}
+ function tools(g){return g.ids.map(e).filter(accessible);}
+ function reset(){selected=null;render();}
+ function render(){
+  if(!e('clipboardCategories'))return;const next=[session?.user?.id,activeTeam?.id,mode(),viewMode].join(':');if(context!==next){context=next;selected=null;}
+  const enabled=mode();show('clipboardCategories',enabled);show('clipboardQuickTools',false);show('clipboardQuickHeading',false);show('moreMenuCard',!enabled);show('clipboardLeadersBtn',enabled&&!!window.WMTeamPeople?.allowed());
+  if(!enabled){selected=null;show('clipboardCategoryPanel',false);return;}
+  const available=groups.filter(g=>tools(g).length);e('clipboardCategoryGrid').innerHTML=available.map(g=>`<button type="button" class="clipboard-tile" data-clipboard-category="${g.id}" aria-expanded="${selected===g.id}"><span>${g.icon}</span><span><b>${g.name}</b><small>${g.detail}</small></span></button>`).join('');
+  e('clipboardCategoryGrid').querySelectorAll('[data-clipboard-category]').forEach(b=>b.onclick=()=>{selected=b.dataset.clipboardCategory;render();e('clipboardCategoryTitle').focus();});
+  const group=available.find(g=>g.id===selected);show('clipboardCategoryGrid',!group);show('clipboardCategoryPanel',!!group);
+  if(!group){selected=null;return;}
+  e('clipboardCategoryTitle').textContent=group.name;
+  e('clipboardCategoryTools').innerHTML=tools(group).map(node=>{
+   const title=node.querySelector('b')?.textContent||node.textContent,desc=node.querySelector('small')?.textContent||'',icon=node.querySelector('span')?.textContent||'›';
+   return `<button type="button" class="menu-row" data-clipboard-tool="${node.id}"><span>${esc(icon)}</span><div><b>${esc(title)}</b><small>${esc(desc)}</small></div><i>›</i></button>`;
+  }).join('');
+  e('clipboardCategoryTools').querySelectorAll('[data-clipboard-tool]').forEach(b=>b.onclick=()=>{const node=e(b.dataset.clipboardTool);if(accessible(node)&&mode())node.click();else render();});
+ }
+ e('clipboardCategoryBack').onclick=()=>{const previous=selected;reset();e('clipboardCategoryGrid').querySelector(`[data-clipboard-category="${previous}"]`)?.focus();};
+ window.WMClipboard={sync:render,reset};render();
+})();
+
+</script>
+<script id="wm-profile-pin-0.20.30">
+/* One local PIN per profile. Native Keychain when supported; browser-only records stay in this browser. */
+window.WMProfilePIN=(()=>{
+ const pending=new Map();let selected=undefined,flight=Promise.resolve();
+ const native=()=>!!window.webkit?.messageHandlers?.wmProfilePin;
+ const profile=()=>{if(window.wrestlingManagerOfflineNative)return window.wrestlingManagerMatProfile||null;if(typeof session!=='undefined')return session?.user?.id||null;try{return localStorage.getItem('wm.profile-pin.active');}catch{return null;}};
+ const key=id=>'wm.profile-pin.v1:'+id;
+ window.wrestlingManagerProfilePINResponse=r=>{const q=pending.get(r.id);if(!q)return;clearTimeout(q.timer);pending.delete(r.id);r.success?q.resolve(r):q.reject(Error(r.error||'PIN request failed.'));};
+ function send(command,payload={}){return new Promise((resolve,reject)=>{const id=crypto.randomUUID(),timer=setTimeout(()=>{pending.delete(id);reject(Error('The PIN service did not respond. Reopen the app and try again.'));},8000);pending.set(id,{resolve,reject,timer});try{window.webkit.messageHandlers.wmProfilePin.postMessage({id,command,...payload});}catch(e){clearTimeout(timer);pending.delete(id);reject(e);}});}
+ async function select(){const id=profile();if(!native()&&typeof session!=='undefined'){id?localStorage.setItem('wm.profile-pin.active',id):localStorage.removeItem('wm.profile-pin.active');}if(native()&&!window.wrestlingManagerOfflineNative&&selected!==id){await send('select',{profile:id});selected=id;}return id;}
+ function read(id){const raw=localStorage.getItem(key(id));if(!raw)return null;const r=JSON.parse(raw);if(r.v!==1||!/^[a-f0-9]{64}$/.test(r.hash)||typeof r.salt!=='string')throw Error('The saved profile PIN could not be read. Keep this device’s app data.');return r;}
+ async function hash(pin,salt){const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(pin),'PBKDF2',false,['deriveBits']);const v=await crypto.subtle.deriveBits({name:'PBKDF2',salt:new TextEncoder().encode(salt),iterations:100000,hash:'SHA-256'},k,256);return Array.from(new Uint8Array(v),n=>n.toString(16).padStart(2,'0')).join('');}
+ function check(id){if(!id)throw Error('Sign into your profile to set your device PIN.');if(window.webkit?.messageHandlers?.security&&!native())throw Error('Install native update 0.20.30 to use one profile PIN.');}
+ async function status(id=profile()){check(id);await select();return native()?send('status',{profile:id}):{exists:!!read(id),legacy:false};}
+ async function verify(id,pin){check(id);await select();if(native())return send('verify',{profile:id,pin});const r=read(id);if(!r)throw Error('Set your profile PIN in Profile → Security.');if(Date.now()<(r.until||0))throw Error('Wait 30 seconds before trying your PIN again.');if(!/^\d{4,8}$/.test(pin)||await hash(pin,r.salt)!==r.hash){r.tries=(r.tries||0)+1;if(r.tries>=5){r.tries=0;r.until=Date.now()+30000;}localStorage.setItem(key(id),JSON.stringify(r));throw Error(r.until>Date.now()?'Wait 30 seconds before trying your PIN again.':'Incorrect PIN.');}r.tries=0;r.until=0;localStorage.setItem(key(id),JSON.stringify(r));return {success:true};}
+ async function set(pin,current=''){const id=profile();check(id);if(!/^\d{4,8}$/.test(pin))throw Error('Use a 4–8 digit PIN.');await select();if(native())return send('set',{profile:id,pin,current});if(read(id))await verify(id,current);const salt=crypto.randomUUID(),digest=await hash(pin,salt);if(id!==profile())throw Error('Your profile changed. Reopen Security.');localStorage.setItem(key(id),JSON.stringify({v:1,salt,hash:digest,tries:0,until:0}));return {success:true};}
+ function serial(fn){const next=flight.then(fn);flight=next.catch(()=>{});return next;}
+ return {native,profile,select:()=>serial(select),status:(id)=>serial(()=>status(id)),verify:(id,pin)=>serial(()=>verify(id,pin)),set:(pin,current)=>serial(()=>set(pin,current))};
+})();
+
+</script>
+<script id="wm-profile-pin-ui-0.20.30">
+/* Profile Security owns setup/change; actions only ask for the existing PIN. */
+(()=>{
+ const $=id=>document.getElementById(id),api=window.WMProfilePIN;let generation=0,saving=false;
+ async function refreshPIN(){const g=++generation,id=api.profile();try{const state=await api.status();if(g!==generation||id!==api.profile())return;
+  $('securityCurrentPinWrap').hidden=!(state.exists||state.legacy);$('securityCurrentPinLabel').textContent=state.exists?'Current profile PIN':'Existing app PIN (one-time transition)';
+  $('securityPinStatus').textContent=state.exists?'Your profile PIN is set on this device. App unlock, kiosk and new Mat sessions use it.':'Set your profile PIN once on this device.';
+  $('saveSecurityPinBtn').disabled=false;$('saveSecurityPinBtn').textContent=state.exists?'Change Profile PIN':'Set Profile PIN';
+  show('appLockPinWrap',state.exists||!!securityState.pinEnabled);$('kioskPinStatus').textContent=state.exists?'Uses your profile PIN on this device':'Set a profile PIN in Profile → Security';
+ }catch(e){if(g===generation){$('securityPinStatus').textContent=e.message;$('saveSecurityPinBtn').disabled=true;}}}
+ const oldUI=updateSecurityUi;updateSecurityUi=function(){oldUI();refreshPIN();};
+ const oldOpen=openSecuritySheet;openSecuritySheet=function(){oldOpen();for(const id of ['securityCurrentPin','securityPin','securityPinConfirm'])$(id).value='';refreshPIN();};$('securityBtn').onclick=openSecuritySheet;
+ $('saveSecurityPinBtn').onclick=async()=>{if(saving)return;if($('securityPin').value!==$('securityPinConfirm').value){message('The new PIN entries do not match.',true);return;}saving=true;$('saveSecurityPinBtn').disabled=true;try{await api.set($('securityPin').value,$('securityCurrentPin').value);for(const id of ['securityCurrentPin','securityPin','securityPinConfirm'])$(id).value='';message('Profile PIN saved on this device.');}catch(e){message(e.message,true);}finally{saving=false;refreshPIN();}};
+ $('unlockWithPinBtn').onclick=async()=>{try{const owner=api.profile(),state=await api.status(owner);if(state.exists){await api.verify(owner,$('appLockPin').value);if(owner!==api.profile())throw Error('Your profile changed. Unlock the current profile.');$('appLockPin').value='';unlockApp();}else postNativeSecurity('verifyPin',{pin:$('appLockPin').value});}catch(e){message(e.message,true);}};
+ changeKioskPin=()=>openSecuritySheet();$('changeKioskPinBtn').onclick=changeKioskPin;
+ verifyKioskPin=async()=>{try{const owner=localStorage.getItem('wm_kiosk_profile_owner');const pin=prompt(owner?'Enter the profile PIN to unlock this kiosk:':'Enter the previous kiosk PIN to unlock this older session:');if(pin===null)return false;if(owner)await api.verify(owner,pin);else if(await kioskPinHash(pin)!==localStorage.getItem('wm_kiosk_pin_hash'))throw Error('Incorrect PIN.');return true;}catch(e){message(e.message,true);return false;}};
+ window.WMProfilePINUI={refresh:refreshPIN};
+ refreshPIN();
 })();
 
 </script>
