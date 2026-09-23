@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.30: Team people, grouped Clipboard, and device profile PIN. -->
+<!-- Wrestling Manager v0.20.31: Clear email confirmation and team access status; Mat PDF exports. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -689,6 +689,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
     </div>
     <div class="card auth-card">
       <h2>Sign In</h2>
+      <div id="confirmationNotice" class="privacy-note hidden" role="status"><b>Check your email</b><p>Confirm the email for <span id="confirmationEmail"></span>, then return here and sign in with your password.</p><p id="confirmationStatus">Check your spam folder too. A team request may still need coach approval after you sign in.</p><button id="resendConfirmationBtn" type="button" class="secondary">Resend Confirmation Email</button></div>
       <div class="view-mode-switch" style="margin-bottom:18px"><button id="personalSignInTab" type="button" aria-pressed="true">Personal Login</button><button id="teamSignInTab" class="secondary" type="button" aria-pressed="false">Team Login</button></div>
       <form id="personalSignInFields" method="post" autocomplete="on" onsubmit="event.preventDefault()">
       <label for="email">Email</label>
@@ -763,6 +764,8 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
         <p>Create a team or connect to one you were invited to.</p>
       </div>
     </div>
+    <div class="card" id="setupAccountStatus"><h2>You’re signed in</h2><p id="setupSignedInEmail" style="overflow-wrap:anywhere"></p><p id="setupAccessStatus" role="status"></p><div id="setupRequestList"></div><div class="stack-actions"><button id="setupCheckAccessBtn" type="button">Check Team Access</button><button id="setupSignOutBtn" class="secondary" type="button">Sign Out</button></div></div>
+    <details id="setupChoices" open><summary>Team setup and invitations</summary>
     <div class="card">
       <h2>How Are You Joining?</h2>
       <div class="account-role-grid" role="group" aria-label="Your team role">
@@ -816,7 +819,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
       <button id="bootstrapTeamBtn" class="wide">Create Organization + Team</button>
     </div>
   <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
-<button id="setupOrgHubBtn" class="wide secondary" type="button">Organization Hub · for assigned leaders</button><button id="setupFeedbackBtn" class="wide secondary" type="button">Feedback</button>
+</details><button id="setupOrgHubBtn" class="wide secondary" type="button">Organization Hub · for assigned leaders</button><button id="setupFeedbackBtn" class="wide secondary" type="button">Feedback</button>
 </section>
 
   <section id="appView" class="app hidden">
@@ -2049,7 +2052,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.30</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.31</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -2319,6 +2322,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
   <script>
 const SUPABASE_URL = 'https://vfocpoyexnjsjpxhhyqr.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_aX7mx8Myn8sok3bhPPmphQ_fWN8o38P';
+const EMAIL_CONFIRM_REDIRECT_URL = 'https://meleman35.github.io/wrestling-weight-manager-public/auth-confirm.html';
 const RESET_REDIRECT_URL = 'wrestlingmanager://password-reset';
 const AUTH_REMEMBER_KEY = 'wm_remember_session';
 // Only the email hint is saved here. Passwords belong to the system password manager.
@@ -2902,27 +2906,31 @@ async function saveRecoveryPassword(){
 window.wrestlingManagerHandleAuthURL=async function(urlString){
   try{
     const url=new URL(urlString);const query=url.searchParams;const hash=new URLSearchParams(url.hash.replace(/^#/,''));
+    if(url.protocol!=='wrestlingmanager:')throw new Error('This is not an app sign-in link.');
     const action=(url.hostname||url.pathname.replace(/^\//,'')).toLowerCase();
+    if(action==='email-confirmed'){WMOnboarding.confirmedLink();return;}
     const joinCode=query.get('code')||query.get('join');
     const inviteToken=query.get('token')||query.get('invite');
     if(action==='join'&&joinCode){
-      pendingJoinCode=joinCode;
+      WMOnboarding.remember(joinCode,'');
       if(session){const code=pendingJoinCode;pendingJoinCode='';setTimeout(()=>startJoinFlow(code),120);}
       else{$('setupJoinCode').value=joinCode;message('Sign in or create your account to request team access.');}
       return;
     }
     if(action==='invite'&&inviteToken){
-      pendingInviteToken=inviteToken;
+      WMOnboarding.remember('',inviteToken);
       $('inviteToken').value=inviteToken;
       if(session){const token=pendingInviteToken;pendingInviteToken='';$('inviteToken').value=token;setTimeout(()=>acceptInvite(),120);}
       else message('Sign in or create your account to accept this invitation.');
       return;
     }
+    if(!['password-reset','auth-callback'].includes(action))throw new Error('This app link is not supported.');
+    const recovery=action==='password-reset'||(query.get('type')||hash.get('type'))==='recovery';
     const code=query.get('code');const accessToken=query.get('access_token')||hash.get('access_token');const refreshToken=query.get('refresh_token')||hash.get('refresh_token');
     if(code){const {error}=await client.auth.exchangeCodeForSession(code);if(error)throw error;}
     else if(accessToken&&refreshToken){const {error}=await client.auth.setSession({access_token:accessToken,refresh_token:refreshToken});if(error)throw error;}
-    else throw new Error('This recovery link is incomplete or expired.');
-    closeSheets();openSheet('resetPasswordSheet');
+    else throw new Error('This sign-in link is incomplete or expired. Request a new email.');
+    closeSheets();if(recovery)openSheet('resetPasswordSheet');else{await refresh();message('Email confirmed. Your team access has been checked.');}
   }catch(error){message(error.message||'The password recovery link could not be opened.',true);}
 };
 function openSecuritySheet(){
@@ -3374,6 +3382,7 @@ async function selectTeamProfile(kind){
 async function signOutCurrentPhone(){
   if(teamLoginSigningOut)return;teamLoginSigningOut=true;
   window.WMQuickSignIn?.signOut();
+  WMOnboarding.signOut();
   const managed=!!managedLogin,shared=!!managedLogin?.shared_login_id;
   await disableNativePushDeviceBeforeSignOut();
   if(shared)await callTeamLogin('logout_profile',{},true).catch(()=>{});
@@ -3647,10 +3656,11 @@ async function createPersonalAccount(event){
   document.querySelectorAll('[data-signup-role]').forEach(b=>b.disabled=true);
   try{
     setRememberSession($('staySignedIn').checked);
-    const {data,error}=await client.auth.signUp({email,password,options:{data:{wm_onboarding_role:role}}});
+    WMOnboarding.bind(email);
+    const {data,error}=await client.auth.signUp({email,password,options:{emailRedirectTo:EMAIL_CONFIRM_REDIRECT_URL,data:{wm_onboarding_role:role}}});
     if(error)throw error;
     $('email').value=email;$('password').value='';$('signUpPassword').value='';
-    if(data.session)updateRememberEmail($('rememberEmail').checked,email);
+    if(data.session)updateRememberEmail($('rememberEmail').checked,email);else WMOnboarding.confirmation(email);
     closeSheets();
     if(accountRefreshFlight)await accountRefreshFlight;
     await refresh();
@@ -3672,6 +3682,43 @@ async function acceptLeaderInvitation(){
   await acceptInvite(token,status);
 }
 
+/* Onboarding hints never grant access: verified sessions and server memberships do. */
+window.WMOnboarding=(()=>{
+ const KEY='wm.onboarding.v1',TTL=7*86400000,attempted=new Set();let requests=[],requestOwner='',loadVersion=0,resendBusy=false,resendAfter=0,layoutOwner='';
+ const norm=s=>String(s||'').trim().toLowerCase();
+ function read(){try{const r=JSON.parse(localStorage.getItem(KEY));return r&&Number.isFinite(r.at)&&Date.now()-r.at<TTL&&Date.now()>=r.at?r:null;}catch{return null;}}
+ function write(r){try{r?localStorage.setItem(KEY,JSON.stringify(r)):localStorage.removeItem(KEY);}catch{message('This device could not remember your invitation. Keep the original invitation link.',true);}}
+ function remember(join='',invite=''){write({join:String(join).slice(0,300),invite:String(invite).slice(0,1000),email:'',at:Date.now()});pendingJoinCode=join;pendingInviteToken=invite;attempted.clear();}
+ function bind(email){const r=read();if(r&&!r.email){r.email=norm(email);write(r);}}
+ function restore(){const r=read(),email=norm(session?.user?.email);if(r&&(!r.email||r.email===email||!session)){pendingJoinCode=r.join||'';pendingInviteToken=r.invite||'';}else{pendingJoinCode='';pendingInviteToken='';}if(session){show('confirmationNotice',false);if(r&&!r.email)bind(email);} }
+ function clear(kind){const r=read();if(kind==='invite')pendingInviteToken='';if(kind==='join')pendingJoinCode='';if(r){r[kind]='';write(r.join||r.invite||r.awaitingEmail?r:null);}}
+ function signOut(){write(null);pendingJoinCode='';pendingInviteToken='';requests=[];requestOwner='';++loadVersion;attempted.clear();}
+ function confirmation(email){const r=read()||{at:Date.now(),join:'',invite:''};r.awaitingEmail=norm(email);write(r);$('confirmationEmail').textContent=email;show('confirmationNotice',true);}
+ function confirmedLink(){chooseSignInMode(false);if(session){refresh();message('Your email link has returned to the app. Your current account is signed in.');}else{show('confirmationNotice',true);$('confirmationEmail').textContent=read()?.awaitingEmail||$('email').value||'your account';$('confirmationStatus').textContent='If your email was confirmed, sign in below with the password you created. Team approval is checked after sign-in.';$('email').focus();}}
+ async function resend(){if(resendBusy||Date.now()<resendAfter)return;const email=$('email').value.trim();if(!email||!$('email').checkValidity()){$('confirmationStatus').textContent='Enter your email in the sign-in field first.';return;}resendBusy=true;$('resendConfirmationBtn').disabled=true;try{const {error}=await client.auth.resend({type:'signup',email,options:{emailRedirectTo:EMAIL_CONFIRM_REDIRECT_URL}});if(error)throw error;confirmation(email);resendAfter=Date.now()+60000;$('confirmationStatus').textContent='If this account needs confirmation, a new email is on its way. Use the newest link. You can request another in one minute.';setTimeout(()=>{$('resendConfirmationBtn').disabled=false;},60000);}catch(error){$('confirmationStatus').textContent=error.message||'Could not send the email. Try again.';$('resendConfirmationBtn').disabled=false;}finally{resendBusy=false;}}
+ async function render(){const uid=session?.user?.id,version=++loadVersion;if(!uid||managedLogin)return;requestOwner=uid;requests=[];$('setupSignedInEmail').textContent=session.user.email||'your account';$('setupAccessStatus').textContent='Checking your team requests…';$('setupRequestList').replaceChildren();
+  const {data,error}=await client.from('team_join_requests').select('id,team_id,status,athlete_first_name,athlete_last_name,submitted_at').eq('requester_user_id',uid).order('submitted_at',{ascending:false}).limit(50);
+  if(version!==loadVersion||session?.user?.id!==uid)return;
+  if(error){$('setupAccessStatus').textContent='You are signed in. Team requests could not be checked. Check your connection and tap Check Team Access.';return;}
+  requests=data||[];const pending=requests.some(r=>['pending','more_info_requested'].includes(r.status));
+  $('setupAccessStatus').textContent=pending?'Your account is ready. Team access is waiting for coach approval. You can stay signed in.':'Your account is ready. Accept your invitation or connect to a team below.';
+  const labels={pending:'Waiting for coach approval',more_info_requested:'Your coach needs more information. Contact them to finish your request.',approved:'Approved. Tap Check Team Access to open your team.',denied:'Not approved. Contact the coach if this was unexpected.',cancelled:'Request cancelled'};
+  for(const r of requests){const item=document.createElement('p'),name=[r.athlete_first_name,r.athlete_last_name].filter(Boolean).join(' ');item.textContent=(name?name+' — ':'Team request — ')+(labels[r.status]||'Request received');$('setupRequestList').append(item);}
+  if(layoutOwner!==uid){$('setupChoices').open=!pending;layoutOwner=uid;}
+ }
+ function hasPending(teamId){return requestOwner===session?.user?.id&&requests.some(r=>r.team_id===teamId&&['pending','more_info_requested'].includes(r.status));}
+ function resume(){if(!session||managedLogin)return;const uid=session.user.id,email=norm(session.user.email),r=read();if(r?.email&&r.email!==email)return;
+  const invite=pendingInviteToken,join=pendingJoinCode,k=uid+':'+(invite||join);if(!invite&&!join||attempted.has(k))return;attempted.add(k);
+  setTimeout(()=>{if(session?.user?.id!==uid||managedLogin)return;if(invite){$('inviteToken').value=invite;acceptInvite(invite);}else{pendingJoinCode='';startJoinFlow(join);}},120);
+ }
+ async function submitted(){clear('join');await render();if(requests.some(r=>['pending','more_info_requested'].includes(r.status)))$('setupChoices').open=false;}
+ if(pendingJoinCode||pendingInviteToken){const old=read();if(old?.join!==pendingJoinCode||old?.invite!==pendingInviteToken)remember(pendingJoinCode,pendingInviteToken);const u=new URL(location.href);u.searchParams.delete('join');u.searchParams.delete('invite');history.replaceState(null,'',u);}
+ const r=read();if(r?.awaitingEmail)confirmation(r.awaitingEmail);
+ $('resendConfirmationBtn').onclick=resend;$('setupCheckAccessBtn').onclick=async()=>{const b=$('setupCheckAccessBtn');b.disabled=true;try{await refresh();}finally{b.disabled=false;}};$('setupSignOutBtn').onclick=signOutCurrentPhone;
+ if(new URLSearchParams(location.search).has('email-confirmed')){const u=new URL(location.href);u.searchParams.delete('email-confirmed');history.replaceState(null,'',u);setTimeout(confirmedLink,100);}
+ return {remember,bind,restore,clear,signOut,confirmation,confirmedLink,resend,render,resume,submitted,hasPending};
+})();
+
 let accountRefreshFlight=null;
 function refresh(){
  if(accountRefreshFlight)return accountRefreshFlight;
@@ -3682,6 +3729,7 @@ async function refreshAccountView(){
   if(teamProfileChoice||teamLoginSigningOut)return;
   const res = await client.auth.getSession();
   session = res.data.session;
+  WMOnboarding.restore();
   renderSetupRole();
   ++staffWeightLoadVersion;$('staffPersonalWeightList').textContent='';show('staffPersonalWeightSection',false);
   show('authView', !session);
@@ -3741,7 +3789,7 @@ async function refreshAccountView(){
     show('setupView', true); show('appView', false);
     if(pendingJoinCode) $('setupJoinCode').value=pendingJoinCode;
     if(pendingInviteToken) $('inviteToken').value=pendingInviteToken;
-    if(pendingJoinCode){ const code=pendingJoinCode; pendingJoinCode=''; setTimeout(()=>startJoinFlow(code),80); }
+    await WMOnboarding.render();WMOnboarding.resume();
     return;
   }
 
@@ -3757,7 +3805,7 @@ async function refreshAccountView(){
     (data||[]).forEach(t=>teamMap.set(t.id,t));
   }
   availableTeams=[...teamMap.values()].sort((a,b)=>String(a.name).localeCompare(String(b.name)));
-  if(!availableTeams.length){ show('setupView',true); show('appView',false); return; }
+  if(!availableTeams.length){ show('setupView',true); show('appView',false); await WMOnboarding.render();WMOnboarding.resume();return; }
 
   show('setupView', false); show('appView', true);
   const savedTeamId=localStorage.getItem('wm_active_team_id');
@@ -3768,8 +3816,7 @@ async function refreshAccountView(){
   if(pendingNativeNotificationPayload)await routeNativeNotification(pendingNativeNotificationPayload);
 
   if(session?.user?.id===loginUserId){teamProfileReadyUserId=loginUserId;$('switchTeamProfileBtn').disabled=false;}
-  if(!managedLogin&&pendingJoinCode){ const code=pendingJoinCode; pendingJoinCode=''; setTimeout(()=>startJoinFlow(code),120); }
-  if(!managedLogin&&pendingInviteToken){ const token=pendingInviteToken; pendingInviteToken=''; $('inviteToken').value=token; setTimeout(()=>acceptInvite(),120); }
+  WMOnboarding.resume();
 }
 
 
@@ -7062,7 +7109,7 @@ async function acceptInvite(providedToken=null,statusElement=null){
     if(session?.user?.id!==uid)return;
     if(result.error)throw result.error;
     $('inviteToken').value='';$('joinLeaderToken').value='';
-    if(pendingInviteToken===token)pendingInviteToken='';
+    WMOnboarding.clear('invite');
     status.textContent='Invitation accepted.';closeSheets();
     if(accountRefreshFlight)await accountRefreshFlight;
     await refresh();message('Invitation accepted. Welcome to the team.');
@@ -7115,7 +7162,7 @@ async function submitSelectedChildrenJoin(){
     if(session?.user?.id!==userId||$('joinRequestTeamId').value!==teamId)return;
     const rows=Array.isArray(data)?data:[];
     $('joinFamilyResult').innerHTML='<b>Selection saved</b>'+rows.map(row=>`<small>${esc(selectedNames.get(row.athlete_id)||'Child')}: ${row.status==='joined'?'Connected to your account on this team.':'Sent for coach approval.'}</small>`).join('');
-    show('joinFamilyResult',true);
+    show('joinFamilyResult',true);await WMOnboarding.submitted();
     await loadJoinFamilyChildren();
     if(session?.user?.id!==userId||$('joinRequestTeamId').value!==teamId)return;
     if(rows.some(row=>row.status==='joined'))scheduleAccountConnectionRefresh();
@@ -7135,6 +7182,7 @@ async function startJoinFlow(code,teamId=null,parentExisting=false){
     const {data,error}=await client.rpc('preview_team_join_code',{p_join_code:code});
     if(error||!data?.length){message(error?.message||'That team code is not valid or has expired.',true);return;}
     joinPreview=data[0];
+    if(WMOnboarding.hasPending(joinPreview.team_id)){WMOnboarding.clear('join');message('Your request is already waiting for coach approval. You are signed in.');return;}
     $('joinRequestCode').value=code; $('joinRequestTeamId').value=joinPreview.team_id;
     $('joinRequestTeam').textContent=`${joinPreview.organization_name} · ${joinPreview.team_name}`;
   } else if(teamId){
@@ -7358,7 +7406,7 @@ async function submitCheckedJoinRequest(){
     });
     $('submitJoinRequestBtn').disabled=false;$('submitJoinRequestBtn').textContent='Send Claim Request';
     if(error){message(error.message,true);return;}
-    closeSheets();message('Profile claim sent. A coach or admin will approve the account connection.');
+    closeSheets();await WMOnboarding.submitted();message('Profile claim sent. A coach or admin will approve the account connection.');
     return;
   }
 
@@ -7376,7 +7424,7 @@ async function submitCheckedJoinRequest(){
   }
   $('submitJoinRequestBtn').disabled=false; $('submitJoinRequestBtn').textContent='Send Join Request';
   if(result.error){message(result.error.message,true);return;}
-  closeSheets(); message(joinRequesterRole==='parent_guardian'?'Athlete profile request sent. Your parent/guardian account will be linked after coach approval.':'Join request sent. A coach will approve or deny it.');
+  closeSheets();await WMOnboarding.submitted(); message(joinRequesterRole==='parent_guardian'?'Athlete profile request sent. Your parent/guardian account will be linked after coach approval.':'Join request sent. A coach will approve or deny it.');
 }
 
 async function showTeamJoin(){
@@ -9602,13 +9650,14 @@ async function signInPersonalAccount(){
  const email=$('email').value.trim();
  const waitNotice=setTimeout(()=>message('Still connecting. Check your internet connection; your sign-in is not lost.',true),15000);
  try{setRememberSession($('staySignedIn').checked);securityUnlockedThisLaunch=false;
+ WMOnboarding.bind(email);
  const {error}=await client.auth.signInWithPassword({email,password:$('password').value});
  if(error)throw error;
  updateRememberEmail($('rememberEmail').checked,email);
  // Finish any startup refresh, then explicitly refresh the authenticated view.
  if(accountRefreshFlight)await accountRefreshFlight;
  await refresh();
- }catch(error){message(error.message||'Could not finish sign-in. Please try again.',true);}
+ }catch(error){if(error.code==='email_not_confirmed'||/email not confirmed/i.test(error.message||''))WMOnboarding.confirmation(email);message(error.message||'Could not finish sign-in. Please try again.',true);}
  finally{clearTimeout(waitNotice);button.disabled=false;button.textContent='Sign In';}
 }
 $('personalSignInFields').onsubmit=e=>{e.preventDefault();signInPersonalAccount();};
