@@ -1,0 +1,7 @@
+{
+  "release": "0.20.37",
+  "baseline_commit": "129d8dfc8e2f3c9787c7114af6f3519d760c4882",
+  "syntax_checks": 33,
+  "preservation": "All script code outside chooseSignInMode and openSignUp is byte-identical, including account creation, invitation handling, permissions and native bridges.",
+  "index_sha256": "80f8d87a542f2b3cd6eb7208adb6c980355595e991bfd556468981e2c02f5e37"
+}

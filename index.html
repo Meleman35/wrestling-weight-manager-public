@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.36: Server-backed organization positions and affiliate directory. -->
+<!-- Wrestling Manager v0.20.37: Clear account creation guidance for team invitations and both login modes. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -643,6 +643,11 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
 /* Account intent guides onboarding only; team permissions still come from membership. */
 #signUpSheet .sheet-head>div{flex:1;min-width:0}
 #signUpSheet .icon-close{flex:0 0 44px;min-width:44px;min-height:44px}
+.auth-create-account{margin:16px 0 20px;padding:16px;border:1px solid #bdd1e9;border-radius:18px;background:#eef5fc}
+.auth-create-account h3{margin:0 0 8px;font-size:1.1rem;line-height:1.3}
+.auth-create-account p{margin:8px 0 14px;line-height:1.45}
+.auth-create-account .fine{margin:12px 0 0}
+#teamSignInNotice{padding:12px;border:1px solid var(--line);border-radius:12px;background:#f5f7fa;line-height:1.5}
 .account-role-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}
 .account-role-grid button{min-width:0;min-height:66px;padding:12px 8px;background:#edf1f5;color:var(--ink);border:2px solid transparent;line-height:1.3}
 .account-role-grid button[aria-pressed="true"]{background:#e8f1fc;border-color:var(--accent);color:var(--accent)}
@@ -698,8 +703,15 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
     </div>
     <div class="card auth-card">
       <h2>Sign In</h2>
+      <div class="auth-create-account" aria-labelledby="newAccountTitle">
+        <h3 id="newAccountTitle">New to Wrestling Manager?</h3>
+        <p>A team link or code does not create an account. Create your own account first, then continue joining your team.</p>
+        <button id="signUpBtn" class="wide" type="button">Create an Account</button>
+        <p class="fine">Already have an account? Sign in below.</p>
+      </div>
       <div id="confirmationNotice" class="privacy-note hidden" role="status"><b>Check your email</b><p>Confirm the email for <span id="confirmationEmail"></span>, then return here and sign in with your password.</p><p id="confirmationStatus">Check your spam folder too. A team request may still need coach approval after you sign in.</p><button id="resendConfirmationBtn" type="button" class="secondary">Resend Confirmation Email</button></div>
       <div class="view-mode-switch" style="margin-bottom:18px"><button id="personalSignInTab" type="button" aria-pressed="true">Personal Login</button><button id="teamSignInTab" class="secondary" type="button" aria-pressed="false">Team Login</button></div>
+      <p id="teamSignInNotice" class="fine hidden">Use Team Login only if your administrator gave you a username and password. To join a team with your own account, use Personal Login or Create an Account above.</p>
       <form id="personalSignInFields" method="post" autocomplete="on" onsubmit="event.preventDefault()">
       <label for="email">Email</label>
       <input id="email" name="username" type="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="email" enterkeyhint="next" required placeholder="you@example.com">
@@ -724,7 +736,6 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
       <div class="stack-actions">
         <button id="teamSignInBtn" class="hidden" type="submit" form="teamSignInFields">Sign In to Team</button>
         <button id="signInBtn" type="submit" form="personalSignInFields">Sign In</button>
-        <button id="signUpBtn" class="secondary" type="button">Create Account</button>
       </div>
       <p class="fine auth-password-help">Use your saved password from AutoFill or the keyboard’s Passwords button. Leave Stay signed in on for your personal device.</p>
       <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
@@ -2073,7 +2084,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.36</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.37</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -3428,7 +3439,8 @@ function chooseSignInMode(team){
   $('personalSignInFields').querySelectorAll('input').forEach(el=>el.disabled=team);
   $('teamSignInFields').querySelectorAll('input').forEach(el=>el.disabled=!team);
   show('rememberEmailRow',!team);
-  show('signInBtn',!team);show('signUpBtn',!team);show('teamSignInBtn',team);show('forgotPasswordBtn',!team);
+  show('signInBtn',!team);show('signUpBtn',true);show('teamSignInBtn',team);show('forgotPasswordBtn',!team);
+  show('teamSignInNotice',team);
   $('personalSignInTab').classList.toggle('secondary',team);$('teamSignInTab').classList.toggle('secondary',!team);
   $('personalSignInTab').setAttribute('aria-pressed',String(!team));$('teamSignInTab').setAttribute('aria-pressed',String(team));
   $('password').value='';$('teamSignInPassword').value='';
@@ -3671,6 +3683,7 @@ function chooseSignUpRole(role){
 }
 function openSignUp(){
   if(signUpBusy)return;
+  if($('teamSignInTab').getAttribute('aria-pressed')==='true')chooseSignInMode(false);
   closeSheets();
   $('signUpEmail').value=$('email').value.trim();$('signUpPassword').value=$('password').value;
   $('signUpStatus').textContent='';$('signUpStatus').classList.remove('error');

@@ -1,0 +1,15 @@
+{
+  "release": "0.20.37",
+  "engine": "Isolated Chromium with complete HTML and mocked backend; no real accounts or messages",
+  "passed": 8,
+  "checks": [
+    "New-account prompt opens the existing role-based signup without creating an account",
+    "Signup remains visible in both login modes at 320px, 390px and 1024px without overflow",
+    "Signup from Team Login switches to Personal Login without copying shared credentials or replacing the invitation",
+    "Account creation retains the team link through the email-confirmation screen",
+    "Successful personal sign-in opens the invited team join form without granting membership",
+    "Reload retains the invitation and the existing personal sign-in form still submits correctly",
+    "Private staff invitation keeps its token and existing starting role without granting access",
+    "Existing native join-link handler preserves its code through signup"
+  ]
+}
