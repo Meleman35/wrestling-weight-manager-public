@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.34: Create and email adult staff invitations with retry and clear submission status. -->
+<!-- Wrestling Manager v0.20.35: Clipboard Organization card and cross-organization team switching. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -666,6 +666,11 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
 
 <style id="wm-chat-members-033">
 #communicationThreadIdentity.members-enabled{cursor:pointer;border-radius:12px;-webkit-tap-highlight-color:transparent}#communicationThreadIdentity.members-enabled:focus-visible{outline:3px solid var(--team-primary);outline-offset:4px}#communicationMembersHint{display:block;color:#24568b;font-size:12px;font-weight:700;margin-top:4px}#communicationMembersSheet{z-index:110;max-height:85%}#communicationMembersSheet .sheet-head>div{min-width:0}#communicationMembersSheet h2{overflow-wrap:anywhere;font-size:clamp(1.3rem,5vw,1.8rem)}#communicationMembersSheet .chat-member-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:14px 0;border-bottom:1px solid var(--line)}#communicationMembersSheet .chat-member-row b,#communicationMembersSheet .chat-member-row small{display:block;overflow-wrap:anywhere}#communicationMembersSheet .chat-member-row small{color:var(--muted);margin-top:4px}#communicationMembersSheet .chat-member-row button{min-height:44px;padding:10px 13px;white-space:normal}#communicationMembersStatus{min-height:1.5em;overflow-wrap:anywhere}#communicationMembersStatus:empty{display:none}#communicationMembersStatus.error{color:#a51c24}#communicationMembersSheet .member-note{line-height:1.4}#communicationMembersSheet h3{margin-top:24px}#communicationMembersBack{flex-shrink:0;min-height:44px}#communicationMembersSheet .sheet-head{align-items:center}
+</style>
+<style id="wm-organization-navigation-035">
+/* Organization management is reached through Clipboard, never the team home.
+   Keep legacy hook nodes in the DOM for compatibility with existing refresh code. */
+#organizationHeading, #homeOrganizationPanel { display:none !important; }
 </style>
 </head>
 <body>
@@ -2068,7 +2073,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.34</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.35</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -3288,7 +3293,7 @@ function setLockerRoomSection(name){
 function setTab(name){
  if(name==='more')window.WMClipboard?.reset();
  if(name==='home')window.WMFamily?.home();
-  if(!managedLogin&&selectedHomeOrganization()&&activeTeam?.organization_id!==selectedHomeOrganization()&&name!=='home'){message('Choose a team in this organization first.');name='home';}
+  // Organization browsing in Clipboard does not block the active team's tabs.
   if(name==='messages'&&!managedMessagesEnabled())name='home';
   document.activeElement?.blur?.();
   recoverInteractionLayer();
@@ -3984,10 +3989,9 @@ function paintOrganizationHeading(){
  const id=selectedHomeOrganization(),row=organizationHeadingRows.find(o=>o.id===id);
  $('organizationHeading').innerHTML='<small>ORGANIZATION</small><strong>'+esc(row?.name||'Choose organization')+'</strong><span aria-hidden="true">⌄</span>';
  $('organizationHeading').disabled=!!managedLogin;
- const matches=!id||activeTeam?.organization_id===id;
- document.getElementById('appView').classList.toggle('organization-only',!matches&&!managedLogin);
- if(!matches&&!managedLogin){['home','schedule','messages','weight','more'].forEach(t=>show(t+'Tab',t==='home'));document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab==='home'));}
- $('homeOrganizationNotice').textContent=matches?'':'Choose a managed team below to open its feed. Affiliated clubs keep their own team administration.';
+ // Browsing another organization in Clipboard must not hide the active team.
+ document.getElementById('appView').classList.remove('organization-only');
+ $('homeOrganizationNotice').textContent='';
  renderTeamSwitcher();
 }
 function acceptHomeOrganization(data){
@@ -4010,7 +4014,7 @@ async function refreshOrganizationHeading(){
  if(uid!==session?.user?.id||ticket!==homeOrganizationGeneration)return;
  if(error){$('homeOrganizationNotice').textContent='Organization could not load. Tap the organization heading to retry.';return;}
  organizationHeadingRows=rows||[];
- const wanted=selectedHomeOrganization()||saved||activeTeam?.organization_id;
+ const wanted=activeTeam?.organization_id||selectedHomeOrganization()||saved;
  const id=organizationHeadingRows.some(o=>o.id===wanted)?wanted:organizationHeadingRows[0]?.id;
  homeOrganizationUser=uid;homeOrganizationId=id||null;paintOrganizationHeading();
  if(!id)return;
@@ -4020,9 +4024,17 @@ async function refreshOrganizationHeading(){
  acceptHomeOrganization(data);
 }
 document.getElementById('organizationHeading').onclick=()=>WMOperations.open(selectedHomeOrganization());
+function syncOrganizationForTeam(team){
+  // This changes UI context only; it never grants organization or team permissions.
+  homeOrganizationUser=session?.user?.id||null;
+  homeOrganizationId=team?.organization_id||null;
+  ++homeOrganizationGeneration; // Ignore outstanding responses for the previous team.
+  try{if(homeOrganizationUser&&homeOrganizationId)localStorage.setItem(homeOrgKey(),homeOrganizationId);}catch{}
+  document.getElementById('appView').classList.remove('organization-only');
+}
 function renderTeamSwitcher(){
   if(!$('teamChoiceList')) return;
-  $('teamChoiceList').innerHTML=availableTeams.length?[...availableTeams].filter(t=>managedLogin||!selectedHomeOrganization()||t.organization_id===selectedHomeOrganization()).sort((a,b)=>String(a.organization_id).localeCompare(String(b.organization_id))||a.name.localeCompare(b.name)).map((t,i,rows)=>`${i===0||rows[i-1].organization_id!==t.organization_id?'<h3>'+esc(organizationHeadingRows.find(o=>o.id===t.organization_id)?.name||'Organization')+'</h3>':''}
+  $('teamChoiceList').innerHTML=availableTeams.length?[...availableTeams].sort((a,b)=>String(a.organization_id).localeCompare(String(b.organization_id))||a.name.localeCompare(b.name)).map((t,i,rows)=>`${i===0||rows[i-1].organization_id!==t.organization_id?'<h3>'+esc(organizationHeadingRows.find(o=>o.id===t.organization_id)?.name||'Organization')+'</h3>':''}
     <button class="team-choice ${activeTeam?.id===t.id?'active':''}" type="button" data-switch-team="${t.id}">
       <span><b>${esc(t.name)}</b><small>${esc(roleLabelForTeam(t))}${(t.service_levels||[]).length?` · ${(t.service_levels||[]).map(teamLevelLabel).join(', ')}`:''}</small></span>
       <span class="check">${activeTeam?.id===t.id?'✓':'›'}</span>
@@ -4509,6 +4521,7 @@ async function activateTeam(teamId,{persist=true}={}){
   resetTeammateWeightPicker();resetWeightPinEditor();resetAthleteCard();
   weightCardPhotoCache.clear();
   activeTeam=team;
+  syncOrganizationForTeam(team);
   communicationNotifications=[];communicationNotificationRenderSignature='';renderCommunicationNotifications();
   coachWeightAthleteId=null;coachWeightSnapshot=null;++coachWeightSnapshotRequest;++weightTrendRequestVersion;
   rosterRows=[];rosterManagementRows=[];
@@ -10428,9 +10441,11 @@ window.WMOperations=(()=>{
     .filter(r=>inDivision(r.division_id)&&r.data.status!=='cancelled'&&new Date(r.data.ends_at||r.data.starts_at).getTime()>=Date.now())
     .sort((a,b)=>String(a.data.starts_at).localeCompare(String(b.data.starts_at))).slice(0,3);
   $o('opsContent').innerHTML=`<div class="ops-overview-intro"><p>${e(division?divName(division):'All divisions')} · Organization Hub</p><h3>Everything your organization coordinates</h3><p>Choose a tile to open its tools. Your assigned role controls what you can see and manage.</p></div>
+   <button id="opsSwitchTeams" type="button" class="wide secondary">Switch Team</button><p class="ops-sheet-note">Choose any team your account can access. Its organization follows automatically; each team keeps its own permissions.</p>
    <div class="ops-home-grid">${tiles.map(([key,icon,title,description])=>`<button class="ops-home-tile" type="button" data-ops-home="${key}"><span aria-hidden="true">${icon}</span><b>${e(title)}</b><small>${e(description)}</small></button>`).join('')}</div>
    <div class="ops-section-heading"><h3>Coming up</h3><button class="secondary" type="button" data-ops-home="event">View calendar</button></div>
    ${upcoming.map(r=>`<button class="ops-upcoming" type="button" data-ops-upcoming="${e(r.id)}"><b>${e(r.title)}</b><small>${e(fmtDateTime(r.data.starts_at))} · ${e(r.data.status||'')}</small></button>`).join('')||'<p class="ops-sheet-note">No upcoming events in this view. Open Calendar to view or add dates.</p>'}`;
+  $o('opsSwitchTeams').onclick=()=>{closeSheets();openTeamSwitcher();};
   $o('opsContent').querySelectorAll('[data-ops-home]').forEach(b=>b.onclick=()=>{tab=b.dataset.opsHome;render();$o('opsHubSheet').scrollTop=0;});
   $o('opsContent').querySelectorAll('[data-ops-upcoming]').forEach(b=>b.onclick=()=>view([...hub.records,...list(hub.team_events)].find(r=>r.id===b.dataset.opsUpcoming)));
  }
@@ -12514,7 +12529,8 @@ window.WMAgreementPDF = (() => {
   {id:'practice',icon:'🤼',name:'Practice & Competition',detail:'Attendance, lineup & Match Book',ids:['clipboardAttendanceBtn','clipboardLineupBtn','matchBookBtn']},
   {id:'health',icon:'✍️',name:'Forms & Health',detail:'Agreements & medical clearance',ids:['agreementsBtn','medicalClearanceBtn']},
   {id:'gear',icon:'🎒',name:'Gear & Files',detail:'Equipment & team resources',ids:['clipboardEquipmentBtn','clipboardFilesBtn']},
-  {id:'settings',icon:'⚙️',name:'Settings & Organization',detail:'Events, account & team settings',ids:['organizationHubBtn','accountBtn','feedbackBtn']}
+  {id:'settings',icon:'⚙️',name:'Settings',detail:'Account, team settings & feedback',ids:['accountBtn','feedbackBtn']},
+  {id:'organization',icon:'🏛️',name:'Organization',detail:'Teams, leadership & organization tools',ids:['organizationHubBtn'],direct:'organizationHubBtn'}
  ];
  let selected=null,context='';const e=id=>document.getElementById(id);
  const mode=()=>isStaff||isManager;
@@ -12525,8 +12541,13 @@ window.WMAgreementPDF = (() => {
   if(!e('clipboardCategories'))return;const next=[session?.user?.id,activeTeam?.id,mode(),viewMode].join(':');if(context!==next){context=next;selected=null;}
   const enabled=mode();show('clipboardCategories',enabled);show('clipboardQuickTools',false);show('clipboardQuickHeading',false);show('moreMenuCard',!enabled);show('clipboardLeadersBtn',enabled&&!!window.WMTeamPeople?.allowed());
   if(!enabled){selected=null;show('clipboardCategoryPanel',false);return;}
-  const available=groups.filter(g=>tools(g).length);e('clipboardCategoryGrid').innerHTML=available.map(g=>`<button type="button" class="clipboard-tile" data-clipboard-category="${g.id}" aria-expanded="${selected===g.id}"><span>${g.icon}</span><span><b>${g.name}</b><small>${g.detail}</small></span></button>`).join('');
-  e('clipboardCategoryGrid').querySelectorAll('[data-clipboard-category]').forEach(b=>b.onclick=()=>{selected=b.dataset.clipboardCategory;render();e('clipboardCategoryTitle').focus();});
+  const available=groups.filter(g=>tools(g).length);e('clipboardCategoryGrid').innerHTML=available.map(g=>`<button type="button" class="clipboard-tile" data-clipboard-category="${g.id}" ${g.direct?'aria-haspopup="dialog"':`aria-expanded="${selected===g.id}"`}><span>${g.icon}</span><span><b>${g.name}</b><small>${g.detail}</small></span></button>`).join('');
+  e('clipboardCategoryGrid').querySelectorAll('[data-clipboard-category]').forEach(b=>b.onclick=()=>{
+   const group=available.find(g=>g.id===b.dataset.clipboardCategory);
+   if(!group||!mode())return;
+   if(group.direct){const node=e(group.direct);if(accessible(node))node.click();else render();return;}
+   selected=group.id;render();e('clipboardCategoryTitle').focus();
+  });
   const group=available.find(g=>g.id===selected);show('clipboardCategoryGrid',!group);show('clipboardCategoryPanel',!!group);
   if(!group){selected=null;return;}
   e('clipboardCategoryTitle').textContent=group.name;
