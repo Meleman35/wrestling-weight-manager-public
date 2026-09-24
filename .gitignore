@@ -1,0 +1,3 @@
+validation/*.png
+node_modules/
+supabase/.temp/

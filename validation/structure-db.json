@@ -1,0 +1,28 @@
+{
+  "engine": "PGlite/PostgreSQL",
+  "tests": [
+    "Existing directory preserved but unreviewed; athlete representative deferred",
+    "Adult selector excludes minor, shared login and unrelated tenant",
+    "Server rejects unconfirmed, minor and cross-tenant assignments",
+    "One adult can hold multiple posts",
+    "Save replay is idempotent and changed-payload replay is rejected",
+    "Templates create vacant posts once without permissions",
+    "Missing and stale revisions rejected",
+    "Explicit access grant confirmation required",
+    "Confirmed access permission stored independently of title",
+    "Athlete template cannot be assigned or renamed around restriction",
+    "Hierarchy cycle rejected",
+    "Archive and restore require latest revision",
+    "Voting eligibility requires separate membership review and rule record",
+    "Unapproved team and unrelated organization links rejected",
+    "Reactivation retains identity and resets eligibility review",
+    "Immutable revision history preserves earlier affiliation states",
+    "Incomplete meeting and voting APIs unavailable",
+    "Nonadministrator can read limited structure but cannot write or read history",
+    "Tenant separation enforced",
+    "Shared and unauthenticated accounts rejected",
+    "No direct table access",
+    "No organization memberships or team management changed"
+  ],
+  "passed": 22
+}

@@ -1,0 +1,20 @@
+{
+  "engine": "Isolated Chromium; mocked backend; complete HTML",
+  "passed": 14,
+  "tests": [
+    "Clipboard organization remains separate from Settings",
+    "Existing hub opens Positions with vacant posts",
+    "Athlete representative assignment disabled in UI",
+    "Failed save retains form and visibly reports unsaved state",
+    "Retry reuses request identifier and reloads server state",
+    "Revision conflict preserves edit and offers explicit reload",
+    "WAWA template previews 19 titles without applying automatically",
+    "Historical affiliates show separate membership and eligibility review",
+    "History, archive and reactivation preserve the affiliate record",
+    "Late server responses cannot replace another organization tab",
+    "Cross-organization team navigation preserved",
+    "390px directory and editor have no horizontal overflow",
+    "Read-only view hides all structure mutations",
+    "Stored titles and names are escaped"
+  ]
+}
