@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.33: Visible selected tabs, linked staff names, and coach/admin group members. -->
+<!-- Wrestling Manager v0.20.34: Create and email adult staff invitations with retry and clear submission status. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -2068,7 +2068,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.33</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.34</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -8169,7 +8169,11 @@ async function sendTeamEmail(recipients,subject,textBody,htmlBody,messageType='t
   const {data,error}=await client.functions.invoke('send-team-email',{body:{
     team_id:activeTeam.id,recipients,subject,text:textBody||'',html:htmlBody||'',message_type:messageType,metadata
   }});
-  if(error)throw error;
+  if(error){
+    let detail=null;
+    try{if(error.context?.json)detail=await error.context.json();}catch{}
+    throw new Error(typeof detail?.error==='string'?detail.error:typeof detail?.message==='string'?detail.message:error.message||'Email request failed.');
+  }
   if(data?.failed)throw new Error(data.results?.find(x=>!x.ok)?.error||'Email failed to send.');
   return data;
 }
@@ -12367,11 +12371,11 @@ window.WMAgreementPDF = (() => {
 /* Team-scoped people editor; staff and guardian roles can coexist. */
 (() => {
  const el=id=>document.getElementById(id);
- let rows=[],filter='staff',selected=null,team=null,user=null,generation=0,busy=false,orgAdmin=false;
+ let rows=[],filter='staff',selected=null,team=null,user=null,generation=0,busy=false,orgAdmin=false,pendingInvite=null;
  const allowed=()=>!!activeTeam&&!!session?.user?.id&&isTeamAdmin&&!managedLogin&&viewMode!=='parent';
  const current=(g,t=team,u=user)=>g===generation&&allowed()&&activeTeam.id===t&&session.user.id===u&&!el('staffAccessSheet').classList.contains('hidden');
  const note=(text,error=false)=>{el('peopleStatus').textContent=text;el('peopleStatus').classList.toggle('error',error);};
- function reset(){++generation;rows=[];selected=null;team=null;user=null;busy=false;el('peopleSearch').value='';el('adultAccessList').replaceChildren();el('adultInviteBox').replaceChildren();el('peopleReview').replaceChildren();show('peopleEditor',false);show('peopleReview',false);}
+ function reset(){++generation;rows=[];selected=null;pendingInvite=null;team=null;user=null;busy=false;el('peopleSearch').value='';el('adultAccessList').replaceChildren();el('adultInviteBox').replaceChildren();el('peopleReview').replaceChildren();show('peopleEditor',false);show('peopleReview',false);}
  function options(){
   const keys=['team_leader','volunteer_coach','assistant_coach','head_coach','team_mom','limited_staff'];
   if(orgAdmin||selected?.staff_role==='club_president')keys.push('club_president');
@@ -12412,7 +12416,7 @@ window.WMAgreementPDF = (() => {
   }
  }
  function edit(id){
-  if(busy||!current(generation))return;selected=rows.find(r=>r.user_id===id);if(!selected||selected.known_minor)return;
+  if(busy||!current(generation))return;selected=rows.find(r=>r.user_id===id);if(!selected||selected.known_minor)return;pendingInvite=null;
   options();el('adultRole').value=selected.staff_role||'team_leader';roleUI(true);
   el('adultAccessFormTitle').textContent=`Edit ${selected.display_name||'team member'}`;el('peopleSelectedSummary').textContent=selected.is_parent_guardian?'Parent / guardian access and child connections will be retained.':selected.has_active_athlete?'Keep this same account and profile history. Choose their adult role below.':'Changes apply to this team.';
   if(selected.is_organization_admin)el('peopleSelectedSummary').textContent+=' Organization administrator access is managed separately and remains in place.';
@@ -12422,20 +12426,46 @@ window.WMAgreementPDF = (() => {
   el('saveAdultAccessBtn').textContent='Review Changes';el('saveAdultAccessBtn').disabled=false;el('adultInviteBox').replaceChildren();show('peopleEditor',true);show('cancelAdultEditBtn',true);note('');el('peopleEditor').scrollIntoView({block:'start',behavior:'smooth'});
  }
  function invite(){
-  if(busy||!current(generation))return;selected=null;options();el('adultRole').value='team_leader';roleUI(true);el('adultAccessFormTitle').textContent='Invite a New Adult';el('peopleSelectedSummary').textContent='Already on this team? Choose them from the lists above to update the same account.';el('managerEmail').value='';el('managerEmail').readOnly=false;el('saveAdultAccessBtn').textContent='Review Invitation';el('saveAdultAccessBtn').disabled=false;el('adultInviteBox').replaceChildren();show('peopleEditor',true);show('cancelAdultEditBtn',true);el('peopleEditor').scrollIntoView({block:'start',behavior:'smooth'});
+  if(busy||!current(generation))return;selected=null;pendingInvite=null;note('');options();el('adultRole').value='team_leader';roleUI(true);el('adultAccessFormTitle').textContent='Invite a New Adult';el('peopleSelectedSummary').textContent='Already on this team? Choose them from the lists above to update the same account.';el('managerEmail').value='';el('managerEmail').readOnly=false;el('saveAdultAccessBtn').textContent='Review Invitation';el('saveAdultAccessBtn').disabled=false;el('adultInviteBox').replaceChildren();show('peopleEditor',true);show('cancelAdultEditBtn',true);el('peopleEditor').scrollIntoView({block:'start',behavior:'smooth'});
  }
  function payload(){return {team_id:team,user_id:selected?.user_id,revision:selected?.revision,role_key:el('adultRole').value,title:el('adultTitle').value.trim()||null,permissions:{attendance:el('managerAttendance').checked,weigh_in:el('managerWeighIn').checked,equipment:el('managerEquipment').checked,checkout:el('managerCheckout').checked,mass_text:el('managerMassText').checked||el('adultTeamAdmin').checked},team_admin:el('adultTeamAdmin').checked,confirm_adult:el('peopleConfirmAdult').checked,retire_athlete:!!selected?.has_active_athlete&&el('peopleRetireAthlete').checked};}
  function review(){
-  if(busy||!current(generation))return;const p=payload(),email=el('managerEmail').value.trim();
+  if(busy||(!selected&&pendingInvite)||!current(generation))return;const p=payload(),email=el('managerEmail').value.trim();
   if(!selected&&(!email||!el('managerEmail').checkValidity())){note('Enter the adult’s email address.',true);return;}
   if(selected?.has_active_athlete&&p.role_key!=='parent_only'&&!p.confirm_adult){note('Confirm this is the adult’s own account and they are at least 18.',true);return;}
   if(p.role_key==='club_president'&&!orgAdmin){note('An organization administrator must manage Club President access.',true);return;}
   const label=p.role_key==='parent_only'?'Parent / Guardian only':adultRoleLabel(p.role_key);
-  el('peopleReview').innerHTML=`<h3>Review ${selected?'Role Change':'Invitation'}</h3><p><b>${esc(selected?.display_name||email)}</b><br>${esc(email)}<br>${esc(activeTeam.name)}</p><p>Role: <b>${esc(label)}</b>${p.role_key!=='parent_only'?`<br>Team administrator: <b>${p.team_admin?'Yes':'No'}</b>`:''}</p>${selected?.has_active_athlete&&p.role_key!=='parent_only'?`<p>${p.retire_athlete?'Take this person off active athlete rosters for this team. Their profile, past bouts and weight records stay saved.':'Keep their active athlete role as well as the new staff role.'}</p>`:''}${selected?.is_parent_guardian?'<p>Keep their parent / guardian access and child connections.</p>':''}<div class="two-col"><button type="button" id="peopleConfirmSave">${selected?'Save Role':'Create Invitation'}</button><button type="button" id="peopleBackToEdit" class="secondary">Keep Editing</button></div>`;
+  el('peopleReview').innerHTML=`<h3>Review ${selected?'Role Change':'Invitation'}</h3><p><b>${esc(selected?.display_name||email)}</b><br>${esc(email)}<br>${esc(activeTeam.name)}</p><p>Role: <b>${esc(label)}</b>${p.role_key!=='parent_only'?`<br>Team administrator: <b>${p.team_admin?'Yes':'No'}</b>`:''}</p>${selected?.has_active_athlete&&p.role_key!=='parent_only'?`<p>${p.retire_athlete?'Take this person off active athlete rosters for this team. Their profile, past bouts and weight records stay saved.':'Keep their active athlete role as well as the new staff role.'}</p>`:''}${selected?.is_parent_guardian?'<p>Keep their parent / guardian access and child connections.</p>':''}${!selected?'<p>We will email a private invitation link to the address above.</p>':''}<div class="two-col"><button type="button" id="peopleConfirmSave">${selected?'Save Role':'Create & Email Invitation'}</button><button type="button" id="peopleBackToEdit" class="secondary">Keep Editing</button></div>`;
   show('peopleReview',true);el('peopleConfirmSave').onclick=()=>save(p,email,selected,generation);el('peopleBackToEdit').onclick=()=>show('peopleReview',false);el('peopleReview').scrollIntoView({block:'nearest',behavior:'smooth'});note('');
  }
+ async function sendInvitationEmail(invitation,g,t,u){
+  if(invitation.sending||pendingInvite!==invitation||!current(g,t,u))return;
+  invitation.sending=true;
+  const button=el('peopleRetryInviteEmail');
+  button.disabled=true;button.textContent='Sending Email…';
+  note(`Invitation created. Sending email to ${invitation.email}…`);
+  try{
+    const {email,url,role,teamName,id}=invitation;
+    const data=await sendTeamEmail(
+      [{email}],
+      `${teamName} — ${role} invitation`,
+      `You have been invited to join ${teamName} as ${role} in Wrestling Manager.\n\nOpen this private invitation: ${url}\n\nSign in or create your account using ${email} to accept the invitation. This link expires in 14 days. Do not forward it.`,
+      `<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto"><h2>${esc(teamName)}</h2><p>You have been invited to join as <b>${esc(role)}</b> in Wrestling Manager.</p><p><a href="${esc(url)}" style="display:inline-block;padding:12px 18px;background:#163A67;color:#fff;text-decoration:none;border-radius:10px;font-weight:bold">Accept Private Invitation</a></p><p>Sign in or create your account using <b>${esc(email)}</b>.</p><p style="font-size:12px;color:#667085">This private invitation expires in 14 days. Do not forward it.</p></div>`,
+      'staff_invite',{invitation_id:id,staff_role:invitation.roleKey}
+    );
+    if(data?.ok!==true||data?.sent!==1)throw new Error('The email service did not confirm submission.');
+    invitation.submitted=true;
+    if(pendingInvite!==invitation||!current(g,t,u))return;
+    button.textContent='Email Submitted';button.disabled=true;
+    note(`Invitation email submitted to ${email}. Ask them to check their inbox and spam folder.`);
+  }catch(e){
+    if(pendingInvite!==invitation||!current(g,t,u))return;
+    button.textContent='Retry Email';button.disabled=false;
+    note(`Invitation created, but email submission was not confirmed: ${e?.message||'Email request failed.'} Check the inbox before retrying. Copy and Share still use this same invitation.`,true);
+  }finally{invitation.sending=false;}
+ }
  async function save(p,email,person,g){
-  if(busy||!current(g))return;busy=true;el('peopleConfirmSave').disabled=true;el('peopleConfirmSave').textContent='Saving…';el('saveAdultAccessBtn').disabled=true;
+  if(busy||(!person&&pendingInvite)||!current(g))return;busy=true;el('peopleConfirmSave').disabled=true;el('peopleConfirmSave').textContent=person?'Saving…':'Creating Invitation…';el('saveAdultAccessBtn').disabled=true;
   const t=team,u=user;
   try{
    let result;
@@ -12443,9 +12473,28 @@ window.WMAgreementPDF = (() => {
    else result=await client.rpc('create_adult_staff_invitation',{p_team_id:t,p_email:email,p_role_key:p.role_key,p_title:p.title,p_permissions:p.permissions,p_team_admin:p.team_admin,p_expires_in_days:14});
    if(!current(g,t,u))return;if(result.error)throw result.error;
    if(person){selected=null;show('peopleEditor',false);show('peopleReview',false);filter=p.role_key==='parent_only'?'parents':'staff';await load(g);if(!current(g,t,u))return;note('Role saved. Profile history and parent connections are retained.');if(person.user_id===u){closeSheets();await refresh();}else{refreshTeamData({force:true});}}
-   else{const token=result.data?.[0]?.invitation_token||result.data?.invitation_token;if(!token)throw Error('Invitation response missing. Reload before trying again.');const url=inviteUrl(token);el('adultInviteBox').innerHTML='<p class="fine">Invitation ready. They must sign in with the invited email.</p><button type="button" id="peopleCopyInvite">Copy Invitation Link</button><button type="button" id="peopleShareInvite" class="secondary">Share Invitation</button>';el('peopleCopyInvite').onclick=()=>copyText(url);el('peopleShareInvite').onclick=()=>systemShare(`${activeTeam.name} staff invitation`,adultRoleLabel(p.role_key),url);show('peopleReview',false);note('Invitation created. Share it with the intended adult.');}
+   else{
+    const row=result.data?.[0]||result.data,token=row?.invitation_token;
+    if(!token)throw Error('Invitation response missing. Reload before trying again.');
+    let url=inviteUrl(token);
+    if(!/^https?:\/\//i.test(url)){const publicUrl=new URL('https://meleman35.github.io/wrestling-weight-manager-public/');publicUrl.searchParams.set('invite',token);url=publicUrl.toString();}
+    const invitation={id:row.invitation_id,email,url,role:adultRoleLabel(p.role_key),roleKey:p.role_key,teamName:activeTeam.name,sending:false,submitted:false};
+    pendingInvite=invitation;
+    el('adultInviteBox').innerHTML='<p class="fine">Invitation created. They must sign in with the invited email.</p><button type="button" id="peopleRetryInviteEmail" disabled>Sending Email…</button><button type="button" id="peopleCopyInvite" class="secondary">Copy Invitation Link</button><button type="button" id="peopleShareInvite" class="secondary">Share Invitation</button>';
+    el('peopleCopyInvite').onclick=()=>copyText(invitation.url);
+    el('peopleShareInvite').onclick=()=>systemShare(invitation.teamName+' staff invitation',invitation.role,invitation.url);
+    el('peopleRetryInviteEmail').onclick=async()=>{
+      if(busy||invitation.submitted||pendingInvite!==invitation||!current(g,t,u))return;
+      busy=true;
+      try{await sendInvitationEmail(invitation,g,t,u);}
+      finally{if(g===generation)busy=false;}
+    };
+    show('peopleReview',false);el('saveAdultAccessBtn').textContent='Invitation Created';
+    el('adultInviteBox').scrollIntoView({block:'nearest',behavior:'smooth'});
+    await sendInvitationEmail(invitation,g,t,u);
+   }
   }catch(e){if(current(g,t,u)){note(e.message||'Could not save. Reload to check the current role before retrying.',true);show('peopleReview',false);}}
-  finally{if(g===generation)busy=false;if(current(g,t,u))el('saveAdultAccessBtn').disabled=false;}
+  finally{if(g===generation)busy=false;if(current(g,t,u))el('saveAdultAccessBtn').disabled=!!pendingInvite;}
  }
  el('peopleSearch').oninput=render;el('peopleReload').onclick=()=>{if(!busy){selected=null;show('peopleEditor',false);load(++generation);}};
  document.querySelectorAll('[data-people-filter]').forEach(b=>b.onclick=()=>setFilter(b.dataset.peopleFilter));
