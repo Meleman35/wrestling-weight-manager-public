@@ -1,0 +1,13 @@
+{
+  "passed": 7,
+  "tests": [
+    "60/30/15/10/5 thresholds emit once and remain deduplicated across repeated reads or restored state",
+    "Delayed estimates and mat changes produce updates without repeating earlier countdowns",
+    "Readiness statuses emit once each",
+    "Delayed older revisions cannot generate alerts or replace a newer assignment",
+    "Unknown, expired or stale timing never generates a countdown",
+    "Joining late emits only the closest useful threshold instead of a burst of missed alerts",
+    "Mat-only simulation includes only assignment updates"
+  ],
+  "scope": "Pure simulation; no background delivery or live provider"
+}

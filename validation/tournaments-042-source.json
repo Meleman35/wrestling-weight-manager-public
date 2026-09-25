@@ -1,0 +1,19 @@
+{
+  "baseline": "c469a483ac33b1840ee32292bb537e050d028879",
+  "reproducible": true,
+  "idempotent": true,
+  "inline_scripts_syntax_checked": 39,
+  "preserved_files": [
+    "mat-mode.html",
+    "auth-confirm.html",
+    "app.js",
+    "styles.css",
+    "src/athlete-goals.js",
+    "src/notification-inbox.js",
+    "src/message-reactions.js",
+    "src/organization-meetings.js",
+    "src/organization-structure.js",
+    "src/organization-voting.js"
+  ],
+  "sha256": "14756ca47380fdf5192ce521051b4d429805ff5cb96b514382679aa27e8fddf8"
+}

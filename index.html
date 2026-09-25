@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.41: Cross-team notification badges, wrestling reactions and invite email reminders. -->
+<!-- Wrestling Manager v0.20.42: Reliable team link copying, customizable Clipboard categories and manual Tournament Day. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -695,6 +695,12 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
 body.kiosk-locked #messageReactionDialog,body:has(#appLockOverlay:not(.hidden)) #messageReactionDialog{visibility:hidden;pointer-events:none}
 
 </style>
+<style id="wm-tournaments-042">
+#manualCopyDialog{border:1px solid #536582;border-radius:20px;background:#fff;color:#10243c;max-width:440px;width:calc(100% - 32px);padding:24px}#manualCopyDialog::backdrop{background:#0009}#teamJoinCopyValue,#manualCopyValue{width:100%;font-size:16px;user-select:text;-webkit-user-select:text}#teamJoinCopyStatus{min-height:1.5em}#clipboardCustomizeBtn{margin-bottom:12px}.tournament-source,.tournament-card-head,.tournament-heading,.tournament-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.tournament-source{border:1px solid #bfd2e7;border-radius:12px;padding:12px;margin:12px 0}.tournament-source b{color:#815513}.tournament-source span{font-size:.8rem}.tournament-toolbar label{flex:1;min-width:180px}.tournament-toolbar{margin:12px 0}.tournament-toolbar button{width:auto;flex:0 1 auto}.tournament-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px;margin:14px 0}.tournament-bout{border:1px solid #c8d7e8;border-radius:18px;padding:18px;background:#fff;color:#10243c}.tournament-bout h3{margin:4px 0;font-size:1.1rem}.tournament-bout p{margin:10px 0}.tournament-bout>small{display:block;margin-top:12px;font-size:.75rem;color:#526982}.tournament-bout>button{margin-top:12px}.tournament-assignment{display:flex;gap:12px;margin:14px 0}.tournament-assignment b{padding:10px 14px;background:#e9f2fc;color:#153c68;border-radius:10px;font-size:1.2rem}.tournament-status-pill{padding:6px 10px;border-radius:20px;background:#e4f4ee;color:#145540;font-size:.75rem}.tournament-stale{border-color:#b98231}.tournament-stale .tournament-time{color:#875718}.tournament-filters,.tournament-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.tournament-editor,.tournament-family,.tournament-demo-controls,.tournament-alerts{padding:16px;margin:16px 0;border:1px solid #c8d7e8;border-radius:14px}.tournament-visibility{display:flex;align-items:end;gap:12px;margin:12px 0}.tournament-visibility label{flex:1;min-width:0}#tournamentSheet{max-width:980px}#tournamentSheet label{display:block;font-size:.85rem}#tournamentSheet select,#tournamentSheet input{width:100%;min-width:0;margin-top:6px}#tournamentSheet input,#tournamentSheet select{font-size:16px}#tournamentSheet a{color:#1756a3}.tournament-heading{margin-top:20px}.tournament-heading h3{margin:0}.tournament-heading p{font-size:.85rem;color:#526982}.tournament-bout,.tournament-bout *{overflow-wrap:anywhere}@media(max-width:540px){.tournament-form-grid,.tournament-filters{grid-template-columns:1fr}.tournament-visibility{flex-wrap:wrap}.tournament-toolbar button{flex:1 1 140px}}
+
+#tournamentStatus:empty{display:none}.tournament-filter-details{margin:12px 0;padding:10px 0}.tournament-filter-details summary{font-weight:700;color:#294f7d;cursor:pointer}.tournament-filter-details[open] summary{margin-bottom:12px}
+
+</style>
 </head>
 <body>
   <div id="message"></div>
@@ -959,7 +965,7 @@ body.kiosk-locked #messageReactionDialog,body:has(#appLockOverlay:not(.hidden)) 
         </section>
       </section>
 
-      <section id="scheduleTab" class="tabview hidden">
+      <section id="scheduleTab" class="tabview hidden"><button type="button" id="tournamentScheduleBtn" class="wide secondary">🤼 Tournament Day</button>
         <button type="button" class="tab-back-btn" data-back-home><span>←</span> Back to Locker Room</button>
         <div class="section-head top-space">
           <div><div class="eyebrow">TEAM CALENDAR</div><h2>Schedule</h2></div>
@@ -1088,6 +1094,7 @@ body.kiosk-locked #messageReactionDialog,body:has(#appLockOverlay:not(.hidden)) 
           </div>
         </div>
 <div id="clipboardCategories">
+ <button id="clipboardCustomizeBtn" type="button" class="wide secondary">↕ Customize Clipboard</button>
  <button type="button" id="clipboardLeadersBtn" class="clipboard-tile clipboard-leaders admin-only"><span>🪪</span><span><b>Edit Team Leaders</b><small>Coaches, parents who help &amp; signup corrections</small></span></button>
  <div id="clipboardCategoryGrid" class="clipboard-grid"></div>
  <section id="clipboardCategoryPanel" class="hidden"><button type="button" id="clipboardCategoryBack" class="secondary">← All Clipboard Categories</button><h3 id="clipboardCategoryTitle" tabindex="-1"></h3><div id="clipboardCategoryTools" class="menu-card"></div></section>
@@ -1105,7 +1112,7 @@ body.kiosk-locked #messageReactionDialog,body:has(#appLockOverlay:not(.hidden)) 
             <button id="staffDirectoryBtn" class="menu-row" data-layout-key="staff_directory"><span>📇</span><div><b>Coaches & Staff</b><small>Team staff photos and shared contact information</small></div><i>›</i></button>
             <button id="memberProfilesBtn" class="menu-row member-only" data-layout-key="member_profiles"><span>👤</span><div><b>My Athlete Profiles</b><small>Photo, sizes, contact permissions and age divisions</small></div><i>›</i></button>
             <button id="familyBtn" class="menu-row member-only" data-layout-key="family"><span>👨‍👩‍👧</span><div><b>Family</b><small>Invite a parent or add another child</small></div><i>›</i></button>
-            <button id="teamGoalsBtn" class="menu-row" data-layout-key="team_goals"><span>🎯</span><div><b>Team Goals</b><small>Academic, wrestling and coach-defined goals</small></div><i>›</i></button>
+            <button id="tournamentDayBtn" type="button" class="menu-row"><span>🤼</span><div><b>Tournament Day</b><small>Bouts, mats &amp; next-match updates</small></div><i>›</i></button><button id="teamGoalsBtn" class="menu-row" data-layout-key="team_goals"><span>🎯</span><div><b>Team Goals</b><small>Academic, wrestling and coach-defined goals</small></div><i>›</i></button>
             <button id="findProfilesBtn" class="menu-row" data-layout-key="find_profiles"><span>🔎</span><div><b>Find Profiles</b><small>Search and browse shared wrestling profiles</small></div><i>›</i></button>
           </div></section>
           <section class="toolbox-group"><div class="toolbox-group-head"><span>🎒</span><div><b>Gear & Files</b><small>Team resources in one place</small></div></div><div class="menu-card">
@@ -1285,7 +1292,7 @@ body.kiosk-locked #messageReactionDialog,body:has(#appLockOverlay:not(.hidden)) 
   <section id="eventDetailSheet" class="sheet hidden" aria-modal="true">
     <div class="sheet-handle"></div>
     <div class="sheet-head"><div><div id="detailType" class="eyebrow">EVENT</div><h2 id="detailTitle">Event</h2></div><button class="icon-close" data-close-sheet>×</button></div>
-    <div id="detailMeta" class="detail-meta"></div>
+    <button type="button" id="eventTournamentBtn" class="wide hidden">Open Tournament Day</button><div id="detailMeta" class="detail-meta"></div>
     <div class="calendar-event-actions"><button id="addEventCalendarBtn" type="button">Add This Event to Calendar</button></div>
     <div id="memberRsvpBox" class="hidden"></div>
     <div id="coachEventActions" class="detail-actions">
@@ -2106,7 +2113,7 @@ body.kiosk-locked #messageReactionDialog,body:has(#appLockOverlay:not(.hidden)) 
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.41</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.42</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -2152,14 +2159,15 @@ body.kiosk-locked #messageReactionDialog,body:has(#appLockOverlay:not(.hidden)) 
     <div id="weightTestAthleteList"></div>
   </section>
 
-  <section id="layoutEditorSheet" class="sheet hidden" aria-modal="true">
+  <section id="tournamentSheet" class="sheet hidden" aria-modal="true"><div class="sheet-handle"></div><div class="sheet-head"><div><div class="eyebrow">COMPETITION</div><h2>Tournament Day</h2></div><button type="button" class="icon-close" data-close-sheet>×</button></div><button type="button" id="tournamentRefresh" class="secondary">Refresh</button><p id="tournamentStatus" role="status" aria-live="polite"></p><div id="tournamentBody"></div></section>
+<section id="layoutEditorSheet" class="sheet hidden" aria-modal="true">
     <div class="sheet-handle"></div>
     <div class="sheet-head"><div><div class="eyebrow">YOUR APP</div><h2>Customize Layout</h2><p class="muted">Move the parts you use most. This layout follows your account across teams and devices.</p></div><button class="icon-close" data-close-sheet>×</button></div>
     <div class="layout-note">Hold a tile for half a second to arrange it directly. Use the arrows here as an alternative, or turn Show tile off to hide it. Restore hidden tiles here anytime. Home, More, and Account stay available. Your access permissions do not change.</div>
     <h3 class="subhead">Home</h3><div id="homeLayoutEditor" class="layout-editor-list"></div>
     <h3 class="subhead">Quick Actions</h3><div id="quickLayoutEditor" class="layout-editor-list"></div>
     <h3 class="subhead">Bottom navigation</h3><div id="navLayoutEditor" class="layout-editor-list"></div>
-    <h3 class="subhead">More</h3><div id="moreLayoutEditor" class="layout-editor-list"></div>
+    <div id="clipboardLayoutEditors"></div><h3 class="subhead">Toolbox</h3><div id="moreLayoutEditor" class="layout-editor-list"></div>
     <button id="resetLayoutBtn" class="wide secondary" type="button">Reset to Default Layout</button>
     <button id="saveLayoutBtn" class="wide sticky-save" type="button">Save My Layout</button>
   </section>
@@ -3052,9 +3060,10 @@ function parseStoredSize(value,defaultCategory='Youth'){
 function storedApparelValue(prefix,id){const size=$(prefix+id)?.value;return size?`${$(prefix+'GearCategory')?.value||'Youth'} ${size}`:null;}
 function storedShoeValue(prefix){const size=$(prefix+'Shoe')?.value;return size?`${$(prefix+'ShoeCategory')?.value||'Youth'} ${size}`:null;}
 let tileEditing=false,tileEditUser=null,tileSelected=null,tileSaveBusy=false,tileGesture=null,tileSuppressClickUntil=0;
-const layoutParent=group=>group==='home'?$('homeLayoutBlocks'):group==='nav'?document.querySelector('.bottom-nav'):group==='quick'?document.querySelector('.quick-grid'):$('moreMenuCard');
-const layoutRequired=(group,key)=>(group==='nav'&&['home','more'].includes(key))||(group==='more'&&key==='account');
+const layoutParent=group=>group==='home'?$('homeLayoutBlocks'):group==='nav'?document.querySelector('.bottom-nav'):group==='quick'?document.querySelector('.quick-grid'):group==='more'?$('moreMenuCard'):window.WMClipboard?.parent(group);
+const layoutRequired=(group,key)=>(group==='nav'&&['home','more'].includes(key))||(group==='more'&&key==='account')||(group==='clipboard'&&key==='settings')||(group==='clip_settings'&&key==='accountBtn');
 function normalizedLayout(source={}){
+ source=window.WMClipboard?.upgrade(source)||source;
  const result={hidden:{}};
  Object.keys(DEFAULT_UI_LAYOUT).forEach(group=>{
   const saved=Array.isArray(source?.[group])?source[group]:[];
@@ -3078,7 +3087,7 @@ function renderLayoutGroup(group,id){
  box.querySelectorAll('[data-layout-move]').forEach(btn=>btn.onclick=()=>{const [g,i,d]=btn.dataset.layoutMove.split(':');const from=Number(i),to=from+Number(d);[pendingUiLayout[g][from],pendingUiLayout[g][to]]=[pendingUiLayout[g][to],pendingUiLayout[g][from]];renderAllLayoutEditors();});
  box.querySelectorAll('[data-layout-visible]').forEach(input=>input.onchange=()=>{const [g,key]=input.dataset.layoutVisible.split(':');pendingUiLayout.hidden[g]=pendingUiLayout.hidden[g].filter(k=>k!==key);if(!input.checked&&!layoutRequired(g,key))pendingUiLayout.hidden[g].push(key);});
 }
-function renderAllLayoutEditors(){renderLayoutGroup('home','homeLayoutEditor');renderLayoutGroup('nav','navLayoutEditor');renderLayoutGroup('more','moreLayoutEditor');renderLayoutGroup('quick','quickLayoutEditor');}
+function renderAllLayoutEditors(){renderLayoutGroup('home','homeLayoutEditor');renderLayoutGroup('nav','navLayoutEditor');renderLayoutGroup('more','moreLayoutEditor');renderLayoutGroup('quick','quickLayoutEditor');window.WMClipboard?.editors();}
 function canEditTiles(){return !!session?.user?.id&&!document.body.classList.contains('kiosk-locked')&&!document.querySelector('#appLockOverlay:not(.hidden)');}
 function openLayoutEditor(){if(!canEditTiles())return;if(tileEditing)finishTileEditing(false);tileEditUser=session.user.id;pendingUiLayout=currentUiLayout();renderAllLayoutEditors();closeSheets();openSheet('layoutEditorSheet');}
 async function saveUiLayout(){
@@ -3192,8 +3201,9 @@ function eventLabel(type){
   return ({practice:'Practice',open_mat:'Open Mat',dual:'Dual',tournament:'Tournament',camp:'Camp',travel:'Travel',meeting:'Meeting',weigh_in:'Weigh-In',wrestle_off:'Wrestle-Off',other:'Other'})[type] || type;
 }
 
+const JOIN_PUBLIC_BASE_042 = 'https://meleman35.github.io/wrestling-weight-manager-public/';
 function teamJoinUrl(code){
-  const u=new URL(location.href); u.search=''; u.hash=''; u.searchParams.set('join',code); return u.toString();
+  const u=new URL(/^https?:$/.test(location.protocol)?location.href:JOIN_PUBLIC_BASE_042); u.search=''; u.hash=''; u.searchParams.set('join',code); return u.toString();
 }
 function inviteUrl(token){
   const u=new URL(location.href); u.search=''; u.hash=''; u.searchParams.set('invite',token); return u.toString();
@@ -3203,7 +3213,52 @@ function makeQr(targetId,text){
   if(window.QRCode) new QRCode(el,{text,width:190,height:190,correctLevel:QRCode.CorrectLevel.M});
   else el.textContent=text;
 }
-async function copyText(text){ try{await navigator.clipboard.writeText(text);message('Copied.');}catch{message('Press and hold to copy the link.',true);} }
+/* JOIN_COPY_042_START */
+/* Browser and WKWebView copying; no unacknowledged native bridge success. */
+async function copyText(text,options={}){
+ const value=String(text??'');let copied=false;
+ try{if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(value);copied=true;}}catch{}
+ if(options.isCurrent&&!options.isCurrent())return false;
+ if(!copied){
+  const previous=document.activeElement,box=document.createElement('textarea');
+  box.value=value;box.readOnly=true;box.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;opacity:.01;font-size:16px';
+  document.body.append(box);box.focus();box.select();box.setSelectionRange(0,value.length);
+  try{copied=document.execCommand('copy')===true;}catch{}finally{box.remove();previous?.focus?.({preventScroll:true});}
+ }
+ const status=options.status;
+ if(copied){if(status?.isConnected)status.textContent='Copied. Paste the link wherever you want to share it.';else message('Copied.');return true;}
+ let field=options.field;
+ if(!field?.isConnected){
+  let dialog=document.getElementById('manualCopyDialog');
+  if(!dialog){dialog=document.createElement('dialog');dialog.id='manualCopyDialog';dialog.innerHTML='<h2>Copy link</h2><p>Automatic copying is unavailable here. Select the link below and choose Copy.</p><label for="manualCopyValue">Link</label><textarea id="manualCopyValue" readonly rows="4"></textarea><button type="button">Done</button>';document.body.append(dialog);dialog.querySelector('button').onclick=()=>dialog.close();}
+  field=dialog.querySelector('textarea');field.value=value;if(!dialog.open)dialog.showModal();
+ }
+ field.value=value;field.focus();field.select();field.setSelectionRange(0,value.length);
+ if(status?.isConnected)status.textContent='Select the link above and choose Copy. Automatic copying is unavailable here.';
+ return false;
+}
+let teamJoinGeneration=0;
+async function showTeamJoin(){
+ if(!activeTeam||!session?.user?.id)return;
+ const team={id:activeTeam.id,name:activeTeam.name},uid=session.user.id,g=++teamJoinGeneration;
+ const current=()=>g===teamJoinGeneration&&session?.user?.id===uid&&activeTeam?.id===team.id&&!$('joinSheet').classList.contains('hidden');
+ openSheet('joinSheet');$('joinCodeBox').textContent='Loading the join link for '+team.name+'…';
+ try{
+  const {data,error}=await client.rpc('get_or_create_team_join_code',{p_team_id:team.id,p_expires_at:null});
+  if(!current())return;if(error)throw error;
+  const code=data?.[0]?.join_code||data?.join_code;if(!code)throw new Error('No join code was returned. Close this sheet and try again.');
+  const url=teamJoinUrl(code);
+  $('joinCodeBox').innerHTML=`<p><b>${esc(team.name)}</b></p><div class="joincode">${esc(code)}</div><div id="teamJoinQr" class="qr-wrap"></div><label for="teamJoinCopyValue">Team join link</label><textarea id="teamJoinCopyValue" readonly rows="3" autocapitalize="off" spellcheck="false"></textarea><p id="teamJoinCopyStatus" role="status" aria-live="polite"></p><div class="share-grid"><button type="button" data-team-share="text">Text</button><button type="button" data-team-share="email">Email</button><button type="button" data-team-share="copy">Copy Link</button><button type="button" data-team-share="share">Share</button></div><div class="info-banner">Athletes or parents scan the same QR, fill out the information, and wait for coach approval.</div><p class="invite-email-reminder">${esc(INVITE_EMAIL_REMINDER)}</p>`;
+  $('teamJoinCopyValue').value=url;
+  const bind=(action,fn)=>{$('joinCodeBox').querySelector(`[data-team-share="${action}"]`).onclick=()=>{if(current())return fn();$('joinCodeBox').textContent='Team changed. Reopen Team Join for the current team.';};};
+  bind('text',()=>shareByText(`Join ${team.name} in Wrestling Manager: ${url}\n\n${INVITE_EMAIL_REMINDER}`));
+  bind('email',()=>shareByEmail(`Join ${team.name}`,`Fill out your Wrestling Manager team registration here: ${url}\n\n${INVITE_EMAIL_REMINDER}`));
+  bind('copy',async()=>{const btn=$('joinCodeBox').querySelector('[data-team-share="copy"]'),status=$('teamJoinCopyStatus');btn.disabled=true;try{const ok=await copyText(url,{field:$('teamJoinCopyValue'),status,isCurrent:current});if(current())btn.textContent=ok?'Copied':'Copy Link';}finally{btn.disabled=false;}});
+  bind('share',()=>systemShare(`Join ${team.name}`,'Wrestling Manager team registration. '+INVITE_EMAIL_REMINDER,url));
+  try{makeQr('teamJoinQr',url);}catch{$('teamJoinQr').textContent='Use the join link below.';}
+ }catch(e){if(current())$('joinCodeBox').textContent=e.message||'Could not load the join link. Please try again.';}
+}
+/* JOIN_COPY_042_END */
 function shareByText(text){ location.href=`sms:&body=${encodeURIComponent(text)}`; }
 function shareByEmail(subject,text){ location.href=`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`; }
 async function systemShare(title,text,url){ if(navigator.share){try{await navigator.share({title,text,url});}catch{}} else copyText(url); }
@@ -3356,6 +3411,7 @@ function openSheet(id){
   requestAnimationFrame(()=>{if(panel)panel.scrollTop=0;});
 }
 function closeSheets(){
+  window.WMTournaments?.reset();
   window.WMReactions?.reset();
   if(document.body.classList.contains('kiosk-locked')) return;
   window.WMTeamPeople?.reset();
@@ -3374,7 +3430,7 @@ function closeSheets(){
   document.activeElement?.blur?.();
   stopCommunicationReceiptLiveRefresh();
   clearPendingCommunicationMedia();
-  ['agreementRecordsSheet','agreementPdfSheet','agreementReceiptSheet','signUpSheet','wrestlingProfilesSheet','extendedFamilySheet','weightTestAthleteSheet','athleteCardSheet','missingWeightChecksSheet','weightPinSheet','teammateWeightCheckSheet','eventSheet','eventDetailSheet','attendanceSheet','announcementSheet','communicationThreadSheet','conversationActionsSheet','communicationMuteSheet','newCommunicationSheet','guardianSafetyTestSheet','athleteChatPermissionsSheet','scheduleMessageSheet','communicationPreferencesSheet','communicationNotificationsSheet','massTextSheet','textRepliesSheet','communicationSafetySheet','rosterSheet','athleteTeamsSheet','addAthleteSheet','joinSheet','joinRequestSheet','coachJoinRequestsSheet','athleteViewSheet','athleteProfileSheet','weightTrendSheet','photoCropSheet','communicationSheet','staffProfileSheet','staffDirectorySheet','familySheet','agreementsSheet','agreementEditorSheet','agreementPreviewSheet','calendarSubscriptionSheet','medicalClearanceSheet','medicalCaseSheet','excuseSheet','athleteAccessSheet','staffAccessSheet','weighedTodaySheet','weighInStartSheet','weighInConsoleSheet','myWeightCheckSheet','importRosterSheet','teamSwitcherSheet','createTeamSheet','editTeamSheet','lineupClassSheet','accountSheet','layoutEditorSheet','forgotPasswordSheet','resetPasswordSheet','securitySheet'].forEach(id=>show(id,false));
+  ['tournamentSheet','agreementRecordsSheet','agreementPdfSheet','agreementReceiptSheet','signUpSheet','wrestlingProfilesSheet','extendedFamilySheet','weightTestAthleteSheet','athleteCardSheet','missingWeightChecksSheet','weightPinSheet','teammateWeightCheckSheet','eventSheet','eventDetailSheet','attendanceSheet','announcementSheet','communicationThreadSheet','conversationActionsSheet','communicationMuteSheet','newCommunicationSheet','guardianSafetyTestSheet','athleteChatPermissionsSheet','scheduleMessageSheet','communicationPreferencesSheet','communicationNotificationsSheet','massTextSheet','textRepliesSheet','communicationSafetySheet','rosterSheet','athleteTeamsSheet','addAthleteSheet','joinSheet','joinRequestSheet','coachJoinRequestsSheet','athleteViewSheet','athleteProfileSheet','weightTrendSheet','photoCropSheet','communicationSheet','staffProfileSheet','staffDirectorySheet','familySheet','agreementsSheet','agreementEditorSheet','agreementPreviewSheet','calendarSubscriptionSheet','medicalClearanceSheet','medicalCaseSheet','excuseSheet','athleteAccessSheet','staffAccessSheet','weighedTodaySheet','weighInStartSheet','weighInConsoleSheet','myWeightCheckSheet','importRosterSheet','teamSwitcherSheet','createTeamSheet','editTeamSheet','lineupClassSheet','accountSheet','layoutEditorSheet','forgotPasswordSheet','resetPasswordSheet','securitySheet'].forEach(id=>show(id,false));
   show('sheetBackdrop', false); $('sheetBackdrop').style.pointerEvents='none'; document.body.style.overflow='';
 }
 function recoverInteractionLayer(){
@@ -4551,6 +4607,7 @@ async function saveEditTeam(){
 }
 
 async function activateTeam(teamId,{persist=true}={}){
+  window.WMTournaments?.reset();show('tournamentSheet',false);
   window.WMReactions?.reset();
   const team=availableTeams.find(t=>t.id===teamId);
   if(!team){message('That team is not available to this account.',true);return;}
@@ -4704,6 +4761,7 @@ function applyMoreTabMode(){
 }
 
 function applyRoleUI(){
+  window.WMTournaments?.sync();
   window.WMKioskScan?.tick();
   window.WMGoals?.sync();
   show('teamGoalsBtn',!managedLogin&&!!activeTeam);show('lockerGoalsTab',!managedLogin&&!!activeTeam);
@@ -7521,21 +7579,6 @@ async function submitCheckedJoinRequest(){
   closeSheets();await WMOnboarding.submitted(); message(joinRequesterRole==='parent_guardian'?'Athlete profile request sent. Your parent/guardian account will be linked after coach approval.':'Join request sent. A coach will approve or deny it.');
 }
 
-async function showTeamJoin(){
-  if(!activeTeam)return;
-  openSheet('joinSheet');
-  const {data,error}=await client.rpc('get_or_create_team_join_code',{p_team_id:activeTeam.id,p_expires_at:null});
-  if(error){message(error.message,true);return;}
-  const code=data?.[0]?.join_code||data?.join_code; if(!code)return;
-  const url=teamJoinUrl(code);
-  $('joinCodeBox').innerHTML=`<div class="joincode">${esc(code)}</div><div id="teamJoinQr" class="qr-wrap"></div><div class="share-grid"><button data-team-share="text">Text</button><button data-team-share="email">Email</button><button data-team-share="copy">Copy Link</button><button data-team-share="share">Share</button></div><div class="info-banner">Athletes or parents scan the same QR, fill out the information, and wait for coach approval.</div><p class="invite-email-reminder">${esc(INVITE_EMAIL_REMINDER)}</p>`;
-  makeQr('teamJoinQr',url);
-  $('joinCodeBox').querySelector('[data-team-share="text"]').onclick=()=>shareByText(`Join ${activeTeam.name} in Wrestling Manager: ${url}\n\n${INVITE_EMAIL_REMINDER}`);
-  $('joinCodeBox').querySelector('[data-team-share="email"]').onclick=()=>shareByEmail(`Join ${activeTeam.name}`,`Fill out your Wrestling Manager team registration here: ${url}\n\n${INVITE_EMAIL_REMINDER}`);
-  $('joinCodeBox').querySelector('[data-team-share="copy"]').onclick=()=>copyText(url);
-  $('joinCodeBox').querySelector('[data-team-share="share"]').onclick=()=>systemShare(`Join ${activeTeam.name}`,'Wrestling Manager team registration. '+INVITE_EMAIL_REMINDER,url);
-}
-
 /* Request updates are invalidation signals; current server rows remain authoritative. */
 let joinRequestLoadVersion=0,joinRequestPaintVersion=0;
 window.WMJoinSync=(()=>{
@@ -9018,6 +9061,7 @@ async function openEventDetail(id){
   show('memberRsvpBox',!isStaff&&!isManager);
   if(canAttendance) await loadEventParticipants(activeEvent.id);
   else if(!isManager) await renderMemberRsvpControls();
+  show('eventTournamentBtn',activeEvent.event_type==='tournament'&&!managedLogin);
   openSheet('eventDetailSheet');
 }
 
@@ -10335,7 +10379,7 @@ client.auth.onAuthStateChange((event,nextSession)=>{
  setTimeout(()=>handleAuthViewChange(event,nextSession).catch(e=>message(e.message,true)),0);
 });
 async function handleAuthViewChange(event,nextSession){
-  if(session?.user?.id!==nextSession?.user?.id){window.WMNotificationSync?.reset();window.WMReactions?.reset();finishTileEditing(false);tileEditUser=null;pendingUiLayout=null;window.WMKioskScan?.reset();window.WMGoals?.reset();window.WMProfiles?.reset();window.WMFamily?.reset();resetAthleteCard();nativeCameraScanContext=null;weightCardPhotoCache.clear();}
+  if(session?.user?.id!==nextSession?.user?.id){window.WMTournaments?.reset();show('tournamentSheet',false);window.WMNotificationSync?.reset();window.WMReactions?.reset();finishTileEditing(false);tileEditUser=null;pendingUiLayout=null;window.WMKioskScan?.reset();window.WMGoals?.reset();window.WMProfiles?.reset();window.WMFamily?.reset();resetAthleteCard();nativeCameraScanContext=null;weightCardPhotoCache.clear();}
   if(session?.user?.id!==nextSession?.user?.id&&(myWeightCheckMode==='teammate'||myWeightCheckMode==='test'||myWeightCheckMode==='staff'||!$('weightTestAthleteSheet').classList.contains('hidden')||!$('teammateWeightCheckSheet').classList.contains('hidden')||!$('weightPinSheet').classList.contains('hidden')))closeSheets();
   session=nextSession||null;
   window.WMProfilePIN?.select().catch(()=>{});window.WMProfilePINUI?.refresh();
@@ -12849,43 +12893,55 @@ window.WMAgreementPDF = (() => {
 
 </script>
 <script id="wm-clipboard-0.20.29">
-/* Categories use existing tool actions and their role gates. */
+/* Category and nested tool preferences share the existing account layout. */
 (() => {
  const groups=[
   {id:'people',icon:'👥',name:'People & Roles',detail:'Roster, leaders, parents & goals',ids:['staffAccessBtn','rosterBtn','joinRequestsBtn','joinBtn','staffDirectoryBtn','teamGoalsBtn','memberProfilesBtn','familyBtn','findProfilesBtn']},
-  {id:'practice',icon:'🤼',name:'Practice & Competition',detail:'Attendance, lineup & Match Book',ids:['clipboardAttendanceBtn','clipboardLineupBtn','matchBookBtn']},
+  {id:'practice',icon:'🤼',name:'Practice & Competition',detail:'Attendance, lineup & Match Book',ids:['tournamentDayBtn','clipboardAttendanceBtn','clipboardLineupBtn','matchBookBtn']},
   {id:'health',icon:'✍️',name:'Forms & Health',detail:'Agreements & medical clearance',ids:['agreementsBtn','medicalClearanceBtn']},
   {id:'gear',icon:'🎒',name:'Gear & Files',detail:'Equipment & team resources',ids:['clipboardEquipmentBtn','clipboardFilesBtn']},
   {id:'settings',icon:'⚙️',name:'Settings',detail:'Account, team settings & feedback',ids:['accountBtn','feedbackBtn']},
   {id:'organization',icon:'🏛️',name:'Organization',detail:'Teams, leadership & organization tools',ids:['organizationHubBtn'],direct:'organizationHubBtn'}
  ];
- let selected=null,context='';const e=id=>document.getElementById(id);
+ let selected=null,context='';const e=id=>document.getElementById(id),key=g=>'clip_'+g.id;
  const mode=()=>isStaff||isManager;
- function accessible(node){return node&&!node.disabled&&!node.classList.contains('hidden')&&!node.classList.contains('hidden-role')&&!node.classList.contains('user-tile-hidden')&&(!node.classList.contains('member-only')||node.classList.contains('show'));}
+ // Hidden originals live in the legacy Toolbox; category preferences govern the proxies.
+ function accessible(node){return node&&!node.disabled&&!node.classList.contains('hidden')&&!node.classList.contains('hidden-role')&&(!node.classList.contains('member-only')||node.classList.contains('show'));}
  function tools(g){return g.ids.map(e).filter(accessible);}
+ UI_LAYOUT_META.clipboard=Object.fromEntries(groups.map(g=>[g.id,[g.icon,g.name]]));DEFAULT_UI_LAYOUT.clipboard=groups.map(g=>g.id);
+ for(const g of groups){UI_LAYOUT_META[key(g)]=Object.fromEntries(g.ids.map(id=>{const n=e(id);return [id,[n?.querySelector('span')?.textContent||'›',n?.querySelector('b')?.textContent||id]];}));DEFAULT_UI_LAYOUT[key(g)]=g.ids;}
+ const edit=e('clipboardCustomizeBtn');edit.onclick=()=>{openLayoutEditor();requestAnimationFrame(()=>e('clipboardLayoutEditors').scrollIntoView({block:'start'}));};
+ function upgrade(source){
+  // Carry legacy Toolbox order/visibility into each category until separately customized.
+  source={...source,hidden:{...source.hidden}};
+  for(const g of groups){const k=key(g);if(Array.isArray(source[k]))continue;const ids=g.ids,order=source.more||[];source[k]=[...ids].sort((a,b)=>{const at=id=>{const n=order.indexOf(e(id)?.dataset.layoutKey);return n<0?999:n;};return at(a)-at(b);});source.hidden[k]=ids.filter(id=>(source.hidden.more||[]).includes(e(id)?.dataset.layoutKey));}
+  return source;
+ }
+ function parent(group){return group==='clipboard'?e('clipboardCategoryGrid'):selected&&group==='clip_'+selected?e('clipboardCategoryTools'):null;}
+ function editors(){const box=e('clipboardLayoutEditors');if(!box)return;box.innerHTML='<h3>Clipboard categories</h3><div id="clipboardMainEditor"></div>'+groups.filter(g=>!g.direct).map(g=>`<h3>${esc(g.name)} tools</h3><div id="clipEditor_${g.id}"></div>`).join('');renderLayoutGroup('clipboard','clipboardMainEditor');for(const g of groups)if(!g.direct)renderLayoutGroup(key(g),'clipEditor_'+g.id);}
  function reset(){selected=null;render();}
  function render(){
   if(!e('clipboardCategories'))return;const next=[session?.user?.id,activeTeam?.id,mode(),viewMode].join(':');if(context!==next){context=next;selected=null;}
   const enabled=mode();show('clipboardCategories',enabled);show('clipboardQuickTools',false);show('clipboardQuickHeading',false);show('moreMenuCard',!enabled);show('clipboardLeadersBtn',enabled&&!!window.WMTeamPeople?.allowed());
   if(!enabled){selected=null;show('clipboardCategoryPanel',false);return;}
-  const available=groups.filter(g=>tools(g).length);e('clipboardCategoryGrid').innerHTML=available.map(g=>`<button type="button" class="clipboard-tile" data-clipboard-category="${g.id}" ${g.direct?'aria-haspopup="dialog"':`aria-expanded="${selected===g.id}"`}><span>${g.icon}</span><span><b>${g.name}</b><small>${g.detail}</small></span></button>`).join('');
+  const available=groups.filter(g=>tools(g).length);
+  e('clipboardCategoryGrid').innerHTML=available.map(g=>`<button type="button" class="clipboard-tile" data-layout-key="${g.id}" data-clipboard-category="${g.id}" ${g.direct?'aria-haspopup="dialog"':`aria-expanded="${selected===g.id}"`}><span>${g.icon}</span><span><b>${esc(g.name)}</b><small>${esc(g.detail)}</small></span></button>`).join('');
   e('clipboardCategoryGrid').querySelectorAll('[data-clipboard-category]').forEach(b=>b.onclick=()=>{
-   const group=available.find(g=>g.id===b.dataset.clipboardCategory);
-   if(!group||!mode())return;
+   const group=available.find(g=>g.id===b.dataset.clipboardCategory);if(!group||!mode())return;
    if(group.direct){const node=e(group.direct);if(accessible(node))node.click();else render();return;}
    selected=group.id;render();e('clipboardCategoryTitle').focus();
   });
   const group=available.find(g=>g.id===selected);show('clipboardCategoryGrid',!group);show('clipboardCategoryPanel',!!group);
-  if(!group){selected=null;return;}
-  e('clipboardCategoryTitle').textContent=group.name;
-  e('clipboardCategoryTools').innerHTML=tools(group).map(node=>{
-   const title=node.querySelector('b')?.textContent||node.textContent,desc=node.querySelector('small')?.textContent||'',icon=node.querySelector('span')?.textContent||'›';
-   return `<button type="button" class="menu-row" data-clipboard-tool="${node.id}"><span>${esc(icon)}</span><div><b>${esc(title)}</b><small>${esc(desc)}</small></div><i>›</i></button>`;
-  }).join('');
-  e('clipboardCategoryTools').querySelectorAll('[data-clipboard-tool]').forEach(b=>b.onclick=()=>{const node=e(b.dataset.clipboardTool);if(accessible(node)&&mode())node.click();else render();});
+  e('clipboardCategoryTools').innerHTML='';
+  if(group){
+   e('clipboardCategoryTitle').textContent=group.name;
+   e('clipboardCategoryTools').innerHTML=tools(group).map(node=>`<button type="button" class="menu-row" data-layout-key="${node.id}" data-clipboard-tool="${node.id}"><span>${esc(node.querySelector('span')?.textContent||'›')}</span><div><b>${esc(node.querySelector('b')?.textContent||node.textContent)}</b><small>${esc(node.querySelector('small')?.textContent||'')}</small></div><i>›</i></button>`).join('');
+   e('clipboardCategoryTools').querySelectorAll('[data-clipboard-tool]').forEach(b=>b.onclick=()=>{const node=e(b.dataset.clipboardTool);if(accessible(node)&&mode())node.click();else render();});
+  }else selected=null;
+  applyUiPreferences();
  }
  e('clipboardCategoryBack').onclick=()=>{const previous=selected;reset();e('clipboardCategoryGrid').querySelector(`[data-clipboard-category="${previous}"]`)?.focus();};
- window.WMClipboard={sync:render,reset};render();
+ window.WMClipboard={sync:render,reset,parent,editors,upgrade};render();
 })();
 
 </script>
@@ -13068,6 +13124,151 @@ window.WMReactions=(()=>{
   setInterval(()=>{if(sync())refresh();},5000);
   document.addEventListener('visibilitychange',()=>{if(document.hidden)reset();else refresh(true);});
   return {mount(){if(sync()){paint();refresh();}},refresh,reset,close};
+})();
+
+</script>
+<script id="wm-tournament-provider-042">
+/* Adapter boundary: authorization and provider normalization stay on the server.
+ * A supported live connector can implement this request contract once approved.
+ * IDs in board responses are stable internal IDs, never names or display numbers.
+ */
+window.WMTournamentProviders={
+ manual:{source:'manual',connected:true,request:(client,action,data)=>client.rpc('tournament_request',{p_action:action,p_data:data})},
+ usa_bracketing:{source:'usa_bracketing',connected:false,async request(){throw new Error('USA Bracketing access and documentation are pending. No live connection is configured.');}}
+};
+
+</script>
+<script id="wm-tournament-alerts-042">
+/* Pure simulation reducer. No push, notification writes, polling or provider calls. */
+(function(root){
+ const active=new Set(['queued','in_hole','on_deck','up_next','on_mat']);
+ const labels={in_hole:'In the hole',on_deck:'On deck',up_next:'Up next',on_mat:'On mat'};
+ function step(prior,rows,now){
+  const state=JSON.parse(JSON.stringify(prior||{})),alerts=[];
+  for(const row of rows){
+   const id=row.id,stamp=Date.parse(row.updated_at),version=row.revision||0;
+   if(!id||!Number.isFinite(stamp))continue;
+   const old=state[id];if(old&&(version<old.version||stamp<old.stamp))continue;
+   const s=state[id]=old||{seen:{},version:0,stamp:0};
+   const emit=(key,body)=>{if(!s.seen[key]){s.seen[key]=true;alerts.push({bout_id:id,kind:key,body});}};
+   const where=`Bout ${row.bout_number} · ${row.mat?'Mat '+row.mat:'Mat pending'}`;
+   const fresh=now-stamp<=600000&&stamp<=now+60000&&!row.stale;
+   if(fresh){
+    if(old&&s.mat!==row.mat)emit('mat:'+version+':'+stamp,where+' · Mat assignment changed');
+    // Mat-only projection intentionally carries no status, ETA, opponent or bracket.
+    if(row.visibility!=='mat_only'&&active.has(row.status)){
+     if(labels[row.status])emit('status:'+row.status,where+' · '+labels[row.status]);
+     const eta=Date.parse(row.estimated_start),minutes=(eta-now)/60000;
+     if(old&&Number.isFinite(eta)&&s.eta&&Math.abs(eta-s.eta)>=120000)emit('reschedule:'+version+':'+stamp,where+' · Estimated start changed');
+     if(row.status!=='on_mat'&&Number.isFinite(minutes)&&minutes>=0){
+      const threshold=[5,10,15,30,60].find(t=>minutes<=t);
+      if(threshold){emit('minutes:'+threshold,where+' · About '+Math.max(1,Math.ceil(minutes))+' minutes');for(const t of [5,10,15,30,60])if(t>=threshold)s.seen['minutes:'+t]=true;}
+     }
+    }
+   }
+   Object.assign(s,{version,stamp,mat:row.mat,eta:Date.parse(row.estimated_start)||null,status:row.status});
+  }
+  return {state,alerts};
+ }
+ const api={step};root.WMTournamentAlerts=api;if(typeof module!=='undefined')module.exports=api;
+})(typeof window!=='undefined'?window:globalThis);
+
+</script>
+<script id="wm-tournaments-042">
+/* All real data passes through the server's permission-filtered projection. */
+window.WMTournaments=(()=>{
+ const el=id=>document.getElementById(id),labels={queued:'Queued',in_hole:'In the hole',on_deck:'On deck',up_next:'Up next',on_mat:'On mat',complete:'Complete',bye:'Bye',scratched:'Scratched',forfeit:'Forfeit'};
+ const finished=new Set(['complete','bye','scratched','forfeit']);
+ let generation=0,identity='',context=null,board=null,eventId='',editing=null,busy=false,demo=false,demoNow=0,alertState={},alertLog=[],timer;
+ const account=()=>[session?.user?.id,activeTeam?.id].join(':');
+ const visible=()=>!el('tournamentSheet').classList.contains('hidden');
+ const allowed=()=>session?.user?.id&&activeTeam?.id&&!managedLogin&&!document.body.classList.contains('kiosk-locked')&&!document.querySelector('#appLockOverlay:not(.hidden)');
+ const current=g=>generation===g&&identity===account()&&allowed()&&visible();
+ function reset(){generation++;clearInterval(timer);context=board=editing=null;eventId='';identity='';busy=false;demo=false;alertState={};alertLog=[];el('tournamentBody').innerHTML='';el('tournamentStatus').textContent='';}
+ async function rpc(action,data={},g=generation){
+  const teamId=activeTeam?.id;const response=await WMTournamentProviders.manual.request(client,action,{...data,team_id:teamId});
+  if(!current(g))return null;if(response.error)throw new Error(response.error.message||'Could not load tournament data.');return response.data;
+ }
+ function note(text,bad=false){el('tournamentStatus').textContent=text;el('tournamentStatus').className=bad?'error':'fine';}
+ function time(iso,tz){if(!iso)return 'Time unknown';try{return new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZone:tz||undefined,timeZoneName:'short'}).format(new Date(iso));}catch{return 'Time unknown';}}
+ const options=(rows,value)=>rows.map(r=>`<option value="${esc(r.id)}" ${r.id===value?'selected':''}>${esc(r.title||r.name)}</option>`).join('');
+ function shell(){
+  el('tournamentBody').innerHTML=`<div class="tournament-source"><b>${demo?'DEMO · Sample athletes':'COACH ENTERED'}</b><span>USA Bracketing connection pending</span></div><div class="tournament-toolbar"><label>Tournament<select id="tournamentEvent">${demo?'<option>Sample Wrestling Invitational</option>':'<option value="">Choose an event</option>'+options(context?.events||[],eventId)}</select></label><button type="button" id="tournamentDemo" class="secondary">${demo?'Exit demo':'Try sample tournament'}</button></div><div id="tournamentContent"></div><div id="tournamentFamily"></div>${!demo&&context?.can_manage?'<details class="tournament-family"><summary>Scoring &amp; weigh-in tools</summary><p>Open your existing records. Nothing is submitted to USA Bracketing from these tools.</p><div class="tournament-toolbar"><a class="button" href="./mat-mode.html">Mat Mode</a><button id="tournamentMatchBook" type="button" class="secondary">Match Book</button><button id="tournamentWeighSheets" type="button" class="secondary">Official weigh-in sheets</button></div></details>':''}`;
+  el('tournamentEvent').disabled=demo;el('tournamentEvent').onchange=async e=>{eventId=e.target.value;editing=null;await loadBoard();};
+  el('tournamentDemo').onclick=()=>demo?open():openDemo();
+  el('tournamentMatchBook')?.addEventListener('click',()=>{closeSheets();window.WMMatch?.open();});el('tournamentWeighSheets')?.addEventListener('click',()=>{closeSheets();el('officialWeighInSheetsBtn')?.click();});
+  if(!demo)renderFamily();
+ }
+ function renderFamily(){
+  const people=(context?.athletes||[]).filter(a=>a.can_set_visibility),box=el('tournamentFamily');if(!box)return;
+  box.innerHTML=people.length?`<details class="tournament-family"><summary>What my athletes can see</summary><p>Your parent view keeps full information. These choices apply to the athlete's Tournament Day view across their teams.</p>${people.map(a=>`<div class="tournament-visibility"><label>${esc(a.name)}<select data-tournament-visibility="${a.id}"><option value="full" ${a.visibility==='full'?'selected':''}>Full bout details & bracket links</option><option value="upcoming" ${a.visibility==='upcoming'?'selected':''}>Next bout, status & time · no opponent</option><option value="mat_only" ${a.visibility==='mat_only'?'selected':''}>Mat & bout number only</option></select></label><button type="button" data-tournament-save-visibility="${a.id}">Save</button></div>`).join('')}</details>`:'';
+  box.querySelectorAll('[data-tournament-save-visibility]').forEach(btn=>btn.onclick=async()=>{
+   if(busy)return;const a=people.find(x=>x.id===btn.dataset.tournamentSaveVisibility),level=box.querySelector(`[data-tournament-visibility="${a.id}"]`).value,g=generation;busy=true;btn.disabled=true;el('tournamentContent').innerHTML='';
+   try{const result=await rpc('visibility',{athlete_id:a.id,level,revision:a.visibility_revision},g);if(!result)return;context=result;note('Athlete visibility saved.');shell();if(eventId)await loadBoard();else renderBoard();}catch(e){if(current(g)){note(e.message,true);board=null;renderBoard();}}finally{if(current(g)){busy=false;btn.disabled=false;}}
+  });
+ }
+ function projectedDemo(){
+  const level=el('tournamentDemoView')?.value||'full';return board.bouts.map(b=>{
+   const common={id:b.id,athlete_id:b.athlete_id,athlete_name:b.athlete_name,bout_number:b.bout_number,mat:b.mat,updated_at:b.updated_at,stale:b.stale,source:'demo',visibility:level};
+   if(level==='mat_only')return common;
+   const next={...common,division:b.division,weight_class:b.weight_class,status:b.status,estimated_start:b.estimated_start,queue_order:b.queue_order};return level==='full'?{...b,visibility:level}:next;
+  });
+ }
+ function cards(){
+  if(!board)return;let rows=demo?projectedDemo():board.bouts;
+  const athlete=el('tournamentAthleteFilter')?.value||'',mat=el('tournamentMatFilter')?.value||'';
+  rows=rows.filter(b=>(!athlete||b.athlete_id===athlete)&&(!mat||b.mat===mat));
+  const now=demo?demoNow:Date.now();
+  el('tournamentCards').innerHTML=rows.length?rows.map(b=>{
+   const stale=b.stale||now-Date.parse(b.updated_at)>600000,mins=b.estimated_start?Math.ceil((Date.parse(b.estimated_start)-now)/60000):null;
+   const next=board.bouts.filter(x=>x.athlete_id===b.athlete_id&&!finished.has(x.status)).sort((a,c)=>{const rank=x=>({on_mat:0,up_next:1,on_deck:2,in_hole:3,queued:4}[x.status]??5);return rank(a)-rank(c)||a.queue_order-c.queue_order||String(a.estimated_start||'z').localeCompare(c.estimated_start||'z')||a.id.localeCompare(c.id);})[0]?.id===b.id;
+   return `<article class="tournament-bout ${stale?'tournament-stale':''}" data-tournament-bout="${esc(b.id)}"><div class="tournament-card-head"><div><small>${next?'NEXT BOUT':finished.has(b.status)?'RESULT':'BOUT'}</small><h3>${esc(b.athlete_name)}</h3></div>${b.status?`<span class="tournament-status-pill">${esc(labels[b.status]||b.status)}</span>`:''}</div><div class="tournament-assignment"><b>${b.mat?'Mat '+esc(b.mat):'Mat pending'}</b><b>Bout ${esc(b.bout_number)}</b></div>${b.division?`<p>${esc(b.division)} · ${esc(b.weight_class)}</p>`:''}${b.visibility!=='mat_only'?`<p class="tournament-time">${stale?'Update needed':b.estimated_start?mins<0?'Estimate passed · confirm at the mat':`~${mins} min · ${esc(time(b.estimated_start,board.timezone))}`:'Time unknown'}</p>`:''}${b.opponent?`<p>Opponent: <b>${esc(b.opponent)}</b></p>`:''}${b.result?`<p>Coach-entered result: ${esc(b.result)}</p>`:''}${b.bracket_url&&/^https:\/\//.test(b.bracket_url)?`<a href="${esc(b.bracket_url)}" target="_blank" rel="noopener noreferrer">Open bracket reference ↗</a>`:''}<small>${demo?'Sample data':'Coach entered'} · Updated ${esc(time(b.updated_at,board.timezone))}${stale?' · May be out of date':''}</small>${board.can_manage&&!demo?`<button type="button" class="secondary" data-tournament-edit="${esc(b.id)}">Edit bout</button>`:''}</article>`;
+  }).join(''):'<div class="empty-card">No bout assignments are available for this view yet.</div>';
+  el('tournamentCards').querySelectorAll('[data-tournament-edit]').forEach(b=>b.onclick=()=>editBout(board.bouts.find(x=>x.id===b.dataset.tournamentEdit)));
+ }
+ function renderBoard(){
+  const box=el('tournamentContent');if(!box)return;
+  if(!eventId&&!demo){box.innerHTML='<div class="empty-card">Choose a tournament from the team schedule, or try the sample tournament.</div>';return;}
+  if(!board){box.innerHTML='<div class="empty-card">Tournament data is unavailable. Tap Refresh to try again.</div>';return;}
+  if(!board.workspace_id&&!demo){box.innerHTML=`<div class="empty-card"><h3>${esc(board.title)}</h3><p>No bout board has been set up yet.</p>${board.can_manage?'<label>Event timezone<input id="tournamentTimezone" value="America/Denver" maxlength="80"></label><button type="button" id="tournamentSetup">Set up manual bout board</button>':'Your coach can set up the bout board.'}</div>`;el('tournamentSetup')?.addEventListener('click',()=>mutate('setup',{timezone:el('tournamentTimezone').value}));return;}
+  box.innerHTML=`<div class="tournament-heading"><div><h3>${esc(board.title)}</h3><p>${demo?'Simulated times and alerts. No team records or messages are changed.':'Assignments and results are entered by a coach. Confirm timing with the event.'}</p></div>${board.can_manage&&!demo?'<button id="tournamentAdd" type="button">＋ Add bout</button>':''}</div>${demo?'<div class="tournament-demo-controls"><label>Sample viewer<select id="tournamentDemoView"><option value="full">Coach / parent · full</option><option value="upcoming">Athlete · next bout</option><option value="mat_only">Athlete · mat & bout only</option></select></label><div class="tournament-toolbar"><button data-sim="advance" type="button">Advance 5 min</button><button data-sim="delay" type="button" class="secondary">Delay 10 min</button><button data-sim="mat" type="button" class="secondary">Change mat</button><button data-sim="status" type="button" class="secondary">Next status</button><button data-sim="unknown" type="button" class="secondary">Unknown time</button><button data-sim="stale" type="button" class="secondary">Stale update</button></div><p id="tournamentDemoClock" class="fine"></p></div>':''}<details class="tournament-filter-details"><summary>Filter athletes &amp; mats</summary><div class="tournament-filters"><label>Athlete<select id="tournamentAthleteFilter"><option value="">All available athletes</option>${options(board.athletes||[],'')}</select></label><label>Mat<select id="tournamentMatFilter"><option value="">All mats</option>${[...new Set(board.bouts.map(b=>b.mat).filter(Boolean))].map(m=>`<option>${esc(m)}</option>`).join('')}</select></label></div></details><div id="tournamentEdit"></div><div id="tournamentCards" class="tournament-cards"></div>${demo?'<details open class="tournament-alerts"><summary>Simulated alert preview</summary><p>No notifications are sent. Duplicate countdowns stay suppressed when the estimate moves.</p><div id="tournamentAlertLog"></div></details>':''}`;
+  el('tournamentAdd')?.addEventListener('click',()=>editBout(null));el('tournamentAthleteFilter').onchange=cards;el('tournamentMatFilter').onchange=cards;
+  el('tournamentDemoView')?.addEventListener('change',()=>{alertState={};alertLog=[];simulate();});
+  box.querySelectorAll('[data-sim]').forEach(b=>b.onclick=()=>{
+   const target=board.bouts[0],now=demoNow;target.revision++;
+   if(b.dataset.sim==='advance'){demoNow+=300000;for(const row of board.bouts){row.updated_at=new Date(demoNow).toISOString();row.stale=false;}}
+   if(b.dataset.sim==='delay')target.estimated_start=new Date((Date.parse(target.estimated_start)||now)+600000).toISOString();
+   if(b.dataset.sim==='mat')target.mat=target.mat==='1'?'3':'1';
+   if(b.dataset.sim==='status'){const order=['queued','in_hole','on_deck','up_next','on_mat','complete'];target.status=order[(order.indexOf(target.status)+1)%order.length];}
+   if(b.dataset.sim==='unknown')target.estimated_start=null;
+   target.updated_at=new Date(demoNow).toISOString();target.stale=false;
+   if(b.dataset.sim==='stale'){target.updated_at=new Date(demoNow-660000).toISOString();target.stale=true;}
+   simulate();
+  });cards();if(demo)simulate();
+ }
+ function simulate(){const result=WMTournamentAlerts.step(alertState,projectedDemo(),demoNow);alertState=result.state;alertLog.push(...result.alerts);el('tournamentDemoClock').textContent='Sample clock: '+time(new Date(demoNow).toISOString(),board.timezone);el('tournamentAlertLog').innerHTML=alertLog.length?alertLog.slice(-20).map(a=>`<p class="notice">${esc(a.body)}</p>`).join(''):'<p class="fine">No new alerts for this view.</p>';cards();}
+ function editBout(b){
+  if(busy||!board?.can_manage||demo)return;editing=b||{id:crypto.randomUUID(),revision:0,athlete_id:board.athletes[0]?.id||'',status:'queued'};
+  const fields=[['division','Division',80],['weight_class','Weight class (include unit)',40],['bout_number','Displayed bout number',40],['mat','Mat (blank if unknown)',40],['opponent','Opponent (optional)',160],['result','Result / correction note (optional)',240],['bracket_url','Bracket reference URL (optional)',1000]];
+  el('tournamentEdit').innerHTML=`<form id="tournamentBoutForm" class="tournament-editor"><h3>${b?'Edit bout':'Add bout'}</h3><label>Athlete<select name="athlete_id" required>${options(board.athletes,editing.athlete_id)}</select></label><div class="tournament-form-grid">${fields.map(([k,label,len])=>`<label>${label}<input name="${k}" maxlength="${len}" ${['division','weight_class','bout_number'].includes(k)?'required':''} ${k==='bracket_url'?'type="url" placeholder="https://…"':''} value="${esc(editing[k]||'')}"></label>`).join('')}<label>Status<select name="status">${Object.entries(labels).map(([k,v])=>`<option value="${k}" ${editing.status===k?'selected':''}>${v}</option>`).join('')}</select></label><label>Queue order<input name="queue_order" type="number" min="0" max="1000000" step="1" value="${editing.queue_order||0}"></label><label>Estimated start (your device time)<input name="estimated_start" type="datetime-local" value="${editing.estimated_start?esc(localDateTimeValue(new Date(editing.estimated_start))):''}"></label></div><p class="fine">Leave the estimated start blank if unknown. Queue order resolves upcoming bouts with the same status; bout numbers do not determine timing.</p><div class="tournament-toolbar"><button type="submit">Save bout</button><button id="tournamentCancelEdit" class="secondary" type="button">Cancel</button></div></form>`;
+  el('tournamentCancelEdit').onclick=()=>{editing=null;el('tournamentEdit').innerHTML='';};el('tournamentBoutForm').onsubmit=async e=>{e.preventDefault();const values=Object.fromEntries(new FormData(e.target));values.queue_order=Number(values.queue_order);values.estimated_start=values.estimated_start?new Date(values.estimated_start).toISOString():null;await mutate('save_bout',{...values,id:editing.id,revision:editing.revision});};el('tournamentEdit').scrollIntoView({block:'start'});
+ }
+ async function mutate(action,values){if(busy)return;const g=generation;busy=true;el('tournamentContent').querySelectorAll('button').forEach(b=>b.disabled=true);try{const result=await rpc(action,{event_id:eventId,...values},g);if(!result)return;board=result;editing=null;context.athletes=result.athletes;renderBoard();note('Saved. This is a coach-entered record.');}catch(e){if(current(g))note(e.message,true);}finally{if(current(g)){busy=false;el('tournamentContent').querySelectorAll('button').forEach(b=>b.disabled=false);}}}
+ async function loadBoard(){const g=++generation;board=null;el('tournamentContent').innerHTML='<p>Checking access and loading bouts…</p>';if(!eventId){renderBoard();return;}
+  try{const result=await rpc('board',{event_id:eventId},g);if(!result)return;board=result;context.athletes=result.athletes;renderBoard();renderFamily();note('');}catch(e){if(current(g)){board=null;renderBoard();note(e.message,true);}}
+ }
+ async function open(id=''){
+  if(!allowed()){message('Sign in to your personal team account to open Tournament Day.',true);return;}
+  closeSheets();openSheet('tournamentSheet');identity=account();const g=++generation;note('Loading tournaments…');
+  try{const data=await rpc('context',{},g);if(!data)return;context=data;eventId=data.events.some(e=>e.id===id)?id:'';shell();if(eventId)await loadBoard();else{renderBoard();note('');}timer=setInterval(()=>refresh(false),20000);}catch(e){if(current(g)){note(e.message,true);el('tournamentBody').innerHTML='<p>Try Refresh after checking your connection.</p>';}}
+ }
+ function openDemo(){generation++;demo=true;editing=null;demoNow=Date.now();alertState={};alertLog=[];board={workspace_id:'demo',title:'Sample Wrestling Invitational',timezone:Intl.DateTimeFormat().resolvedOptions().timeZone,can_manage:false,athletes:[{id:'sample-a',name:'Sample Wrestler A'},{id:'sample-b',name:'Sample Wrestler B'}],bouts:[{id:'sample-bout-a',athlete_id:'sample-a',athlete_name:'Sample Wrestler A',division:'16U',weight_class:'120 lb',bout_number:'101',mat:'1',opponent:'Sample Opponent A',status:'queued',estimated_start:new Date(demoNow+35*60000).toISOString(),updated_at:new Date(demoNow).toISOString(),queue_order:1,revision:1},{id:'sample-bout-b',athlete_id:'sample-b',athlete_name:'Sample Wrestler B',division:'Junior',weight_class:'145 lb',bout_number:'101',mat:'2',opponent:'Sample Opponent B',status:'on_deck',estimated_start:null,updated_at:new Date(demoNow).toISOString(),queue_order:2,revision:1}]};shell();renderBoard();note('Demo only · no live tournament connection or notifications.');}
+ async function refresh(force){if(!visible()||document.hidden)return;if(identity!==account()||!allowed()){reset();show('tournamentSheet',false);return;}if(busy||demo)return;if(editing&&!force)return;if(force)editing=null;if(!context){await open(eventId);return;}await loadBoard();}
+ function sync(){show('tournamentDayBtn',!!activeTeam&&!managedLogin);show('tournamentScheduleBtn',!!activeTeam&&!managedLogin);if(visible()&&(identity!==account()||!allowed())){reset();show('tournamentSheet',false);}}
+ el('tournamentRefresh').onclick=()=>refresh(true);el('tournamentDayBtn').onclick=()=>open();el('tournamentScheduleBtn').onclick=()=>open();el('eventTournamentBtn').onclick=()=>open(activeEvent?.id);
+ window.addEventListener('focus',()=>refresh(true));document.addEventListener('visibilitychange',()=>{if(document.hidden&&!demo&&visible()){board=null;el('tournamentContent')&&(el('tournamentContent').innerHTML='');}else refresh(true);});
+ const observer=new MutationObserver(()=>{if(visible()&&!allowed()){reset();show('tournamentSheet',false);}});observer.observe(document.body,{attributes:true,attributeFilter:['class']});if(el('appLockOverlay'))observer.observe(el('appLockOverlay'),{attributes:true,attributeFilter:['class']});
+ return {open,reset,sync,refresh,providers:WMTournamentProviders};
 })();
 
 </script>
