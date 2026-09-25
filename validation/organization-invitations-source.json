@@ -1,0 +1,11 @@
+{
+  "passed": 6,
+  "tests": [
+    "Exact reproduction from published 0.20.42 base",
+    "Build is idempotent",
+    "All 40 inline scripts parse",
+    "2 native/security script blocks preserved",
+    "App assets, mat mode and confirmation page preserved",
+    "Migration contains no team membership, affiliate or paid entitlement mutation"
+  ]
+}

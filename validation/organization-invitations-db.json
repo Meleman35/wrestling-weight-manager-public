@@ -1,0 +1,24 @@
+{
+  "engine": "PGlite/PostgreSQL, isolated fixture; live ops_member definition",
+  "passed": 18,
+  "tests": [
+    "Creation requires valid email, known role, adult attestation and explicit access approval",
+    "Lost-response retries preserve one invitation; changed payload and duplicate pending admin invite rejected",
+    "Invitation list does not expose raw tokens or hashes",
+    "Wrong email, unrelated tenant and ordinary accounts cannot read or grant leadership",
+    "Unverified email, known minor, shared login and anonymous access denied",
+    "Administrator reviews and accepts once without any team membership",
+    "Accepted-token replay never restores removed access; pending revocation is distinct from access removal",
+    "Final organization administrator cannot be removed",
+    "Scoped position acceptance enables actual organization membership predicate, preserves scope and records history without team/admin rows",
+    "A limited leader cannot invite or promote administrators",
+    "Clearing a position removes its access and accepted link cannot reassign it",
+    "Changed position revision and governance permissions invalidate outstanding invitation",
+    "Athlete representative posts and cross-organization positions cannot be invited",
+    "Revocation is idempotent and expired/revoked links grant nothing",
+    "Removing an inviter also revokes their outstanding invitations",
+    "Email context fixes recipient, verifies saved token and administrator, and limits duplicate requests",
+    "Raw invitation storage and anonymous RPC execution are blocked",
+    "Only token hashes persist; no secrets in audit and no affiliate/team mutations"
+  ]
+}
