@@ -1,27 +1,20 @@
-# Wrestling Manager Web v0.6
+# The Wrestling Manager
 
-This version moves the project from the early Weight Manager shell into the broader Wrestling Manager app structure.
+Mobile team management backed by Supabase, with an iOS web-view app and native/offline scoring tools.
 
-## Included
-- Supabase Auth sign in/create account
-- Existing organization/team/season bootstrap
-- Mobile bottom navigation: Home, Schedule, Messages, Weight Room, More
-- Live team and weight-room dashboard counts
-- Real Supabase-backed Schedule
-- Event types: Practice, Open Mat, Dual, Tournament, Camp, Travel, Weigh-In, Wrestle-Off, Other
-- RSVP/attendance flags per event
-- `counts_toward_season_attendance` support; Open Mat and Camp default OFF
-- Event detail view
-- Coach attendance marking: Present, Late, Absent, Modified
-- Team Join code
-- Roster display
-- Mobile-first bottom-sheet UI
+This development branch contains **0.20.44 in draft**, built on the unpublished 0.20.43 tournament-alert work. Published main was 0.20.42 when this draft was prepared. Purchases and tournament phone-alert delivery are not active.
 
-## Next modules
-- Athlete/parent RSVP screens
-- Parent excuse workflow UI
-- Event checkout / ride-home UI
-- Equipment
-- Feed/photos/files
-- Safeguarded Messaging + SMS
-- Full Weight Room kiosk and certification flows
+- [Paid launch components and remaining work](docs/PAID-LAUNCH-READINESS.md)
+- [0.20.44 changes, tests and deployment limits](docs/RELEASE-0.20.44.md)
+- [0.20.43 tournament-alert dependency](docs/RELEASE-0.20.43.md)
+- [0.20.42 published release](docs/RELEASE-0.20.42.md)
+
+The app includes team/family access, safeguarded messaging, schedules and attendance, weight-room tools, agreements, goals, inventory/files, Match Book, organization tools and manual Tournament Day. A feature being present does not mean its paid-launch workflow is complete; the workboard records those boundaries.
+
+Build the self-contained web page with:
+
+```sh
+python scripts/build-launch-044.py
+```
+
+Edit the relevant files in `src/` and rebuild. Existing native-facing assets must remain compatible. Database migrations are separate deployment steps; building the page does not apply them. Keep the pilot enabled until the paid-launch gates are complete.

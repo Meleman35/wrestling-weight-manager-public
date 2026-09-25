@@ -1,0 +1,24 @@
+{
+  "passed": 17,
+  "tests": [
+    "Pilot includes inventory tools without creating a paid subscription or checkout",
+    "Free teams keep inventory reads but cannot write after pilot access ends",
+    "Verified events are idempotent; changed replays and stale revisions roll back",
+    "Equivalent billing retries remain idempotent across database time zones",
+    "One coach with two teams cannot reuse the first team subscription",
+    "Renaming and replacing the head coach preserve the paid team and revoke departed access",
+    "Linked parents and athletes share team coverage without gaining billing or staff permissions",
+    "Removed guardian links and inactive athlete rosters cannot read team plan details",
+    "Managed accounts and unrelated teams cannot obtain plan details",
+    "Cancellation keeps prepaid access through term end; revocation removes paid access immediately",
+    "Past due, expired and future terms cannot silently unlock paid tools or delete records",
+    "Renewal restores inventory edits and existing inventory conflict checks still apply",
+    "Equipment managers retain only their assigned role; organization administrators can view team billing status",
+    "Clients cannot read billing identifiers, change plans or pilot mode, grant access, or call internal feature helpers",
+    "Plan projection omits provider and payment references",
+    "Direct resource helper calls cannot bypass paid inventory checks; existing file access remains unchanged",
+    "Unknown feature keys and invalid billing periods fail closed"
+  ],
+  "engine": "Isolated PGlite; actual migration and captured resource functions; synthetic records only",
+  "limits": "Independent concurrent database sessions and payment-provider verification not tested"
+}

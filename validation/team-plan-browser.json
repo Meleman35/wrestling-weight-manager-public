@@ -1,0 +1,18 @@
+{
+  "passed": 11,
+  "tests": [
+    "Team Plan opens through Clipboard Settings with free pilot status and no purchase action at phone width",
+    "The same coach sees Full Year for the paid team and Free for another team",
+    "Parents see shared coverage without administrator billing dates",
+    "A failed plan request clears old status and supports retry without granting local access",
+    "Late paid-team responses cannot overwrite another team’s plan",
+    "Managed account changes close the plan screen and clear its data",
+    "Clipboard Equipment reaches the actual SQL-backed inventory and saves issue counts",
+    "Expired subscriptions keep a usable inventory CSV export with spreadsheet formula escaping",
+    "Clipboard Files opens the existing file module without a placeholder",
+    "Kiosk lock hides and clears the plan projection",
+    "Whole-page app runs without uncaught JavaScript errors"
+  ],
+  "viewport": "390 × 844",
+  "engine": "Chromium + isolated PGlite; synthetic accounts; no network or production writes"
+}

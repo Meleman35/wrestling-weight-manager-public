@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.43: Tournament alert choices and private background preparation. -->
+<!-- Wrestling Manager v0.20.44: Team plan foundation and connected inventory tools. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -703,6 +703,10 @@ body.kiosk-locked #messageReactionDialog,body:has(#appLockOverlay:not(.hidden)) 
 </style>
 <style id="wm-tournament-alerts-043">
 .tournament-alert-settings{padding:16px;margin:16px 0;border:1px solid #c8d7e8;border-radius:14px}.tournament-alert-settings summary{font-weight:700;cursor:pointer}.tournament-alert-settings p{font-size:.85rem;color:#526982}.tournament-alert-settings fieldset{border:0;padding:0;margin:16px 0}.tournament-alert-settings legend{font-size:.85rem;font-weight:700;margin-bottom:8px}.tournament-alert-options{display:flex;flex-wrap:wrap;gap:8px}.tournament-alert-options label{padding:10px;background:#e9f2fc;border-radius:10px}.tournament-alert-option{padding:12px 0}#tournamentSheet .tournament-alert-settings input[type=checkbox]{width:20px;height:20px;margin:0 5px 0 0;vertical-align:middle}.tournament-alert-settings [data-alert-status]{min-height:1.5em}
+
+</style>
+<style id="wm-team-plan-044">
+#teamPlanSheet{max-width:760px}#teamPlanSheet .sheet-head>div{min-width:0}#teamPlanSheet .icon-close{flex-shrink:0}#teamPlanBody{overflow-wrap:anywhere}.team-plan-card{padding:18px;border:1px solid #cbd8e7;border-radius:16px;background:#f5f8fc;margin:14px 0;color:#17324f}.team-plan-card h3{margin:0 0 10px}.team-plan-card p:last-child{margin-bottom:0}.team-plan-label{font-size:.85rem;font-weight:700;margin:0 0 8px}.team-plan-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.team-plan-columns .team-plan-card{margin:0}.team-plan-card ul{padding-left:20px;line-height:1.55}.team-plan-card li+li{margin-top:7px}.team-plan-rules{margin:20px 0;line-height:1.5}.team-plan-note{padding:14px;background:#fff6df;border-radius:12px;line-height:1.5}#teamPlanStatus:empty{display:none}#wmEquipmentExport{margin:12px 0;min-height:44px}@media(max-width:520px){.team-plan-columns{grid-template-columns:1fr}}
 
 </style>
 </head>
@@ -2108,6 +2112,7 @@ body.kiosk-locked #messageReactionDialog,body:has(#appLockOverlay:not(.hidden)) 
     <button id="teamLoginsBtn" class="wide secondary hidden" type="button">Team Logins</button>
     <button id="editTeamBtn" class="wide admin-only" type="button">Edit Team</button>
     <button id="communicationBtn" class="wide admin-only" type="button">Communication Settings</button>
+    <button id="teamPlanBtn" class="menu-row" type="button"><span>📋</span><div><b>Team Plan</b><small>This team’s access &amp; annual plan</small></div><i>›</i></button>
     <button id="communicationPreferencesBtn" class="wide secondary" type="button">Notification Settings</button>
     <button id="weightScheduleSettingsBtn" class="wide secondary admin-only" type="button">Weigh-in Schedule</button>
     <button id="athleteCardsSettingsBtn" class="wide secondary" type="button">Athlete Cards</button>
@@ -2117,7 +2122,7 @@ body.kiosk-locked #messageReactionDialog,body:has(#appLockOverlay:not(.hidden)) 
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.43</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.44</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -2164,6 +2169,7 @@ body.kiosk-locked #messageReactionDialog,body:has(#appLockOverlay:not(.hidden)) 
   </section>
 
   <section id="tournamentSheet" class="sheet hidden" aria-modal="true"><div class="sheet-handle"></div><div class="sheet-head"><div><div class="eyebrow">COMPETITION</div><h2>Tournament Day</h2></div><button type="button" class="icon-close" data-close-sheet>×</button></div><button type="button" id="tournamentRefresh" class="secondary">Refresh</button><p id="tournamentStatus" role="status" aria-live="polite"></p><div id="tournamentBody"></div></section>
+<section id="teamPlanSheet" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="teamPlanTitle"><div class="sheet-handle"></div><div class="sheet-head"><div><div class="eyebrow">YOUR TEAM</div><h2 id="teamPlanTitle">Team Plan</h2></div><button type="button" class="icon-close" data-close-sheet aria-label="Close team plan">×</button></div><button type="button" id="teamPlanRefresh" class="secondary">Refresh plan</button><p id="teamPlanStatus" role="status" aria-live="polite"></p><div id="teamPlanBody"></div></section>
 <section id="layoutEditorSheet" class="sheet hidden" aria-modal="true">
     <div class="sheet-handle"></div>
     <div class="sheet-head"><div><div class="eyebrow">YOUR APP</div><h2>Customize Layout</h2><p class="muted">Move the parts you use most. This layout follows your account across teams and devices.</p></div><button class="icon-close" data-close-sheet>×</button></div>
@@ -3415,6 +3421,7 @@ function openSheet(id){
   requestAnimationFrame(()=>{if(panel)panel.scrollTop=0;});
 }
 function closeSheets(){
+  window.WMTeamPlan?.reset();
   window.WMTournaments?.reset();
   window.WMReactions?.reset();
   if(document.body.classList.contains('kiosk-locked')) return;
@@ -3434,7 +3441,7 @@ function closeSheets(){
   document.activeElement?.blur?.();
   stopCommunicationReceiptLiveRefresh();
   clearPendingCommunicationMedia();
-  ['tournamentSheet','agreementRecordsSheet','agreementPdfSheet','agreementReceiptSheet','signUpSheet','wrestlingProfilesSheet','extendedFamilySheet','weightTestAthleteSheet','athleteCardSheet','missingWeightChecksSheet','weightPinSheet','teammateWeightCheckSheet','eventSheet','eventDetailSheet','attendanceSheet','announcementSheet','communicationThreadSheet','conversationActionsSheet','communicationMuteSheet','newCommunicationSheet','guardianSafetyTestSheet','athleteChatPermissionsSheet','scheduleMessageSheet','communicationPreferencesSheet','communicationNotificationsSheet','massTextSheet','textRepliesSheet','communicationSafetySheet','rosterSheet','athleteTeamsSheet','addAthleteSheet','joinSheet','joinRequestSheet','coachJoinRequestsSheet','athleteViewSheet','athleteProfileSheet','weightTrendSheet','photoCropSheet','communicationSheet','staffProfileSheet','staffDirectorySheet','familySheet','agreementsSheet','agreementEditorSheet','agreementPreviewSheet','calendarSubscriptionSheet','medicalClearanceSheet','medicalCaseSheet','excuseSheet','athleteAccessSheet','staffAccessSheet','weighedTodaySheet','weighInStartSheet','weighInConsoleSheet','myWeightCheckSheet','importRosterSheet','teamSwitcherSheet','createTeamSheet','editTeamSheet','lineupClassSheet','accountSheet','layoutEditorSheet','forgotPasswordSheet','resetPasswordSheet','securitySheet'].forEach(id=>show(id,false));
+  ['teamPlanSheet','tournamentSheet','agreementRecordsSheet','agreementPdfSheet','agreementReceiptSheet','signUpSheet','wrestlingProfilesSheet','extendedFamilySheet','weightTestAthleteSheet','athleteCardSheet','missingWeightChecksSheet','weightPinSheet','teammateWeightCheckSheet','eventSheet','eventDetailSheet','attendanceSheet','announcementSheet','communicationThreadSheet','conversationActionsSheet','communicationMuteSheet','newCommunicationSheet','guardianSafetyTestSheet','athleteChatPermissionsSheet','scheduleMessageSheet','communicationPreferencesSheet','communicationNotificationsSheet','massTextSheet','textRepliesSheet','communicationSafetySheet','rosterSheet','athleteTeamsSheet','addAthleteSheet','joinSheet','joinRequestSheet','coachJoinRequestsSheet','athleteViewSheet','athleteProfileSheet','weightTrendSheet','photoCropSheet','communicationSheet','staffProfileSheet','staffDirectorySheet','familySheet','agreementsSheet','agreementEditorSheet','agreementPreviewSheet','calendarSubscriptionSheet','medicalClearanceSheet','medicalCaseSheet','excuseSheet','athleteAccessSheet','staffAccessSheet','weighedTodaySheet','weighInStartSheet','weighInConsoleSheet','myWeightCheckSheet','importRosterSheet','teamSwitcherSheet','createTeamSheet','editTeamSheet','lineupClassSheet','accountSheet','layoutEditorSheet','forgotPasswordSheet','resetPasswordSheet','securitySheet'].forEach(id=>show(id,false));
   show('sheetBackdrop', false); $('sheetBackdrop').style.pointerEvents='none'; document.body.style.overflow='';
 }
 function recoverInteractionLayer(){
@@ -4611,6 +4618,7 @@ async function saveEditTeam(){
 }
 
 async function activateTeam(teamId,{persist=true}={}){
+  window.WMTeamPlan?.reset();show('teamPlanSheet',false);
   window.WMTournaments?.reset();show('tournamentSheet',false);
   window.WMReactions?.reset();
   const team=availableTeams.find(t=>t.id===teamId);
@@ -4765,6 +4773,7 @@ function applyMoreTabMode(){
 }
 
 function applyRoleUI(){
+  window.WMTeamPlan?.sync();
   window.WMTournaments?.sync();
   window.WMKioskScan?.tick();
   window.WMGoals?.sync();
@@ -10077,8 +10086,8 @@ $('clipboardAttendanceBtn')?.addEventListener('click',()=>setTab('schedule'));
 $('clipboardMatchBookBtn')?.addEventListener('click',()=>window.WMMatch?.open());
 $('clipboardMedicalBtn')?.addEventListener('click',()=>{if(!$('medicalClearanceBtn')?.classList.contains('hidden'))$('medicalClearanceBtn')?.click();});
 $('clipboardFormsBtn')?.addEventListener('click',()=>{if(!$('agreementsBtn')?.classList.contains('hidden'))$('agreementsBtn')?.click();});
-$('clipboardEquipmentBtn')?.addEventListener('click',()=>message('Equipment tracking is already reserved in Clipboard and will activate when the equipment module is connected.'));
-$('clipboardFilesBtn')?.addEventListener('click',()=>message('Files & Photos is reserved in Clipboard and will activate when the file module is connected.'));
+$('clipboardEquipmentBtn')?.addEventListener('click',()=>window.WMExtras?.equipment().catch(e=>message(e.message,true)));
+$('clipboardFilesBtn')?.addEventListener('click',()=>window.WMExtras?.media().catch(e=>message(e.message,true)));
 $('clipboardOfficialsBtn')?.addEventListener('click',()=>WMOperations.open(selectedHomeOrganization()));
 $('clipboardAdminBtn')?.addEventListener('click',()=>$('accountBtn')?.click());
 $('saveAnnouncementBtn').onclick=saveImportantAnnouncement;
@@ -10383,7 +10392,7 @@ client.auth.onAuthStateChange((event,nextSession)=>{
  setTimeout(()=>handleAuthViewChange(event,nextSession).catch(e=>message(e.message,true)),0);
 });
 async function handleAuthViewChange(event,nextSession){
-  if(session?.user?.id!==nextSession?.user?.id){window.WMTournaments?.reset();show('tournamentSheet',false);window.WMNotificationSync?.reset();window.WMReactions?.reset();finishTileEditing(false);tileEditUser=null;pendingUiLayout=null;window.WMKioskScan?.reset();window.WMGoals?.reset();window.WMProfiles?.reset();window.WMFamily?.reset();resetAthleteCard();nativeCameraScanContext=null;weightCardPhotoCache.clear();}
+  if(session?.user?.id!==nextSession?.user?.id){window.WMTeamPlan?.reset();show('teamPlanSheet',false);window.WMTournaments?.reset();show('tournamentSheet',false);window.WMNotificationSync?.reset();window.WMReactions?.reset();finishTileEditing(false);tileEditUser=null;pendingUiLayout=null;window.WMKioskScan?.reset();window.WMGoals?.reset();window.WMProfiles?.reset();window.WMFamily?.reset();resetAthleteCard();nativeCameraScanContext=null;weightCardPhotoCache.clear();}
   if(session?.user?.id!==nextSession?.user?.id&&(myWeightCheckMode==='teammate'||myWeightCheckMode==='test'||myWeightCheckMode==='staff'||!$('weightTestAthleteSheet').classList.contains('hidden')||!$('teammateWeightCheckSheet').classList.contains('hidden')||!$('weightPinSheet').classList.contains('hidden')))closeSheets();
   session=nextSession||null;
   window.WMProfilePIN?.select().catch(()=>{});window.WMProfilePINUI?.refresh();
@@ -11643,8 +11652,38 @@ window.WMExtras=(()=>{
  $('wmExtraBody').querySelectorAll('[data-media-share]').forEach(b=>b.onclick=async()=>{b.disabled=true;try{const m=out.rows.find(x=>x.id===b.dataset.mediaShare);await res('media_visibility',{id:m.id,shared:!m.shared});await mediaList();}catch(e){note(e.message);b.disabled=false;}});
  $('wmExtraBody').querySelectorAll('[data-media-remove]').forEach(b=>b.onclick=async()=>{if(!confirm('Remove this upload?'))return;b.disabled=true;try{const m=out.rows.find(x=>x.id===b.dataset.mediaRemove),{error}=await client.storage.from('wm-media').remove([m.path]);if(error)throw error;await res('media_remove',{id:m.id});await mediaList();}catch(e){note(e.message);b.disabled=false;}});
  }
- async function equipment(){start('Equipment');await equipmentList();}
- async function equipmentList(){const out=await res('equipment_list',{team});$('wmExtraBody').innerHTML=`<p>Team inventory and available quantities.</p>${out.write?'<form id="wmEquipmentForm"><label>Item / size<input id="wmEquipmentTitle" required maxlength="120" placeholder="Singlet · medium"></label><label>Quantity<input id="wmEquipmentQty" type="number" min="1" max="10000" value="1" required></label><label>Notes<input id="wmEquipmentNotes" maxlength="500"></label><button>Add item</button></form>':''}${out.rows.map(i=>`<article class="ops-card"><h3>${E(i.title)}</h3><p>${i.quantity-i.checked_out} available · ${i.checked_out} issued · ${i.quantity} total</p><p>${E(i.notes)}</p>${out.write?`<div class="ops-actions">${button('Issue one',`data-equip="equipment_out" data-id="${i.id}" ${i.checked_out>=i.quantity?'disabled':''}`)}${button('Return one',`data-equip="equipment_in" data-id="${i.id}" ${!i.checked_out?'disabled':''}`)}${button('Remove item',`data-equip="equipment_remove" data-id="${i.id}" ${i.checked_out?'disabled':''}`)}</div>`:''}</article>`).join('')||'<p>No equipment listed.</p>'}`;note('');$('wmEquipmentForm')?.addEventListener('submit',async e=>{e.preventDefault();const b=e.submitter;b.disabled=true;try{await res('equipment_add',{team,title:$('wmEquipmentTitle').value,quantity:Number($('wmEquipmentQty').value),notes:$('wmEquipmentNotes').value});await equipmentList();}catch(e){note(e.message);b.disabled=false;}});$('wmExtraBody').querySelectorAll('[data-equip]').forEach(b=>b.onclick=async()=>{if(b.dataset.equip==='equipment_remove'&&!confirm('Remove this inventory item?'))return;b.disabled=true;try{const i=out.rows.find(x=>x.id===b.dataset.id);await res(b.dataset.equip,{team,id:i.id,revision:i.revision});await equipmentList();}catch(e){note(e.message);b.disabled=false;}});}
+/* EQUIPMENT_044_START */
+// Embedded inside WMExtras; retains its account/team and epoch checks.
+async function equipment(){start('Equipment');await equipmentList();}
+async function equipmentList(){
+ const ticket=epoch,out=await res('equipment_list',{team});
+ if(ticket!==epoch||!valid())return;
+ $('wmExtraBody').innerHTML=`<p>Team inventory and available quantities.</p>
+  ${out.plan_required?'<p class="team-plan-note">Inventory is available to view and export. Full Year is required to add, issue, return or remove items.</p>':''}
+  ${out.rows.length?'<button type="button" id="wmEquipmentExport" class="secondary">Export inventory CSV</button>':''}
+  ${out.write?'<form id="wmEquipmentForm"><label>Item / size<input id="wmEquipmentTitle" required maxlength="120" placeholder="Singlet · medium"></label><label>Quantity<input id="wmEquipmentQty" type="number" min="1" max="10000" value="1" required></label><label>Notes<input id="wmEquipmentNotes" maxlength="500"></label><button>Add item</button></form>':''}
+  ${out.rows.map(i=>`<article class="ops-card"><h3>${E(i.title)}</h3><p>${i.quantity-i.checked_out} available · ${i.checked_out} issued · ${i.quantity} total</p><p>${E(i.notes)}</p>
+   ${out.write?`<div class="ops-actions">${button('Issue one',`data-equip="equipment_out" data-id="${i.id}" ${i.checked_out>=i.quantity?'disabled':''}`)}${button('Return one',`data-equip="equipment_in" data-id="${i.id}" ${!i.checked_out?'disabled':''}`)}${button('Remove item',`data-equip="equipment_remove" data-id="${i.id}" ${i.checked_out?'disabled':''}`)}</div>`:''}</article>`).join('')||'<p>No equipment listed.</p>'}`;
+ note('');
+ $('wmEquipmentExport')?.addEventListener('click',()=>{
+  if(ticket!==epoch||!valid())return;
+  const blob=new Blob(['\uFEFF'+WMTeamPlan.inventoryCsv(out.rows)],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='Team_Inventory.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ });
+ $('wmEquipmentForm')?.addEventListener('submit',async e=>{
+  e.preventDefault();if(ticket!==epoch||!valid())return;const b=e.submitter;b.disabled=true;
+  try{await res('equipment_add',{team,title:$('wmEquipmentTitle').value,quantity:Number($('wmEquipmentQty').value),notes:$('wmEquipmentNotes').value});await equipmentList();}
+  catch(e){if(ticket===epoch&&valid()){note(e.message);b.disabled=false;}}
+ });
+ $('wmExtraBody').querySelectorAll('[data-equip]').forEach(b=>b.onclick=async()=>{
+  if(ticket!==epoch||!valid())return;
+  if(b.dataset.equip==='equipment_remove'&&!confirm('Remove this inventory item?'))return;
+  b.disabled=true;
+  try{const i=out.rows.find(x=>x.id===b.dataset.id);await res(b.dataset.equip,{team,id:i.id,revision:i.revision});await equipmentList();}
+  catch(e){if(ticket===epoch&&valid()){note(e.message);b.disabled=false;}}
+ });
+}
+/* EQUIPMENT_044_END */
  const tokenKey=id=>'wm-crew-device:'+uid+':'+id;
  function remember(r){if(r.token){localStorage.setItem(tokenKey(r.id),r.token);delete r.token;}return r;}
  const roleName=s=>s==='chair'?'Chairman':'Judge';
@@ -12904,7 +12943,7 @@ window.WMAgreementPDF = (() => {
   {id:'practice',icon:'🤼',name:'Practice & Competition',detail:'Attendance, lineup & Match Book',ids:['tournamentDayBtn','clipboardAttendanceBtn','clipboardLineupBtn','matchBookBtn']},
   {id:'health',icon:'✍️',name:'Forms & Health',detail:'Agreements & medical clearance',ids:['agreementsBtn','medicalClearanceBtn']},
   {id:'gear',icon:'🎒',name:'Gear & Files',detail:'Equipment & team resources',ids:['clipboardEquipmentBtn','clipboardFilesBtn']},
-  {id:'settings',icon:'⚙️',name:'Settings',detail:'Account, team settings & feedback',ids:['accountBtn','feedbackBtn']},
+  {id:'settings',icon:'⚙️',name:'Settings',detail:'Account, team plan & feedback',ids:['accountBtn','teamPlanBtn','feedbackBtn']},
   {id:'organization',icon:'🏛️',name:'Organization',detail:'Teams, leadership & organization tools',ids:['organizationHubBtn'],direct:'organizationHubBtn'}
  ];
  let selected=null,context='';const e=id=>document.getElementById(id),key=g=>'clip_'+g.id;
@@ -13306,6 +13345,62 @@ window.WMTournaments=(()=>{
  window.addEventListener('focus',()=>refresh(true));document.addEventListener('visibilitychange',()=>{if(document.hidden&&!demo&&visible()){board=null;el('tournamentContent')&&(el('tournamentContent').innerHTML='');}else refresh(true);});
  const observer=new MutationObserver(()=>{if(visible()&&!allowed()){reset();show('tournamentSheet',false);}});observer.observe(document.body,{attributes:true,attributeFilter:['class']});if(el('appLockOverlay'))observer.observe(el('appLockOverlay'),{attributes:true,attributeFilter:['class']});
  return {open,reset,sync,refresh,providers:WMTournamentProviders};
+})();
+
+</script>
+
+<script id="wm-team-plan-044">
+/* Server-confirmed team status only. This screen never activates a subscription. */
+window.WMTeamPlan=(()=>{
+ const el=id=>document.getElementById(id);
+ let generation=0,identity='',busy=false;
+ const account=()=>[session?.user?.id,activeTeam?.id].join(':');
+ const allowed=()=>!!session?.user?.id&&!!activeTeam?.id&&!managedLogin&&!document.body.classList.contains('kiosk-locked')&&!document.querySelector('#appLockOverlay:not(.hidden)');
+ const visible=()=>!el('teamPlanSheet').classList.contains('hidden');
+ function reset(){generation++;identity='';busy=false;el('teamPlanBody').replaceChildren();el('teamPlanStatus').textContent='';el('teamPlanRefresh').disabled=false;}
+ function sync(){
+  show('teamPlanBtn',allowed());
+  if(visible()&&(!allowed()||identity&&identity!==account())){reset();show('teamPlanSheet',false);recoverInteractionLayer();}
+ }
+ const date=value=>{const d=new Date(value);return Number.isFinite(d.getTime())?d.toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'}):'';};
+ function render(data){
+  const pilot=data.access_source==='pilot',paid=data.access_source==='subscription';
+  const heading=paid?'Full Year':pilot?'TestFlight pilot':'Free';
+  let detail=paid?'This team has Full Year access.':pilot?'Paid tools are included during the free pilot. No purchase is needed.':'This team does not have an active Full Year subscription.';
+  if(paid&&data.paid_through)detail+=(data.subscription_status==='canceled'?' Access ends on ':' Current access runs through ')+date(data.paid_through)+'.';
+  if(data.subscription_status==='expired'&&!pilot)detail='Full Year has expired. Your free features and authorized access to saved records remain available.';
+  el('teamPlanBody').innerHTML=`<section class="team-plan-card"><p class="team-plan-label">${esc(data.team_name)}</p><h3>${heading}</h3><p>${esc(detail)}</p></section>
+   <section class="team-plan-rules"><h3>One team, one subscription</h3><p>Full Year covers the team’s authorized coaches, parents and athletes. Family members do not need separate subscriptions.</p><p>Changing the head coach, team name or season keeps the subscription with this team. Creating another team requires its own plan.</p></section>
+   <div class="team-plan-columns"><section class="team-plan-card"><h3>Always included</h3><ul><li>Accounts and family connections</li><li>Core team communication and schedules</li><li>Parent controls and athlete privacy</li><li>Authorized access to saved records</li></ul></section>
+   <section class="team-plan-card"><h3>Full Year at launch</h3><p>Annual access for one team. We’re preparing team management, inventory and reporting tools for the paid release.</p><p>Final pricing and the complete feature list will be shown before purchase.</p></section></div>
+   <p class="team-plan-note">Purchases are not open yet. ${data.can_manage_plan?'Your team administrator will manage the team subscription.':'Your coach or team administrator will handle the team subscription.'}</p>
+   <p class="fine">USA Bracketing integration and tournament phone alerts are still being prepared. They are not active services in this release.</p>`;
+ }
+ async function refresh(){
+  if(!allowed()||!visible()||busy)return;
+  const ticket=++generation,teamId=activeTeam.id;identity=account();busy=true;
+  el('teamPlanBody').replaceChildren();el('teamPlanRefresh').disabled=true;el('teamPlanStatus').textContent='Checking this team’s plan…';
+  const current=()=>ticket===generation&&identity===account()&&allowed()&&visible();
+  try{
+   const {data,error}=await client.rpc('team_plan_request',{p_team_id:teamId});
+   if(!current())return;
+   if(error||!data||data.team_id!==teamId||!['free','pilot','subscription'].includes(data.access_source))throw Error('Plan status is unavailable. Please refresh in a moment.');
+   render(data);el('teamPlanStatus').textContent='';
+  }catch(e){if(current())el('teamPlanStatus').textContent='Plan status is unavailable. Please refresh in a moment.';}
+  finally{if(current()){busy=false;el('teamPlanRefresh').disabled=false;}}
+ }
+ function open(){if(!allowed())return;closeSheets();openSheet('teamPlanSheet');identity=account();refresh();}
+ function inventoryCsv(rows){
+  const cell=value=>{let s=String(value??'');if(/^[\s]*[=+@-]/.test(s)||/^[\t\r\n]/.test(s))s="'"+s;return '"'+s.replaceAll('"','""')+'"';};
+  return [['Item','Total','Issued','Available','Notes'],...rows.map(r=>[r.title,r.quantity,r.checked_out,r.quantity-r.checked_out,r.notes])].map(r=>r.map(cell).join(',')).join('\r\n');
+ }
+ el('teamPlanBtn').onclick=open;el('teamPlanRefresh').onclick=refresh;
+ document.addEventListener('visibilitychange',()=>{sync();if(!document.hidden&&visible())refresh();});
+ window.addEventListener('focus',()=>{sync();if(visible())refresh();});
+ // Lock/account changes clear the visible projection even without a navigation event.
+ setInterval(()=>{sync();},1000);
+ setInterval(()=>{if(!document.hidden&&visible())refresh();},60000);
+ sync();return {open,reset,sync,inventoryCsv};
 })();
 
 </script>
