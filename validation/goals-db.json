@@ -1,0 +1,20 @@
+{
+  "passed": 15,
+  "tests": [
+    "Athlete can adjust active goals without generating an accomplishment",
+    "Completion earns one server-dated accomplishment; unchanged saves keep one star",
+    "Stale and retry writes cannot duplicate a completion",
+    "Completed text cannot silently overwrite the accomplished goal",
+    "Replacement clears only its slot and preserves the accomplishment",
+    "A new goal can earn its own star; correcting a completion retracts only that star",
+    "Active teammates can view goals and accomplishments, but cannot edit or publish them",
+    "Linked parent can edit their child, without gaining access to unrelated teammates",
+    "Coach visibility does not grant parent-only profile sharing",
+    "Other teams cannot access private goals; profile sharing defaults off",
+    "Parent opt-in projects current goals only, with no accomplishment history or internal metadata",
+    "Removed template slots stay private to athlete/parents; profile preview uses the filtered projection",
+    "Revoked guardian authority and profile blocking prevent broader goal disclosure",
+    "Private profile and parent sharing-off immediately suppress profile goals",
+    "Shared/anonymous accounts and direct table/helper access denied"
+  ]
+}

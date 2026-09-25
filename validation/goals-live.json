@@ -1,0 +1,15 @@
+{
+  "release": "0.20.40",
+  "migration": "20260925022527_athlete_goal_accomplishments_02040",
+  "engine": "Connected PostgreSQL; authenticated role and synthetic test claims at database boundary",
+  "passed": 10,
+  "tests": ["completion", "stale-save", "replacement", "teammate", "parent-scope", "profile-projection", "tenant-separation", "table-denial", "helper-denial", "guardian-revocation"],
+  "fixture_cleanup": "All synthetic rows rolled back",
+  "before_after_existing_row_counts_match": true,
+  "new_accomplishment_rows_after_test": 0,
+  "new_profile_sharing_rows_after_test": 0,
+  "real_team_settings_changed": false,
+  "real_athlete_goals_changed": false,
+  "credentials_sessions_or_invitations_created": false,
+  "native_device_tested": false
+}

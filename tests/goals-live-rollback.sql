@@ -1,0 +1,61 @@
+-- Run only after the 0.20.40 migration. Synthetic fixtures never commit.
+-- No emails, sessions, passwords, invitations or real team writes.
+begin;
+do $$
+declare org uuid=gen_random_uuid(); t uuid=gen_random_uuid(); ss uuid=gen_random_uuid();
+ coach uuid=gen_random_uuid(); parent uuid=gen_random_uuid(); athlete uuid=gen_random_uuid(); mate uuid=gen_random_uuid(); outsider uuid=gen_random_uuid();
+ a uuid=gen_random_uuid(); b uuid=gen_random_uuid(); portable uuid; pid uuid=gen_random_uuid();
+ p jsonb; oldp jsonb; q jsonb; entries jsonb; denied boolean; star text;
+begin
+ insert into auth.users(id,raw_user_meta_data) values(coach,'{"name":"Goal validation coach"}'),(parent,'{"name":"Goal validation parent"}'),(athlete,'{"name":"Goal validation athlete"}'),(mate,'{"name":"Goal validation teammate"}'),(outsider,'{"name":"Goal validation outsider"}');
+ insert into public.organizations(id,name) values(org,'Temporary goal validation');
+ insert into public.teams(id,organization_id,name) values(t,org,'Temporary goal validation team');
+ insert into public.seasons(id,team_id,name,active) values(ss,t,'Temporary season',true);
+ insert into public.athletes(id,organization_id,first_name,last_name) values(a,org,'Example','Athlete'),(b,org,'Example','Teammate');
+ select profile_id into portable from public.athletes where id=a;
+ insert into public.roster_memberships(season_id,athlete_id) values(ss,a),(ss,b);
+ insert into public.team_memberships(team_id,user_id,athlete_id,role) values(t,coach,null,'head_coach'),(t,parent,a,'parent_guardian'),(t,athlete,a,'athlete'),(t,mate,b,'athlete');
+ insert into public.athlete_guardians(athlete_id,guardian_user_id,name) values(a,parent,'Example Guardian');
+ insert into private.wrestling_profiles(id,athlete_profile_id,name,discoverable) values(pid,portable,'Example Athlete',true);
+ perform set_config('request.jwt.claim.sub',coach::text,true);execute 'set local role authenticated';
+ p:=public.team_goals_request('context',jsonb_build_object('team_id',t));
+ p:=public.team_goals_request('settings_save',jsonb_build_object('team_id',t,'revision',p->'revision','enabled',true,'instructions','Synthetic test only','categories','[{"id":"wrestling","label":"Wrestling","count":1,"prompt":""}]'::jsonb));
+ perform set_config('request.jwt.claim.sub',athlete::text,true);
+ p:=public.team_goals_request('view',jsonb_build_object('team_id',t,'athlete_id',a));oldp:=p;
+ entries:='{"wrestling:1":{"text":"Finish five clean takedowns","complete":true}}';
+ p:=public.team_goals_request('save',jsonb_build_object('team_id',t,'athlete_id',a,'settings_revision',p->'settings_revision','revision',p->'revision','entries',entries));
+ if jsonb_array_length(p->'accomplishments')<>1 or p->'accomplishments'->0->>'completed_at' is null then raise exception 'Completion missing';end if;
+ star:=p->'accomplishments'->0->>'id';
+ denied:=false;begin
+  perform public.team_goals_request('save',jsonb_build_object('team_id',t,'athlete_id',a,'settings_revision',oldp->'settings_revision','revision',oldp->'revision','entries',entries));
+ exception when others then if sqlerrm not like '%another device%' then raise;end if;denied:=true;end;
+ if not denied then raise exception 'Stale save accepted';end if;
+ p:=public.team_goals_request('replace',jsonb_build_object('team_id',t,'athlete_id',a,'settings_revision',p->'settings_revision','revision',p->'revision','entries',entries,'goal_key','wrestling:1'));
+ if p->'entries'->'wrestling:1'->>'text'<>'' or p->'accomplishments'->0->>'id'<>star then raise exception 'Replacement lost accomplishment';end if;
+ entries:='{"wrestling:1":{"text":"Finish ten clean takedowns","complete":false}}';
+ p:=public.team_goals_request('save',jsonb_build_object('team_id',t,'athlete_id',a,'settings_revision',p->'settings_revision','revision',p->'revision','entries',entries));
+ perform set_config('request.jwt.claim.sub',mate::text,true);
+ q:=public.team_goals_request('view',jsonb_build_object('team_id',t,'athlete_id',a));
+ if (q->>'editable')::boolean or jsonb_array_length(q->'accomplishments')<>1 then raise exception 'Teammate view incorrect';end if;
+ perform set_config('request.jwt.claim.sub',parent::text,true);
+ p:=public.team_goals_request('profile_sharing',jsonb_build_object('team_id',t,'athlete_id',a,'enabled',true,'revision',0));
+ denied:=false;begin perform public.team_goals_request('view',jsonb_build_object('team_id',t,'athlete_id',b));exception when others then if sqlerrm not like '%not available%' then raise;end if;denied:=true;end;
+ if not denied then raise exception 'Parent read unrelated child';end if;
+ perform set_config('request.jwt.claim.sub',outsider::text,true);
+ q:=public.wrestling_profiles_request('view',jsonb_build_object('id',pid));
+ if q->'shared_goals'->0->'goals'->0->>'text'<>'Finish ten clean takedowns' or (q->'shared_goals')::text like '%five clean%' or (q->'shared_goals')::text like '%achievement_id%' then raise exception 'Profile projection incorrect';end if;
+ denied:=false;begin perform public.team_goals_request('view',jsonb_build_object('team_id',t,'athlete_id',a));exception when others then if sqlerrm not like '%access required%' then raise;end if;denied:=true;end;
+ if not denied then raise exception 'Outsider read team goals';end if;
+ denied:=false;begin perform 1 from private.athlete_goal_accomplishments;exception when insufficient_privilege then denied:=true;end;
+ if not denied then raise exception 'Direct history read allowed';end if;
+ denied:=false;begin perform private.goals040_profile(pid);exception when insufficient_privilege then denied:=true;end;
+ if not denied then raise exception 'Direct helper access allowed';end if;
+ execute 'reset role';update public.team_memberships set active=false where user_id=parent;
+ execute 'set local role authenticated';
+ q:=public.wrestling_profiles_request('view',jsonb_build_object('id',pid));
+ if q->'shared_goals'<>'[]'::jsonb then raise exception 'Revoked guardian still publishing';end if;
+ execute 'reset role';
+ perform set_config('goals040.validation','completion,stale-save,replacement,teammate,parent-scope,profile-projection,tenant-separation,table-denial,helper-denial,guardian-revocation',true);
+end $$;
+select current_setting('goals040.validation') as passed, 'All synthetic fixture rows rolled back' as cleanup;
+rollback;

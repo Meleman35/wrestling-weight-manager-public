@@ -1,0 +1,10 @@
+{
+  "release": "0.20.40",
+  "baseline": "70e6942003c00c0d898f3887a496924151165148",
+  "syntax_checks": 35,
+  "preserved_script_checks": 35,
+  "embedded_sources": 1,
+  "profile_rpc_preserved": true,
+  "index_sha256": "0bc995752c94667fde1fb5835522179c806746a6af29c0bfd889aa576c3a89b4",
+  "bytes": 5403903
+}

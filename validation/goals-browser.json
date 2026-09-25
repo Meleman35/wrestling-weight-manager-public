@@ -1,0 +1,14 @@
+{
+  "engine": "Chromium whole app + PGlite guarded goal/profile RPCs",
+  "passed": 8,
+  "tests": [
+    "Locker Room Goals tab fits phone; completing saves before celebrating with a star",
+    "Set a new goal opens a blank slot and keeps the accomplished goal",
+    "Lost response does not celebrate prematurely; reload finds one saved accomplishment",
+    "Correcting completion removes its star and allows editing again",
+    "Profile/Clipboard goals sheet and Locker Room tab reuse the saved data without duplicate controls",
+    "Linked parent sees only their child and explicitly opts into profile sharing",
+    "What others see shows parent-approved current goals and excludes accomplishment history",
+    "Teammate can view goals and stars with no editing or profile-sharing controls"
+  ]
+}
