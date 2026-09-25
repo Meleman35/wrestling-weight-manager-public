@@ -1,0 +1,10 @@
+{
+  "passed": 4,
+  "tests": [
+    "Only selected countdown thresholds appear in the sample preview",
+    "Enabling choices after a threshold or readiness status has been consumed does not replay it",
+    "Completed bouts cannot produce mat-change alerts",
+    "Mat-only preview still permits selected assignment changes without timing"
+  ],
+  "scope": "Pure preference-aware sample simulation"
+}

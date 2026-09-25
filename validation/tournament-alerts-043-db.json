@@ -1,0 +1,19 @@
+{
+  "passed": 13,
+  "tests": [
+    "Choices default off and belong only to the signed-in account and team",
+    "Stale revisions, malformed inputs, outsiders and managed accounts cannot save choices",
+    "Server-only preparation emits each threshold once, selects only the next bout and survives repeated batches",
+    "Estimate delays and mat revisions prepare changes without replaying consumed countdowns; expired drafts disappear",
+    "Status reversals do not repeat readiness alerts",
+    "Mat-only recipient preparation contains only mat and bout information; no opponent data is staged",
+    "Membership removal and paused team notifications remove pending recipient drafts",
+    "Delayed older revisions cannot replace newer durable state",
+    "Unknown and stale estimates stay silent, and deselected alert kinds stay off",
+    "Saving new choices invalidates pending drafts immediately",
+    "Background authorization distinguishes linked family, revoked guardians, managers, organization admins, managed logins and active rosters",
+    "Anonymous access, raw records, recipient helpers and worker execution are unavailable to clients",
+    "All worker runs leave the live-delivery-shaped inbox and queue untouched"
+  ],
+  "engine": "Isolated PGlite using migration SQL; synthetic data only; no production writes"
+}
