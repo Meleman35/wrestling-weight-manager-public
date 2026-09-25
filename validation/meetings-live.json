@@ -1,0 +1,22 @@
+{
+  "meeting": {
+    "checks": [
+      "Live public RPC creates one meeting across retries",
+      "Ordinary member cannot read draft through actual live access helpers",
+      "Actual database enforces idempotent save and revision conflicts",
+      "Adjourned minutes available to member with restricted notes excluded",
+      "Approval and correction create immutable separately labeled versions",
+      "Direct confidential table and legacy meeting API denied",
+      "Legacy voting remains disabled",
+      "Unrelated and anonymous identities rejected"
+    ],
+    "passed": 8
+  },
+  "profile": {
+    "passed": 2,
+    "shared_profile": "Shared affiliation shown; private bio and family corner omitted by live server",
+    "private_profile": "Undiscoverable profile returns unavailable with empty details"
+  },
+  "transactions": "All test mutations rolled back.",
+  "migration": "20260925001745_organization_meetings_02038"
+}

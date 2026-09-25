@@ -1,0 +1,19 @@
+{
+  "passed": 14,
+  "tests": [
+    "Meeting created with assigned secretary and unconfigured quorum",
+    "Server autosave survives closing and reopening the meeting",
+    "Offline error is visible and navigation cannot silently discard edits",
+    "Retry reuses the same request after uncertain failure",
+    "A rejected validation can be corrected without discarding the draft",
+    "Lost response retry does not duplicate an accepted save",
+    "Edits typed during a save are queued and persist afterward",
+    "Revision conflicts preserve local edits and provide a saved-copy comparison",
+    "Adjournment shows unapproved minutes and separates restricted notes",
+    "Corrections save a new minutes version with a reason",
+    "Reader view has no editor or executive notes",
+    "What others see tab requests filtered profile and hides owner tools/private family fields",
+    "Private profile preview explains visibility and retains both tabs",
+    "Phone meeting and profile tabs fit at 390px with no script errors"
+  ]
+}

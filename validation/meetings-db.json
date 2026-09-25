@@ -1,0 +1,28 @@
+{
+  "engine": "PGlite / PostgreSQL",
+  "passed": 22,
+  "tests": [
+    "Adult candidate list excludes minor, shared and unrelated accounts",
+    "Assignment requires adult attestation and tenant eligibility",
+    "Create retry returns original meeting; changed replay rejected",
+    "Roll snapshots distinct adults; unreviewed affiliates and quorum stay unconfigured",
+    "Draft and executive access denied to titles, ordinary members, affiliates, minors, other tenants and team logins",
+    "President title alone grants no meeting creation access",
+    "Assigned chair can read draft but cannot edit",
+    "Secretary autosave is durable; stale/missing revisions fail; retries do not double-write",
+    "Reload returns complete agenda, discussion, motion, actions and restricted notes",
+    "Quorum cannot acquire an implicit rule and roster identity cannot be rewritten",
+    "No zero-ballot majority or unsubstantiated passed/denied outcome",
+    "Adjournment publishes minutes atomically",
+    "Authorized members and approved affiliates receive shared minutes without executive notes or private IDs",
+    "Published history and ID substitution preserve tenant separation",
+    "Approval requires actual date, reference and attestation; creates separate revision",
+    "Correction requires reason, creates an unapproved revision and preserves prior approval",
+    "Directory edits cannot rewrite meeting snapshots; all published revisions exclude executive content",
+    "Revoking affiliate authorization removes published minutes access",
+    "Revoked secretary cannot keep using an old assignment",
+    "Legacy electronic voting remains blocked",
+    "Direct tables and helper functions are inaccessible to authenticated clients",
+    "Anonymous access rejected"
+  ]
+}
