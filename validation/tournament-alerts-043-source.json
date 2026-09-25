@@ -1,0 +1,20 @@
+{
+  "baseline": "82e89ca2ec9cd3f28ed205e19ce3a9d28fb62eb4",
+  "reproducible": true,
+  "idempotent": true,
+  "inline_scripts_syntax_checked": 40,
+  "preserved_files": [
+    "mat-mode.html",
+    "auth-confirm.html",
+    "app.js",
+    "styles.css",
+    "src/join-copy.js",
+    "src/clipboard-navigation.js",
+    "src/tournament-provider.js",
+    "src/athlete-goals.js",
+    "src/notification-inbox.js",
+    "src/message-reactions.js"
+  ],
+  "scheduler_or_delivery_writes": false,
+  "sha256": "49b2afb5b602fd2bc5304ebefb2ab27752e5106a597381821e47e0dc03a9deff"
+}

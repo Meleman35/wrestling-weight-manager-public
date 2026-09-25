@@ -1,0 +1,52 @@
+const assert=require('node:assert/strict'),fs=require('fs'),path=require('path'),{PGlite}=require('@electric-sql/pglite'),{fixture,root}=require('./tournament-alerts-043-fixture.cjs');
+(async()=>{
+ const db=new PGlite(),f=await fixture(db),{ids,as,preferences,tick,due}=f,tests=[];const pass=s=>{tests.push(s);console.log('PASS',s)};
+ const now=new Date(),iso=n=>new Date(now.getTime()+n*60000).toISOString(),all={countdown_minutes:[60,30,15,10,5],readiness:true,changes:true};
+ const drafts=async()=>{await db.exec('reset role');return (await db.query('select * from private.tournament_alert_drafts order by event_key')).rows;};
+ assert.deepEqual(await preferences(),{countdown_minutes:[],readiness:false,changes:false,revision:0,delivery_active:false});
+ let p=await preferences('save',{...all,revision:0,user_id:ids.parent});assert.equal(p.revision,1);
+ await as(ids.parent);assert.equal((await preferences()).revision,0);await as(ids.coach);assert.equal((await preferences()).revision,1);pass('Choices default off and belong only to the signed-in account and team');
+ await assert.rejects(()=>preferences('save',{...all,revision:0}),/another device/);
+ for(const bad of [{countdown_minutes:[1]},{countdown_minutes:['5']},{readiness:'true'},{revision:1.5},{countdown_minutes:null}])await assert.rejects(()=>preferences('save',{...all,revision:1,...bad}));
+ await as(ids.outsider);await assert.rejects(()=>preferences(),/access required/);await as(ids.shared);await assert.rejects(()=>preferences(),/Personal account/);pass('Stale revisions, malformed inputs, outsiders and managed accounts cannot save choices');
+ await as(ids.coach);await f.call('setup',{timezone:'America/Denver'});const first=f.row({estimated_start:iso(65)});await f.call('save_bout',first);await f.call('save_bout',f.row({queue_order:2,estimated_start:iso(5)}));
+ await db.exec('reset role');await db.query('update private.tournament_bouts set updated_at=$1',[iso(0)]);
+ let r=await tick(now);assert.equal(r.prepared,0);const kinds=[];
+ for(const minute of [5,35,50,55,60]){
+  await db.query('update private.tournament_bouts set updated_at=$1',[iso(minute)]);await due();r=await tick(new Date(iso(minute)));assert.equal(r.prepared,1);kinds.push((await drafts())[0].event_key);
+  await due();assert.equal((await tick(new Date(iso(minute)))).prepared,0);
+ }
+ assert.deepEqual(kinds,['minutes:60','minutes:30','minutes:15','minutes:10','minutes:5']);pass('Server-only preparation emits each threshold once, selects only the next bout and survives repeated batches');
+ await db.query("update private.tournament_bouts set mat='3',estimated_start=$1,revision=2,updated_at=$2 where id=$3",[iso(80),iso(61),first.id]);await due();r=await tick(new Date(iso(61)));assert.equal(r.prepared,2);assert.deepEqual((await drafts()).map(x=>x.kind).sort(),['assignment','reschedule']);
+ await db.query('update private.tournament_bouts set updated_at=$1 where id=$2',[iso(70),first.id]);await due();assert.equal((await tick(new Date(iso(70)))).prepared,0);assert.equal((await drafts()).length,0);pass('Estimate delays and mat revisions prepare changes without replaying consumed countdowns; expired drafts disappear');
+ await db.query("update private.tournament_bouts set status='on_deck',revision=3,updated_at=$1 where id=$2",[iso(70),first.id]);await due();assert.equal((await tick(new Date(iso(70)))).prepared,1);
+ await db.query("update private.tournament_bouts set status='queued',revision=4,updated_at=$1 where id=$2",[iso(71),first.id]);await due();await tick(new Date(iso(71)));
+ await db.query("update private.tournament_bouts set status='on_deck',revision=5,updated_at=$1 where id=$2",[iso(72),first.id]);await due();assert.equal((await tick(new Date(iso(72)))).prepared,0);pass('Status reversals do not repeat readiness alerts');
+ await as(ids.athlete);await preferences('save',{...all,revision:0});await as(ids.parent);await f.call('visibility',{athlete_id:ids.a,level:'mat_only',revision:0});await due();await tick(new Date(iso(72)));
+ assert.equal((await drafts()).filter(x=>x.user_id===ids.athlete).length,0);
+ await db.query("update private.tournament_bouts set mat='4',revision=6,updated_at=$1 where id=$2",[iso(73),first.id]);await due();await tick(new Date(iso(73)));let rows=(await drafts()).filter(x=>x.user_id===ids.athlete);assert.equal(rows.length,1);assert.equal(rows[0].kind,'assignment');assert.deepEqual(Object.keys(rows[0].payload).sort(),['bout_number','mat']);assert(!JSON.stringify(await drafts()).includes('Private Opponent'));pass('Mat-only recipient preparation contains only mat and bout information; no opponent data is staged');
+ await db.query('update public.team_memberships set active=false where user_id=$1',[ids.athlete]);await due();await tick(new Date(iso(73)));assert.equal((await drafts()).filter(x=>x.user_id===ids.athlete).length,0);
+ await db.query('update public.team_memberships set notifications_paused=true where user_id=$1',[ids.coach]);await due();await tick(new Date(iso(73)));assert.equal((await drafts()).length,0);pass('Membership removal and paused team notifications remove pending recipient drafts');
+ await db.query('update public.team_memberships set notifications_paused=false where user_id=$1',[ids.coach]);
+ await db.query("update private.tournament_bouts set mat='9',revision=1,updated_at=$1 where id=$2",[iso(1),first.id]);await due();assert.equal((await tick(new Date(iso(73)))).prepared,0);pass('Delayed older revisions cannot replace newer durable state');
+ await as(ids.coach);p=await preferences('save',{countdown_minutes:[5],readiness:false,changes:false,revision:1});assert.equal(p.revision,2);
+ await db.exec('reset role');await db.query("update private.tournament_bouts set estimated_start=null,status='on_deck',revision=7,updated_at=$1 where id=$2",[iso(74),first.id]);await due();assert.equal((await tick(new Date(iso(74)))).prepared,0);
+ await db.query("update private.tournament_bouts set estimated_start=$1,revision=8,updated_at=$2 where id=$3",[iso(89),iso(74),first.id]);await due();assert.equal((await tick(new Date(iso(85)))).prepared,0);pass('Unknown and stale estimates stay silent, and deselected alert kinds stay off');
+ await as(ids.coach);await preferences('save',{...all,revision:2});await db.exec('reset role');await db.query("update private.tournament_bouts set estimated_start=$1,status='up_next',revision=9,updated_at=$2 where id=$3",[iso(90),iso(86),first.id]);await due();await tick(new Date(iso(86)));assert((await drafts()).length>0);
+ await as(ids.coach);await preferences('save',{countdown_minutes:[],readiness:false,changes:false,revision:3});assert.equal((await drafts()).length,0);pass('Saving new choices invalidates pending drafts immediately');
+ await db.exec('reset role');
+ const level=async(u,a=ids.a,t=ids.team)=>(await db.query('select private.tournament_alert_viewer_level($1,$2,$3) v',[t,a,u])).rows[0].v;
+ assert.equal(await level(ids.parent),'full');assert.equal(await level(ids.parent,ids.b),null);
+ await db.query('delete from public.athlete_guardians where guardian_user_id=$1',[ids.parent]);assert.equal(await level(ids.parent),null);
+ await db.query("insert into public.team_memberships(team_id,user_id,role) values($1,$2,'manager')",[ids.team,ids.outsider]);assert.equal(await level(ids.outsider),null);
+ await db.query("update public.team_memberships set permissions='{\"team_admin\":true}' where team_id=$1 and user_id=$2",[ids.team,ids.outsider]);assert.equal(await level(ids.outsider),'full');
+ await db.query('delete from public.team_memberships where team_id=$1 and user_id=$2',[ids.team,ids.outsider]);
+ await db.query('update public.teams set organization_id=$1 where id=$2',[ids.other,ids.team]);await db.query("insert into public.organization_memberships values($1,$2,'organization_admin')",[ids.other,ids.outsider]);assert.equal(await level(ids.outsider),'full');
+ await db.query("insert into public.team_memberships(team_id,user_id,role) values($1,$2,'head_coach')",[ids.team,ids.shared]);assert.equal(await level(ids.shared),null);
+ await db.query('update public.roster_memberships set active=false where athlete_id=$1',[ids.a]);assert.equal(await level(ids.outsider),null);
+ pass('Background authorization distinguishes linked family, revoked guardians, managers, organization admins, managed logins and active rosters');
+ for(const uid of [ids.coach,ids.athlete]){await as(uid);await assert.rejects(()=>db.query('select * from private.tournament_alert_drafts'),/permission denied/);await assert.rejects(()=>db.query('select private.prepare_tournament_alert_drafts()'),/permission denied/);await assert.rejects(()=>db.query('select private.tournament_alert_viewer_level($1,$2,$3)',[ids.team,ids.a,ids.coach]),/permission denied/);}
+ await db.exec('reset role;set role anon');await assert.rejects(()=>preferences(),/permission denied/);pass('Anonymous access, raw records, recipient helpers and worker execution are unavailable to clients');
+ await db.exec('reset role');const q=(await db.query('select (select count(*) from public.communication_notifications)::int inbox,(select count(*) from public.communication_delivery_queue)::int delivery')).rows[0];assert.deepEqual(q,{inbox:0,delivery:0});pass('All worker runs leave the live-delivery-shaped inbox and queue untouched');
+ fs.writeFileSync(path.join(root,'validation/tournament-alerts-043-db.json'),JSON.stringify({passed:tests.length,tests,engine:'Isolated PGlite using migration SQL; synthetic data only; no production writes'},null,2));await db.close();
+})().catch(e=>{console.error(e);process.exit(1)});

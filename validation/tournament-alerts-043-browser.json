@@ -1,0 +1,12 @@
+{
+  "passed": 6,
+  "tests": [
+    "Fresh account/team choices default off and clearly state that delivery is inactive",
+    "Reminder and readiness choices save through SQL and restore after reopening",
+    "Another-device conflicts preserve unsaved controls and reload exposes the newer saved choices",
+    "Sample preview follows saved choices; temporary demo changes never save or send notifications",
+    "Switching accounts or teams does not carry over another set of choices",
+    "Account switches clear controls and discard delayed preference responses"
+  ],
+  "engine": "Whole-page Chromium at 390px + migration SQL in isolated PGlite; external requests blocked"
+}

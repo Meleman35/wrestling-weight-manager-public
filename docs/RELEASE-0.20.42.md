@@ -30,7 +30,7 @@ Updates use stable internal UUIDs and optimistic revisions. Stale edits and dupl
 - 12 live database checks passed using synthetic users without email, passwords or sessions in one rolled-back transaction. No real invitations, notifications, athlete records or team events were changed.
 - Security advisors: existing warning counts unchanged (2 anonymous-definer notices, 181 authenticated-definer notices and the existing password-protection notice). Four new informational no-policy notices are intentional: the private raw tables deny direct client access, with data returned only by the permission-filtered RPC. See [Supabase's RLS advisory](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy).
 
-Test commands use the installed Playwright and PGlite runtime. Browser screenshots were inspected at 390px and desktop widths. Physical iPhone/TestFlight clipboard behavior still requires device confirmation; simulated web-view API availability is not a device test.
+Test commands use the installed Playwright and PGlite runtime. Browser screenshots were inspected at 390px and desktop widths. Damon confirmed the requested iPhone checks for Team Join copying, Clipboard customization and the tournament demo working on September 25, 2026. Automated simulated web-view checks remain separate from that user device confirmation.
 
 ## Deployment and remaining integration work
 
