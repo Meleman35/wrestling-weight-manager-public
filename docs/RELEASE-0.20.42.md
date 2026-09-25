@@ -34,7 +34,7 @@ Test commands use the installed Playwright and PGlite runtime. Browser screensho
 
 ## Deployment and remaining integration work
 
-Web publication is pending Damon’s approval. Automatic approval review rejected pushing directly to main because publishing was not explicitly authorized in this turn. The tested code is on a separate review branch; the current public app remains 0.20.41. The additive database migration below is already installed and does not alter existing features or records.
+Damon explicitly approved publishing 0.20.42 on September 24, 2026. The reviewed release is published through PR #1. The additive database migration below is already installed and does not alter existing features or records.
 
 Migration `20260925033022_tournament_foundation_02042.sql` was applied once to project `vfocpoyexnjsjpxhhyqr`, with rollback-only validation afterward. No earlier migrations were reapplied.
 
