@@ -1,0 +1,19 @@
+{
+  "engine": "Chromium; complete HTML; isolated synthetic accounts and email transport",
+  "passed": 13,
+  "tests": [
+    "Organization-only account opens its hub and invite tools without a team or team switch prompt",
+    "Phone invite form separates title, scope and permissions without horizontal overflow",
+    "Lost creation response retains form and retries the same secure invitation",
+    "Share link uses public app URL; blocked copying shows manual fallback without false success",
+    "Email failure is visible; retry preserves link and request identity and reports submission only",
+    "Pending invitations can be revoked; full administrator access is explicit",
+    "Late invitation responses cannot overwrite another organization tab",
+    "Acceptance previews access, requires consent and can be cancelled without granting a role",
+    "Limited leader accepts directly into the organization without team membership or administrator invite tools",
+    "Wrong-email rejection appears in the invitation form and grants nothing",
+    "Account change closes the consent dialog without granting access",
+    "WMO link selects leadership signup, survives email confirmation and reload, and resumes with explicit consent",
+    "Integrated app completes without JavaScript errors"
+  ]
+}

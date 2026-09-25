@@ -1,0 +1,6 @@
+.oi-root #oiStatus:empty{display:none}.oi-root #oiStatus{overflow-wrap:anywhere}.oi-root .ops-card button{margin-top:12px}.oi-root #oiLink{width:100%;box-sizing:border-box}
+#organizationInviteReview{width:min(560px,calc(100% - 32px));max-height:calc(100dvh - 40px);border:0;border-radius:20px;padding:24px;box-sizing:border-box;overflow:auto;color:var(--ink,#142338);background:var(--paper,#fff)}
+#organizationInviteReview::backdrop{background:rgba(10,25,44,.66)}
+#organizationInviteReview .ops-check{display:flex;align-items:flex-start;gap:10px;margin:18px 0}#organizationInviteReview .ops-check input{width:auto;flex:0 0 auto;margin-top:4px}
+#organizationInviteReview .ops-actions{display:flex;flex-wrap:wrap;gap:10px}#organizationInviteReview p{overflow-wrap:anywhere}#oiReviewStatus{color:#8d2d2d}
+#setupOrganizations button{margin-top:10px}
