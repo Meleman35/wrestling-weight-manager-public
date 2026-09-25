@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.40: Goal accomplishments, replacements, Locker Room goals and parent-approved profile sharing. -->
+<!-- Wrestling Manager v0.20.41: Cross-team notification badges, wrestling reactions and invite email reminders. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -677,6 +677,24 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
    Keep legacy hook nodes in the DOM for compatibility with existing refresh code. */
 #organizationHeading, #homeOrganizationPanel { display:none !important; }
 </style>
+<style id="communications041Style">
+/* Team navigation notifications and mobile reaction picker. */
+#teamSwitcherBtn{position:relative;padding-right:38px}
+.team-unread-badge{position:absolute;top:1px;right:1px;min-width:24px;height:24px;padding:2px 6px;display:grid;place-items:center;border-radius:99px;background:#d92d20;color:#fff;font-size:12px;font-weight:900;font-style:normal;border:2px solid white;line-height:1}
+.team-choice-row{position:relative;min-width:0}.team-choice-row .team-choice{min-height:76px;padding-right:64px}.team-choice-row .team-choice>span:first-child{min-width:0;overflow-wrap:anywhere}
+.team-notification-badge{position:absolute;right:9px;top:8px;min-width:44px;min-height:44px;padding:8px;border-radius:99px;background:#d92d20!important;color:#fff!important;font-size:15px;font-weight:900;box-shadow:none!important;z-index:1}
+#otherTeamNotificationsBtn{margin:8px 0 16px;text-align:left;background:#fff2f0;color:#912018;border:1px solid #ffcdc7;min-height:44px}
+.invite-email-reminder{padding:12px 14px;border-radius:12px;background:#fff8df;border:1px solid #efd28a;color:#66470a;font-size:14px;line-height:1.45}
+.message-reactions{display:flex;flex-wrap:wrap;gap:5px;margin:5px 0 3px 40px}.message-row.mine .message-reactions{justify-content:flex-end;margin-left:0}
+.message-reactions:empty{display:none}.reaction-chip{font-size:16px;min-height:36px;min-width:44px;padding:5px 10px;border:1px solid #d0d5dd;border-radius:20px;background:#f2f4f7!important;color:#243b53!important;box-shadow:none!important}.reaction-chip.selected{background:#e3efff!important;border-color:#2679da}.reaction-chip:disabled{opacity:1;cursor:default}
+#messageReactionDialog{max-width:360px;width:calc(100% - 32px);border:0;padding:20px;border-radius:24px;box-shadow:0 16px 70px #10182855;color:#142b46;max-height:calc(100dvh - 48px);overflow:auto;z-index:200}
+#messageReactionDialog::backdrop{background:#10182870;backdrop-filter:blur(3px)}
+.reaction-heading{display:flex;justify-content:space-between;align-items:center;gap:10px}.reaction-heading h3{margin:0;font-size:20px}.reaction-heading button{min-width:44px;min-height:44px;background:#f2f4f7;color:#142b46;padding:8px;border-radius:50%;font-size:22px}
+#reactionChoices{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;margin:14px 0}.reaction-choice{padding:6px 0;min-height:46px;min-width:0;border:2px solid transparent;border-radius:13px;background:#f2f4f7;color:#142b46;font-size:26px;box-shadow:none!important}.reaction-choice.selected{border-color:#2679da;background:#e3efff}
+#reactionStatus{font-size:13px;line-height:1.45;overflow-wrap:anywhere}#removeMessageReaction{width:100%;min-height:44px}
+body.kiosk-locked #messageReactionDialog,body:has(#appLockOverlay:not(.hidden)) #messageReactionDialog{visibility:hidden;pointer-events:none}
+
+</style>
 </head>
 <body>
   <div id="message"></div>
@@ -707,9 +725,9 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
         <h3 id="newAccountTitle">New to Wrestling Manager?</h3>
         <p>A team link or code does not create an account. Create your own account first, then continue joining your team.</p>
         <button id="signUpBtn" class="wide" type="button">Create an Account</button>
-        <p class="fine">Already have an account? Sign in below.</p>
+        <p class="fine">Already have an account? Sign in below.</p><p class="invite-email-reminder">Can’t find your confirmation email, invitation, or team code? Check your Junk or Spam folder. If the email is there, mark it as Not Junk and return here to continue.</p>
       </div>
-      <div id="confirmationNotice" class="privacy-note hidden" role="status"><b>Check your email</b><p>Confirm the email for <span id="confirmationEmail"></span>, then return here and sign in with your password.</p><p id="confirmationStatus">Check your spam folder too. A team request may still need coach approval after you sign in.</p><button id="resendConfirmationBtn" type="button" class="secondary">Resend Confirmation Email</button></div>
+      <div id="confirmationNotice" class="privacy-note hidden" role="status"><b>Check your email</b><p>Confirm the email for <span id="confirmationEmail"></span>, then return here and sign in with your password.</p><p id="confirmationStatus">Check your Junk or Spam folder for the confirmation email, invitation, or team code. A team request may still need coach approval after you sign in.</p><button id="resendConfirmationBtn" type="button" class="secondary">Resend Confirmation Email</button></div>
       <div class="view-mode-switch" style="margin-bottom:18px"><button id="personalSignInTab" type="button" aria-pressed="true">Personal Login</button><button id="teamSignInTab" class="secondary" type="button" aria-pressed="false">Team Login</button></div>
       <p id="teamSignInNotice" class="fine hidden">Use Team Login only if your administrator gave you a username and password. To join a team with your own account, use Personal Login or Create an Account above.</p>
       <form id="personalSignInFields" method="post" autocomplete="on" onsubmit="event.preventDefault()">
@@ -756,7 +774,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
       <p id="signUpRoleHelp" class="fine">Choose a role to continue.</p>
       <label for="signUpEmail">Your email</label><input id="signUpEmail" name="username" type="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required>
       <label for="signUpPassword">Create a password</label><input id="signUpPassword" name="new-password" type="password" autocomplete="new-password" minlength="8" required placeholder="At least 8 characters">
-      <p id="signUpStatus" class="onboarding-status" role="status" aria-live="polite"></p>
+      <p class="invite-email-reminder">Can’t find your confirmation email, invitation, or team code? Check your Junk or Spam folder. If the email is there, mark it as Not Junk and return here to continue.</p><p id="signUpStatus" class="onboarding-status" role="status" aria-live="polite"></p>
       <button id="createPersonalAccountBtn" type="submit" class="wide" disabled>Create Account</button>
     </form>
   </section>
@@ -796,7 +814,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
       <p id="setupRoleHelp" class="muted"></p>
     </div>
     <div id="setupJoinCard" class="card">
-      <h2>Join a Team</h2>
+      <h2>Join a Team</h2><p class="invite-email-reminder">Can’t find your confirmation email, invitation, or team code? Check your Junk or Spam folder. If the email is there, mark it as Not Junk and return here to continue.</p>
       <p class="muted">Scan the team QR or enter the team code. You fill out the information and the coach simply approves or denies the request.</p>
       <label>Team code</label>
       <input id="setupJoinCode" placeholder="WMW-…">
@@ -850,7 +868,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
           <small id="headerSeasonName">Season</small>
           <strong id="headerTeamName">Team</strong>
         </span>
-        <span class="chev">⌄</span>
+        <span class="chev">⌄</span><i id="teamUnreadBadge" class="team-unread-badge hidden" aria-label="0 unread updates">0</i>
       </button>
       <button id="profileBtn" class="round-btn" aria-label="Account">👤</button>
     </header>
@@ -981,6 +999,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
       </section>
 
       <section id="messagesTab" class="tabview hidden">
+        <button id="otherTeamNotificationsBtn" type="button" class="wide hidden"></button>
         <button type="button" class="tab-back-btn" data-back-home><span>←</span> Back to Locker Room</button>
         <div class="communication-head top-space"><div><div class="eyebrow">SAFEGUARDED COMMUNICATION</div><h2 style="margin:3px 0 0">Messages</h2></div><div class="communication-actions"><button id="openNotificationsBtn" type="button" class="secondary">🔔 <span id="communicationUnreadCount">0</span></button><button id="newCommunicationBtn" type="button">+ New</button></div></div>
         <div class="safesport-banner"><span>🛡️</span><div><b>Guardian-safe by design</b><small>Adults cannot privately message a minor without a connected parent or guardian receiving silent read access. Messages remain in the audit history after edits or removal. Automated checks flag secrecy, sexual-image requests, threats, off-app contact attempts and adult-to-minor phone-number sharing for human review.</small></div></div>
@@ -1416,7 +1435,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
   <section id="communicationNotificationsSheet" class="sheet hidden" aria-modal="true">
     <div class="sheet-handle"></div>
     <div class="sheet-head"><div><div class="eyebrow">MESSAGES</div><h2>All Notifications</h2></div><button class="icon-close" data-close-sheet>×</button></div>
-    <p id="notificationSyncStatus" class="fine" role="status"></p><button id="refreshAllNotificationsBtn" type="button" class="secondary wide">Refresh Notifications</button><div id="communicationNotificationList"><div class="empty-card">No unread message notifications.</div></div>
+    <button id="notificationShowAllBtn" type="button" class="secondary hidden">Show all teams</button><p id="notificationSyncStatus" class="fine" role="status"></p><button id="refreshAllNotificationsBtn" type="button" class="secondary wide">Refresh Notifications</button><div id="communicationNotificationList"><div class="empty-card">No unread message notifications.</div></div>
     <button id="markCommunicationNotificationsReadBtn" class="wide secondary" type="button">Mark All Read</button>
   </section>
 
@@ -1982,7 +2001,8 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
 
   <section id="teamSwitcherSheet" class="sheet hidden" aria-modal="true">
     <div class="sheet-handle"></div>
-    <div class="sheet-head"><div><div class="eyebrow">TEAMS</div><h2>Switch Team</h2><p class="team-switch-hint">Your role and permissions can be different on each team.</p></div><button class="icon-close" data-close-sheet>×</button></div>
+    <div class="sheet-head"><div><div class="eyebrow">TEAMS</div><h2>Switch Team</h2><p id="teamNotificationHint" class="team-switch-hint">Your role and permissions can be different on each team.</p></div><button class="icon-close" data-close-sheet>×</button></div>
+    <button id="allTeamNotificationsBtn" type="button" class="wide secondary">All notifications</button>
     <div id="teamChoiceList" class="team-choice-list"><div class="empty-card">No other teams available.</div></div>
     <button id="createTeamBtn" class="wide" type="button" style="margin-top:14px">+ Create Team</button>
   </section>
@@ -2086,7 +2106,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.40</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.41</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -2354,6 +2374,7 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
   </section>
 
   <script>
+const INVITE_EMAIL_REMINDER = "Can’t find your confirmation email, invitation, or team code? Check your Junk or Spam folder. If the email is there, mark it as Not Junk and return here to continue.";
 const SUPABASE_URL = 'https://vfocpoyexnjsjpxhhyqr.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_aX7mx8Myn8sok3bhPPmphQ_fWN8o38P';
 const EMAIL_CONFIRM_REDIRECT_URL = 'https://meleman35.github.io/wrestling-weight-manager-public/auth-confirm.html';
@@ -3335,6 +3356,7 @@ function openSheet(id){
   requestAnimationFrame(()=>{if(panel)panel.scrollTop=0;});
 }
 function closeSheets(){
+  window.WMReactions?.reset();
   if(document.body.classList.contains('kiosk-locked')) return;
   window.WMTeamPeople?.reset();
   window.WMChatMembers?.reset();
@@ -3712,7 +3734,7 @@ async function createPersonalAccount(event){
     closeSheets();
     if(accountRefreshFlight)await accountRefreshFlight;
     await refresh();
-    message(data.session?'Account created. Continue with your team setup.':'Check your email to confirm your account, then sign in to finish team setup.');
+    message(data.session?'Account created. Continue with your team setup.':'Check your inbox and Junk or Spam folder to confirm your account, then sign in to finish team setup.');
   }catch(error){status.classList.add('error');status.textContent=error.message||'Could not create your account. Please try again.';}
   finally{signUpBusy=false;button.disabled=!signUpRole;button.textContent='Create Account';document.querySelectorAll('[data-signup-role]').forEach(b=>b.disabled=false);}
 }
@@ -3751,7 +3773,7 @@ window.WMOnboarding=(()=>{
  function signOut(){write(null);pendingJoinCode='';pendingInviteToken='';requests=[];requestOwner='';++loadVersion;attempted.clear();}
  function confirmation(email){const r=read()||{at:Date.now(),join:'',invite:''};r.awaitingEmail=norm(email);write(r);$('confirmationEmail').textContent=email;show('confirmationNotice',true);}
  function confirmedLink(){chooseSignInMode(false);if(session){refresh();message('Your email link has returned to the app. Your current account is signed in.');}else{show('confirmationNotice',true);$('confirmationEmail').textContent=read()?.awaitingEmail||$('email').value||'your account';$('confirmationStatus').textContent='If your email was confirmed, sign in below with the password you created. Team approval is checked after sign-in.';$('email').focus();}}
- async function resend(){if(resendBusy||Date.now()<resendAfter)return;const email=$('email').value.trim();if(!email||!$('email').checkValidity()){$('confirmationStatus').textContent='Enter your email in the sign-in field first.';return;}resendBusy=true;$('resendConfirmationBtn').disabled=true;try{const {error}=await client.auth.resend({type:'signup',email,options:{emailRedirectTo:EMAIL_CONFIRM_REDIRECT_URL}});if(error)throw error;confirmation(email);resendAfter=Date.now()+60000;$('confirmationStatus').textContent='If this account needs confirmation, a new email is on its way. Use the newest link. You can request another in one minute.';setTimeout(()=>{$('resendConfirmationBtn').disabled=false;},60000);}catch(error){$('confirmationStatus').textContent=error.message||'Could not send the email. Try again.';$('resendConfirmationBtn').disabled=false;}finally{resendBusy=false;}}
+ async function resend(){if(resendBusy||Date.now()<resendAfter)return;const email=$('email').value.trim();if(!email||!$('email').checkValidity()){$('confirmationStatus').textContent='Enter your email in the sign-in field first.';return;}resendBusy=true;$('resendConfirmationBtn').disabled=true;try{const {error}=await client.auth.resend({type:'signup',email,options:{emailRedirectTo:EMAIL_CONFIRM_REDIRECT_URL}});if(error)throw error;confirmation(email);resendAfter=Date.now()+60000;$('confirmationStatus').textContent='If this account needs confirmation, a new email is on its way. Check your Junk or Spam folder too. Use the newest link. You can request another in one minute.';setTimeout(()=>{$('resendConfirmationBtn').disabled=false;},60000);}catch(error){$('confirmationStatus').textContent=error.message||'Could not send the email. Try again.';$('resendConfirmationBtn').disabled=false;}finally{resendBusy=false;}}
  async function render(){const uid=session?.user?.id,version=++loadVersion;if(!uid||managedLogin)return;requestOwner=uid;requests=[];$('setupSignedInEmail').textContent=session.user.email||'your account';$('setupAccessStatus').textContent='Checking your team requests…';$('setupRequestList').replaceChildren();
   const {data,error}=await client.from('team_join_requests').select('id,team_id,status,athlete_first_name,athlete_last_name,submitted_at').eq('requester_user_id',uid).order('submitted_at',{ascending:false}).limit(50);
   if(version!==loadVersion||session?.user?.id!==uid)return;
@@ -4051,23 +4073,23 @@ function syncOrganizationForTeam(team){
 function renderTeamSwitcher(){
   if(!$('teamChoiceList')) return;
   $('teamChoiceList').innerHTML=availableTeams.length?[...availableTeams].sort((a,b)=>String(a.organization_id).localeCompare(String(b.organization_id))||a.name.localeCompare(b.name)).map((t,i,rows)=>`${i===0||rows[i-1].organization_id!==t.organization_id?'<h3>'+esc(organizationHeadingRows.find(o=>o.id===t.organization_id)?.name||'Organization')+'</h3>':''}
-    <button class="team-choice ${activeTeam?.id===t.id?'active':''}" type="button" data-switch-team="${t.id}">
+    <div class="team-choice-row"><button class="team-choice ${activeTeam?.id===t.id?'active':''}" type="button" data-switch-team="${t.id}">
       <span><b>${esc(t.name)}</b><small>${esc(roleLabelForTeam(t))}${(t.service_levels||[]).length?` · ${(t.service_levels||[]).map(teamLevelLabel).join(', ')}`:''}</small></span>
       <span class="check">${activeTeam?.id===t.id?'✓':'›'}</span>
-    </button>`).join(''):'<div class="empty-card">No teams available.</div>';
+    </button><button type="button" class="team-notification-badge hidden" data-team-notifications="${esc(t.id)}" aria-label="Unread team updates">0</button></div>`).join(''):'<div class="empty-card">No teams available.</div>';
   $('teamChoiceList').querySelectorAll('[data-switch-team]').forEach(btn=>btn.onclick=async()=>{
     if(btn.dataset.switchTeam===activeTeam?.id){closeSheets();return;}
     closeSheets();
     await activateTeam(btn.dataset.switchTeam);
   });
   const canCreate=!managedLogin && organizationMemberships.some(x=>x.role==='organization_admin');
-  show('createTeamBtn',canCreate);
+  show('createTeamBtn',canCreate);window.WMNotificationSync?.render();
 }
 
 function openTeamSwitcher(){
   renderTeamSwitcher();
   openSheet('teamSwitcherSheet');
-  refreshTeamSwitcherConnections();
+  refreshTeamSwitcherConnections();window.WMNotificationSync?.refresh();
 }
 
 // Give replacements a new topic while Supabase asynchronously removes the old channel.
@@ -4529,6 +4551,7 @@ async function saveEditTeam(){
 }
 
 async function activateTeam(teamId,{persist=true}={}){
+  window.WMReactions?.reset();
   const team=availableTeams.find(t=>t.id===teamId);
   if(!team){message('That team is not available to this account.',true);return;}
   if(myWeightCheckActive)resetMyWeightCheck();
@@ -5767,7 +5790,7 @@ async function loadCommunications(showErrors=true){
 function renderCommunicationInbox(){
   const list=$('communicationThreadList');if(!list)return;
   const unread=unreadMessageNotifications().length;
-  $('communicationUnreadCount').textContent=unread>99?'99+':String(unread);
+  if(window.WMNotificationSync)WMNotificationSync.render();else $('communicationUnreadCount').textContent=unread>99?'99+':String(unread);
   updateBottomNavBadges();
   if(!communicationThreads.length){list.innerHTML='<div class="empty-card">No conversations yet. Tap New to start one.</div>';return;}
   const pins=pinnedThreadIds();
@@ -5852,7 +5875,7 @@ async function refreshActiveCommunicationMessages(threadId,{stickToBottom=false,
       activeCommunicationMessages=hydrated.value;
       renderCommunicationMessages(activeCommunicationMessages,{preserveScroll:!shouldStick,distanceFromBottom,scrollTop:savedScrollTop,stickToBottom:shouldStick});
     }
-    if(markRead)settleWithin(client.rpc('mark_communication_thread_read',{p_thread_id:threadId}),6000,'Read status').then(()=>{window.WMNotificationSync?.readChanged();loadCommunications(false);window.WMJoinSync?.changed(payload);});
+    if(markRead)settleWithin(client.rpc('mark_communication_thread_read',{p_thread_id:threadId}),6000,'Read status').then(()=>{window.WMNotificationSync?.readChanged();loadCommunications(false);});
   })();
   communicationLiveRefreshPromise=task;
   try{return await task;}
@@ -6149,6 +6172,7 @@ function renderCommunicationMessages(rows,{preserveScroll=false,distanceFromBott
   list.querySelectorAll('[data-remove-message]').forEach(b=>b.onclick=()=>removeCommunicationMessage(b.dataset.removeMessage));
   list.querySelectorAll('[data-report-message]').forEach(b=>b.onclick=()=>reportCommunicationMessage(b.dataset.reportMessage));
   list.querySelectorAll('[data-preview-communication-image]').forEach(b=>b.onclick=()=>openCommunicationMediaLightbox(b.dataset.previewCommunicationImage));
+  window.WMReactions?.mount();
   const restoreScroll=()=>{
     if(stickToBottom||!preserveScroll)list.scrollTop=list.scrollHeight;
     else if(Number.isFinite(scrollTop))list.scrollTop=scrollTop;
@@ -6637,7 +6661,7 @@ async function openTextReplies(){
   if(!activeTeam)return;
   const {data,error}=await client.rpc('get_team_sms_replies',{p_team_id:activeTeam.id,p_limit:100});
   if(error){message(error.message,true);return;}
-  smsReplies=data||[];closeSheets();openSheet('textRepliesSheet');renderSmsReplies();
+  smsReplies=data||[];closeSheets();openSheet('textRepliesSheet');renderSmsReplies();return true;
 }
 
 async function markSmsRepliesRead(){
@@ -6649,7 +6673,7 @@ async function markSmsRepliesRead(){
 async function openCommunicationSafetyReview(){
   if(!isStaff)return;closeSheets();openSheet('communicationSafetySheet');
   const {data,error}=await client.rpc('get_communication_safety_queue',{p_team_id:activeTeam.id});if(error){message(error.message,true);return;}
-  communicationSafetyFlags=data||[];renderCommunicationSafetyList();
+  communicationSafetyFlags=data||[];renderCommunicationSafetyList();return true;
 }
 function renderCommunicationSafetyList(){
   const list=$('communicationSafetyList');
@@ -7117,7 +7141,7 @@ async function createAthleteInvite(){
   });
   if(error){message(error.message,true);return;}
   const token=data?.[0]?.invitation_token||data?.invitation_token;
-  const url=inviteUrl(token); $('athleteInviteTokenBox').innerHTML=`<div class="token-box">${esc(token||'Invite created')}</div><div id="athleteInviteQr" class="qr-wrap"></div><div class="share-grid"><button data-ai="text">Text</button><button data-ai="email">Email</button><button data-ai="copy">Copy Link</button><button data-ai="share">Share</button></div><p class="fine">Private invite for ${esc(a.email)}.</p>`; makeQr('athleteInviteQr',url); $('athleteInviteTokenBox').querySelector('[data-ai="text"]').onclick=()=>shareByText(`Join ${activeTeam.name} as your athlete profile: ${url}`); $('athleteInviteTokenBox').querySelector('[data-ai="email"]').onclick=()=>sendAthleteInviteEmail(a.email,url); $('athleteInviteTokenBox').querySelector('[data-ai="copy"]').onclick=()=>copyText(url); $('athleteInviteTokenBox').querySelector('[data-ai="share"]').onclick=()=>systemShare('Wrestling Manager invite','Private athlete invitation',url);
+  const url=inviteUrl(token); $('athleteInviteTokenBox').innerHTML=`<div class="token-box">${esc(token||'Invite created')}</div><div id="athleteInviteQr" class="qr-wrap"></div><div class="share-grid"><button data-ai="text">Text</button><button data-ai="email">Email</button><button data-ai="copy">Copy Link</button><button data-ai="share">Share</button></div><p class="fine">Private invite for ${esc(a.email)}.</p>`; makeQr('athleteInviteQr',url); $('athleteInviteTokenBox').querySelector('[data-ai="text"]').onclick=()=>shareByText(`Join ${activeTeam.name} as your athlete profile: ${url}\n\n${INVITE_EMAIL_REMINDER}`); $('athleteInviteTokenBox').querySelector('[data-ai="email"]').onclick=()=>sendAthleteInviteEmail(a.email,url); $('athleteInviteTokenBox').querySelector('[data-ai="copy"]').onclick=()=>copyText(url); $('athleteInviteTokenBox').querySelector('[data-ai="share"]').onclick=()=>systemShare('Wrestling Manager invite','Private athlete invitation. '+INVITE_EMAIL_REMINDER,url);
 }
 
 async function saveGuardianContact(){
@@ -7153,7 +7177,7 @@ async function createGuardianInvite(){
   if(error){ $('createGuardianInviteBtn').disabled=false; $('createGuardianInviteBtn').textContent='Create Account Invite'; message(error.message,true);return; }
   const token=data?.[0]?.invitation_token||data?.invitation_token;
   accessGuardianRecord.invitation_status='pending';
-  const url=inviteUrl(token); $('guardianInviteTokenBox').innerHTML=`<div class="token-box">${esc(token||'Invite created')}</div><div id="guardianInviteQr" class="qr-wrap"></div><div class="share-grid"><button data-gi="text">Text</button><button data-gi="email">Email</button><button data-gi="copy">Copy Link</button><button data-gi="share">Share</button></div><p class="fine"><b>Private parent invite.</b> A replacement invalidates the older code.</p>`; makeQr('guardianInviteQr',url); $('guardianInviteTokenBox').querySelector('[data-gi="text"]').onclick=()=>shareByText(`Connect to ${accessAthleteRecord?.first_name||'your athlete'} in Wrestling Manager: ${url}`); $('guardianInviteTokenBox').querySelector('[data-gi="email"]').onclick=()=>sendGuardianInviteEmail(email,name,url); $('guardianInviteTokenBox').querySelector('[data-gi="copy"]').onclick=()=>copyText(url); $('guardianInviteTokenBox').querySelector('[data-gi="share"]').onclick=()=>systemShare('Wrestling Manager parent invite','Connect to your athlete',url);
+  const url=inviteUrl(token); $('guardianInviteTokenBox').innerHTML=`<div class="token-box">${esc(token||'Invite created')}</div><div id="guardianInviteQr" class="qr-wrap"></div><div class="share-grid"><button data-gi="text">Text</button><button data-gi="email">Email</button><button data-gi="copy">Copy Link</button><button data-gi="share">Share</button></div><p class="fine"><b>Private parent invite.</b> A replacement invalidates the older code.</p>`; makeQr('guardianInviteQr',url); $('guardianInviteTokenBox').querySelector('[data-gi="text"]').onclick=()=>shareByText(`Connect to ${accessAthleteRecord?.first_name||'your athlete'} in Wrestling Manager: ${url}\n\n${INVITE_EMAIL_REMINDER}`); $('guardianInviteTokenBox').querySelector('[data-gi="email"]').onclick=()=>sendGuardianInviteEmail(email,name,url); $('guardianInviteTokenBox').querySelector('[data-gi="copy"]').onclick=()=>copyText(url); $('guardianInviteTokenBox').querySelector('[data-gi="share"]').onclick=()=>systemShare('Wrestling Manager parent invite','Connect to your athlete. '+INVITE_EMAIL_REMINDER,url);
   $('createGuardianInviteBtn').textContent='Invite Created';
   $('createGuardianInviteBtn').disabled=true;
   await loadGuardianContacts();
@@ -7504,12 +7528,12 @@ async function showTeamJoin(){
   if(error){message(error.message,true);return;}
   const code=data?.[0]?.join_code||data?.join_code; if(!code)return;
   const url=teamJoinUrl(code);
-  $('joinCodeBox').innerHTML=`<div class="joincode">${esc(code)}</div><div id="teamJoinQr" class="qr-wrap"></div><div class="share-grid"><button data-team-share="text">Text</button><button data-team-share="email">Email</button><button data-team-share="copy">Copy Link</button><button data-team-share="share">Share</button></div><div class="info-banner">Athletes or parents scan the same QR, fill out the information, and wait for coach approval.</div>`;
+  $('joinCodeBox').innerHTML=`<div class="joincode">${esc(code)}</div><div id="teamJoinQr" class="qr-wrap"></div><div class="share-grid"><button data-team-share="text">Text</button><button data-team-share="email">Email</button><button data-team-share="copy">Copy Link</button><button data-team-share="share">Share</button></div><div class="info-banner">Athletes or parents scan the same QR, fill out the information, and wait for coach approval.</div><p class="invite-email-reminder">${esc(INVITE_EMAIL_REMINDER)}</p>`;
   makeQr('teamJoinQr',url);
-  $('joinCodeBox').querySelector('[data-team-share="text"]').onclick=()=>shareByText(`Join ${activeTeam.name} in Wrestling Manager: ${url}`);
-  $('joinCodeBox').querySelector('[data-team-share="email"]').onclick=()=>shareByEmail(`Join ${activeTeam.name}`,`Fill out your Wrestling Manager team registration here: ${url}`);
+  $('joinCodeBox').querySelector('[data-team-share="text"]').onclick=()=>shareByText(`Join ${activeTeam.name} in Wrestling Manager: ${url}\n\n${INVITE_EMAIL_REMINDER}`);
+  $('joinCodeBox').querySelector('[data-team-share="email"]').onclick=()=>shareByEmail(`Join ${activeTeam.name}`,`Fill out your Wrestling Manager team registration here: ${url}\n\n${INVITE_EMAIL_REMINDER}`);
   $('joinCodeBox').querySelector('[data-team-share="copy"]').onclick=()=>copyText(url);
-  $('joinCodeBox').querySelector('[data-team-share="share"]').onclick=()=>systemShare(`Join ${activeTeam.name}`,'Wrestling Manager team registration',url);
+  $('joinCodeBox').querySelector('[data-team-share="share"]').onclick=()=>systemShare(`Join ${activeTeam.name}`,'Wrestling Manager team registration. '+INVITE_EMAIL_REMINDER,url);
 }
 
 /* Request updates are invalidation signals; current server rows remain authoritative. */
@@ -8195,6 +8219,7 @@ async function saveCommunicationSettings(){
 
 async function sendTeamEmail(recipients,subject,textBody,htmlBody,messageType='team_email',metadata={}){
   if(!activeTeam)throw new Error('No active team selected.');
+  if(String(messageType).endsWith('_invite')){textBody=(textBody||'')+'\n\n'+INVITE_EMAIL_REMINDER;htmlBody=(htmlBody||'')+'<p style="font-family:Arial,sans-serif;padding:12px;color:#66470a;background:#fff8df">'+esc(INVITE_EMAIL_REMINDER)+'</p>';}
   const {data,error}=await client.functions.invoke('send-team-email',{body:{
     team_id:activeTeam.id,recipients,subject,text:textBody||'',html:htmlBody||'',message_type:messageType,metadata
   }});
@@ -8221,7 +8246,7 @@ async function sendGuardianInviteEmail(email,name,url){
   if(!email){message('This parent/guardian does not have an email address saved.',true);return;}
   try{
     await sendTeamEmail([{email,name:name||'Parent / Guardian'}],`${activeTeam.name} — Wrestling Manager parent invite`,`${name||'Parent/Guardian'},\n\nYou have been invited to connect to an athlete in ${activeTeam.name} on Wrestling Manager.\n\nOpen this private invitation: ${url}\n\nThis link is private and should not be forwarded.`,`<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto"><h2>${esc(activeTeam.name)}</h2><p>Hello ${esc(name||'Parent / Guardian')},</p><p>You have been invited to connect to an athlete in <b>${esc(activeTeam.name)}</b> on Wrestling Manager.</p><p><a href="${esc(url)}" style="display:inline-block;padding:12px 18px;background:#163A67;color:#fff;text-decoration:none;border-radius:10px;font-weight:bold">Open Private Invitation</a></p><p style="font-size:12px;color:#667085">This invitation is private. Do not forward it.</p></div>`,'guardian_invite',{athlete_id:accessAthleteId});
-    message(`Invite email sent to ${email}.`);
+    message(`Invite email submitted to ${email}. Ask them to check their inbox and Junk or Spam folder.`);
   }catch(e){message(`Email failed: ${e?.message||e}`,true);}
 }
 
@@ -8229,7 +8254,7 @@ async function sendAthleteInviteEmail(email,url){
   if(!email){message('This athlete does not have an email address saved.',true);return;}
   try{
     await sendTeamEmail([{email,name:accessAthleteRecord?`${accessAthleteRecord.first_name||''} ${accessAthleteRecord.last_name||''}`.trim():'Athlete'}],`${activeTeam.name} — Wrestling Manager athlete invite`,`You have been invited to connect your athlete profile for ${activeTeam.name}.\n\nOpen this private invitation: ${url}\n\nThis link is private and should not be forwarded.`,`<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto"><h2>${esc(activeTeam.name)}</h2><p>You have been invited to connect your athlete profile on Wrestling Manager.</p><p><a href="${esc(url)}" style="display:inline-block;padding:12px 18px;background:#163A67;color:#fff;text-decoration:none;border-radius:10px;font-weight:bold">Open Private Invitation</a></p><p style="font-size:12px;color:#667085">This invitation is private. Do not forward it.</p></div>`,'athlete_invite',{athlete_id:accessAthleteId});
-    message(`Invite email sent to ${email}.`);
+    message(`Invite email submitted to ${email}. Ask them to check their inbox and Junk or Spam folder.`);
   }catch(e){message(`Email failed: ${e?.message||e}`,true);}
 }
 
@@ -10310,7 +10335,7 @@ client.auth.onAuthStateChange((event,nextSession)=>{
  setTimeout(()=>handleAuthViewChange(event,nextSession).catch(e=>message(e.message,true)),0);
 });
 async function handleAuthViewChange(event,nextSession){
-  if(session?.user?.id!==nextSession?.user?.id){finishTileEditing(false);tileEditUser=null;pendingUiLayout=null;window.WMKioskScan?.reset();window.WMGoals?.reset();window.WMProfiles?.reset();window.WMFamily?.reset();resetAthleteCard();nativeCameraScanContext=null;weightCardPhotoCache.clear();}
+  if(session?.user?.id!==nextSession?.user?.id){window.WMNotificationSync?.reset();window.WMReactions?.reset();finishTileEditing(false);tileEditUser=null;pendingUiLayout=null;window.WMKioskScan?.reset();window.WMGoals?.reset();window.WMProfiles?.reset();window.WMFamily?.reset();resetAthleteCard();nativeCameraScanContext=null;weightCardPhotoCache.clear();}
   if(session?.user?.id!==nextSession?.user?.id&&(myWeightCheckMode==='teammate'||myWeightCheckMode==='test'||myWeightCheckMode==='staff'||!$('weightTestAthleteSheet').classList.contains('hidden')||!$('teammateWeightCheckSheet').classList.contains('hidden')||!$('weightPinSheet').classList.contains('hidden')))closeSheets();
   session=nextSession||null;
   window.WMProfilePIN?.select().catch(()=>{});window.WMProfilePINUI?.refresh();
@@ -12344,11 +12369,11 @@ window.WMTravel = (() => {
 <script id="wm-notification-sync-032">
 /* One unread inbox across teams; server read state drives every device badge. */
 window.WMNotificationSync = (() => {
-  let rows=[],owner='',loading=null,generation=0,badge=null,remoteCount=null,lastRemote=0,remoteBusy=false,retryTimer=null;
+  let rows=[],owner='',loading=null,generation=0,badge=null,remoteCount=null,lastRemote=0,remoteBusy=false,retryTimer=null,filterTeam=null;
   const $n=id=>document.getElementById(id);
   const current=()=>session?.user?.id||'';
   const available=()=>!!current()&&managedMessagesEnabled();
-  function reset(){generation++;rows=[];owner=current();badge=null;remoteCount=null;lastRemote=0;loading=null;remoteBusy=false;clearTimeout(retryTimer);render();}
+  function reset(){generation++;rows=[];owner=current();badge=null;remoteCount=null;lastRemote=0;loading=null;remoteBusy=false;filterTeam=null;clearTimeout(retryTimer);render();}
   async function pushBadge(count,userId){
     if(!available()||current()!==userId||remoteBusy)return;
     if(remoteCount===count&&Date.now()-lastRemote<300000)return;
@@ -12392,20 +12417,39 @@ window.WMNotificationSync = (() => {
   function render(){
     if(!$n('notificationSyncStatus'))return;
     const list=$n('communicationNotificationList');
-    if(owner!==current())return;
-    const visible=rows.filter(r=>!r.read_at);
-    $n('communicationUnreadCount').textContent=(badge??visible.length)>99?'99+':String(badge??visible.length);
-    $n('openNotificationsBtn').setAttribute('aria-label',`All notifications, ${badge??visible.length} unread across your teams`);
+    if(owner!==current()){reset();return;}
+    const all=rows.filter(r=>!r.read_at),visible=all.filter(r=>!filterTeam||r.team_id===filterTeam);
+    const count=available()?(badge??all.length):0,display=n=>n>99?'99+':String(n);
+    const counts=new Map();for(const r of all)counts.set(r.team_id,(counts.get(r.team_id)||0)+1);
+    const outside=all.filter(r=>r.team_id!==activeTeam?.id).length;
+    const header=$n('teamUnreadBadge');header.textContent=display(count);header.classList.toggle('hidden',!count);
+    header.setAttribute('aria-label',`${count} unread updates across your teams`);
+    $n('teamSwitcherBtn').setAttribute('aria-label',`Switch team${count?`, ${count} unread updates across your teams`:''}`);
+    for(const b of document.querySelectorAll('[data-team-notifications]')){
+      const n=available()?(counts.get(b.dataset.teamNotifications)||0):0;
+      b.textContent=display(n);b.classList.toggle('hidden',!n);
+      const team=availableTeams.find(t=>t.id===b.dataset.teamNotifications);
+      b.setAttribute('aria-label',`${n} unread updates for ${team?.name||'this team'}`);
+      b.onclick=()=>openInbox(b.dataset.teamNotifications);
+    }
+    $n('teamNotificationHint').textContent=count?`${count} unread update${count===1?'':'s'} across your teams. Tap a red badge to see that team’s updates.`:'Your role and permissions can be different on each team.';
+    const other=$n('otherTeamNotificationsBtn');other.classList.toggle('hidden',!outside||!available());other.textContent=`${outside} unread update${outside===1?'':'s'} in other teams · View`;
+    $n('allTeamNotificationsBtn').textContent=`All notifications${count?' · '+display(count):''}`;
+    $n('communicationUnreadCount').textContent=display(count);
+    $n('openNotificationsBtn').setAttribute('aria-label',`All notifications, ${count} unread across your teams`);
     $n('markCommunicationNotificationsReadBtn').disabled=!visible.length;
-    $n('notificationSyncStatus').textContent='Unread updates from all your teams. Reading here updates your other devices.';
+    $n('markCommunicationNotificationsReadBtn').textContent=filterTeam?'Mark this team read':'Mark All Read';
+    const selected=availableTeams.find(t=>t.id===filterTeam);
+    $n('notificationSyncStatus').textContent=filterTeam?`Unread updates for ${selected?.name||'this team'}. Other teams stay unread.`:'Unread updates from all your teams. Reading here updates your other devices.';
+    $n('notificationShowAllBtn').classList.toggle('hidden',!filterTeam);
     list.replaceChildren();
-    if(!visible.length){const empty=document.createElement('div');empty.className='empty-card';empty.textContent='You’re all caught up. No unread notifications across your teams.';list.append(empty);return;}
+    if(!visible.length){const empty=document.createElement('div');empty.className='empty-card';empty.textContent=filterTeam?'No unread notifications for this team.':'You’re all caught up. No unread notifications across your teams.';list.append(empty);return;}
     for(const row of visible){
       const b=document.createElement('button');b.className='notification-card unread';b.type='button';b.dataset.notificationId=row.id;
       const team=(availableTeams||[]).find(t=>t.id===row.team_id);
       const meta=document.createElement('small');meta.textContent=`${team?.name||'Team update'} · ${String(row.category||'update').replaceAll('_',' ')} · ${fmtDateTime(row.created_at)}`;
       const title=document.createElement('b');title.textContent=row.title||'Team update';const body=document.createElement('p');body.textContent=row.body||'';b.append(title,body,meta);
-      b.onclick=()=>open(row);list.append(b);
+      b.onclick=async event=>{event.stopPropagation();try{await open(row);}catch(error){message(error.message||'Could not open this update. Please try again.',true);}};list.append(b);
     }
   }
   async function mark(items){
@@ -12414,32 +12458,33 @@ window.WMNotificationSync = (() => {
     if(current()!==userId)return false;
     if(error){message('Could not mark these notifications read. Please try again.',true);return false;}
     // Invalidate any older request before it can restore a badge that was read.
-    generation++;loading=null;rows=rows.filter(x=>!ids.includes(x.id));render();
+    generation++;loading=null;rows=rows.filter(x=>!ids.includes(x.id));applyBadge(rows.length);render();
     await refresh();loadCommunications(false);return true;
   }
   async function open(row){
     const userId=current();
-    if(!await mark([row])||current()!==userId)return;
+    if(!available()||!userId)return;
     if(row.team_id&&!availableTeams.some(t=>t.id===row.team_id))await refreshCurrentTeamConnections();
     if(current()!==userId)return;
     if(row.team_id&&activeTeam?.id!==row.team_id){
-      if(!availableTeams.some(t=>t.id===row.team_id)){message('Marked read. You no longer have access to that team.');return;}
+      if(!availableTeams.some(t=>t.id===row.team_id)){message('This team is no longer available. You can mark the notification read from the inbox.');return;}
       await activateTeam(row.team_id);
     }
-    if(current()!==userId)return;
+    if(current()!==userId||row.team_id&&activeTeam?.id!==row.team_id)return;
     if(window.WMJoinSync?.isNotification(row)){await WMJoinSync.openNotification(row);return;}
     if(row.category==='weigh_in'){await openWeighInNotification({...row,notification_id:row.id});return;}
-    if(row.category==='sms_reply'){await openTextReplies();return;}
-    if(row.category==='safety'&&isStaff){await openCommunicationSafetyReview();return;}
+    if(row.category==='sms_reply'){if(await openTextReplies())await mark([row]);return;}
+    if(row.category==='safety'&&isStaff){if(await openCommunicationSafetyReview())await mark([row]);return;}
     if(row.thread_id){closeSheets();setTab('messages');await openCommunicationThread(row.thread_id);return;}
-    message('Notification marked read.');
+    if(await mark([row]))message('Notification marked read.');
   }
-  async function openInbox(){await refresh();closeSheets();openSheet('communicationNotificationsSheet');render();}
+  async function openInbox(teamId=null){const userId=current();if(!userId)return;filterTeam=typeof teamId==='string'?teamId:null;closeSheets();openSheet('communicationNotificationsSheet');render();await refresh();if(current()!==userId)return;render();}
   function foreground(){if(!document.hidden)refresh();}
   document.addEventListener('visibilitychange',foreground);window.addEventListener('focus',foreground);window.addEventListener('online',foreground);
   setInterval(()=>{if(!document.hidden&&available())refresh();else if(owner!==current())reset();},15000);
   $n('refreshAllNotificationsBtn').onclick=()=>refresh();
-  return {refresh,render,reset,open:openInbox,markRecords:mark,markAll:()=>mark([...rows]),readChanged:()=>{generation++;loading=null;return refresh();}};
+  for(const id of ['allTeamNotificationsBtn','otherTeamNotificationsBtn','notificationShowAllBtn'])$n(id).onclick=()=>openInbox();
+  return {refresh,render,reset,open:openInbox,markRecords:mark,markAll:()=>mark(rows.filter(r=>!filterTeam||r.team_id===filterTeam)),readChanged:()=>{generation++;loading=null;return refresh();}};
 })();
 
 </script>
@@ -12754,7 +12799,7 @@ window.WMAgreementPDF = (() => {
     invitation.submitted=true;
     if(pendingInvite!==invitation||!current(g,t,u))return;
     button.textContent='Email Submitted';button.disabled=true;
-    note(`Invitation email submitted to ${email}. Ask them to check their inbox and spam folder.`);
+    note(`Invitation email submitted to ${email}. Ask them to check their inbox and Junk or Spam folder.`);
   }catch(e){
     if(pendingInvite!==invitation||!current(g,t,u))return;
     button.textContent='Retry Email';button.disabled=false;
@@ -12777,9 +12822,9 @@ window.WMAgreementPDF = (() => {
     if(!/^https?:\/\//i.test(url)){const publicUrl=new URL('https://meleman35.github.io/wrestling-weight-manager-public/');publicUrl.searchParams.set('invite',token);url=publicUrl.toString();}
     const invitation={id:row.invitation_id,email,url,role:adultRoleLabel(p.role_key),roleKey:p.role_key,teamName:activeTeam.name,sending:false,submitted:false};
     pendingInvite=invitation;
-    el('adultInviteBox').innerHTML='<p class="fine">Invitation created. They must sign in with the invited email.</p><button type="button" id="peopleRetryInviteEmail" disabled>Sending Email…</button><button type="button" id="peopleCopyInvite" class="secondary">Copy Invitation Link</button><button type="button" id="peopleShareInvite" class="secondary">Share Invitation</button>';
+    el('adultInviteBox').innerHTML='<p class="fine">Invitation created. They must sign in with the invited email. Ask them to check Junk or Spam for their invitation and confirmation email.</p><button type="button" id="peopleRetryInviteEmail" disabled>Sending Email…</button><button type="button" id="peopleCopyInvite" class="secondary">Copy Invitation Link</button><button type="button" id="peopleShareInvite" class="secondary">Share Invitation</button>';
     el('peopleCopyInvite').onclick=()=>copyText(invitation.url);
-    el('peopleShareInvite').onclick=()=>systemShare(invitation.teamName+' staff invitation',invitation.role,invitation.url);
+    el('peopleShareInvite').onclick=()=>systemShare(invitation.teamName+' staff invitation',invitation.role+'. '+INVITE_EMAIL_REMINDER,invitation.url);
     el('peopleRetryInviteEmail').onclick=async()=>{
       if(busy||invitation.submitted||pendingInvite!==invitation||!current(g,t,u))return;
       busy=true;
@@ -12961,6 +13006,68 @@ window.WMProfilePIN=(()=>{
  el('communicationMemberSearch').oninput=render;
  el('communicationThreadIdentity').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&allowed()&&eligible(activeCommunicationThread)){e.preventDefault();open();}});
  window.WMChatMembers={open,reset,sync,allowed};
+})();
+
+</script>
+<dialog id="messageReactionDialog" aria-labelledby="reactionTitle"><div class="reaction-heading"><h3 id="reactionTitle">React to message</h3><button type="button" data-reaction-close aria-label="Close reactions">×</button></div><p class="fine">Wrestling &amp; team reactions</p><div id="reactionChoices"></div><p id="reactionStatus" role="status" aria-live="polite"></p><button id="removeMessageReaction" type="button" class="secondary" hidden>Remove my reaction</button></dialog>
+<script id="wm-reactions-041">
+/* 0.20.41: message reactions, available only through the conversation's server permissions. */
+window.WMReactions=(()=>{
+  const choices=[['wrestling','🤼','Wrestling'],['strength','💪','Strong'],['fire','🔥','On fire'],['trophy','🏆','Champion'],['gold','🥇','Gold medal'],['clap','👏','Great work'],['heart','❤️','Love it'],['thumbsup','👍','Got it'],['laugh','😂','Funny'],['celebrate','🎉','Celebrate'],['question','❓','Question'],['emphasis','‼️','Important']];
+  let owner='',team='',thread='',epoch=0,loading=null,busy=false,last=0,cache=new Map(),canReact=false,selected=null,returnFocus=null,press=null,suppressClickUntil=0;
+  const $r=id=>document.getElementById(id),dialog=$r('messageReactionDialog');
+  const allowed=()=>!!session?.user?.id&&!managedLogin&&!document.hidden&&!document.body.classList.contains('kiosk-locked')&&!document.querySelector('#appLockOverlay:not(.hidden)')&&!$r('communicationThreadSheet').classList.contains('hidden');
+  const valid=t=>t===epoch&&allowed()&&owner===session?.user?.id&&team===activeTeam?.id&&thread===String(activeCommunicationThread?.thread_id||'');
+  const row=id=>activeCommunicationMessages.find(m=>String(m.message_id)===String(id));
+  function close(){selected=null;clearTimeout(press?.timer);press=null;if(dialog.open)dialog.close();}
+  function reset(){epoch++;close();owner='';team='';thread='';cache=new Map();loading=null;busy=false;canReact=false;last=0;}
+  function sync(){if(!allowed()||owner&&(!valid(epoch))){reset();return false;}const next=String(activeCommunicationThread?.thread_id||'');if(!next)return false;if(thread!==next){reset();owner=session.user.id;team=activeTeam?.id;thread=next;}return true;}
+  function paint(){
+    if(!valid(epoch))return;
+    for(const node of $r('communicationMessageList').querySelectorAll('[data-message-id]')){
+      const m=row(node.dataset.messageId);if(!m)continue;
+      let bar=node.querySelector('.message-reactions');if(!bar){bar=document.createElement('div');bar.className='message-reactions';node.querySelector('.message-line')?.after(bar);}bar.replaceChildren();
+      if(!m.deleted_at&&!m.is_simulated)for(const r of cache.get(String(m.message_id))||[]){
+        const choice=choices.find(c=>c[0]===r.key);if(!choice)continue;
+        const b=document.createElement('button');b.type='button';b.className='reaction-chip'+(r.mine?' selected':'');b.textContent=choice[1]+' '+r.count;b.setAttribute('aria-pressed',String(!!r.mine));b.setAttribute('aria-label',`${choice[2]}, ${r.count} reaction${r.count===1?'':'s'}${r.mine?', including you':''}`);b.title=(r.people||[]).join(', ');b.disabled=!canReact||busy;b.onclick=()=>chooseMessage(m.message_id,b);bar.append(b);
+      }
+      let action=node.querySelector('[data-react-message]');
+      if(!action&&!m.deleted_at&&!m.is_simulated){const actions=node.querySelector('.message-actions');if(actions){action=document.createElement('button');action.type='button';action.dataset.reactMessage=m.message_id;action.textContent='React';action.onclick=()=>chooseMessage(m.message_id,action);actions.prepend(action);}}
+      if(action){action.hidden=!canReact;action.disabled=busy;}
+    }
+  }
+  async function refresh(force=false){
+    if(!sync())return;if(loading)return loading;if(!force&&Date.now()-last<5000){paint();return;}
+    const ticket=epoch,ids=activeCommunicationMessages.filter(m=>!m.deleted_at&&!m.is_simulated).map(m=>m.message_id).slice(-100);if(!ids.length){paint();return;}
+    const task=(async()=>{try{const {data,error}=await client.rpc('message_reactions_request',{p_action:'list',p_data:{thread_id:thread,message_ids:ids}});if(!valid(ticket))return;if(error)throw error;cache=new Map((data?.messages||[]).map(m=>[String(m.message_id),m.reactions||[]]));canReact=!!data?.can_react;last=Date.now();paint();}catch(e){if(valid(ticket)){canReact=false;cache=new Map();paint();if(dialog.open)$r('reactionStatus').textContent='Reactions could not refresh. Close and reopen the conversation to retry.';}}})();loading=task;try{await task;}finally{if(loading===task)loading=null;}
+  }
+  function chooseMessage(id,source){
+    if(!sync()||busy||!canReact)return;const m=row(id);if(!m||m.deleted_at||m.is_simulated)return;
+    selected=String(id);returnFocus=source;const mine=(cache.get(selected)||[]).find(r=>r.mine)?.key;
+    $r('reactionStatus').textContent='Choose a reaction. Tap your selected reaction again to remove it.';
+    $r('reactionChoices').replaceChildren();
+    for(const [key,emoji,label] of choices){const b=document.createElement('button');b.type='button';b.className='reaction-choice'+(key===mine?' selected':'');b.textContent=emoji;b.setAttribute('aria-label',label);b.setAttribute('aria-pressed',String(key===mine));b.title=label;b.dataset.reactionKey=key;b.onclick=()=>save(key===mine?null:key);$r('reactionChoices').append(b);}
+    $r('removeMessageReaction').hidden=!mine;if(!dialog.open)dialog.showModal();
+  }
+  async function save(key){
+    if(!sync()||busy||!selected||!canReact)return;const id=selected,ticket=epoch,targetThread=thread;busy=true;dialog.querySelectorAll('button:not([data-reaction-close])').forEach(b=>b.disabled=true);$r('reactionStatus').textContent='Saving reaction…';paint();
+    try{const {data,error}=await client.rpc('message_reactions_request',{p_action:'set',p_data:{thread_id:targetThread,message_id:id,reaction:key}});if(!valid(ticket))return;if(error)throw error;epoch++;loading=null;for(const m of data?.messages||[])cache.set(String(m.message_id),m.reactions||[]);canReact=!!data?.can_react;last=0;close();}
+    catch(e){if(valid(ticket)){$r('reactionStatus').textContent='Reaction not confirmed. '+(e.message||'Check your connection and try again.');last=0;}}
+    finally{if(owner===session?.user?.id&&thread===targetThread){busy=false;dialog.querySelectorAll('button').forEach(b=>b.disabled=false);paint();if(!dialog.open)returnFocus?.isConnected&&returnFocus.focus();}}
+  }
+  const list=$r('communicationMessageList');
+  list.addEventListener('pointerdown',e=>{if(e.button!==0||e.target.closest('button,a,input,video'))return;const message=e.target.closest('[data-message-id]');if(!message||!canReact)return;clearTimeout(press?.timer);press={x:e.clientX,y:e.clientY,id:message.dataset.messageId};press.timer=setTimeout(()=>{if(!press)return;suppressClickUntil=Date.now()+700;chooseMessage(press.id,null);press=null;},500);});
+  const cancelPress=()=>{clearTimeout(press?.timer);press=null;};
+  list.addEventListener('pointermove',e=>{if(press&&Math.hypot(e.clientX-press.x,e.clientY-press.y)>10)cancelPress();});
+  for(const ev of ['pointerup','pointercancel','scroll'])list.addEventListener(ev,cancelPress,{passive:true});
+  list.addEventListener('click',e=>{if(Date.now()<suppressClickUntil){suppressClickUntil=0;e.preventDefault();e.stopImmediatePropagation();}},true);
+  list.addEventListener('contextmenu',e=>{const m=e.target.closest('[data-message-id]');if(m&&canReact&&!e.target.closest('a,video')){e.preventDefault();chooseMessage(m.dataset.messageId,null);}});
+  dialog.addEventListener('click',e=>{if(e.target===dialog||e.target.closest('[data-reaction-close]'))close();});
+  dialog.addEventListener('close',()=>{selected=null;suppressClickUntil=0;});
+  $r('removeMessageReaction').onclick=()=>save(null);
+  setInterval(()=>{if(sync())refresh();},5000);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)reset();else refresh(true);});
+  return {mount(){if(sync()){paint();refresh();}},refresh,reset,close};
 })();
 
 </script>

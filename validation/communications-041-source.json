@@ -1,0 +1,13 @@
+{
+  "baseline": "ae781feb52aca942a4a295c4f4c811badb095ded",
+  "reproducible": true,
+  "idempotent": true,
+  "inline_scripts_syntax_checked": 36,
+  "preserved_files": [
+    "mat-mode.html",
+    "auth-confirm.html",
+    "app.js",
+    "styles.css"
+  ],
+  "sha256": "7b8b0fcce2c998e6878698e9a61ca1854bc6ce514dc345aeaccbebce2c7c5cfe"
+}

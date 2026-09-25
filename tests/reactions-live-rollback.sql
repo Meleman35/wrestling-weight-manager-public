@@ -1,0 +1,52 @@
+-- Run after the reaction migration. Synthetic users have no credentials or email.
+-- All fixtures roll back. No invitation or delivery functions are invoked.
+begin;
+do $$
+declare org uuid=gen_random_uuid(); t uuid=gen_random_uuid(); t2 uuid=gen_random_uuid();
+ coach uuid=gen_random_uuid(); mate uuid=gen_random_uuid(); mirror uuid=gen_random_uuid(); outsider uuid=gen_random_uuid();
+ thread uuid=gen_random_uuid(); other_thread uuid=gen_random_uuid(); msg uuid=gen_random_uuid(); other_msg uuid=gen_random_uuid();
+ p jsonb; denied boolean; events integer;
+begin
+ insert into auth.users(id,raw_user_meta_data) values(coach,'{"name":"Reaction validation coach"}'),(mate,'{"name":"Reaction validation teammate"}'),(mirror,'{"name":"Reaction validation observer"}'),(outsider,'{"name":"Reaction validation outsider"}');
+ insert into public.organizations(id,name) values(org,'Temporary reaction validation');
+ insert into public.teams(id,organization_id,name) values(t,org,'Temporary reaction validation team'),(t2,org,'Temporary reaction validation other team');
+ insert into public.team_memberships(team_id,user_id,role) values(t,coach,'head_coach'),(t,mate,'assistant_coach'),(t,mirror,'assistant_coach'),(t2,outsider,'head_coach');
+ insert into public.communication_threads(id,team_id,kind,title,created_by) values(thread,t,'group','Temporary reaction validation',coach),(other_thread,t2,'group','Temporary other conversation',outsider);
+ insert into public.communication_thread_members(thread_id,user_id,can_post,member_role) values(thread,coach,true,'participant'),(thread,mate,true,'participant'),(thread,mirror,false,'guardian_mirror'),(other_thread,outsider,true,'participant');
+ insert into public.communication_messages(id,thread_id,team_id,sender_user_id,body) values(msg,thread,t,coach,'Temporary verification message'),(other_msg,other_thread,t2,outsider,'Temporary verification message');
+ perform set_config('request.jwt.claim.sub',coach::text,true);execute 'set local role authenticated';
+ p:=public.message_reactions_request('set',jsonb_build_object('thread_id',thread,'message_id',msg,'reaction','wrestling'));
+ if not (p->>'can_react')::boolean or p->'messages'->0->'reactions'->0->>'key'<>'wrestling' then raise exception 'Reaction save failed';end if;
+ p:=public.message_reactions_request('set',jsonb_build_object('thread_id',thread,'message_id',msg,'reaction','wrestling'));
+ execute 'reset role';select count(*) into events from private.message_reaction_events where message_id=msg;
+ if events<>1 then raise exception 'Retry duplicated event';end if;
+ perform set_config('request.jwt.claim.sub',mate::text,true);execute 'set local role authenticated';
+ p:=public.message_reactions_request('set',jsonb_build_object('thread_id',thread,'message_id',msg,'reaction','wrestling'));
+ if (p->'messages'->0->'reactions'->0->>'count')::int<>2 then raise exception 'Shared count incorrect';end if;
+ p:=public.message_reactions_request('set',jsonb_build_object('thread_id',thread,'message_id',msg,'reaction','fire'));
+ if jsonb_array_length(p->'messages'->0->'reactions')<>2 then raise exception 'Replacement incorrect';end if;
+ p:=public.message_reactions_request('set',jsonb_build_object('thread_id',thread,'message_id',msg,'reaction',null));
+ if jsonb_array_length(p->'messages'->0->'reactions')<>1 or (p->'messages'->0->'reactions'->0->>'mine')::boolean then raise exception 'Removal altered another selection';end if;
+ denied:=false;begin perform public.message_reactions_request('list',jsonb_build_object('thread_id',thread,'message_ids',jsonb_build_array(other_msg)));exception when others then if sqlerrm not like '%belong%' then raise;end if;denied:=true;end;
+ if not denied then raise exception 'Cross-thread read allowed';end if;
+ perform set_config('request.jwt.claim.sub',mirror::text,true);
+ p:=public.message_reactions_request('list',jsonb_build_object('thread_id',thread,'message_ids',jsonb_build_array(msg)));
+ if (p->>'can_react')::boolean then raise exception 'Observer has write permission';end if;
+ denied:=false;begin perform public.message_reactions_request('set',jsonb_build_object('thread_id',thread,'message_id',msg,'reaction','heart'));exception when others then if sqlerrm not like '%not allowed%' then raise;end if;denied:=true;end;
+ if not denied then raise exception 'Observer write allowed';end if;
+ perform set_config('request.jwt.claim.sub',outsider::text,true);
+ denied:=false;begin perform public.message_reactions_request('list',jsonb_build_object('thread_id',thread,'message_ids',jsonb_build_array(msg)));exception when others then if sqlerrm not like '%access required%' then raise;end if;denied:=true;end;
+ if not denied then raise exception 'Outsider read allowed';end if;
+ denied:=false;begin perform 1 from private.message_reactions;exception when insufficient_privilege then denied:=true;end;
+ if not denied then raise exception 'Private table read allowed';end if;
+ denied:=false;begin perform private.message_reactions_request('list','{}');exception when insufficient_privilege then denied:=true;end;
+ if not denied then raise exception 'Private helper allowed';end if;
+ execute 'reset role';update public.team_memberships set active=false where user_id=coach;
+ perform set_config('request.jwt.claim.sub',coach::text,true);execute 'set local role authenticated';
+ denied:=false;begin perform public.message_reactions_request('list',jsonb_build_object('thread_id',thread,'message_ids',jsonb_build_array(msg)));exception when others then if sqlerrm not like '%access required%' then raise;end if;denied:=true;end;
+ if not denied then raise exception 'Revoked team access allowed';end if;
+ execute 'reset role';
+ perform set_config('reactions041.validation','save,retry,shared-count,replace,remove,cross-thread,read-only-observer,outsider,table-denial,helper-denial,revoked-team',true);
+end $$;
+select current_setting('reactions041.validation') as passed, 'All synthetic fixture rows rolled back' as cleanup;
+rollback;

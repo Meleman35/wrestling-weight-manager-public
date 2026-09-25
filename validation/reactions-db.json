@@ -1,0 +1,15 @@
+{
+  "passed": 10,
+  "tests": [
+    "A saved reaction and repeated request produce one selection and one event",
+    "Members see shared counts; changing/removing affects only their own reaction",
+    "Only fixed reactions and active real messages are accepted",
+    "Thread membership and message ownership prevent cross-team reads and writes",
+    "Read-only guardian mirrors can view but cannot react",
+    "Direct-chat blocking prevents reactions",
+    "Current parent restrictions prevent both sides from reacting in a restricted direct chat",
+    "Revoked team access and removed thread members cannot use reactions",
+    "Archived conversations and safety simulations reject reactions",
+    "Shared/anonymous accounts and direct private-table/helper access denied"
+  ]
+}

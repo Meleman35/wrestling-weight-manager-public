@@ -1,0 +1,19 @@
+{
+  "passed": 13,
+  "tests": [
+    "Header and each team show unread counts across organizations, including more than 200 notifications",
+    "Team-filtered inbox marks only that team read and leaves the other team untouched",
+    "Opening another team’s update switches team before opening its conversation",
+    "A current-team update opens once without the older delegated click handler running",
+    "An update remains unread after a failed open and clears after successful access",
+    "Current-team message rendering cannot overwrite global notification badges",
+    "Reads from another device clear the shared unread count",
+    "Account changes discard delayed unread results and previous-account contents",
+    "Wrestling reaction saves to the real SQL RPC and appears on its message",
+    "Picking a different reaction replaces it; removal clears only the viewer’s selection",
+    "Press-and-hold opens the same picker and Escape closes it",
+    "Lost reaction response recovers the saved server state without duplicating a selection",
+    "Invitation email text/HTML and recipient signup screens include the junk-mail reminder without sending real mail"
+  ],
+  "engine": "Whole-page Chromium; isolated PGlite reactions; mocked notifications and mail"
+}

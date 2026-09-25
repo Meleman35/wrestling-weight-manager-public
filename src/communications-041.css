@@ -1,0 +1,15 @@
+/* Team navigation notifications and mobile reaction picker. */
+#teamSwitcherBtn{position:relative;padding-right:38px}
+.team-unread-badge{position:absolute;top:1px;right:1px;min-width:24px;height:24px;padding:2px 6px;display:grid;place-items:center;border-radius:99px;background:#d92d20;color:#fff;font-size:12px;font-weight:900;font-style:normal;border:2px solid white;line-height:1}
+.team-choice-row{position:relative;min-width:0}.team-choice-row .team-choice{min-height:76px;padding-right:64px}.team-choice-row .team-choice>span:first-child{min-width:0;overflow-wrap:anywhere}
+.team-notification-badge{position:absolute;right:9px;top:8px;min-width:44px;min-height:44px;padding:8px;border-radius:99px;background:#d92d20!important;color:#fff!important;font-size:15px;font-weight:900;box-shadow:none!important;z-index:1}
+#otherTeamNotificationsBtn{margin:8px 0 16px;text-align:left;background:#fff2f0;color:#912018;border:1px solid #ffcdc7;min-height:44px}
+.invite-email-reminder{padding:12px 14px;border-radius:12px;background:#fff8df;border:1px solid #efd28a;color:#66470a;font-size:14px;line-height:1.45}
+.message-reactions{display:flex;flex-wrap:wrap;gap:5px;margin:5px 0 3px 40px}.message-row.mine .message-reactions{justify-content:flex-end;margin-left:0}
+.message-reactions:empty{display:none}.reaction-chip{font-size:16px;min-height:36px;min-width:44px;padding:5px 10px;border:1px solid #d0d5dd;border-radius:20px;background:#f2f4f7!important;color:#243b53!important;box-shadow:none!important}.reaction-chip.selected{background:#e3efff!important;border-color:#2679da}.reaction-chip:disabled{opacity:1;cursor:default}
+#messageReactionDialog{max-width:360px;width:calc(100% - 32px);border:0;padding:20px;border-radius:24px;box-shadow:0 16px 70px #10182855;color:#142b46;max-height:calc(100dvh - 48px);overflow:auto;z-index:200}
+#messageReactionDialog::backdrop{background:#10182870;backdrop-filter:blur(3px)}
+.reaction-heading{display:flex;justify-content:space-between;align-items:center;gap:10px}.reaction-heading h3{margin:0;font-size:20px}.reaction-heading button{min-width:44px;min-height:44px;background:#f2f4f7;color:#142b46;padding:8px;border-radius:50%;font-size:22px}
+#reactionChoices{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;margin:14px 0}.reaction-choice{padding:6px 0;min-height:46px;min-width:0;border:2px solid transparent;border-radius:13px;background:#f2f4f7;color:#142b46;font-size:26px;box-shadow:none!important}.reaction-choice.selected{border-color:#2679da;background:#e3efff}
+#reactionStatus{font-size:13px;line-height:1.45;overflow-wrap:anywhere}#removeMessageReaction{width:100%;min-height:44px}
+body.kiosk-locked #messageReactionDialog,body:has(#appLockOverlay:not(.hidden)) #messageReactionDialog{visibility:hidden;pointer-events:none}
