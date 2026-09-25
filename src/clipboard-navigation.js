@@ -5,7 +5,7 @@
   {id:'practice',icon:'🤼',name:'Practice & Competition',detail:'Attendance, lineup & Match Book',ids:['tournamentDayBtn','clipboardAttendanceBtn','clipboardLineupBtn','matchBookBtn']},
   {id:'health',icon:'✍️',name:'Forms & Health',detail:'Agreements & medical clearance',ids:['agreementsBtn','medicalClearanceBtn']},
   {id:'gear',icon:'🎒',name:'Gear & Files',detail:'Equipment & team resources',ids:['clipboardEquipmentBtn','clipboardFilesBtn']},
-  {id:'settings',icon:'⚙️',name:'Settings',detail:'Account, team settings & feedback',ids:['accountBtn','feedbackBtn']},
+  {id:'settings',icon:'⚙️',name:'Settings',detail:'Account, team plan & feedback',ids:['accountBtn','teamPlanBtn','feedbackBtn']},
   {id:'organization',icon:'🏛️',name:'Organization',detail:'Teams, leadership & organization tools',ids:['organizationHubBtn'],direct:'organizationHubBtn'}
  ];
  let selected=null,context='';const e=id=>document.getElementById(id),key=g=>'clip_'+g.id;
