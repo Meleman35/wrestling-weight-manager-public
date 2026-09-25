@@ -26,7 +26,7 @@ change("return{open,close,parseTime,remaining,scores};", """function videoSnapsh
   return state;
  }
  return{open,close,parseTime,remaining,scores,videoSnapshot};""")
-for name in ['video-pilot-core','video-pilot']:
+for name in ['video-pilot-core','video-pilot','video-pilot-native']:
  tag='<script id="wm-'+name+'-046">\n'+(root/f'src/{name}.js').read_text()+'\n</script>'
  s=re.sub(r'\n*<script id="wm-'+name+r'-046">.*?</script>\n*','',s,flags=re.S)
  s=s.replace('</body>',tag+'\n</body>')

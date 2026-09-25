@@ -1,6 +1,7 @@
 /* Free, allowlisted browser capture pilot. Server grants never create paid rights. */
 window.WMVideoPilot = (() => {
   'use strict';
+  if (window.webkit?.messageHandlers?.wmVideoPilot) return null;
   const $ = id => document.getElementById(id), C = WMVideoCore;
   const MAX_MS = 20 * 60000, RESERVE = 256 * 1024 * 1024;
   let generation = 0, grant = null, store = null, stream = null, recorder = null, take = null, timeline = null;
@@ -274,7 +275,8 @@ window.WMVideoPilot = (() => {
     player.onloadedmetadata = () => { if (!Number.isFinite(player.duration)) { player.currentTime = 1e10; player.addEventListener('seeked', () => { player.currentTime = 0; }, {once: true}); } };
     $('vpEvents').innerHTML = row.events.map((e, i) => `<button type="button" class="secondary" data-vp-seek="${i}">${format(e.atMs)} · ${esc(e.label)}</button>`).join('');
     $('vpEvents').querySelectorAll('button').forEach(b => b.onclick = () => {
-      const seconds = row.events[Number(b.dataset.vpSeek)].atMs / 1000;
+      // Media seek times may round down; land just after the exact snapshot boundary.
+      const seconds = row.events[Number(b.dataset.vpSeek)].atMs / 1000 + .001;
       player.currentTime = Math.min(seconds, Number.isFinite(player.duration) ? Math.max(0, player.duration - .05) : seconds); paint();
     });
     $('vpReplayClose').onclick = closeReplay;

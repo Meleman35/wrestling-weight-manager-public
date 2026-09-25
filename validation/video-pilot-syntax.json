@@ -203,5 +203,10 @@
     "check": "syntax",
     "script": "wm-video-pilot-046",
     "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "wm-video-pilot-native-046",
+    "passed": true
   }
 ]

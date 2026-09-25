@@ -26,12 +26,12 @@
   },
   {
     "check": "syntax",
-    "script": "6",
+    "script": "wmMeetings038",
     "passed": true
   },
   {
     "check": "syntax",
-    "script": "7",
+    "script": "wmVoting039",
     "passed": true
   },
   {
@@ -111,6 +111,16 @@
   },
   {
     "check": "syntax",
+    "script": "23",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "24",
+    "passed": true
+  },
+  {
+    "check": "syntax",
     "script": "wm-travel-027",
     "passed": true
   },
@@ -165,21 +175,38 @@
     "passed": true
   },
   {
-    "check": "Invitation email / people editor preserved byte-for-byte",
+    "check": "syntax",
+    "script": "wm-reactions-041",
     "passed": true
   },
   {
-    "check": "All unrelated scripts and scoring preserved byte-for-byte",
+    "check": "syntax",
+    "script": "wm-tournament-provider-042",
     "passed": true
   },
   {
-    "check": "Native/security bridge preserved",
-    "script": "wm-profile-pin-0.20.30",
+    "check": "syntax",
+    "script": "wm-tournament-alerts-042",
     "passed": true
   },
   {
-    "check": "Native/security bridge preserved",
-    "script": "wm-profile-pin-ui-0.20.30",
+    "check": "syntax",
+    "script": "wm-tournaments-042",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "wm-video-pilot-core-046",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "wm-video-pilot-046",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "wm-video-pilot-native-046",
     "passed": true
   }
 ]
