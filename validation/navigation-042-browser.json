@@ -1,0 +1,14 @@
+{
+  "passed": 8,
+  "checks": [
+    "Successful copy contains the selected team join code and confirms success inside the sheet",
+    "Clipboard denial exposes the selected link without claiming it copied",
+    "Legacy copy fallback succeeds when Clipboard API is absent in a web view",
+    "Delayed previous-team responses cannot replace the current team link; copying then pasting confirms the new team",
+    "Category and nested-tool arrows and visibility save through the existing account preferences",
+    "Both navigation levels keep their order and visibility after a page refresh",
+    "Touch press-and-hold recognizes nested Clipboard tools using the existing editor",
+    "Customization preserves role visibility and does not carry into another account"
+  ],
+  "engine": "Chromium with synthetic account; web-view clipboard availability simulated"
+}

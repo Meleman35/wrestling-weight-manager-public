@@ -1,0 +1,17 @@
+{
+  "passed": 11,
+  "tests": [
+    "Coach opens a manual workspace only on the active team tournament",
+    "Duplicate names and displayed bout numbers retain separate athlete, division and bout identities",
+    "Lost-response retries and invalid bracket URLs do not overwrite saved bouts",
+    "Athlete defaults to their next bout with opponent, bracket and future-bout data excluded by SQL",
+    "Linked parent keeps full child information, changes only their child and detects stale settings",
+    "Mat-only API response excludes timing, status, opponent, division, weight and results",
+    "Coach access remains full; completing one bout advances the athlete to their next assignment",
+    "Parent-approved full view includes coach-sourced results and bracket references",
+    "Unrelated accounts, managed logins and other-team event IDs are denied",
+    "Anonymous callers and direct raw table or helper reads are denied",
+    "Guardian removal and roster removal revoke subsequent reads"
+  ],
+  "engine": "PGlite, synthetic users and tables; actual migration functions"
+}

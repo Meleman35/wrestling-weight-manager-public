@@ -1,0 +1,14 @@
+{
+  "passed": 8,
+  "tests": [
+    "Coach board loads actual SQL projections, multiple mats and unknown timing",
+    "Editing a manual assignment saves through SQL and refreshes the board",
+    "Coach adds a second division without treating the displayed bout number as an identity",
+    "Parent can save the athlete restriction while retaining their own full child view",
+    "Restricted athlete sees only their mat/bout assignment with no bracket shortcut or parent controls",
+    "Demo uses only synthetic wrestlers and simulates timing, mat updates and viewer restrictions",
+    "Stale and unknown estimates are visible and desktop layout remains usable",
+    "Account changes clear the sheet and discard in-flight responses"
+  ],
+  "engine": "Chromium whole page + actual SQL in isolated PGlite; synthetic accounts only"
+}
