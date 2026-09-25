@@ -1,0 +1,207 @@
+[
+  {
+    "check": "syntax",
+    "script": "0",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "2",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "3",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "4",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "wmOrgStructure036",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "wmMeetings038",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "wmVoting039",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "8",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "9",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "10",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "11",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "12",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "13",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "14",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "15",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "16",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "17",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "18",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "19",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "20",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "21",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "22",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "23",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "24",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "wm-travel-027",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "wm-notification-sync-032",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "wm-agreement-signatures-027",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "wm-contract-fontkit-027",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "wm-contract-fonts-027",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "wm-agreement-pdf-027",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "wm-team-people-0.20.29",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "wm-clipboard-0.20.29",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "wm-profile-pin-0.20.30",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "wm-profile-pin-ui-0.20.30",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "wm-chat-members-0.20.33",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "wm-reactions-041",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "wm-tournament-provider-042",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "wm-tournament-alerts-042",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "wm-tournaments-042",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "wm-video-pilot-core-046",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "wm-video-pilot-046",
+    "passed": true
+  }
+]

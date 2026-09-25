@@ -1,0 +1,16 @@
+{
+  "passed": [
+    "Actual MediaRecorder with synthetic camera saves closed device files while offline and retains original awards plus undo history",
+    "Replay seeks to historical scores, including before an award; phone layout fits and export limitation is visible",
+    "Device video and synchronized timeline survive normal page restart",
+    "Changing team closes playback and excludes other-team device files",
+    "Permission denial is actionable and never claims a recording exists",
+    "Low storage prevents capture before camera access",
+    "Leaving a recording closes capture and preserves a clearly labeled partial replay",
+    "Restart recovery reconstructs a playable partial take from committed segments",
+    "Write failure stops capture and cannot report a complete saved video",
+    "Another account cannot list the previous coach’s device recordings",
+    "Server denial keeps pilot closed"
+  ],
+  "engine": "Chromium; actual MediaRecorder and OPFS with synthetic camera, synthetic account/RPC fixture; not iOS verification"
+}

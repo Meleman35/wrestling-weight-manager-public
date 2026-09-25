@@ -1,0 +1,62 @@
+const fs=require('fs'),path=require('path'),assert=require('node:assert/strict'),{chromium}=require('playwright');
+const root=path.resolve(__dirname,'..');
+(async()=>{
+ const browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE_PATH||'/tmp/chromium',headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream']});
+ const ctx=await browser.newContext({viewport:{width:390,height:844},permissions:['camera','microphone']}),p=await ctx.newPage(),errors=[],passed=[];
+ p.on('pageerror',e=>errors.push(e.message));const pass=s=>{passed.push(s);console.log('PASS',s);};
+ let init=fs.readFileSync(path.join(root,'tests/browser-fixture.js'),'utf8');
+ init=init.replace("    F.calls.push",`    if(name==='video_pilot_context')return {data:{allowed:!F.videoDenied,user_id:F.session?.user.id,team_id:args.p_team_id,lease_seconds:7200,athlete_ids:[]},error:null};
+    if(name==='get_operations'&&args.p_request.action==='matches')return {data:{matches:[],athletes:[],challenges:[]},error:null};
+    if(name==='save_operations')return {data:{revision:1},error:null};
+    F.calls.push`);
+ await ctx.addInitScript({content:init});
+ await p.route('**/*',r=>r.request().url()==='https://wm.test/'?r.fulfill({contentType:'text/html',body:fs.readFileSync(path.join(root,'index.html'),'utf8')}):r.request().url().includes('supabase-js')?r.fulfill({contentType:'text/javascript',body:''}):r.abort());
+ async function setup(){await p.evaluate(()=>{session=fixture.session={user:{id:'coach-test'}};activeTeam={id:'TEAM-A',name:'Synthetic Team'};activeSeason={id:'SEASON-A'};accountProfileData={id:session.user.id,ui_preferences:{}};isStaff=actualIsStaff=isTeamAdmin=actualIsTeamAdmin=true;isManager=false;viewMode='staff';show('authView',false);show('appView',true);show('appLockOverlay',false);applyRoleUI();});}
+ await p.goto('https://wm.test/');await setup();await p.evaluate(()=>WMMatch.open());
+ await p.locator('#matchNew').click();await p.locator('#matchBookType').selectOption('test');
+ await p.locator('#matchSetupForm').evaluate(f=>f.requestSubmit());
+ await p.waitForFunction(()=>!document.getElementById('vpPanel').hidden);
+ await p.locator('#vpPermission').check();await p.locator('#vpPreview').click();await p.waitForFunction(()=>!document.getElementById('vpStart').disabled);
+ await p.locator('#vpStart').click();await p.waitForFunction(()=>document.getElementById('vpStatus').textContent.includes('Recording privately'));
+ await p.locator('#matchToggle').click();await p.waitForTimeout(1100);
+ await p.locator('#matchCorners [data-corner="red"][data-award="td"]').click();await p.waitForTimeout(1100);
+ await p.screenshot({path:path.join(root,'validation/video-pilot-recording-phone.png')});
+ await p.locator('#matchToggle').click();await p.waitForTimeout(900);await p.locator('#matchUndo').click();await p.waitForTimeout(1000);
+ // Network loss must not prevent same-device recording/scoring/saving after the grant.
+ await ctx.setOffline(true);await p.waitForTimeout(500);await p.locator('#vpStop').click();
+ await p.waitForFunction(()=>document.getElementById('vpStatus').textContent.includes('Saved on this device'),null,{timeout:25000});
+ const takes=await p.evaluate(async()=>{const s=await new WMVideoCore.DeviceStore().init();return s.list('coach-test:TEAM-A');});
+ assert.equal(takes.length,1);const take=takes[0];assert.equal(take.status,'ready');assert(take.chunks>=2&&take.bytes>1000);assert(take.events.some(e=>e.state.ledger.some(a=>a.undo_of)));assert(take.events.some(e=>e.state.running));
+ const scored=take.events.find(e=>e.state.ledger.some(a=>a.scoring&&!a.voided));assert(scored);assert.equal(scored.state.ledger.find(a=>a.scoring).points,3);
+ pass('Actual MediaRecorder with synthetic camera saves closed device files while offline and retains original awards plus undo history');
+ await p.locator('#vpTakes').locator('..').evaluate(d=>d.open=true);await p.locator('#vpTakes [data-vp-play]').click();await p.waitForFunction(()=>document.getElementById('vpPlayer')?.readyState>=2);
+ const scoredIndex=take.events.findIndex(e=>e===scored);
+ await p.locator(`[data-vp-seek="${scoredIndex}"]`).click();await p.waitForTimeout(250);assert.match(await p.locator('#vpReplayOverlay').innerText(),/3/);
+ await p.locator('[data-vp-seek="0"]').click();await p.waitForTimeout(250);assert.equal(await p.locator('#vpReplayOverlay span').first().locator('b').innerText(),'0');
+ assert.match(await p.locator('.vp-replay').innerText(),/does not have the scoreboard embedded/);assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+ await p.screenshot({path:path.join(root,'validation/video-pilot-replay-phone.png')});pass('Replay seeks to historical scores, including before an award; phone layout fits and export limitation is visible');
+ await p.locator('#vpReplayClose').click();await ctx.setOffline(false);await p.reload();await setup();await p.evaluate(()=>WMMatch.open());await p.waitForSelector('#vpAllTakes [data-vp-play]');
+ await p.locator('#vpAllTakes [data-vp-play]').click();await p.waitForFunction(()=>document.getElementById('vpPlayer')?.readyState>=2);pass('Device video and synchronized timeline survive normal page restart');
+ await p.evaluate(()=>{activeTeam={id:'TEAM-B'};WMVideoPilot.reset();});assert.equal(await p.locator('.vp-replay').count(),0);await p.evaluate(()=>WMMatch.open());await p.waitForTimeout(300);assert.equal(await p.locator('#vpAllTakes [data-vp-play]').count(),0);pass('Changing team closes playback and excludes other-team device files');
+ await p.evaluate(()=>{activeTeam={id:'TEAM-A',name:'Synthetic Team'};WMVideoPilot.reset();});await p.evaluate(()=>WMMatch.open());await p.locator('#matchResume').click();await p.waitForFunction(()=>!document.getElementById('vpPanel').hidden);
+ // Permission failure leaves scoring usable and creates no video record.
+ await p.evaluate(()=>{fixture.originalGetUserMedia=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);navigator.mediaDevices.getUserMedia=async()=>{throw new DOMException('denied','NotAllowedError')};});
+ await p.locator('#vpPermission').check();await p.locator('#vpPreview').click();await p.waitForFunction(()=>document.getElementById('vpStatus').textContent.includes('permission was denied'));assert(await p.locator('#vpStart').isDisabled());
+ await p.evaluate(()=>{navigator.mediaDevices.getUserMedia=fixture.originalGetUserMedia;});pass('Permission denial is actionable and never claims a recording exists');
+ await p.evaluate(()=>{fixture.originalEstimate=navigator.storage.estimate.bind(navigator.storage);navigator.storage.estimate=async()=>({usage:990,quota:1000});});await p.locator('#vpPreview').click();await p.waitForFunction(()=>document.getElementById('vpStatus').textContent.includes('Not enough device storage'));assert(await p.locator('#vpStart').isDisabled());await p.evaluate(()=>{navigator.storage.estimate=fixture.originalEstimate;});pass('Low storage prevents capture before camera access');
+ await p.locator('#vpPreview').click();await p.waitForFunction(()=>!document.getElementById('vpStart').disabled);await p.locator('#vpStart').click();await p.waitForFunction(()=>document.getElementById('vpStatus').textContent.includes('Recording privately'));await p.waitForTimeout(2300);
+ await p.evaluate(()=>WMVideoPilot.leaving());await p.waitForFunction(()=>!WMVideoPilot.active(),null,{timeout:25000});
+ const partial=await p.evaluate(async()=>{const s=await new WMVideoCore.DeviceStore().init();return (await s.list('coach-test:TEAM-A')).find(t=>t.status==='partial');});assert(partial);assert.match(partial.reason,/leaving/);pass('Leaving a recording closes capture and preserves a clearly labeled partial replay');
+ await p.screenshot({path:path.join(root,'validation/video-pilot-scoreboard-phone.png')});
+ // Simulate a crash after committed chunks but before final assembly.
+ await p.evaluate(async id=>{const s=await new WMVideoCore.DeviceStore().init(),t=await s.get(id);t.status='recording';await s.put(t);await (await s.directory(id)).removeEntry('replay');},partial.id);
+ await p.reload();await setup();await p.evaluate(()=>WMMatch.open());await p.waitForSelector(`[data-vp-recover="${partial.id}"]`);await p.locator(`[data-vp-recover="${partial.id}"]`).click();await p.waitForFunction(()=>document.getElementById('vpLibraryStatus').textContent.includes('Partial recording recovered'));pass('Restart recovery reconstructs a playable partial take from committed segments');
+ await p.locator('#matchResume').click();await p.waitForFunction(()=>!document.getElementById('vpPanel').hidden);await p.locator('#vpPermission').check();await p.locator('#vpPreview').click();await p.waitForFunction(()=>!document.getElementById('vpStart').disabled);
+ await p.evaluate(()=>{fixture.originalChunk=WMVideoCore.DeviceStore.prototype.chunk;WMVideoCore.DeviceStore.prototype.chunk=async()=>{throw new DOMException('full','QuotaExceededError');};});
+ await p.locator('#vpStart').click();await p.waitForFunction(()=>document.getElementById('vpStatus').textContent.includes('Recording privately'));await p.waitForFunction(()=>!WMVideoPilot.active(),null,{timeout:20000});
+ assert.match(await p.locator('#vpStatus').innerText(),/incomplete/);const failed=await p.evaluate(async()=>{WMVideoCore.DeviceStore.prototype.chunk=fixture.originalChunk;const s=await new WMVideoCore.DeviceStore().init();return (await s.list('coach-test:TEAM-A')).filter(t=>t.status==='interrupted');});assert(failed.length);assert(failed.every(t=>t.status!=='ready'));pass('Write failure stops capture and cannot report a complete saved video');
+ await p.evaluate(()=>{session=fixture.session={user:{id:'different-coach'}};WMVideoPilot.reset();});await p.evaluate(()=>WMMatch.open());await p.waitForTimeout(300);assert.equal(await p.locator('#vpAllTakes [data-vp-play]').count(),0);pass('Another account cannot list the previous coach’s device recordings');
+ await p.evaluate(()=>{fixture.videoDenied=true;WMVideoPilot.reset();});await p.evaluate(()=>WMMatch.open());await p.waitForTimeout(300);assert(await p.locator('#vpLibrary').isHidden());assert(await p.locator('#vpPanel').isHidden());pass('Server denial keeps pilot closed');
+ assert.deepEqual(errors,[]);
+ fs.writeFileSync(path.join(root,'validation/video-pilot-browser.json'),JSON.stringify({passed,engine:'Chromium; actual MediaRecorder and OPFS with synthetic camera, synthetic account/RPC fixture; not iOS verification'},null,2));await browser.close();
+})().catch(e=>{console.error(e);process.exit(1);});
