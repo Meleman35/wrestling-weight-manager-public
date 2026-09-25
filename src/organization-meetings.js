@@ -10,7 +10,7 @@ window.WMMeetings=(()=>{
  const select=(path,label,choices,value)=>`<label>${E(label)}<select data-m-path="${path}">${choices.map(([v,n])=>`<option value="${E(v)}" ${v===value?'selected':''}>${E(n)}</option>`).join('')}</select></label>`;
  const check=(path,label,value)=>`<label class="ops-check"><input data-m-path="${path}" type="checkbox" ${value?'checked':''}>${E(label)}</label>`;
  const val=id=>el(id)?.value?.trim()||'';
- function close(){if(state)clearTimeout(state.timer);epoch++;state=null;}
+ function close(){if(state){clearTimeout(state.timer);el('mtRoot')?.remove();}epoch++;state=null;}
  async function rpc(s,q){if(!current(s))throw Error('Account or team changed. Reopen the organization.');const {data,error}=await client.rpc('organization_governance',{p_request:{organization_id:s.org,...q}});if(!current(s))throw Error('Account or team changed. Reopen the organization.');if(error){const failure=Error(error.message||'The server could not confirm this save.');failure.code=error.code;throw failure;}return data;}
  function note(s,msg,bad=false){if(!current(s))return;s.message=msg;s.error=bad;const n=el('mtStatus');if(n){n.textContent=msg;n.classList.toggle('ops-error',bad);}el('mtRetry')?.classList.toggle('hidden',!bad);el('mtReload')?.classList.toggle('hidden',!bad);}
  function shell(s,html){if(!current(s))return;el('opsContent').innerHTML=`<section id="mtRoot" class="mt-root"><div class="mt-savebar"><p id="mtStatus" role="status" aria-live="polite"></p><button id="mtRetry" class="secondary hidden">Retry save</button><button id="mtReload" class="secondary hidden">Compare / reload saved copy</button></div>${html}</section>`;note(s,s.message||'',s.error);el('mtRetry').onclick=()=>flush(s).catch(()=>{});el('mtReload').onclick=()=>compare(s);}
