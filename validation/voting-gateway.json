@@ -1,0 +1,13 @@
+{
+  "passed": 2,
+  "tests": [
+    {
+      "test": "anonymous",
+      "status": 401
+    },
+    {
+      "test": "invalid-session",
+      "status": 401
+    }
+  ]
+}

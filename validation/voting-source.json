@@ -1,0 +1,9 @@
+{
+  "release": "0.20.39",
+  "baseline": "f74ba2ba1d92b59d47d316c3332f79bac05aa2b5",
+  "syntax_checks": 35,
+  "preserved_script_checks": 34,
+  "embedded_sources": 2,
+  "index_sha256": "12a778f419edd26600079ad1307c84602ed84ef7081bfda1546cfdd8a1a0ea64",
+  "bytes": 5396800
+}

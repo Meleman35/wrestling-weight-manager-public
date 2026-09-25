@@ -1,0 +1,17 @@
+{
+  "engine": "Chromium whole app + PGlite guarded RPCs",
+  "passed": 11,
+  "tests": [
+    "Test creation saves server flag, demo clubs and delete control",
+    "Test ballot uses fictional clubs and explicitly chosen sample rules",
+    "Opening freezes a real database round; chair has no progressive tally",
+    "Lost vote response clears the choice; refreshing reveals recorded status without another vote",
+    "Only closing reveals combined test totals and applies the recorded tie rule",
+    "Amendment creates a separate round and keeps the first result",
+    "Test adjournment labels minutes; confirmed deletion removes meeting and its rounds",
+    "Phone inbox finds assigned ballot; ordinary voter has no chair controls",
+    "Status polling preserves an unsubmitted choice",
+    "Voter receipt contains acceptance only and hides open totals",
+    "Account changes cannot submit through a stale voting screen; close clears it"
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "release": "0.20.39",
+  "engine": "Connected PostgreSQL; separate transactions under authenticated role",
+  "session_model": "Temporary database fixtures with session claims, no passwords, JWTs, refresh tokens, emails or invitations",
+  "scenarios": [
+    {
+      "test": "same seat, simultaneous different choices",
+      "submitted": 1,
+      "counted": 1,
+      "receipt_outcomes": [
+        "accepted",
+        "already_recorded"
+      ]
+    },
+    {
+      "test": "original cast racing delegate replacement; replacement retries",
+      "submitted": 1,
+      "counted": 1,
+      "replacement_receipt": "already_recorded"
+    },
+    {
+      "test": "cast racing close",
+      "submitted": 1,
+      "counted": 1,
+      "published": 1
+    },
+    {
+      "test": "accepted transaction rolled back, then retried",
+      "submitted": 1,
+      "counted": 1,
+      "retry_receipt": "accepted"
+    },
+    {
+      "test": "different clubs submit concurrently",
+      "submitted": 2,
+      "counted": 2
+    }
+  ],
+  "cleanup": {
+    "temporary_rounds": 0,
+    "temporary_organizations": 0,
+    "temporary_auth_users": 0
+  },
+  "owner_setup": {
+    "original_cancelled_meeting_flagged_test": true,
+    "original_workspace_unchanged": true,
+    "new_test_meeting": "scheduled",
+    "sample_round": "draft",
+    "fictional_clubs": 3,
+    "official_ballots_created": 0
+  },
+  "limitations": [
+    "Database role/session claims are exercised directly, not an end-to-end real-user sign-in.",
+    "No Safari, TestFlight or owner-device validation."
+  ]
+}
