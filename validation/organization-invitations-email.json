@@ -1,0 +1,13 @@
+{
+  "engine": "Node 24; injected fake HTTP transport; zero real messages",
+  "passed": 7,
+  "tests": [
+    "Missing authentication never reaches email transport",
+    "Malformed token rejected before database or provider calls",
+    "Database authorization failure prevents sending",
+    "Fixed template, saved recipient and public app link ignore caller overrides and escape HTML",
+    "Uncertain-send retry reuses the provider idempotency key",
+    "Provider errors and timeouts never claim success or expose upstream details",
+    "Missing configuration offers copy-link fallback"
+  ]
+}
