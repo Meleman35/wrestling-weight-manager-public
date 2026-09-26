@@ -87,7 +87,7 @@ window.WMOrgInvites=(()=>{
   };
  }
  function share(s,invite){
-  const publicUrl=new URL('join.html',EMAIL_CONFIRM_REDIRECT_URL);publicUrl.searchParams.set('invite',invite.token);const url=publicUrl.toString();
+  const publicUrl=new URL('join.html',JOIN_PUBLIC_BASE_042);publicUrl.searchParams.set('invite',invite.token);const url=publicUrl.toString();
   shell(s,`<h4>Invitation ready for ${E(invite.email)}</h4>${accessHtml(invite.access)}<p>Expires ${E(new Date(invite.expires_at).toLocaleDateString())}. The recipient must sign in or create an account using this email.</p><label>Private invitation link<input id="oiLink" readonly value="${E(url)}"></label><div class="ops-actions"><button id="oiSend">Email invitation</button><button id="oiCopy" class="secondary">Copy link</button><button id="oiDone" class="secondary">Back to invitations</button></div><p class="ops-sheet-note">Keep this screen open if you need to retry sending. For privacy, saved invitation lists do not reveal the link. Revoke and replace an invitation if you lose its link.</p>`);
   el('oiDone').onclick=()=>reload(s);el('oiLink').onclick=()=>el('oiLink').select();
   el('oiCopy').onclick=async()=>{

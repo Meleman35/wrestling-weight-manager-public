@@ -13,7 +13,8 @@ const positions=[
 let admin=true,available=true,writes=[],emailCalls=0,pause=null,failContext=false;
 w.session={user:{id:'admin-1'}};w.activeTeam=null;w.managedLogin=false;w.confirm=()=>true;
 w.esc=value=>String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
-w.EMAIL_CONFIRM_REDIRECT_URL='https://wm.example.test/auth-confirm.html';
+w.EMAIL_CONFIRM_REDIRECT_URL='https://legacy.example.test/auth-confirm.html';
+w.JOIN_PUBLIC_BASE_042='https://theteammanager.app/';
 w.client={rpc:async(name,{p_request:q})=>{
  if(name==='organization_governance')return {data:{can_manage_structure:admin,positions,directory:[],affiliates:[],linkable_teams:[],linkable_organizations:[]}};
  assert.equal(name,'organization_leadership_invites');
@@ -47,7 +48,7 @@ const pass=text=>{checks.push(text);console.log('PASS',text);};
  await d.getElementById('oiForm').onsubmit({preventDefault(){}});
  assert.equal(writes.length,1);assert.equal(writes[0].position_id,'secretary');assert.equal(writes[0].revision,3);
  assert.equal(writes[0].kind,'position');assert.equal(writes[0].access_role,'board');assert.equal(writes[0].organization_id,'test-org');
- assert.ok(d.getElementById('oiLink'));assert.equal(emailCalls,0);
+ assert.ok(d.getElementById('oiLink'));assert.match(d.getElementById('oiLink').value,/^https:\/\/theteammanager\.app\/join\.html\?invite=WMO-/);assert.equal(emailCalls,0);
  pass('Creation uses the selected position revision and explicitly reviewed permissions');
  d.getElementById('oiBackPositions').click();await flush();assert.ok(d.getElementById('gsRows'));
  d.querySelector('[data-gs-invite]').click();await flush();d.getElementById('oiCancel').click();await flush();
