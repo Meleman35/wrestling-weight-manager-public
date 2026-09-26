@@ -8,6 +8,12 @@ const {PGlite}=require(process.env.PGLITE_MODULE||'@electric-sql/pglite'),{fixtu
  const req=async(action,data={})=>(await db.query('select public.video_match_request($1,$2) r',[action,JSON.stringify({team_id:ids.team,...data})])).rows[0].r;
  await as(ids.coach);await assert.rejects(()=>req('manage'),/not enabled/);pass('Pilot remains off, including family endpoints');
  await db.exec('reset role;update private.video_pilot_control set enabled=true');await db.query("insert into private.video_pilot_grants values($1,$2,now()+interval '1 day',null)",[ids.team,ids.coach]);await as(ids.coach);
+ const pilot=await req('assignments');assert.equal(pilot.test_only,true);assert.equal(pilot.can_record_test,true);assert.equal(pilot.can_manage,false);
+ const lease=(await db.query('select public.video_pilot_context($1) r',[ids.team])).rows[0].r;assert.deepEqual(lease.athlete_ids,[]);assert.equal(lease.cloud_upload,false);assert.equal((await req('recorder_test')).data.book_type,'test');
+ await assert.rejects(()=>req('begin',{bout_id:bout.id}),/Only the Test/);await assert.rejects(()=>req('athlete',{athlete_id:ids.a}),/Only the Test/);
+ await as(ids.mate);assert.equal((await req('assignments')).can_scorebook,false);await assert.rejects(()=>req('recorder_test'),/recorder access/);
+ await db.exec('reset role');await db.query("insert into private.video_pilot_grants values($1,$2,now()+interval '1 day',null)",[ids.team,ids.mate]);await as(ids.mate);assert.equal((await req('recorder_test')).data.book_type,'test');
+ await db.exec('reset role');await db.query('delete from private.video_pilot_grants where user_id=$1',[ids.mate]);await db.exec('update private.video_pilot_control set test_only=false');await as(ids.coach);pass('Test-only pilot allows exact personal grants, returns no athlete IDs and blocks real bouts/cloud');
  await req('event_settings',{event_id:ids.event,permitted:true,rules:{style:'folkstyle',periods:[120,120,120],breakSeconds:0,takedown:3}});
  await assert.rejects(()=>req('begin',{bout_id:bout.id}),/permission/);
  await req('assign',{event_id:ids.event,athlete_id:ids.a,user_id:ids.mate});await as(ids.mate);assert.equal((await req('assignments')).bouts.length,0);

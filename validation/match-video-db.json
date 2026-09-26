@@ -1,6 +1,7 @@
 {
   "passed": [
     "Pilot remains off, including family endpoints",
+    "Test-only pilot allows exact personal grants, returns no athlete IDs and blocks real bouts/cloud",
     "Event and guardian permission required; teammate shortcut respects restricted opponent visibility",
     "Assigned teammate imports trusted bout identity; retries deduplicate; concurrent recorder blocked",
     "Student managers can open assigned/test scorebooks without coach rights; removal closes access",

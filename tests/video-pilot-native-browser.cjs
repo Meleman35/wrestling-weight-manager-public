@@ -93,7 +93,7 @@ const root=path.resolve(__dirname,'..');
    fixture.coachBookCalls=0;const original=client.rpc.bind(client);
    client.rpc=async(name,args)=>{
     if(name==='get_operations'&&args.p_request?.action==='matches'||name==='save_operations'){fixture.coachBookCalls++;return{data:null,error:{message:'Coach operations denied'}};}
-    if(name==='video_match_request'&&args.p_action==='assignments')return{data:{bouts:[],can_scorebook:true,can_record_test:true,can_manage:false},error:null};
+    if(name==='video_match_request'&&args.p_action==='assignments')return{data:{bouts:[],test_only:role==='athlete',can_scorebook:true,can_record_test:true,can_manage:false},error:null};
     if(name==='video_match_request'&&args.p_action==='recorder_test'){const id=crypto.randomUUID();return{data:{id,team_id:activeTeam.id,data:{id,video_test:true,book_type:'test',flowVersion:1,nfhs:false,style:'folkstyle',periods:[120,120,120],breakSeconds:0,takedown:3,red_id:null,other_id:null,red_name:'Test Athlete Red',other_name:'Test Athlete Green',label:'Recorder test',period:0,phase:'period',remainingMs:120000,deadline:null,ledger:[],status:'live'}},error:null};}
     return original(name,args);
    };

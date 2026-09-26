@@ -52,4 +52,4 @@ for name in ['video-pilot-core','video-upload','video-pilot','video-pilot-native
 tag='<style id="wm-video-pilot-046">\n'+(root/'src/video-pilot.css').read_text()+'\n</style>'
 s=re.sub(r'<style id="wm-video-pilot-046">.*?</style>\n*','',s,flags=re.S)
 s=s.replace('</head>',tag+'\n</head>');p.write_text(s)
-print('Embedded isolated Video Pilot (production build label remains 0.20.42).')
+print('Embedded guarded Video Pilot; release label preserved.')

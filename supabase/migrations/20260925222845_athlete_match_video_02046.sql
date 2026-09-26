@@ -1,6 +1,7 @@
 -- Held TestFlight draft. No grants, consent, provider, or production activation seeded.
 begin;
-alter table private.video_pilot_control add column cloud_enabled boolean not null default false;
+alter table private.video_pilot_control add column cloud_enabled boolean not null default false,
+ add column test_only boolean not null default true;
 create table private.video_event_settings (
  event_id uuid primary key references public.team_events(id) on delete cascade,
  team_id uuid not null references public.teams(id), recording_permitted boolean not null default false,
@@ -56,7 +57,7 @@ create function private.video_consent(t uuid,a uuid) returns boolean language sq
  where p.team_id=t and p.athlete_id=a and not p.recording_allowed)
 $$;
 create function private.video_can_record(t uuid,a uuid,ev uuid) returns boolean language sql stable security definer set search_path='' as $$
- select private.video_team_enabled(t) and private.video_consent(t,a)
+ select private.video_team_enabled(t) and not (select test_only from private.video_pilot_control where id) and private.video_consent(t,a)
  and exists(select 1 from public.roster_memberships r join public.seasons s on s.id=r.season_id where r.athlete_id=a and r.active and s.active and s.team_id=t)
  and exists(select 1 from private.video_event_settings v where v.team_id=t and v.event_id=ev and v.recording_permitted)
  and ( (public.is_team_staff(t) and exists(select 1 from private.video_pilot_grants g where g.team_id=t and g.user_id=auth.uid() and g.expires_at>now() and g.revoked_at is null))
@@ -77,7 +78,7 @@ declare uid uuid=auth.uid(); expiry timestamptz; people jsonb; staff boolean=pub
 begin
  if uid is null or exists(select 1 from private.team_logins where user_id=uid) then raise exception 'Personal coach or assigned recorder account required'; end if;
  if not private.video_team_enabled(p_team_id) then return jsonb_build_object('allowed',false); end if;
- if staff then select expires_at into expiry from private.video_pilot_grants where team_id=p_team_id and user_id=uid and revoked_at is null and expires_at>now(); end if;
+ if staff or ((select test_only from private.video_pilot_control where id) and exists(select 1 from public.team_memberships where team_id=p_team_id and user_id=uid and active and role in ('athlete','manager'))) then select expires_at into expiry from private.video_pilot_grants where team_id=p_team_id and user_id=uid and revoked_at is null and expires_at>now(); end if;
  if expiry is not null then
   select coalesce(jsonb_agg(distinct r.athlete_id),'[]') into people from public.roster_memberships r join public.seasons s on s.id=r.season_id where s.team_id=p_team_id and s.active and r.active;
  else
@@ -85,8 +86,9 @@ begin
   where r.team_id=p_team_id and r.user_id=uid and private.video_can_record(r.team_id,r.athlete_id,r.event_id);
  end if;
  if expiry is null then return jsonb_build_object('allowed',false); end if;
+ if (select test_only from private.video_pilot_control where id) then people='[]'::jsonb; end if;
  return jsonb_build_object('allowed',true,'user_id',uid,'team_id',p_team_id,'lease_seconds',greatest(0,least(7200,extract(epoch from expiry-now())::int)),
- 'athlete_ids',people,'cloud_upload',(select cloud_enabled from private.video_pilot_control where id),'live',false,'billing',false);
+ 'athlete_ids',people,'test_only',(select test_only from private.video_pilot_control where id),'cloud_upload',(select cloud_enabled and not test_only from private.video_pilot_control where id),'live',false,'billing',false);
 end $$;
 
 create function private.video_match_request(p_action text,p_data jsonb) returns jsonb
@@ -108,6 +110,7 @@ begin
    'period',0,'phase','period','remainingMs',120000,'deadline',null,'ledger','[]'::jsonb,'status','live');
   return jsonb_build_object('id',rid,'data',d,'team_id',t);
  end if;
+ if (select test_only from private.video_pilot_control where id) and p_action not in ('assignments','go_live') then raise exception 'Only the Test scorebook is enabled for this pilot'; end if;
  if p_action='permission' then
   if not private.tournament_guardian(t,a) then raise exception 'Linked parent required'; end if;
   insert into private.video_athlete_permissions values(t,a,u,coalesce((p_data->>'allowed')::boolean,false),now())
@@ -149,11 +152,11 @@ begin
    and private.video_can_record(t,en.athlete_id,e.id) and e.starts_at between now()-interval '24 hours' and now()+interval '36 hours'
   )q;
   return jsonb_build_object('bouts',items,
-   'can_scorebook',public.is_team_staff(t) or exists(select 1 from public.team_memberships where team_id=t and user_id=u and active and role in ('athlete','manager')) or coalesce((private.video_pilot_context(t)->>'allowed')::boolean,false),
+   'can_scorebook',coalesce((private.video_pilot_context(t)->>'allowed')::boolean,false) or (not (select test_only from private.video_pilot_control where id) and (public.is_team_staff(t) or exists(select 1 from public.team_memberships where team_id=t and user_id=u and active and role in ('athlete','manager')))),
    'can_record_test',coalesce((private.video_pilot_context(t)->>'allowed')::boolean,false),
-   'can_manage',public.is_team_staff(t) and exists(select 1 from private.video_pilot_grants where team_id=t and user_id=u and expires_at>now() and revoked_at is null),'can_set_permission',private.tournament_guardian(t,a),'permission',(select recording_allowed from private.video_athlete_permissions where team_id=t and athlete_id=a and guardian_id=u),
+   'can_manage',not (select test_only from private.video_pilot_control where id) and public.is_team_staff(t) and exists(select 1 from private.video_pilot_grants where team_id=t and user_id=u and expires_at>now() and revoked_at is null),'can_set_permission',private.tournament_guardian(t,a),'permission',(select recording_allowed from private.video_athlete_permissions where team_id=t and athlete_id=a and guardian_id=u),
    'recordings',(select coalesce(jsonb_agg(jsonb_build_object('id',v.id,'label',m.data->>'label','opponent',m.data->>'other_name','bout_number',m.data->>'bout_number','created_at',v.created_at,'partial',v.partial,'duration_ms',v.duration_ms) order by v.created_at desc),'[]') from private.video_recordings v join private.video_scored_matches m on m.id=v.match_id where v.team_id=t and v.athlete_id=a and v.status='ready' and private.video_can_view(t,a)),
-   'cloud_enabled',(select cloud_enabled from private.video_pilot_control where id),'live_available',false);
+   'test_only',(select test_only from private.video_pilot_control where id),'cloud_enabled',(select cloud_enabled and not test_only from private.video_pilot_control where id),'live_available',false);
  end if;
  if p_action='begin' then
   select b.*,en.athlete_id,concat_ws(' ',at.first_name,at.last_name) athlete_name,en.division,en.weight_class,w.event_id,e.title,e.season_id into b
@@ -224,7 +227,7 @@ end $$;
 insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types) values('match-video-pilot','match-video-pilot',false,1073741824,array['video/mp4','video/webm','video/quicktime','application/json']);
 create function private.video_object_access(path text,writing boolean) returns boolean language sql stable security definer set search_path='' as $$
  select exists(select 1 from private.video_recordings r join private.video_scored_matches m on m.id=r.match_id
- where path in (r.video_path,r.timeline_path) and private.video_team_enabled(r.team_id) and (select cloud_enabled from private.video_pilot_control where id)
+ where path in (r.video_path,r.timeline_path) and private.video_team_enabled(r.team_id) and (select cloud_enabled and not test_only from private.video_pilot_control where id)
  and case when writing then r.status='uploading' and r.recorder_id=auth.uid() and private.video_can_record(r.team_id,r.athlete_id,m.event_id)
  else (r.status='ready' and private.video_can_view(r.team_id,r.athlete_id)) or (r.status in ('uploading','ready') and r.recorder_id=auth.uid() and private.video_can_record(r.team_id,r.athlete_id,m.event_id)) end)
 $$;

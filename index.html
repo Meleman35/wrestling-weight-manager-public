@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.42: Reliable team link copying, customizable Clipboard categories and manual Tournament Day. -->
+<!-- Wrestling Manager v0.20.46: Guarded private Test scorebook recording pilot and scoped recorder access. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -2123,7 +2123,7 @@ body.kiosk-locked #messageReactionDialog,body:has(#appLockOverlay:not(.hidden)) 
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.42</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.46</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -14019,9 +14019,9 @@ window.WMMatchVideo = (() => {
   let entry=$('lockerMatchBookBtn');if(data.can_scorebook&&!entry){entry=button('Match Book · score & record',scorebook);entry.id='lockerMatchBookBtn';entry.className='wide secondary mv-entry';$('lockerGoalsTab')?.parentElement?.after(entry);}if(entry)entry.hidden=!data.can_scorebook;
   let b=$('videoAssignmentsBtn');if(!b){b=button('Record team matches',scorebook);b.id='videoAssignmentsBtn';$('tournamentDayBtn')?.parentElement?.append(b);}if(b)b.hidden=!data.can_scorebook;
  }catch{if(g!==generation)return;$('videoAssignmentsBtn')?.remove();$('lockerMatchBookBtn')?.remove();bookAccess();}}
- async function scorebook(){const data=await rpc('assignments');if(!data.can_scorebook)throw Error('Your coach needs to give this personal account recorder access.');closeSheets();const box=sheet('Match Book');box.innerHTML='<p>Score and record your assigned team matches. Athletes and student managers use their own accounts.</p>';
+ async function scorebook(){const data=await rpc('assignments');if(!data.can_scorebook)throw Error('Your coach needs to give this personal account recorder access.');closeSheets();const box=sheet('Match Book');box.innerHTML=data.test_only?'<p>Private recording test · saved on this device. Use the Test scorebook to check your camera, scoring and replay.</p>':'<p>Score and record your assigned team matches. Athletes and student managers use their own accounts.</p>';
   if(data.can_record_test)box.append(button('Test scorebook',test));else box.insertAdjacentHTML('beforeend','<p>Your coach can assign a match to enable your camera test.</p>');
-  renderBouts(box,data.bouts);if(data.can_manage)box.append(button('Set event rules & recorder access',manage));
+  if(!data.test_only)renderBouts(box,data.bouts);if(data.can_manage)box.append(button('Set event rules & recorder access',manage));
   const c=context();try{const draft=JSON.parse(localStorage.getItem('wm-match-draft-v1:'+c.user+':'+c.team)||'null');if(data.can_record_test&&draft?.owner===c.user&&draft?.team_id===c.team&&draft?.data?.video_test)box.append(button('Resume test scorebook',async()=>{await rpc('recorder_test');replay?.remove();replay=null;await WMMatch.openVideo(draft);}));}catch{}
  }
  async function test(){if(window.WMVideoPilot?.active())throw Error('Stop and save your current recording first.');const row=await rpc('recorder_test');replay?.remove();replay=null;await WMMatch.openVideo(row);$('vpPanel')?.scrollIntoView({block:'start'});}

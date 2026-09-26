@@ -17,6 +17,6 @@ for name in ['video-pilot-core','video-upload','video-pilot','video-pilot-native
  assert (root/f'src/{name}.js').read_text() in s
 subprocess.run(['python','scripts/embed-video-pilot.py'],cwd=root,check=True)
 assert s==(root/'index.html').read_text(), 'Embedding must be idempotent'
-result={'unrelatedInlineScriptsUnchanged':len(before)-2,'scoringEngineUnchanged':True,'standaloneMatModeUnchanged':True,'embeddingIdempotent':True,'productionBuildLabelUnchanged':True}
+result={'unrelatedInlineScriptsUnchanged':len(before)-2,'scoringEngineUnchanged':True,'standaloneMatModeUnchanged':True,'embeddingIdempotent':True,'releaseBuildLabel':'0.20.46'}
 (root/'validation/video-pilot-source.json').write_text(json.dumps(result,indent=2))
 print('PASS preservation of existing features, shared scoring, Mat Mode and idempotent embedding')

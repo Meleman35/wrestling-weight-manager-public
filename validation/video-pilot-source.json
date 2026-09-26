@@ -3,5 +3,5 @@
   "scoringEngineUnchanged": true,
   "standaloneMatModeUnchanged": true,
   "embeddingIdempotent": true,
-  "productionBuildLabelUnchanged": true
+  "releaseBuildLabel": "0.20.46"
 }
