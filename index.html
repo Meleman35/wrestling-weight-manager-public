@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.53: Branded invitation link previews. -->
+<!-- Wrestling Manager v0.20.54: Branded invitation domain. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -12,7 +12,7 @@
   <meta property="og:site_name" content="Wrestling Manager">
   <meta property="og:title" content="Wrestling Manager">
   <meta property="og:description" content="Connect with your team or organization in Wrestling Manager.">
-  <meta property="og:image" content="https://meleman35.github.io/wrestling-weight-manager-public/assets/wrestling-manager-icon.png">
+  <meta property="og:image" content="https://theteammanager.app/assets/wrestling-manager-icon.png">
   <meta property="og:image:alt" content="Wrestling Manager WM logo with two wrestlers">
   <link rel="icon" type="image/png" href="./assets/wrestling-manager-icon.png">
   <link rel="apple-touch-icon" href="./assets/wrestling-manager-icon.png">
@@ -2207,7 +2207,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.53</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.54</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -2479,6 +2479,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
 const INVITE_EMAIL_REMINDER = "Can’t find your confirmation email, invitation, or team code? Check your Junk or Spam folder. If the email is there, mark it as Not Junk and return here to continue.";
 const SUPABASE_URL = 'https://vfocpoyexnjsjpxhhyqr.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_aX7mx8Myn8sok3bhPPmphQ_fWN8o38P';
+// Keep the existing allowlisted Auth callback during the domain migration.
 const EMAIL_CONFIRM_REDIRECT_URL = 'https://meleman35.github.io/wrestling-weight-manager-public/auth-confirm.html';
 const RESET_REDIRECT_URL = 'wrestlingmanager://password-reset';
 const AUTH_REMEMBER_KEY = 'wm_remember_session';
@@ -3295,7 +3296,7 @@ function eventLabel(type){
   return ({practice:'Practice',open_mat:'Open Mat',dual:'Dual',tournament:'Tournament',camp:'Camp',travel:'Travel',meeting:'Meeting',weigh_in:'Weigh-In',wrestle_off:'Wrestle-Off',other:'Other'})[type] || type;
 }
 
-const JOIN_PUBLIC_BASE_042 = 'https://meleman35.github.io/wrestling-weight-manager-public/';
+const JOIN_PUBLIC_BASE_042 = 'https://theteammanager.app/';
 function teamJoinUrl(code){
   const u=new URL('join.html',JOIN_PUBLIC_BASE_042); u.searchParams.set('join',code); return u.toString();
 }
@@ -10886,7 +10887,7 @@ window.WMOrgInvites=(()=>{
   };
  }
  function share(s,invite){
-  const publicUrl=new URL('join.html',EMAIL_CONFIRM_REDIRECT_URL);publicUrl.searchParams.set('invite',invite.token);const url=publicUrl.toString();
+  const publicUrl=new URL('join.html',JOIN_PUBLIC_BASE_042);publicUrl.searchParams.set('invite',invite.token);const url=publicUrl.toString();
   shell(s,`<h4>Invitation ready for ${E(invite.email)}</h4>${accessHtml(invite.access)}<p>Expires ${E(new Date(invite.expires_at).toLocaleDateString())}. The recipient must sign in or create an account using this email.</p><label>Private invitation link<input id="oiLink" readonly value="${E(url)}"></label><div class="ops-actions"><button id="oiSend">Email invitation</button><button id="oiCopy" class="secondary">Copy link</button><button id="oiDone" class="secondary">Back to invitations</button></div><p class="ops-sheet-note">Keep this screen open if you need to retry sending. For privacy, saved invitation lists do not reveal the link. Revoke and replace an invitation if you lose its link.</p>`);
   el('oiDone').onclick=()=>reload(s);el('oiLink').onclick=()=>el('oiLink').select();
   el('oiCopy').onclick=async()=>{
