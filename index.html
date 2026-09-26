@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.51: Invited organization members in Board Room. -->
+<!-- Wrestling Manager v0.20.52: Direct board-position invitations and accurate build label. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -2198,7 +2198,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.49</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.52</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -10549,17 +10549,18 @@ window.WMOrgStructure=(()=>{
   if(data?.error)throw Error(data.error);return data;
  }
  function shell(s,title,body){if(!current(s))return;el('opsContent').innerHTML=`<section class="gs-root"><div class="ops-section-heading"><h3>${E(title)}</h3></div><div id="gsStatus" class="ops-sheet-note" role="status" aria-live="polite"></div>${body}</section>`;}
- async function open({org,hub,kind}){
-  close();const s=state={org,hub,kind,epoch,uid:session?.user?.id,team:activeTeam?.id,data:null,filter:'current',query:'',pending:null};
+ async function open({org,hub,kind,scope=''}){
+  close();const s=state={org,hub,kind,scope,epoch,uid:session?.user?.id,team:activeTeam?.id,data:null,filter:'current',query:'',pending:null};
   shell(s,kind==='positions'?'Positions':'Affiliate directory','<p>Loading saved organization records…</p>');
-  try{s.data=await call(s,{action:'context'});render(s);}catch(err){if(current(s)){shell(s,'Organization structure','<button id="gsRetry" class="secondary">Retry loading</button>');note(s,err.message,true);el('gsRetry').onclick=()=>open({org,hub,kind});}}
+  try{s.data=await call(s,{action:'context'});render(s);}catch(err){if(current(s)){shell(s,'Organization structure','<button id="gsRetry" class="secondary">Retry loading</button>');note(s,err.message,true);el('gsRetry').onclick=()=>open({org,hub,kind,scope});}}
  }
  async function reload(s,message=''){try{s.data=await call(s,{action:'context'});if(!current(s))return;s.pending=null;render(s);note(s,message);}catch(err){if(current(s)){shell(s,'Organization structure','<button id="gsReloadFailed" class="secondary">Reload saved records</button>');note(s,'Saved change could not be reloaded. '+err.message,true);el('gsReloadFailed').onclick=()=>reload(s);}}}
  function render(s){
   if(!current(s))return;const pos=s.kind==='positions',admin=s.data.can_manage_structure;
-  const all=pos?s.data.positions:s.data.affiliates;
+  const inScope=r=>{if(!pos||!s.scope||!r.division_id)return true;let d=r.division_id;const seen=new Set();while(d&&!seen.has(d)){if(d===s.scope)return true;seen.add(d);d=s.hub.divisions.find(x=>x.id===d)?.parent_id;}return false;};
+  const all=(pos?s.data.positions:s.data.affiliates).filter(inScope);
   const rows=all.filter(r=>(s.filter==='all'||(pos?r.active:r.status!=='archived'))&&(!s.query||(pos?r.title+' '+(r.assigned_name||''):r.name).toLowerCase().includes(s.query.toLowerCase())));
-  const buttons=admin?`<button id="gsAdd">＋ ${pos?'Add position':'Add affiliate'}</button>${pos?'<button id="gsPresets" class="secondary">Position templates</button>':''}`:'';
+  const buttons=admin?`<button id="gsAdd">+ ${pos?'Add position':'Add affiliate'}</button>${pos?'<button id="gsPresets" class="secondary">Position templates</button>':''}`:'';
   shell(s,pos?'Positions':'Affiliate directory',`<p class="ops-sheet-note">${pos?'Define the posts your organization needs, including vacancies. One adult can hold several posts. Access is assigned separately from the title.':'Keep clubs and schools on record as affiliations change. Membership and voting eligibility each require review.'}</p>
    <div class="ops-actions">${buttons}<button id="gsRefresh" class="secondary">Refresh</button></div>
    <div class="gs-grid">${field('gsSearch','Search',s.query)}${choice('gsFilter','Show',[['current','Current records'],['all','Include archived']],s.filter)}</div>
@@ -10569,10 +10570,17 @@ window.WMOrgStructure=(()=>{
   el('gsRefresh').onclick=()=>reload(s);el('gsFilter').onchange=()=>{s.filter=val('gsFilter');render(s)};
   el('gsSearch').oninput=()=>{const v=val('gsSearch'),cursor=el('gsSearch').selectionStart;s.query=v;render(s);el('gsSearch').focus();el('gsSearch').setSelectionRange(cursor,cursor);};
   el('gsRows').querySelectorAll('[data-gs-edit]').forEach(b=>b.onclick=()=>edit(s,all.find(r=>r.id===b.dataset.gsEdit)));
+  el('gsRows').querySelectorAll('[data-gs-invite]').forEach(b=>b.onclick=()=>invite(s,all.find(r=>r.id===b.dataset.gsInvite)));
   el('gsRows').querySelectorAll('[data-gs-history]').forEach(b=>b.onclick=()=>history(s,all.find(r=>r.id===b.dataset.gsHistory)));
   el('gsRows').querySelectorAll('[data-gs-archive]').forEach(b=>b.onclick=()=>archive(s,all.find(r=>r.id===b.dataset.gsArchive)));
  }
- function actions(s,r){return s.data.can_manage_structure?`<div class="ops-actions"><button class="secondary" data-gs-edit="${E(r.id)}">Edit</button><button class="secondary" data-gs-history="${E(r.id)}">History</button><button class="secondary" data-gs-archive="${E(r.id)}">${(s.kind==='positions'?!r.active:r.status==='archived')?'Reactivate':'Archive / remove'}</button></div>`:'';}
+ const canInvite=(s,r)=>s.kind==='positions'&&s.data.can_manage_structure&&s.hub.admin&&r?.active&&r.assignment_enabled&&!r.assigned_user_id&&!/athlete.*rep/i.test(r.title);
+ function invite(s,r){
+  if(!current(s)||!canInvite(s,r))return;
+  const {org,hub,kind,scope}=s;close();
+  window.WMOrgInvites.open({org,positionId:r.id,onBack:()=>open({org,hub,kind,scope})});
+ }
+ function actions(s,r){return s.data.can_manage_structure?`<div class="ops-actions">${canInvite(s,r)?`<button data-gs-invite="${E(r.id)}">Invite to this position</button>`:''}<button class="secondary" data-gs-edit="${E(r.id)}">Edit</button><button class="secondary" data-gs-history="${E(r.id)}">History</button><button class="secondary" data-gs-archive="${E(r.id)}">${(s.kind==='positions'?!r.active:r.status==='archived')?'Reactivate':'Archive / remove'}</button></div>`:'';}
  function positionCard(s,r){const parent=s.data.positions.find(p=>p.id===r.parent_position_id);return `<article class="ops-card"><div class="ops-meta">${E(r.division_name||'Organization')} · Revision ${E(r.revision)}</div><h3>${E(r.title)}</h3><p><b>${E(r.assigned_name||(r.assigned_user_id?'Assigned account':'Vacant'))}</b>${!r.active?' · Archived':''}</p>${!r.assignment_enabled?'<p class="ops-sheet-note">Athlete-representative assignment is deferred.</p>':''}${parent?`<p>Reports to: ${E(parent.title)}</p>`:''}<p class="ops-sheet-note">${E(access.find(a=>a[0]===r.access_role)?.[1]||'Title only · no operational access')}</p>${actions(s,r)}</article>`;}
  function affiliateCard(s,r){return `<article class="ops-card"><div class="ops-meta">${E(r.affiliate_type.replaceAll('_',' '))} · Revision ${E(r.revision)}</div><h3>${E(r.name)}</h3><p>${E(r.status)} · ${E(({unreviewed:'Membership needs review',confirmed:'Membership confirmed',not_current:'Not a current member'})[r.membership_review])}</p><p class="ops-sheet-note">Voting: ${E(({unreviewed:'not reviewed',eligible:'eligible under recorded rule',ineligible:'not eligible'})[r.voting_review])}</p>${r.linked_team_name?`<p>Linked team: ${E(r.linked_team_name)}</p>`:''}${r.linked_organization_name?`<p>Linked organization: ${E(r.linked_organization_name)}</p>`:''}${actions(s,r)}</article>`;}
  function edit(s,r=null){
@@ -10608,6 +10616,11 @@ window.WMOrgStructure=(()=>{
   el('gsTitle').required=true;
   if(pos&&r&&!r.assignment_enabled){el('gsPerson').disabled=true;el('gsPerson').value='';}
   let dirty=false;el('gsForm').oninput=()=>{dirty=true;note(s,'Unsaved changes.');};
+  if(canInvite(s,r)){
+   const button=document.createElement('button');button.type='button';button.className='secondary';button.id='gsInvitePosition';button.textContent='Invite to this position';
+   el('gsCancel').before(button);
+   button.onclick=()=>{if(!dirty||confirm('Discard unsaved changes and invite to the saved position?'))invite(s,r);};
+  }
   el('gsCancel').onclick=()=>{if(!dirty||confirm('Discard unsaved changes?'))render(s);};
   el('gsReloadRecord').onclick=()=>{if(confirm('Reload the saved record and discard these unsaved changes?'))reload(s);};
   el('gsForm').onsubmit=async ev=>{
@@ -10797,13 +10810,25 @@ window.WMOrgInvites=(()=>{
   return (access.find(([key])=>key===(a?.access_role||''))?.[1]||'Assigned organization access')+'. A position does not make this person a team coach or organization administrator.';
  }
  function accessHtml(a){return `<p><b>${E(a?.title)}</b> · ${E(a?.scope||'Organization')}</p><p>${E(accessText(a))}</p><p class="ops-sheet-note">Meeting management: ${a?.can_manage_meetings?'Yes':'No'} · Vote management: ${a?.can_manage_votes?'Yes':'No'} · Voting position: ${a?.voting_member?'Yes · eligibility still checked for each vote':'No'}</p>`;}
- function shell(s,body){if(current(s))el('opsContent').innerHTML=`<section class="gs-root oi-root"><h3>${s.mode==='members'?'Organization members':'Leadership invitations'}</h3><p>${s.mode==='members'?'Invite an adult to join the organization with their own account. Membership does not assign a board position or team role.':'Invite an adult directly to organization leadership. They use their own account and do not need to join a team.'}</p><p id="oiStatus" role="status" aria-live="polite"></p>${body}</section>`;}
- async function open({org,mode='leadership'}){
-  close();const s=state={org,mode,epoch,uid:session?.user?.id,team:activeTeam?.id,data:null,pending:null};
+ function back(s){if(!current(s))return;const onBack=s.onBack;close();onBack?.();}
+ function shell(s,body){
+  if(!current(s))return;
+  el('opsContent').innerHTML=`<section class="gs-root oi-root">${s.onBack?'<button id="oiBackPositions" type="button" class="secondary">Back to positions</button>':''}<h3>${s.mode==='members'?'Organization members':'Leadership invitations'}</h3><p>${s.mode==='members'?'Invite an adult to join the organization with their own account. Membership does not assign a board position or team role.':'Invite an adult directly to organization leadership. They use their own account and do not need to join a team.'}</p><p id="oiStatus" role="status" aria-live="polite"></p>${body}</section>`;
+  el('oiBackPositions')?.addEventListener('click',()=>back(s));
+ }
+ async function open({org,mode='leadership',positionId='',onBack=null}){
+  close();const s=state={org,mode,positionId:mode==='leadership'?positionId:'',onBack,epoch,uid:session?.user?.id,team:activeTeam?.id,data:null,pending:null};
   shell(s,'<p>Loading invitations…</p>');await reload(s);
  }
  async function reload(s,msg=''){
-  try{const data=await rpc({action:'context',organization_id:s.org},s.uid);if(!current(s))return;s.data=data;s.pending=null;render(s);note(s,msg);}
+  try{
+   const data=await rpc({action:'context',organization_id:s.org},s.uid);if(!current(s))return;s.data=data;s.pending=null;render(s);note(s,msg);
+   if(s.positionId){
+    const positionId=s.positionId;s.positionId='';
+    if(data.positions.some(p=>p.id===positionId))edit(s,positionId);
+    else note(s,'This position is no longer available for an invitation. Return to positions and refresh.',true);
+   }
+  }
   catch(error){if(current(s)){shell(s,'<button id="oiRetry" class="secondary">Reload invitations</button>');note(s,error.message,true);el('oiRetry').onclick=()=>reload(s)}}
  }
  function render(s){
@@ -10825,16 +10850,17 @@ window.WMOrgInvites=(()=>{
    try{await rpc({action:'remove_admin',organization_id:s.org,user_id:a.user_id,confirm_remove:true},s.uid);if(current(s))await reload(s,'Organization administrator access removed.')}catch(e){note(s,e.message,true);if(b.isConnected)b.disabled=false;}
   });
  }
- function edit(s){
+ function edit(s,positionId=''){
   s.pending=null;
-  shell(s,`<form id="oiForm"><div class="gs-grid"><label>Invited email<input id="oiEmail" type="email" autocomplete="email" maxlength="254" required></label><label>Invitation role<select id="oiKind">${s.mode==='members'?'<option value="member">Organization member · no board or team role</option>':'<option value="position">Leadership position</option><option value="administrator">Organization administrator · full access</option>'}</select></label><div id="oiPositionFields"><label>Vacant position<select id="oiPosition">${options([['','Choose a position'],...s.data.positions.map(p=>[p.id,p.title+' · '+p.division_name])])}</select></label><label>Operational access<select id="oiAccess">${options(access)}</select></label><p class="ops-sheet-note">Create vacant positions under Positions first. Titles and permissions are separate.</p></div></div><div id="oiAccessSummary" class="privacy-note"></div><label class="ops-check"><input id="oiAdult" type="checkbox" required>I confirm the recipient is at least 18 and will use their own personal account.</label><label class="ops-check"><input id="oiPermissions" type="checkbox" required>I approve the permissions displayed above.</label><p class="ops-sheet-note">The invitation expires in 14 days. It grants access only after the recipient signs in with this verified email and accepts.</p><div class="ops-actions"><button id="oiCreate" type="submit">Create private invitation</button><button id="oiCancel" class="secondary" type="button">Cancel</button></div></form>`);
+  shell(s,`<form id="oiForm"><div class="gs-grid"><label>Invited email<input id="oiEmail" type="email" autocomplete="email" maxlength="254" required></label><label>Invitation role<select id="oiKind">${s.mode==='members'?'<option value="member">Organization member</option>':'<option value="position">Leadership position</option><option value="administrator">Organization administrator</option>'}</select></label><div id="oiPositionFields"><label>Vacant position<select id="oiPosition">${options([['','Choose a position'],...s.data.positions.map(p=>[p.id,p.title+' · '+p.division_name])])}</select></label><label>Operational access<select id="oiAccess">${options(access)}</select></label><p class="ops-sheet-note">Create vacant positions under Positions first. Titles and permissions are separate.</p></div></div><div id="oiAccessSummary" class="privacy-note"></div><label class="ops-check"><input id="oiAdult" type="checkbox" required>I confirm the recipient is at least 18 and will use their own personal account.</label><label class="ops-check"><input id="oiPermissions" type="checkbox" required>I approve the permissions displayed above.</label><p class="ops-sheet-note">The invitation expires in 14 days. It grants access only after the recipient signs in with this verified email and accepts.</p><div class="ops-actions"><button id="oiCreate" type="submit">Create private invitation</button><button id="oiCancel" class="secondary" type="button">Cancel</button></div></form>`);
   const summary=()=>{
    const kind=el('oiKind').value,admin=kind==='administrator',member=kind==='member',p=s.data.positions.find(x=>x.id===el('oiPosition').value);
    el('oiPositionFields').classList.toggle('hidden',admin||member);el('oiPosition').required=kind==='position';
    el('oiAccessSummary').innerHTML=member?accessHtml({title:'Organization member',scope:'Organization',access_role:'organization_member'}):admin?accessHtml({title:'Organization administrator',scope:'Organization',access_role:'organization_admin',can_manage_meetings:true,can_manage_votes:true}):p?accessHtml({...p,scope:p.division_name,access_role:el('oiAccess').value}):'<p>Choose a vacant position to review its scope.</p>';
    el('oiPermissions').checked=false;
   };
-  ['oiKind','oiPosition','oiAccess'].forEach(id=>el(id).onchange=summary);summary();el('oiCancel').onclick=()=>render(s);
+  if(positionId)el('oiPosition').value=positionId;
+  ['oiKind','oiPosition','oiAccess'].forEach(id=>el(id).onchange=summary);summary();el('oiCancel').onclick=()=>s.onBack?back(s):render(s);
   el('oiForm').onsubmit=async event=>{
    event.preventDefault();if(!current(s)||el('oiCreate').disabled)return;
    const p=s.data.positions.find(x=>x.id===el('oiPosition').value),kind=el('oiKind').value;
