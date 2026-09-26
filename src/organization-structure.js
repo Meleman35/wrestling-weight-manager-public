@@ -41,10 +41,17 @@ window.WMOrgStructure=(()=>{
   el('gsRefresh').onclick=()=>reload(s);el('gsFilter').onchange=()=>{s.filter=val('gsFilter');render(s)};
   el('gsSearch').oninput=()=>{const v=val('gsSearch'),cursor=el('gsSearch').selectionStart;s.query=v;render(s);el('gsSearch').focus();el('gsSearch').setSelectionRange(cursor,cursor);};
   el('gsRows').querySelectorAll('[data-gs-edit]').forEach(b=>b.onclick=()=>edit(s,all.find(r=>r.id===b.dataset.gsEdit)));
+  el('gsRows').querySelectorAll('[data-gs-invite]').forEach(b=>b.onclick=()=>invite(s,all.find(r=>r.id===b.dataset.gsInvite)));
   el('gsRows').querySelectorAll('[data-gs-history]').forEach(b=>b.onclick=()=>history(s,all.find(r=>r.id===b.dataset.gsHistory)));
   el('gsRows').querySelectorAll('[data-gs-archive]').forEach(b=>b.onclick=()=>archive(s,all.find(r=>r.id===b.dataset.gsArchive)));
  }
- function actions(s,r){return s.data.can_manage_structure?`<div class="ops-actions"><button class="secondary" data-gs-edit="${E(r.id)}">Edit</button><button class="secondary" data-gs-history="${E(r.id)}">History</button><button class="secondary" data-gs-archive="${E(r.id)}">${(s.kind==='positions'?!r.active:r.status==='archived')?'Reactivate':'Archive / remove'}</button></div>`:'';}
+ const canInvite=(s,r)=>s.kind==='positions'&&s.data.can_manage_structure&&s.hub.admin&&r?.active&&r.assignment_enabled&&!r.assigned_user_id&&!/athlete.*rep/i.test(r.title);
+ function invite(s,r){
+  if(!current(s)||!canInvite(s,r))return;
+  const {org,hub,kind,scope}=s;close();
+  window.WMOrgInvites.open({org,positionId:r.id,onBack:()=>open({org,hub,kind,scope})});
+ }
+ function actions(s,r){return s.data.can_manage_structure?`<div class="ops-actions">${canInvite(s,r)?`<button data-gs-invite="${E(r.id)}">Invite to this position</button>`:''}<button class="secondary" data-gs-edit="${E(r.id)}">Edit</button><button class="secondary" data-gs-history="${E(r.id)}">History</button><button class="secondary" data-gs-archive="${E(r.id)}">${(s.kind==='positions'?!r.active:r.status==='archived')?'Reactivate':'Archive / remove'}</button></div>`:'';}
  function positionCard(s,r){const parent=s.data.positions.find(p=>p.id===r.parent_position_id);return `<article class="ops-card"><div class="ops-meta">${E(r.division_name||'Organization')} · Revision ${E(r.revision)}</div><h3>${E(r.title)}</h3><p><b>${E(r.assigned_name||(r.assigned_user_id?'Assigned account':'Vacant'))}</b>${!r.active?' · Archived':''}</p>${!r.assignment_enabled?'<p class="ops-sheet-note">Athlete-representative assignment is deferred.</p>':''}${parent?`<p>Reports to: ${E(parent.title)}</p>`:''}<p class="ops-sheet-note">${E(access.find(a=>a[0]===r.access_role)?.[1]||'Title only · no operational access')}</p>${actions(s,r)}</article>`;}
  function affiliateCard(s,r){return `<article class="ops-card"><div class="ops-meta">${E(r.affiliate_type.replaceAll('_',' '))} · Revision ${E(r.revision)}</div><h3>${E(r.name)}</h3><p>${E(r.status)} · ${E(({unreviewed:'Membership needs review',confirmed:'Membership confirmed',not_current:'Not a current member'})[r.membership_review])}</p><p class="ops-sheet-note">Voting: ${E(({unreviewed:'not reviewed',eligible:'eligible under recorded rule',ineligible:'not eligible'})[r.voting_review])}</p>${r.linked_team_name?`<p>Linked team: ${E(r.linked_team_name)}</p>`:''}${r.linked_organization_name?`<p>Linked organization: ${E(r.linked_organization_name)}</p>`:''}${actions(s,r)}</article>`;}
  function edit(s,r=null){
@@ -80,6 +87,11 @@ window.WMOrgStructure=(()=>{
   el('gsTitle').required=true;
   if(pos&&r&&!r.assignment_enabled){el('gsPerson').disabled=true;el('gsPerson').value='';}
   let dirty=false;el('gsForm').oninput=()=>{dirty=true;note(s,'Unsaved changes.');};
+  if(canInvite(s,r)){
+   const button=document.createElement('button');button.type='button';button.className='secondary';button.id='gsInvitePosition';button.textContent='Invite to this position';
+   el('gsCancel').before(button);
+   button.onclick=()=>{if(!dirty||confirm('Discard unsaved changes and invite to the saved position?'))invite(s,r);};
+  }
   el('gsCancel').onclick=()=>{if(!dirty||confirm('Discard unsaved changes?'))render(s);};
   el('gsReloadRecord').onclick=()=>{if(confirm('Reload the saved record and discard these unsaved changes?'))reload(s);};
   el('gsForm').onsubmit=async ev=>{

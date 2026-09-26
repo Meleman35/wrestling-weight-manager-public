@@ -20,13 +20,25 @@ window.WMOrgInvites=(()=>{
   return (access.find(([key])=>key===(a?.access_role||''))?.[1]||'Assigned organization access')+'. A position does not make this person a team coach or organization administrator.';
  }
  function accessHtml(a){return `<p><b>${E(a?.title)}</b> · ${E(a?.scope||'Organization')}</p><p>${E(accessText(a))}</p><p class="ops-sheet-note">Meeting management: ${a?.can_manage_meetings?'Yes':'No'} · Vote management: ${a?.can_manage_votes?'Yes':'No'} · Voting position: ${a?.voting_member?'Yes · eligibility still checked for each vote':'No'}</p>`;}
- function shell(s,body){if(current(s))el('opsContent').innerHTML=`<section class="gs-root oi-root"><h3>${s.mode==='members'?'Organization members':'Leadership invitations'}</h3><p>${s.mode==='members'?'Invite an adult to join the organization with their own account. Membership does not assign a board position or team role.':'Invite an adult directly to organization leadership. They use their own account and do not need to join a team.'}</p><p id="oiStatus" role="status" aria-live="polite"></p>${body}</section>`;}
- async function open({org,mode='leadership'}){
-  close();const s=state={org,mode,epoch,uid:session?.user?.id,team:activeTeam?.id,data:null,pending:null};
+ function back(s){if(!current(s))return;const onBack=s.onBack;close();onBack?.();}
+ function shell(s,body){
+  if(!current(s))return;
+  el('opsContent').innerHTML=`<section class="gs-root oi-root">${s.onBack?'<button id="oiBackPositions" type="button" class="secondary">Back to positions</button>':''}<h3>${s.mode==='members'?'Organization members':'Leadership invitations'}</h3><p>${s.mode==='members'?'Invite an adult to join the organization with their own account. Membership does not assign a board position or team role.':'Invite an adult directly to organization leadership. They use their own account and do not need to join a team.'}</p><p id="oiStatus" role="status" aria-live="polite"></p>${body}</section>`;
+  el('oiBackPositions')?.addEventListener('click',()=>back(s));
+ }
+ async function open({org,mode='leadership',positionId='',onBack=null}){
+  close();const s=state={org,mode,positionId:mode==='leadership'?positionId:'',onBack,epoch,uid:session?.user?.id,team:activeTeam?.id,data:null,pending:null};
   shell(s,'<p>Loading invitations…</p>');await reload(s);
  }
  async function reload(s,msg=''){
-  try{const data=await rpc({action:'context',organization_id:s.org},s.uid);if(!current(s))return;s.data=data;s.pending=null;render(s);note(s,msg);}
+  try{
+   const data=await rpc({action:'context',organization_id:s.org},s.uid);if(!current(s))return;s.data=data;s.pending=null;render(s);note(s,msg);
+   if(s.positionId){
+    const positionId=s.positionId;s.positionId='';
+    if(data.positions.some(p=>p.id===positionId))edit(s,positionId);
+    else note(s,'This position is no longer available for an invitation. Return to positions and refresh.',true);
+   }
+  }
   catch(error){if(current(s)){shell(s,'<button id="oiRetry" class="secondary">Reload invitations</button>');note(s,error.message,true);el('oiRetry').onclick=()=>reload(s)}}
  }
  function render(s){
@@ -48,16 +60,17 @@ window.WMOrgInvites=(()=>{
    try{await rpc({action:'remove_admin',organization_id:s.org,user_id:a.user_id,confirm_remove:true},s.uid);if(current(s))await reload(s,'Organization administrator access removed.')}catch(e){note(s,e.message,true);if(b.isConnected)b.disabled=false;}
   });
  }
- function edit(s){
+ function edit(s,positionId=''){
   s.pending=null;
-  shell(s,`<form id="oiForm"><div class="gs-grid"><label>Invited email<input id="oiEmail" type="email" autocomplete="email" maxlength="254" required></label><label>Invitation role<select id="oiKind">${s.mode==='members'?'<option value="member">Organization member · no board or team role</option>':'<option value="position">Leadership position</option><option value="administrator">Organization administrator · full access</option>'}</select></label><div id="oiPositionFields"><label>Vacant position<select id="oiPosition">${options([['','Choose a position'],...s.data.positions.map(p=>[p.id,p.title+' · '+p.division_name])])}</select></label><label>Operational access<select id="oiAccess">${options(access)}</select></label><p class="ops-sheet-note">Create vacant positions under Positions first. Titles and permissions are separate.</p></div></div><div id="oiAccessSummary" class="privacy-note"></div><label class="ops-check"><input id="oiAdult" type="checkbox" required>I confirm the recipient is at least 18 and will use their own personal account.</label><label class="ops-check"><input id="oiPermissions" type="checkbox" required>I approve the permissions displayed above.</label><p class="ops-sheet-note">The invitation expires in 14 days. It grants access only after the recipient signs in with this verified email and accepts.</p><div class="ops-actions"><button id="oiCreate" type="submit">Create private invitation</button><button id="oiCancel" class="secondary" type="button">Cancel</button></div></form>`);
+  shell(s,`<form id="oiForm"><div class="gs-grid"><label>Invited email<input id="oiEmail" type="email" autocomplete="email" maxlength="254" required></label><label>Invitation role<select id="oiKind">${s.mode==='members'?'<option value="member">Organization member</option>':'<option value="position">Leadership position</option><option value="administrator">Organization administrator</option>'}</select></label><div id="oiPositionFields"><label>Vacant position<select id="oiPosition">${options([['','Choose a position'],...s.data.positions.map(p=>[p.id,p.title+' · '+p.division_name])])}</select></label><label>Operational access<select id="oiAccess">${options(access)}</select></label><p class="ops-sheet-note">Create vacant positions under Positions first. Titles and permissions are separate.</p></div></div><div id="oiAccessSummary" class="privacy-note"></div><label class="ops-check"><input id="oiAdult" type="checkbox" required>I confirm the recipient is at least 18 and will use their own personal account.</label><label class="ops-check"><input id="oiPermissions" type="checkbox" required>I approve the permissions displayed above.</label><p class="ops-sheet-note">The invitation expires in 14 days. It grants access only after the recipient signs in with this verified email and accepts.</p><div class="ops-actions"><button id="oiCreate" type="submit">Create private invitation</button><button id="oiCancel" class="secondary" type="button">Cancel</button></div></form>`);
   const summary=()=>{
    const kind=el('oiKind').value,admin=kind==='administrator',member=kind==='member',p=s.data.positions.find(x=>x.id===el('oiPosition').value);
    el('oiPositionFields').classList.toggle('hidden',admin||member);el('oiPosition').required=kind==='position';
    el('oiAccessSummary').innerHTML=member?accessHtml({title:'Organization member',scope:'Organization',access_role:'organization_member'}):admin?accessHtml({title:'Organization administrator',scope:'Organization',access_role:'organization_admin',can_manage_meetings:true,can_manage_votes:true}):p?accessHtml({...p,scope:p.division_name,access_role:el('oiAccess').value}):'<p>Choose a vacant position to review its scope.</p>';
    el('oiPermissions').checked=false;
   };
-  ['oiKind','oiPosition','oiAccess'].forEach(id=>el(id).onchange=summary);summary();el('oiCancel').onclick=()=>render(s);
+  if(positionId)el('oiPosition').value=positionId;
+  ['oiKind','oiPosition','oiAccess'].forEach(id=>el(id).onchange=summary);summary();el('oiCancel').onclick=()=>s.onBack?back(s):render(s);
   el('oiForm').onsubmit=async event=>{
    event.preventDefault();if(!current(s)||el('oiCreate').disabled)return;
    const p=s.data.positions.find(x=>x.id===el('oiPosition').value),kind=el('oiKind').value;

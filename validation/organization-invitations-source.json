@@ -1,6 +1,8 @@
 {
-  "passed": 7,
+  "passed": 9,
   "tests": [
+    "Displayed build version matches the release version",
+    "Embedded position actions match their source module",
     "Embedded invitation source matches current web build",
     "Build is idempotent",
     "All 46 inline scripts parse",

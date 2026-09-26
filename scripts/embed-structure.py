@@ -21,4 +21,4 @@ else:
  anchor='<script>\n/* v0.20.5 organization operations.'
  assert s.count(anchor)==1
  s=s.replace(anchor,'<style>.gs-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:14px}.gs-root label{display:flex;flex-direction:column;gap:6px;min-width:0}.gs-root .ops-check{flex-direction:row;align-items:flex-start}.gs-root input,.gs-root select,.gs-root textarea{max-width:100%;min-width:0}.gs-root .ops-check input{width:auto;flex:0 0 auto}.gs-root textarea{min-height:88px}.gs-root .ops-actions{margin:14px 0;flex-wrap:wrap}.gs-root .ops-card{overflow-wrap:anywhere}.gs-root #gsStatus:empty{display:none}.gs-root #gsStatus:not(:empty){padding:10px 0}</style>\n'+module+'\n'+anchor,1)
- p.write_text(s)
+p.write_text(s)

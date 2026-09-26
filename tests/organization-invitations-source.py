@@ -13,6 +13,11 @@ class Parser(HTMLParser):
 base=subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip()
 old=subprocess.check_output(['git','show',base+':index.html'],cwd=root).decode()
 new=(root/'index.html').read_text();checks=[]
+assert re.search(r'Wrestling Manager v([0-9.]+):',new).group(1)==re.search(r'Build v([0-9.]+)',new).group(1)
+checks.append('Displayed build version matches the release version')
+structure=re.search(r'<script id="wmOrgStructure036">\n(.*?)\n</script>',new,re.S).group(1)
+assert structure==(root/'src/organization-structure.js').read_text()
+checks.append('Embedded position actions match their source module')
 with tempfile.TemporaryDirectory() as td:
  temp=Path(td);(temp/'scripts').mkdir();(temp/'src').mkdir();(temp/'index.html').write_text(new)
  for rel in ['scripts/build-organization-invitations-045.py','src/organization-invitations.js','src/organization-invitations.css']:shutil.copy(root/rel,temp/rel)

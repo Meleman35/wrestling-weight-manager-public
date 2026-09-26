@@ -1,0 +1,16 @@
+{
+  "engine": "JSDOM; real UI modules; synthetic RPC and email transport",
+  "passed": 10,
+  "tests": [
+    "Only active vacant adult positions offer invitations",
+    "Position entry preselects the saved position and scope without granting access",
+    "Creation uses the selected position revision and explicitly reviewed permissions",
+    "Back and Cancel return to positions without creating another invitation",
+    "Edit screen protects unsaved edits and invites only to the saved position",
+    "A position filled or removed before opening is rejected without a fallback role",
+    "Retry after a loading failure retains the intended position",
+    "Late invitation responses cannot overwrite a different tab",
+    "Read-only members have no position invitation action",
+    "Ordinary membership remains separate and all transport stays synthetic"
+  ]
+}
