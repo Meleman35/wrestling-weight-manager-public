@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.49: Direct organization leadership invitations and organization-only onboarding. Draft. -->
+<!-- Wrestling Manager v0.20.50: Association Board Room navigation. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -409,6 +409,7 @@ button{touch-action:manipulation}
 .organization-home-entry{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#edf4fd;color:#173d67;border:1px solid #cbdbee;border-radius:16px;padding:14px;margin:0 0 14px}.organization-home-entry>span:nth-child(2){flex:1;min-width:0}.organization-home-entry b,.organization-home-entry small{display:block}.organization-home-entry small{font-size:12px;line-height:1.4;margin-top:4px;font-weight:400}.ops-overview-intro{padding:4px 0 16px}.ops-overview-intro h3{font-size:23px;line-height:1.2;margin:6px 0 8px}.ops-overview-intro p{font-size:13px;color:var(--muted);line-height:1.5;margin:4px 0}.ops-home-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.ops-home-tile{min-width:0;text-align:left;padding:16px 13px;background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:17px;min-height:150px}.ops-home-tile>span{display:block;font-size:25px;margin-bottom:12px}.ops-home-tile b{display:block;font-size:15px;line-height:1.3}.ops-home-tile small{display:block;margin-top:7px;line-height:1.45;font-size:12px;font-weight:400;color:var(--muted)}.ops-home-tile:focus-visible{outline:3px solid var(--accent2);outline-offset:2px}.ops-section-heading{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:20px}.ops-section-heading h3{margin:0}.ops-section-heading button{width:auto;padding:10px}.ops-upcoming{display:block;width:100%;background:#f4f7fb;color:var(--ink);text-align:left;border:1px solid var(--line);padding:14px;margin:8px 0}.ops-upcoming b,.ops-upcoming small{display:block}.ops-upcoming small{font-weight:400;color:var(--muted);font-size:12px;line-height:1.4;margin-top:5px}.scale-idle-reminder{position:fixed;z-index:1200;left:50%;bottom:calc(12px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(430px,calc(100% - 24px));background:#fff8e7;color:#543d0c;border:1px solid #dbc48e;box-shadow:0 8px 32px #0003;border-radius:18px;padding:16px}.scale-idle-reminder b{font-size:17px}.scale-idle-reminder p{font-size:14px;line-height:1.45;margin:8px 0 12px}.scale-idle-reminder button{width:100%;min-height:44px;font-size:13px;background:#543d0c;color:#fff}.scale-idle-reminder.hidden{display:none}
 
 #opsHubSheet>.sheet-head>div,#createTeamSheet>.sheet-head>div{min-width:0;flex:1}#opsHubSheet>.sheet-head .icon-close,#createTeamSheet>.sheet-head .icon-close{flex:0 0 40px;height:40px}
+.ops-tabs button{min-height:44px}.ops-subtabs{padding:0 0 10px}.ops-subtabs button{font-size:13px;background:#f1f5fa;color:#173d67}.ops-subtabs:empty{display:none}
 
 </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -947,7 +948,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
       <button id="bootstrapTeamBtn" class="wide">Create Organization + Team</button>
     </div>
   <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
-</details><button id="setupOrgHubBtn" class="wide secondary" type="button">Organization Hub · for assigned leaders</button><button id="setupFeedbackBtn" class="wide secondary" type="button">Feedback</button>
+</details><button id="setupOrgHubBtn" class="wide secondary" type="button">Board Room · for organization leaders</button><button id="setupFeedbackBtn" class="wide secondary" type="button">Feedback</button>
 </section>
 
   <section id="appView" class="app hidden">
@@ -1204,7 +1205,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
             <button class="menu-row disabled" data-layout-key="files"><span>📁</span><div><b>Files & Photos</b><small>Team documents and albums</small></div><i>›</i></button>
           </div></section>
           <section class="toolbox-group"><div class="toolbox-group-head"><span>🧰</span><div><b>Program</b><small>Organization, admin and app settings</small></div></div><div class="menu-card">
-            <button id="organizationHubBtn" class="menu-row" data-layout-key="organization_hub"><span>🏛️</span><div><b>Organization Hub</b><small>Divisions, calendars, officials, budgets and contracts</small></div><i>›</i></button>
+            <button id="organizationHubBtn" class="menu-row" data-layout-key="organization_hub"><span>🏛️</span><div><b>Board Room</b><small>Meetings, votes, clubs, programs and leadership</small></div><i>›</i></button>
             <button id="staffAccessBtn" class="menu-row admin-only" data-layout-key="staff_access"><span>🪪</span><div><b>Edit Team Leaders</b><small>Assign coaches, team leaders, volunteers and administrators</small></div><i>›</i></button>
             <button id="feedbackBtn" class="menu-row" data-layout-key="feedback"><span>💬</span><div><b>Feedback</b><small>Share ideas, problems and what you like</small></div><i>›</i></button>
             <button id="accountBtn" class="menu-row" data-layout-key="account"><span>⚙️</span><div><b>Account & Team</b><small>Profile, team and sign out</small></div><i>›</i></button>
@@ -1224,9 +1225,9 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
 
   <div id="sheetBackdrop" class="backdrop hidden"></div>
 <section id="opsHubSheet" class="sheet ops-sheet hidden" aria-modal="true" role="dialog" aria-labelledby="opsHubTitle">
- <div class="sheet-handle"></div><div class="sheet-head"><div><div class="eyebrow">ORGANIZATION</div><h2 id="opsHubTitle">Organization Hub</h2></div><button class="icon-close" data-close-sheet aria-label="Close">×</button></div>
+ <div class="sheet-handle"></div><div class="sheet-head"><div><div class="eyebrow">ORGANIZATION</div><h2 id="opsHubTitle">Board Room</h2></div><button class="icon-close" data-close-sheet aria-label="Close">×</button></div>
  <div class="ops-toolbar"><label>Organization<select id="opsOrg"></select></label><label>Division<select id="opsDivision"><option value="">All divisions</option></select></label></div>
- <div id="opsTabs" class="ops-tabs"></div><div id="opsStatus" class="ops-status" role="status"></div><div id="opsContent"></div>
+ <div id="opsTabs" class="ops-tabs" aria-label="Board Room sections"></div><div id="opsSubtabs" class="ops-tabs ops-subtabs" aria-label="Section tools"></div><div id="opsStatus" class="ops-status" role="status"></div><div id="opsContent"></div>
 </section>
 <section id="opsEditorSheet" class="sheet ops-sheet hidden" aria-modal="true" role="dialog" aria-labelledby="opsEditorTitle">
  <div class="sheet-handle"></div><div class="sheet-head"><h2 id="opsEditorTitle">Edit</h2><button class="icon-close" id="opsEditorBack" aria-label="Back">×</button></div>
@@ -2754,7 +2755,7 @@ const UI_LAYOUT_META={
   home:{my_corner:['👥','My Corner'],important:['📣','Important Announcements'],my_athletes:['👨‍👩‍👧','My Athletes'],quick_actions:['⚡','Quick Actions'],coach_weight_board:['🤼','Lineup by Weight Class'],attention:['✅','Needs Attention'],upcoming:['📅','Upcoming'],weight_snapshot:['⚖️','Weight Room Snapshot']},
   quick:{create_event:['＋','Create event'],attendance:['✓','Attendance'],weight:['⚖','Weight Room'],messages:['💬','Messages'],tools:['☰','Team tools']},
   nav:{home:['⌂','Home'],schedule:['▣','Schedule'],messages:['◯','Messages'],weight:['⚖','Weight Room'],more:['☰','More']},
-  more:{organization_hub:['🏛️','Organization Hub'],match_book:['⏱️','Match Book'],feedback:['💬','Feedback'],roster:['👥','Roster'],join:['🔗','Team Join'],join_requests:['✅','Join Requests'],agreements:['✍️','Team Agreement'],medical:['🩺','Medical Clearance'],member_profiles:['👤','My Athlete Profiles'],family:['👨‍👩‍👧','Family'],staff_directory:['📇','Coaches & Staff'],staff_access:['🪪','Edit Team Leaders'],equipment:['🎽','Equipment'],files:['📁','Files & Photos'],account:['⚙️','Account & Team']}
+  more:{organization_hub:['🏛️','Board Room'],match_book:['⏱️','Match Book'],feedback:['💬','Feedback'],roster:['👥','Roster'],join:['🔗','Team Join'],join_requests:['✅','Join Requests'],agreements:['✍️','Team Agreement'],medical:['🩺','Medical Clearance'],member_profiles:['👤','My Athlete Profiles'],family:['👨‍👩‍👧','Family'],staff_directory:['📇','Coaches & Staff'],staff_access:['🪪','Edit Team Leaders'],equipment:['🎽','Equipment'],files:['📁','Files & Photos'],account:['⚙️','Account & Team']}
 };
 const DEFAULT_UI_LAYOUT={home:Object.keys(UI_LAYOUT_META.home),nav:Object.keys(UI_LAYOUT_META.nav),quick:Object.keys(UI_LAYOUT_META.quick),more:Object.keys(UI_LAYOUT_META.more)};
 let pendingUiLayout=null;
@@ -10890,7 +10891,7 @@ window.WMOrgInvites=(()=>{
   if(ticket!==homeEpoch||uid!==session?.user?.id||managedLogin)return;
   if(error){box.innerHTML='<h2>Organization access</h2><p>Could not check your organizations. Tap Check Access to retry.</p>';return;}
   const rows=Array.isArray(data)?data:[];box.classList.toggle('hidden',!rows.length);
-  box.innerHTML='<h2>Your organizations</h2><p>Open your organization tools. Your assigned role controls access.</p>'+rows.map(o=>`<button class="wide secondary" data-oi-org="${E(o.id)}">${E(o.name)}</button>`).join('');
+  box.innerHTML='<h2>Your Board Rooms</h2><p>Open an organization to see its meetings, clubs and programs. Your assigned role controls access.</p>'+rows.map(o=>`<button class="wide secondary" data-oi-org="${E(o.id)}">${E(o.name)} · Board Room</button>`).join('');
   box.querySelectorAll('[data-oi-org]').forEach(b=>b.onclick=()=>WMOperations.open(b.dataset.oiOrg));
   if(rows.length){el('setupAccessStatus').textContent='Your organization access is ready.';el('setupChoices').open=!!pendingInviteToken;}
  }
@@ -10903,7 +10904,10 @@ window.WMOrgInvites=(()=>{
 window.WMOperations=(()=>{
  let hub=null,org=null,division='',tab='home',generation=0,editor=null,feedbackId=null,dialogResolve=null;
  const $o=id=>document.getElementById(id),e=v=>esc(String(v??'')),list=v=>Array.isArray(v)?v:[];
- const labels={home:'Overview',invitations:'Leadership invitations',positions:'Positions',affiliates:'Affiliate directory',meetings:'Meetings & minutes',voting:'Private voting',event:'Calendar',teams:'Wrestling teams',person:'Staff & credentials',assignment:'Officials',requirement:'Annual requirements',squad:'Dual rosters',budget:'Budgets',contract:'Contracts',settings:'Divisions & access'};
+ const labels={home:'Overview',invitations:'Leadership invitations',positions:'Positions',affiliates:'Affiliate clubs',meetings:'Meetings & minutes',voting:'Private voting',event:'Calendar',teams:'Managed teams',person:'Staff & credentials',assignment:'Officials',requirement:'Annual requirements',squad:'Dual rosters',budget:'Budgets',contract:'Contracts',settings:'Divisions & access'};
+ const sections={home:[],board:['meetings','voting','budget','contract'],clubs:['affiliates','teams'],programs:['event','squad','assignment'],people:['positions','person','requirement'],admin:['invitations','settings']};
+ const sectionFor=key=>Object.keys(sections).find(section=>sections[section].includes(key))||'home';
+ const visibleTools=section=>sections[section].filter(key=>key!=='invitations'||hub?.admin);
  const roles={athletic_director:'Athletic director',school_administrator:'School administrator',athletic_trainer:'Athletic trainer',team_manager:'Team manager',head_coach:'Head coach',assistant_coach:'Assistant coach',club_director:'Club director',membership_coordinator:'Membership coordinator',board_member:'Board member',president:'President',director:'Overall director',board:'Board member',division_director:'Division director',pairing_director:'Pairing director',mat_director:'Mat officials director',coach:'Coach',chaperone:'Chaperone',team_leader:'Team leader',official:'Official',pairing_official:'Pairing official',mat_official:'Mat official',all:'Everyone'};
  const year=()=>{const d=new Date(),y=d.getFullYear()-(d.getMonth()<7?1:0);return y+'–'+String(y+1).slice(-2)};
  const note=(id,msg,bad=false)=>{$o(id).textContent=msg;$o(id).classList.toggle('ops-error',bad)};
@@ -10944,7 +10948,7 @@ window.WMOperations=(()=>{
   wantedOrg=wantedOrg||selectedHomeOrganization();
   if(document.body.classList.contains('kiosk-locked'))return;
   if(managedLogin){message('Use your personal account for organization tools.',true);return;}
-  closeSheets();tab='home';$o('opsHubTitle').textContent='Organization Hub';$o('opsTabs').innerHTML='';openSheet('opsHubSheet');note('opsStatus','Loading organization…');$o('opsContent').innerHTML='';
+  closeSheets();tab='home';$o('opsHubTitle').textContent='Board Room';$o('opsTabs').innerHTML='';$o('opsSubtabs').innerHTML='';openSheet('opsHubSheet');note('opsStatus','Loading organization…');$o('opsContent').innerHTML='';
   const ticket=++generation;
   try{const organizations=await rpc(false,{action:'context'});if(ticket!==generation)return;
    $o('opsOrg').innerHTML=opts(organizations.map(o=>[o.id,o.name]),wantedOrg||org);
@@ -10956,9 +10960,12 @@ window.WMOperations=(()=>{
  async function reload(){const ticket=++generation;const data=await rpc(false,{action:'hub',organization_id:org});if(ticket!==generation)return;hub=data;homeOrganizationGeneration++;acceptHomeOrganization(data);
   if(!hub.divisions.some(d=>d.id===division))division='';if(!division&&!hub.capabilities?.find(c=>c.division_id===null&&(c.event||c.records)))division=hub.capabilities?.find(c=>c.division_id&&(c.event||c.records))?.division_id||'';$o('opsDivision').innerHTML=opts([['','All divisions'],...hub.divisions.map(d=>[d.id,d.name])],division);note('opsStatus','');render();}
  function render(){window.WMVoting?.close();window.WMMeetings?.close();window.WMOrgStructure?.close();window.WMOrgInvites?.close();if(!hub)return;$o('opsDivision').disabled=['invitations','affiliates','meetings','voting'].includes(tab);
-  $o('opsHubTitle').textContent=hub.organizations?.find(o=>o.id===org)?.name||'Organization Hub';
-  $o('opsTabs').innerHTML=Object.entries(labels).filter(([key])=>key!=='invitations'||hub.admin).map(([key,label])=>`<button class="secondary ${tab===key?'selected':''}" data-ops-tab="${key}">${e(label)}</button>`).join('');
-  $o('opsTabs').querySelectorAll('[data-ops-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.opsTab;render()});
+  $o('opsHubTitle').textContent='Board Room · '+(hub.organizations?.find(o=>o.id===org)?.name||'Organization');
+  const section=sectionFor(tab),names={home:'Overview',board:'Board',clubs:schoolOrg()?'Teams':'Clubs',programs:'Programs & events',people:'People',admin:'Administration'};
+  $o('opsTabs').innerHTML=Object.keys(sections).map(key=>`<button type="button" class="secondary ${section===key?'selected':''}" data-ops-section="${key}" aria-current="${section===key?'page':'false'}">${e(names[key])}</button>`).join('');
+  $o('opsTabs').querySelectorAll('[data-ops-section]').forEach(b=>b.onclick=()=>{const key=b.dataset.opsSection;tab=key==='home'?'home':visibleTools(key)[0]||'home';render()});
+  $o('opsSubtabs').innerHTML=visibleTools(section).map(key=>`<button type="button" class="secondary ${tab===key?'selected':''}" data-ops-tab="${key}" aria-current="${tab===key?'page':'false'}">${e(labels[key])}</button>`).join('');
+  $o('opsSubtabs').querySelectorAll('[data-ops-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.opsTab;render()});
   roles.director=schoolOrg()?'Athletic program director':'Overall director';roles.division_director=schoolOrg()?'School / sport director':'Division director';
   if(tab==='home'){home();return;}
   if(tab==='invitations'){if(hub.admin)WMOrgInvites.open({org});else $o('opsContent').textContent='Organization administrator access required.';return;}
@@ -10984,25 +10991,25 @@ window.WMOperations=(()=>{
  const visibleTeams=()=>list(hub.teams).filter(t=>(!t.external||t.approved||hub.admin)&&inDivision(t.division_id));
  function home(){
   const tiles=[
-   ...(hub.admin?[['invitations','✉️','Leadership invitations','Invite leaders directly to your organization']]:[]),
    ['meetings','📝','Meetings & minutes','Agenda, roll call, decisions and saved minutes'],
    ['voting','🗳️','Private voting','Board and club ballots with results after closing'],
-   ['event','📅','Calendar','Board meetings, tournaments and shared dates'],
-   ['teams','🤼','Wrestling teams','Open teams and organize your programs'],
-   ['positions','🏛️','Positions','Vacancies, adult assignments and explicit access'],
-   ['affiliates','🔗','Affiliate directory','Clubs, schools and membership review'],
-   ['person','🪪','Staff & credentials','Staff, certifications and missing requirements'],
-   ['assignment','🏅','Officials','Ranks, assignments and tournament counts'],
-   ['requirement','✓','Annual requirements','Credentials and required tournament counts'],
-   ['squad','📋','Dual rosters','Red and Blue teams and tournament rosters'],
    ['budget','💵','Budgets','Proposals shared with affiliated clubs'],
    ['contract','✍️','Contracts','Published agreements and signatures'],
+   ['affiliates','🔗','Affiliated clubs','Independent clubs and affiliation review'],
+   ['teams','🤼','Managed teams','Teams and programs directly managed by this organization'],
+   ['event','📅','Calendar','Board meetings, tournaments and shared dates'],
+   ['squad','📋','Dual rosters','Red and Blue teams and tournament rosters'],
+   ['assignment','🏅','Officials','Ranks, assignments and tournament counts'],
+   ['positions','🏛️','Board positions','Vacancies, adult assignments and explicit access'],
+   ['person','🪪','Staff & credentials','Staff, certifications and missing requirements'],
+   ['requirement','✓','Annual requirements','Credentials and required tournament counts'],
+   ...(hub.admin?[['invitations','✉️','Leadership invitations','Invite board members directly to your organization']]:[]),
    ['settings','⚙️','Divisions & access','Leadership, divisions and club affiliations']
   ];
   const upcoming=[...hub.records.filter(r=>r.kind==='event'),...list(hub.team_events)]
     .filter(r=>inDivision(r.division_id)&&r.data.status!=='cancelled'&&new Date(r.data.ends_at||r.data.starts_at).getTime()>=Date.now())
     .sort((a,b)=>String(a.data.starts_at).localeCompare(String(b.data.starts_at))).slice(0,3);
-  $o('opsContent').innerHTML=`<div class="ops-overview-intro"><p>${e(division?divName(division):'All divisions')} · Organization Hub</p><h3>Everything your organization coordinates</h3><p>Choose a tile to open its tools. Your assigned role controls what you can see and manage.</p></div>
+  $o('opsContent').innerHTML=`<div class="ops-overview-intro"><p>${e(division?divName(division):'All divisions')} · Board Room</p><h3>${orgType()==='association'?'Your wrestling association':schoolOrg()?'Your school organization':'Your organization'} at a glance</h3><p>Board decisions, affiliations, programs and people stay in their own sections. Your assigned role controls what you can see and manage.</p></div>
    <button id="opsSwitchTeams" type="button" class="wide secondary">Switch Team</button><p class="ops-sheet-note">Choose any team your account can access. Its organization follows automatically; each team keeps its own permissions.</p>
    <div class="ops-home-grid">${tiles.map(([key,icon,title,description])=>`<button class="ops-home-tile" type="button" data-ops-home="${key}"><span aria-hidden="true">${icon}</span><b>${e(title)}</b><small>${e(description)}</small></button>`).join('')}</div>
    <div class="ops-section-heading"><h3>Coming up</h3><button class="secondary" type="button" data-ops-home="event">View calendar</button></div>
@@ -11135,7 +11142,7 @@ window.WMOperations=(()=>{
  async function sendFeedback(ev){ev.preventDefault();if(!session?.user)return;$o('feedbackSend').disabled=true;try{await rpc(true,{action:'feedback',id:feedbackId||crypto.randomUUID(),team_id:activeTeam?.id||null,category:value('feedbackCategory'),body:value('feedbackBody'),build:'v0.20.26'});$o('feedbackBody').value='';feedbackId=crypto.randomUUID();note('feedbackStatus','Thanks—your feedback was saved.');await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}finally{$o('feedbackSend').disabled=false}}
  function close(){window.WMVoting?.close();window.WMMeetings?.close();window.WMOrgStructure?.close();window.WMOrgInvites?.close();finishDialog(null);generation++;editor=null;$o('opsRosterContacts')?.replaceChildren();$o('opsFields').replaceChildren();hub=null;['opsHubSheet','opsEditorSheet','feedbackSheet'].forEach(id=>show(id,false));}
  $o('opsDialogCancel').onclick=()=>finishDialog(null);
- $o('opsOrg').onchange=async()=>{window.WMVoting?.close();window.WMMeetings?.close();window.WMOrgStructure?.close();window.WMOrgInvites?.close();org=value('opsOrg');division='';tab='home';hub=null;$o('opsContent').replaceChildren();$o('opsTabs').replaceChildren();$o('opsHubTitle').textContent='Organization Hub';note('opsStatus','Loading organization…');try{await reload()}catch(err){note('opsStatus',err.message,true)}};
+ $o('opsOrg').onchange=async()=>{window.WMVoting?.close();window.WMMeetings?.close();window.WMOrgStructure?.close();window.WMOrgInvites?.close();org=value('opsOrg');division='';tab='home';hub=null;$o('opsContent').replaceChildren();$o('opsTabs').replaceChildren();$o('opsSubtabs').replaceChildren();$o('opsHubTitle').textContent='Board Room';note('opsStatus','Loading organization…');try{await reload()}catch(err){note('opsStatus',err.message,true)}};
  $o('opsDivision').onchange=()=>{division=value('opsDivision');render()};$o('opsEditorBack').onclick=()=>{editor=null;show('opsEditorSheet',false);openSheet('opsHubSheet')};$o('opsForm').onsubmit=saveEditor;
  $o('feedbackForm').onsubmit=sendFeedback;$o('organizationHubBtn').onclick=()=>open();$o('feedbackBtn').onclick=feedback;
  return {open,calendar,close,feedback,rpc,download,year,dialog,confirmAction};
