@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.48: Larger Locker Room recording entry for phones. -->
+<!-- Wrestling Manager v0.20.49: Direct organization leadership invitations and organization-only onboarding. Draft. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -888,10 +888,11 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
       <div class="brand-mark">WM</div>
       <div>
         <h1>Wrestling Manager</h1>
-        <p>Create a team or connect to one you were invited to.</p>
+        <p>Open your organization, accept an invitation, or connect to a team.</p>
       </div>
     </div>
-    <div class="card" id="setupAccountStatus"><h2>You’re signed in</h2><p id="setupSignedInEmail" style="overflow-wrap:anywhere"></p><p id="setupAccessStatus" role="status"></p><div id="setupRequestList"></div><div class="stack-actions"><button id="setupCheckAccessBtn" type="button">Check Team Access</button><button id="setupSignOutBtn" class="secondary" type="button">Sign Out</button></div></div>
+    <div id="setupOrganizations" class="card hidden"></div>
+    <div class="card" id="setupAccountStatus"><h2>You’re signed in</h2><p id="setupSignedInEmail" style="overflow-wrap:anywhere"></p><p id="setupAccessStatus" role="status"></p><div id="setupRequestList"></div><div class="stack-actions"><button id="setupCheckAccessBtn" type="button">Check Access</button><button id="setupSignOutBtn" class="secondary" type="button">Sign Out</button></div></div>
     <details id="setupChoices" open><summary>Team setup and invitations</summary>
     <div class="card">
       <h2>How Are You Joining?</h2>
@@ -911,10 +912,10 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     </div>
     <div class="card">
       <h2 id="setupInviteTitle">Accept a Private Invitation</h2>
-      <p id="setupInviteHelp" class="muted">Use your athlete, parent/guardian, or coach/staff invitation here.</p>
-      <div id="setupLeaderHelp" class="privacy-note hidden"><b>Joining an existing team?</b><br>Ask its administrator for a Coach / Team Leader invitation from Clipboard → Edit Team Leaders. Use the same email they invite. They choose your role and tools; no athlete profile or child connection is required.</div>
+      <p id="setupInviteHelp" class="muted">Use your organization, athlete, parent/guardian, or coach/staff invitation here.</p>
+      <div id="setupLeaderHelp" class="privacy-note hidden"><b>Joining organization leadership?</b><br>Ask an organization administrator to invite you from Organization → Leadership invitations. Use the invited email; no team or athlete profile is required.<br><br>For a team coaching role, ask its administrator for an invitation from Clipboard → Edit Team Leaders.</div>
       <label for="inviteToken">Invitation token</label>
-      <input id="inviteToken" placeholder="WMWA-… / WMWG-… / WMM-…">
+      <input id="inviteToken" placeholder="WMO-… / WMM-… / athlete or parent invite">
       <button id="acceptInviteBtn" class="wide">Accept Invitation</button>
       <p id="setupInviteStatus" class="onboarding-status" role="status" aria-live="polite"></p>
     </div>
@@ -2196,7 +2197,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.48</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.49</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -3813,7 +3814,7 @@ let onboardingUserId=null,onboardingRole=null,signUpRole=null,signUpBusy=false,i
 const ONBOARDING_HELP={
   athlete:'Connect your athlete profile with a team code or a private athlete invitation.',
   parent_guardian:'Connect your children using a team code or a private parent/guardian invitation.',
-  team_leader:'Accept a private coach/staff invitation or create your own team. No athlete profile or child connection is required.'
+  team_leader:'Accept a private organization or coach/staff invitation, or create your own team. No athlete profile or child connection is required.'
 };
 function currentOnboardingRole(){
   const uid=session?.user?.id||null;
@@ -3827,12 +3828,12 @@ function currentOnboardingRole(){
 }
 function renderSetupRole(){
   let role=currentOnboardingRole();
-  if(pendingInviteToken.toUpperCase().startsWith('WMM-'))role='team_leader';
+  if(/^WM[MO]-/i.test(pendingInviteToken))role='team_leader';
   document.querySelectorAll('[data-setup-role]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.setupRole===role)));
   $('setupRoleHelp').textContent=ONBOARDING_HELP[role]||'Choose your starting role. You can be a coach, an athlete, and a parent on the same account.';
   show('setupJoinCard',role!=='team_leader');show('setupLeaderHelp',role==='team_leader');
-  $('setupInviteTitle').textContent=role==='team_leader'?'Accept a Coach / Staff Invitation':'Accept a Private Invitation';
-  $('setupInviteHelp').textContent=role==='team_leader'?'Paste the private WMM invitation sent by your team administrator.':'Use your athlete, parent/guardian, or coach/staff invitation here.';
+  $('setupInviteTitle').textContent=role==='team_leader'?'Accept a Leadership Invitation':'Accept a Private Invitation';
+  $('setupInviteHelp').textContent=role==='team_leader'?'Paste the WMO organization invitation or WMM staff invitation sent by your administrator.':'Use your organization, athlete, parent/guardian, or coach/staff invitation here.';
 }
 function chooseSetupRole(role){
   if(!ONBOARDING_ROLES.includes(role))return;
@@ -3851,7 +3852,7 @@ function openSignUp(){
   closeSheets();
   $('signUpEmail').value=$('email').value.trim();$('signUpPassword').value=$('password').value;
   $('signUpStatus').textContent='';$('signUpStatus').classList.remove('error');
-  chooseSignUpRole(pendingInviteToken.toUpperCase().startsWith('WMM-')?'team_leader':null);
+  chooseSignUpRole(/^WM[MO]-/i.test(pendingInviteToken)?'team_leader':null);
   openSheet('signUpSheet');
 }
 async function createPersonalAccount(event){
@@ -3879,15 +3880,15 @@ async function createPersonalAccount(event){
 }
 function staffInvitationToken(value){
   let token=String(value||'').trim();
-  if(!/^WMM-/i.test(token)){
+  if(!/^WM[MO]-/i.test(token)){
     try{const url=new URL(token);token=url.searchParams.get('invite')||url.searchParams.get('token')||'';}catch{return '';}
   }
-  return /^WMM-[a-zA-Z0-9-]+$/.test(token)?token:'';
+  return /^WM[MO]-[a-zA-Z0-9-]+$/.test(token)?token:'';
 }
 async function acceptLeaderInvitation(){
   if(invitationBusy)return;
   const status=$('joinLeaderStatus'),token=staffInvitationToken($('joinLeaderToken').value);
-  if(!token){status.textContent='Enter the private WMM staff invitation. A team join code does not assign staff access.';return;}
+  if(!token){status.textContent='Enter the private WMO organization or WMM staff invitation. A team code does not assign leadership access.';return;}
   await acceptInvite(token,status);
 }
 
@@ -3916,10 +3917,10 @@ window.WMOnboarding=(()=>{
  async function render(){const uid=session?.user?.id,version=++loadVersion;if(!uid||managedLogin)return;requestOwner=uid;requests=[];$('setupSignedInEmail').textContent=session.user.email||'your account';$('setupAccessStatus').textContent='Checking your team requests…';$('setupRequestList').replaceChildren();
   const {data,error}=await client.from('team_join_requests').select('id,team_id,status,athlete_first_name,athlete_last_name,submitted_at').eq('requester_user_id',uid).order('submitted_at',{ascending:false}).limit(50);
   if(version!==loadVersion||session?.user?.id!==uid)return;
-  if(error){$('setupAccessStatus').textContent='You are signed in. Team requests could not be checked. Check your connection and tap Check Team Access.';return;}
+  if(error){$('setupAccessStatus').textContent='You are signed in. Team requests could not be checked. Check your connection and tap Check Access.';return;}
   requests=data||[];const pending=requests.some(r=>['pending','more_info_requested'].includes(r.status));
   $('setupAccessStatus').textContent=pending?'Your account is ready. Team access is waiting for coach approval. You can stay signed in.':'Your account is ready. Accept your invitation or connect to a team below.';
-  const labels={pending:'Waiting for coach approval',more_info_requested:'Your coach needs more information. Contact them to finish your request.',approved:'Approved. Tap Check Team Access to open your team.',denied:'Not approved. Contact the coach if this was unexpected.',cancelled:'Request cancelled'};
+  const labels={pending:'Waiting for coach approval',more_info_requested:'Your coach needs more information. Contact them to finish your request.',approved:'Approved. Tap Check Access to open your team.',denied:'Not approved. Contact the coach if this was unexpected.',cancelled:'Request cancelled'};
   for(const r of requests){const item=document.createElement('p'),name=[r.athlete_first_name,r.athlete_last_name].filter(Boolean).join(' ');item.textContent=(name?name+' — ':'Team request — ')+(labels[r.status]||'Request received');$('setupRequestList').append(item);}
   if(layoutOwner!==uid){$('setupChoices').open=!pending;layoutOwner=uid;}
  }
@@ -3948,6 +3949,7 @@ function refresh(){
 }
 async function refreshAccountView(){
   if(teamProfileChoice||teamLoginSigningOut)return;
+  window.WMOrgInvites?.resetHome();
   const res = await client.auth.getSession();
   session = res.data.session;
   WMOnboarding.restore();
@@ -4007,10 +4009,11 @@ async function refreshAccountView(){
   const teamIds = [...new Set(activeMemberships.map(x=>x.team_id))];
 
   if (!orgIds.length && !teamIds.length){
+    activeTeam=null;availableTeams=[];
     show('setupView', true); show('appView', false);
     if(pendingJoinCode) $('setupJoinCode').value=pendingJoinCode;
     if(pendingInviteToken) $('inviteToken').value=pendingInviteToken;
-    await WMOnboarding.render();WMOnboarding.resume();
+    await WMOnboarding.render();await window.WMOrgInvites?.showHome();WMOnboarding.resume();
     return;
   }
 
@@ -4026,7 +4029,7 @@ async function refreshAccountView(){
     (data||[]).forEach(t=>teamMap.set(t.id,t));
   }
   availableTeams=[...teamMap.values()].sort((a,b)=>String(a.name).localeCompare(String(b.name)));
-  if(!availableTeams.length){ show('setupView',true); show('appView',false); await WMOnboarding.render();WMOnboarding.resume();return; }
+  if(!availableTeams.length){ activeTeam=null;show('setupView',true); show('appView',false); await WMOnboarding.render();await window.WMOrgInvites?.showHome();WMOnboarding.resume();return; }
 
   show('setupView', false); show('appView', true);
   const savedTeamId=localStorage.getItem('wm_active_team_id');
@@ -7330,7 +7333,8 @@ async function createGuardianInvite(){
 
 async function acceptInvite(providedToken=null,statusElement=null){
   if(invitationBusy)return;
-  const token=typeof providedToken==='string'?providedToken:$('inviteToken').value.trim();
+  const raw=typeof providedToken==='string'?providedToken:$('inviteToken').value.trim();
+  const token=staffInvitationToken(raw)||raw;
   const status=statusElement||$('setupInviteStatus');
   if(!token){status.textContent='Paste the invitation token first.';return;}
   if(!session?.user){status.textContent='Sign in with the invited email first.';return;}
@@ -7338,18 +7342,21 @@ async function acceptInvite(providedToken=null,statusElement=null){
   const uid=session.user.id;
   $('acceptInviteBtn').disabled=true;$('acceptLeaderInviteBtn').disabled=true;
   try{
-    let result;
-    if(token.toUpperCase().startsWith('WMWA-'))result=await client.rpc('accept_athlete_claim_invitation',{p_invitation_token:token});
+    let result,organizationResult=null;
+    if(token.startsWith('WMO-')){organizationResult=await WMOrgInvites.accept(token);if(!organizationResult){status.textContent='Invitation not accepted. You can open it again when ready.';return;}result={data:organizationResult};}
+    else if(token.toUpperCase().startsWith('WMWA-'))result=await client.rpc('accept_athlete_claim_invitation',{p_invitation_token:token});
     else if(token.toUpperCase().startsWith('WMWG-'))result=await client.rpc('accept_guardian_invitation',{p_invitation_token:token});
     else if(token.toUpperCase().startsWith('WMM-'))result=await client.rpc('accept_manager_invitation',{p_invitation_token:token});
-    else throw new Error('Use an athlete, guardian, or adult staff invitation token.');
+    else throw new Error('Use an organization, athlete, guardian, or adult staff invitation token.');
     if(session?.user?.id!==uid)return;
     if(result.error)throw result.error;
     $('inviteToken').value='';$('joinLeaderToken').value='';
     WMOnboarding.clear('invite');
     status.textContent='Invitation accepted.';closeSheets();
     if(accountRefreshFlight)await accountRefreshFlight;
-    await refresh();message('Invitation accepted. Welcome to the team.');
+    await refresh();if(session?.user?.id!==uid)return;
+    if(organizationResult){await WMOperations.open(organizationResult.organization_id);message(organizationResult.already_accepted?'This organization invitation was already accepted.':'Organization invitation accepted.');}
+    else message('Invitation accepted. Welcome to the team.');
   }catch(error){if(session?.user?.id===uid)status.textContent=error.message||'Could not accept the invitation. Please try again.';}
   finally{invitationBusy=false;$('acceptInviteBtn').disabled=false;$('acceptLeaderInviteBtn').disabled=false;}
 }
@@ -10757,12 +10764,146 @@ window.WMVoting=(()=>{
 })();
 
 </script><!-- /wmVoting039 -->
+<style id="wmOrgInvites045Style">
+.oi-root #oiStatus:empty{display:none}.oi-root #oiStatus{overflow-wrap:anywhere}.oi-root .ops-card button{margin-top:12px}.oi-root #oiLink{width:100%;box-sizing:border-box}
+#organizationInviteReview{width:min(560px,calc(100% - 32px));max-height:calc(100dvh - 40px);border:0;border-radius:20px;padding:24px;box-sizing:border-box;overflow:auto;color:var(--ink,#142338);background:var(--paper,#fff)}
+#organizationInviteReview::backdrop{background:rgba(10,25,44,.66)}
+#organizationInviteReview .ops-check{display:flex;align-items:flex-start;gap:10px;margin:18px 0}#organizationInviteReview .ops-check input{width:auto;flex:0 0 auto;margin-top:4px}
+#organizationInviteReview .ops-actions{display:flex;flex-wrap:wrap;gap:10px}#organizationInviteReview p{overflow-wrap:anywhere}#oiReviewStatus{color:#8d2d2d}
+#setupOrganizations button{margin-top:10px}
+
+</style>
+<script id="wmOrgInvites045">
+/* Organization leadership 0.20.45. Server-owned grants; no team or paid-plan writes. */
+window.WMOrgInvites=(()=>{
+ let state=null,epoch=0,review=null,homeEpoch=0;
+ const el=id=>document.getElementById(id),E=v=>esc(String(v??''));
+ const access=[['','Title only · organization directory'],['board','Board · organization calendar'],['membership_coordinator','Membership coordinator · membership support'],['division_director','Division director · selected scope'],['mat_director','Mat director · selected scope'],['pairing_director','Pairing director · selected scope'],['director','Director · selected scope'],['president','President · operations and contracts'],['coach','Coach · assigned role'],['team_leader','Team leader · assigned role'],['chaperone','Chaperone · assigned role'],['official','Official · assigned role']];
+ const options=rows=>rows.map(([id,name])=>`<option value="${E(id)}">${E(name)}</option>`).join('');
+ const current=s=>state===s&&s.epoch===epoch&&session?.user?.id===s.uid&&activeTeam?.id===s.team&&!managedLogin;
+ const note=(s,text,bad=false)=>{if(!current(s))return;const n=el('oiStatus');if(n){n.textContent=text;n.classList.toggle('ops-error',bad)}};
+ function close(){++epoch;state=null;if(review){review.dialog.close();review=null;}}
+ function resetHome(){++homeEpoch;el('setupOrganizations')?.replaceChildren();el('setupOrganizations')?.classList.add('hidden');}
+ async function rpc(q,uid=session?.user?.id){
+  if(!uid||uid!==session?.user?.id||managedLogin)throw Error('Use your own personal account.');
+  const {data,error}=await client.rpc('organization_leadership_invites',{p_request:q});
+  if(uid!==session?.user?.id||managedLogin)throw Error('Your account changed. Reopen this invitation.');
+  if(error)throw Error(error.message||'The invitation request failed.');return data;
+ }
+ function accessText(a){
+  if(a?.access_role==='organization_admin')return 'Full organization administration, including administrator invitations and administration of teams managed by this organization. Affiliate links do not grant team administration.';
+  return (access.find(([key])=>key===(a?.access_role||''))?.[1]||'Assigned organization access')+'. A position does not make this person a team coach or organization administrator.';
+ }
+ function accessHtml(a){return `<p><b>${E(a?.title)}</b> · ${E(a?.scope||'Organization')}</p><p>${E(accessText(a))}</p><p class="ops-sheet-note">Meeting management: ${a?.can_manage_meetings?'Yes':'No'} · Vote management: ${a?.can_manage_votes?'Yes':'No'} · Voting position: ${a?.voting_member?'Yes · eligibility still checked for each vote':'No'}</p>`;}
+ function shell(s,body){if(current(s))el('opsContent').innerHTML=`<section class="gs-root oi-root"><h3>Leadership invitations</h3><p>Invite an adult directly to this organization. They use their own account and do not need to join a team.</p><p id="oiStatus" role="status" aria-live="polite"></p>${body}</section>`;}
+ async function open({org}){
+  close();const s=state={org,epoch,uid:session?.user?.id,team:activeTeam?.id,data:null,pending:null};
+  shell(s,'<p>Loading invitations…</p>');await reload(s);
+ }
+ async function reload(s,msg=''){
+  try{const data=await rpc({action:'context',organization_id:s.org},s.uid);if(!current(s))return;s.data=data;s.pending=null;render(s);note(s,msg);}
+  catch(error){if(current(s)){shell(s,'<button id="oiRetry" class="secondary">Reload invitations</button>');note(s,error.message,true);el('oiRetry').onclick=()=>reload(s)}}
+ }
+ function render(s){
+  if(!current(s))return;
+  shell(s,`<div class="ops-actions"><button id="oiNew">Invite organization leader</button><button id="oiRefresh" class="secondary">Refresh</button></div><h4>Organization administrators</h4>${s.data.administrators.map(a=>`<article class="ops-card"><b>${E(a.name)}</b>${a.user_id===s.uid?' · You':`<button class="secondary" data-oi-remove="${E(a.user_id)}">Remove administrator access</button>`}</article>`).join('')}<p class="ops-sheet-note">Position assignments are managed in Positions. Other team roles and access remain separate when a leadership role is removed.</p><h4>Invitations</h4>${s.data.invitations.map(i=>`<article class="ops-card"><b>${E(i.invited_email)}</b><p>${E(i.access_summary.title)} · ${E(i.status)}${i.status==='pending'?' · Expires '+E(new Date(i.expires_at).toLocaleDateString()):''}</p>${i.status==='pending'?`<button class="secondary" data-oi-revoke="${E(i.id)}">Revoke invitation</button>`:''}</article>`).join('')||'<p>No invitations yet.</p>'}`);
+  el('oiNew').onclick=()=>edit(s);el('oiRefresh').onclick=()=>reload(s);
+  el('opsContent').querySelectorAll('[data-oi-revoke]').forEach(b=>b.onclick=async()=>{
+   if(!confirm('Revoke this pending invitation? Its link will stop working.'))return;b.disabled=true;
+   try{await rpc({action:'revoke',organization_id:s.org,id:b.dataset.oiRevoke},s.uid);if(current(s))await reload(s,'Invitation revoked.')}catch(e){note(s,e.message,true);if(b.isConnected)b.disabled=false;}
+  });
+  el('opsContent').querySelectorAll('[data-oi-remove]').forEach(b=>b.onclick=async()=>{
+   const a=s.data.administrators.find(x=>x.user_id===b.dataset.oiRemove);
+   if(!confirm(`Remove ${a.name} as an organization administrator? Their pending invitations will also be revoked. Separate team roles and position assignments remain.`))return;b.disabled=true;
+   try{await rpc({action:'remove_admin',organization_id:s.org,user_id:a.user_id,confirm_remove:true},s.uid);if(current(s))await reload(s,'Organization administrator access removed.')}catch(e){note(s,e.message,true);if(b.isConnected)b.disabled=false;}
+  });
+ }
+ function edit(s){
+  s.pending=null;
+  shell(s,`<form id="oiForm"><div class="gs-grid"><label>Invited email<input id="oiEmail" type="email" autocomplete="email" maxlength="254" required></label><label>Invitation role<select id="oiKind"><option value="position">Leadership position</option><option value="administrator">Organization administrator · full access</option></select></label><div id="oiPositionFields"><label>Vacant position<select id="oiPosition">${options([['','Choose a position'],...s.data.positions.map(p=>[p.id,p.title+' · '+p.division_name])])}</select></label><label>Operational access<select id="oiAccess">${options(access)}</select></label><p class="ops-sheet-note">Create vacant positions under Positions first. Titles and permissions are separate.</p></div></div><div id="oiAccessSummary" class="privacy-note"></div><label class="ops-check"><input id="oiAdult" type="checkbox" required>I confirm the recipient is at least 18 and will use their own personal account.</label><label class="ops-check"><input id="oiPermissions" type="checkbox" required>I approve the permissions displayed above.</label><p class="ops-sheet-note">The invitation expires in 14 days. It grants access only after the recipient signs in with this verified email and accepts.</p><div class="ops-actions"><button id="oiCreate" type="submit">Create private invitation</button><button id="oiCancel" class="secondary" type="button">Cancel</button></div></form>`);
+  const summary=()=>{
+   const admin=el('oiKind').value==='administrator',p=s.data.positions.find(x=>x.id===el('oiPosition').value);
+   el('oiPositionFields').classList.toggle('hidden',admin);el('oiPosition').required=!admin;
+   el('oiAccessSummary').innerHTML=admin?accessHtml({title:'Organization administrator',scope:'Organization',access_role:'organization_admin',can_manage_meetings:true,can_manage_votes:true}):p?accessHtml({...p,scope:p.division_name,access_role:el('oiAccess').value}):'<p>Choose a vacant position to review its scope.</p>';
+   el('oiPermissions').checked=false;
+  };
+  ['oiKind','oiPosition','oiAccess'].forEach(id=>el(id).onchange=summary);summary();el('oiCancel').onclick=()=>render(s);
+  el('oiForm').onsubmit=async event=>{
+   event.preventDefault();if(!current(s)||el('oiCreate').disabled)return;
+   const p=s.data.positions.find(x=>x.id===el('oiPosition').value),kind=el('oiKind').value;
+   if(kind==='position'&&!p){note(s,'Choose a vacant position.',true);return;}
+   const q={action:'create',organization_id:s.org,email:el('oiEmail').value.trim().toLowerCase(),kind,
+    position_id:kind==='position'?p.id:null,revision:kind==='position'?p.revision:null,
+    access_role:kind==='position'?(el('oiAccess').value||null):null,confirm_adult:el('oiAdult').checked,confirm_access:el('oiPermissions').checked};
+   const signature=JSON.stringify(q);
+   if(!s.pending||s.pending.signature!==signature){const bytes=crypto.getRandomValues(new Uint8Array(32));s.pending={signature,id:crypto.randomUUID(),token:'WMO-'+Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('')};}
+   const pending=s.pending,form=el('oiForm');[...form.elements].forEach(x=>x.disabled=true);note(s,'Saving invitation…');
+   try{const data=await rpc({...q,id:pending.id,token:pending.token},s.uid);if(current(s))share(s,{...pending,...data,email:q.email,emailRequest:crypto.randomUUID()});}
+   catch(error){note(s,'Invitation not yet confirmed. '+error.message+' Your form is still here; retry uses the same invitation.',true);}
+   finally{if(current(s)&&form.isConnected)[...form.elements].forEach(x=>x.disabled=false);}
+  };
+ }
+ function share(s,invite){
+  const publicUrl=new URL('./',EMAIL_CONFIRM_REDIRECT_URL);publicUrl.searchParams.set('invite',invite.token);const url=publicUrl.toString();
+  shell(s,`<h4>Invitation ready for ${E(invite.email)}</h4>${accessHtml(invite.access)}<p>Expires ${E(new Date(invite.expires_at).toLocaleDateString())}. The recipient must sign in or create an account using this email.</p><label>Private invitation link<input id="oiLink" readonly value="${E(url)}"></label><div class="ops-actions"><button id="oiSend">Email invitation</button><button id="oiCopy" class="secondary">Copy link</button><button id="oiDone" class="secondary">Back to invitations</button></div><p class="ops-sheet-note">Keep this screen open if you need to retry sending. For privacy, saved invitation lists do not reveal the link. Revoke and replace an invitation if you lose its link.</p>`);
+  el('oiDone').onclick=()=>reload(s);el('oiLink').onclick=()=>el('oiLink').select();
+  el('oiCopy').onclick=async()=>{
+   try{await navigator.clipboard.writeText(url);note(s,'Private invitation link copied.');}
+   catch{if(current(s)){el('oiLink').focus();el('oiLink').select();note(s,'Copy was unavailable. The link is selected; use your device’s Copy command.',true)}}
+  };
+  el('oiSend').onclick=async()=>{
+   const button=el('oiSend');button.disabled=true;note(s,'Submitting invitation email…');
+   try{
+    const {data,error}=await client.functions.invoke('send-organization-invitation',{body:{organization_id:s.org,id:invite.id,token:invite.token,request_id:invite.emailRequest}});
+    if(!current(s))return;
+    if(error||data?.ok!==true||data?.sent!==1)throw Error(data?.error||error?.message||'Email submission was not confirmed.');
+    note(s,'Invitation email submitted to '+invite.email+'. Ask them to check their inbox and Junk or Spam folder.');button.textContent='Email submitted';
+   }catch(error){if(current(s)){note(s,'Email submission not confirmed. '+error.message+' Retry or copy the link.',true);button.disabled=false;button.textContent='Retry email';}}
+  };
+ }
+ async function accept(token){
+  const uid=session?.user?.id,team=activeTeam?.id;
+  const data=await rpc({action:'preview',token},uid);
+  if(session?.user?.id!==uid||activeTeam?.id!==team)return null;
+  if(data.already_accepted)return data;
+  closeSheets();
+  const dialog=el('organizationInviteReview');
+  dialog.innerHTML=`<form id="oiReviewForm"><h2 id="oiReviewTitle">Join ${E(data.organization_name)}</h2><p>Invitation for ${E(data.email)}</p>${accessHtml(data.access)}<p>This invitation does not add you to a team roster. Existing roles remain separate.</p><label class="ops-check"><input id="oiReviewAdult" type="checkbox" required>I am at least 18 and this is my own personal account.</label><label class="ops-check"><input id="oiReviewAccess" type="checkbox" required>I accept the displayed organization access.</label><p id="oiReviewStatus" role="status" aria-live="polite"></p><div class="ops-actions"><button id="oiReviewAccept" type="submit">Accept organization invitation</button><button id="oiReviewCancel" class="secondary" type="button">Not now</button></div></form>`;
+  return new Promise(resolve=>{
+   const r=review={dialog,uid,team};let settled=false,busy=false;
+   const finish=value=>{if(settled)return;settled=true;if(review===r)review=null;dialog.onclose=null;dialog.oncancel=null;dialog.close();dialog.replaceChildren();resolve(value);};
+   dialog.onclose=()=>finish(null);dialog.oncancel=event=>{event.preventDefault();if(!busy)finish(null)};
+   el('oiReviewCancel').onclick=()=>finish(null);
+   el('oiReviewForm').onsubmit=async event=>{
+    event.preventDefault();if(busy||review!==r)return;busy=true;el('oiReviewAccept').disabled=true;el('oiReviewCancel').disabled=true;
+    el('oiReviewStatus').textContent='Accepting organization access…';
+    try{const accepted=await rpc({action:'accept',token,confirm_adult:el('oiReviewAdult').checked,confirm_access:el('oiReviewAccess').checked},uid);if(review===r&&activeTeam?.id===team)finish(accepted);else finish(null)}
+    catch(error){if(review===r){el('oiReviewStatus').textContent=error.message;el('oiReviewAccept').disabled=false;el('oiReviewCancel').disabled=false;busy=false;}}
+   };
+   dialog.showModal();el('oiReviewTitle').setAttribute('tabindex','-1');el('oiReviewTitle').focus();
+  });
+ }
+ async function showHome(){
+  const uid=session?.user?.id,ticket=++homeEpoch,box=el('setupOrganizations');
+  if(!uid||managedLogin)return;box.classList.remove('hidden');box.innerHTML='<h2>Your organizations</h2><p>Checking organization access…</p>';
+  const {data,error}=await client.rpc('get_operations',{p_request:{action:'context'}});
+  if(ticket!==homeEpoch||uid!==session?.user?.id||managedLogin)return;
+  if(error){box.innerHTML='<h2>Organization access</h2><p>Could not check your organizations. Tap Check Access to retry.</p>';return;}
+  const rows=Array.isArray(data)?data:[];box.classList.toggle('hidden',!rows.length);
+  box.innerHTML='<h2>Your organizations</h2><p>Open your organization tools. Your assigned role controls access.</p>'+rows.map(o=>`<button class="wide secondary" data-oi-org="${E(o.id)}">${E(o.name)}</button>`).join('');
+  box.querySelectorAll('[data-oi-org]').forEach(b=>b.onclick=()=>WMOperations.open(b.dataset.oiOrg));
+  if(rows.length){el('setupAccessStatus').textContent='Your organization access is ready.';el('setupChoices').open=!!pendingInviteToken;}
+ }
+ return {open,close,accept,showHome,resetHome};
+})();
+
+</script>
 <script>
 /* v0.20.5 organization operations. All authorization is enforced again by the RPC. */
 window.WMOperations=(()=>{
  let hub=null,org=null,division='',tab='home',generation=0,editor=null,feedbackId=null,dialogResolve=null;
  const $o=id=>document.getElementById(id),e=v=>esc(String(v??'')),list=v=>Array.isArray(v)?v:[];
- const labels={home:'Overview',positions:'Positions',affiliates:'Affiliate directory',meetings:'Meetings & minutes',voting:'Private voting',event:'Calendar',teams:'Wrestling teams',person:'Staff & credentials',assignment:'Officials',requirement:'Annual requirements',squad:'Dual rosters',budget:'Budgets',contract:'Contracts',settings:'Divisions & access'};
+ const labels={home:'Overview',invitations:'Leadership invitations',positions:'Positions',affiliates:'Affiliate directory',meetings:'Meetings & minutes',voting:'Private voting',event:'Calendar',teams:'Wrestling teams',person:'Staff & credentials',assignment:'Officials',requirement:'Annual requirements',squad:'Dual rosters',budget:'Budgets',contract:'Contracts',settings:'Divisions & access'};
  const roles={athletic_director:'Athletic director',school_administrator:'School administrator',athletic_trainer:'Athletic trainer',team_manager:'Team manager',head_coach:'Head coach',assistant_coach:'Assistant coach',club_director:'Club director',membership_coordinator:'Membership coordinator',board_member:'Board member',president:'President',director:'Overall director',board:'Board member',division_director:'Division director',pairing_director:'Pairing director',mat_director:'Mat officials director',coach:'Coach',chaperone:'Chaperone',team_leader:'Team leader',official:'Official',pairing_official:'Pairing official',mat_official:'Mat official',all:'Everyone'};
  const year=()=>{const d=new Date(),y=d.getFullYear()-(d.getMonth()<7?1:0);return y+'–'+String(y+1).slice(-2)};
  const note=(id,msg,bad=false)=>{$o(id).textContent=msg;$o(id).classList.toggle('ops-error',bad)};
@@ -10799,7 +10940,7 @@ window.WMOperations=(()=>{
  function can(kind,div=division||null){if(!hub)return false;if(kind==='contract')return hub.president;return !!hub.capabilities?.find(c=>c.division_id===(div||null))?.[kind==='event'?'event':'records'];}
  function inDivision(id){if(!division)return true;let d=id,seen=new Set();while(d&&!seen.has(d)){if(d===division)return true;seen.add(d);d=hub.divisions.find(x=>x.id===d)?.parent_id;}return false;}
  async function open(wantedOrg=null,wantedRecord=null,wantedTab='home'){
-  window.WMOrgStructure?.close();
+  window.WMOrgStructure?.close();window.WMOrgInvites?.close();
   wantedOrg=wantedOrg||selectedHomeOrganization();
   if(document.body.classList.contains('kiosk-locked'))return;
   if(managedLogin){message('Use your personal account for organization tools.',true);return;}
@@ -10807,19 +10948,20 @@ window.WMOperations=(()=>{
   const ticket=++generation;
   try{const organizations=await rpc(false,{action:'context'});if(ticket!==generation)return;
    $o('opsOrg').innerHTML=opts(organizations.map(o=>[o.id,o.name]),wantedOrg||org);
-   if(!organizations.length){hub=null;org=null;$o('opsTabs').innerHTML='';$o('opsContent').innerHTML='<div class="empty-card">Your organization will appear here when you join a team or receive a leadership role.</div><div class="ops-card"><h3>Your account code</h3><p>Give this code to your organization administrator so they can assign your role.</p><p class="ops-code">'+e(session?.user?.id)+'</p></div>';note('opsStatus','');return;}
+   if(!organizations.length){hub=null;org=null;$o('opsTabs').innerHTML='';$o('opsContent').innerHTML='<div class="empty-card">Your organization will appear here when you join a team or receive a leadership role.</div><div class="ops-card"><h3>Your account code</h3><p>Ask an organization administrator to invite your email from Leadership invitations. A WMO invitation does not require joining a team.</p><p class="ops-code">'+e(session?.user?.id)+'</p></div>';note('opsStatus','');return;}
    org=organizations.some(o=>o.id===(wantedOrg||org))?(wantedOrg||org):organizations[0].id;$o('opsOrg').value=org;
    await reload();if(hub&&wantedTab!=='home'){tab=wantedTab;render();}if(wantedRecord&&hub){const r=hub.records.find(r=>r.id===wantedRecord);if(r){tab=r.kind;render();view(r);}}
   }catch(err){note('opsStatus',err.message,true);}
  }
  async function reload(){const ticket=++generation;const data=await rpc(false,{action:'hub',organization_id:org});if(ticket!==generation)return;hub=data;homeOrganizationGeneration++;acceptHomeOrganization(data);
   if(!hub.divisions.some(d=>d.id===division))division='';if(!division&&!hub.capabilities?.find(c=>c.division_id===null&&(c.event||c.records)))division=hub.capabilities?.find(c=>c.division_id&&(c.event||c.records))?.division_id||'';$o('opsDivision').innerHTML=opts([['','All divisions'],...hub.divisions.map(d=>[d.id,d.name])],division);note('opsStatus','');render();}
- function render(){window.WMVoting?.close();window.WMMeetings?.close();window.WMOrgStructure?.close();if(!hub)return;$o('opsDivision').disabled=['affiliates','meetings','voting'].includes(tab);
+ function render(){window.WMVoting?.close();window.WMMeetings?.close();window.WMOrgStructure?.close();window.WMOrgInvites?.close();if(!hub)return;$o('opsDivision').disabled=['invitations','affiliates','meetings','voting'].includes(tab);
   $o('opsHubTitle').textContent=hub.organizations?.find(o=>o.id===org)?.name||'Organization Hub';
-  $o('opsTabs').innerHTML=Object.entries(labels).map(([key,label])=>`<button class="secondary ${tab===key?'selected':''}" data-ops-tab="${key}">${e(label)}</button>`).join('');
+  $o('opsTabs').innerHTML=Object.entries(labels).filter(([key])=>key!=='invitations'||hub.admin).map(([key,label])=>`<button class="secondary ${tab===key?'selected':''}" data-ops-tab="${key}">${e(label)}</button>`).join('');
   $o('opsTabs').querySelectorAll('[data-ops-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.opsTab;render()});
   roles.director=schoolOrg()?'Athletic program director':'Overall director';roles.division_director=schoolOrg()?'School / sport director':'Division director';
   if(tab==='home'){home();return;}
+  if(tab==='invitations'){if(hub.admin)WMOrgInvites.open({org});else $o('opsContent').textContent='Organization administrator access required.';return;}
   if(tab==='teams'){teams();return;}
   if(tab==='meetings'){window.WMMeetings.open({org});return;}
   if(tab==='voting'){window.WMVoting.open({org});return;}
@@ -10842,6 +10984,7 @@ window.WMOperations=(()=>{
  const visibleTeams=()=>list(hub.teams).filter(t=>(!t.external||t.approved||hub.admin)&&inDivision(t.division_id));
  function home(){
   const tiles=[
+   ...(hub.admin?[['invitations','✉️','Leadership invitations','Invite leaders directly to your organization']]:[]),
    ['meetings','📝','Meetings & minutes','Agenda, roll call, decisions and saved minutes'],
    ['voting','🗳️','Private voting','Board and club ballots with results after closing'],
    ['event','📅','Calendar','Board meetings, tournaments and shared dates'],
@@ -10864,6 +11007,7 @@ window.WMOperations=(()=>{
    <div class="ops-home-grid">${tiles.map(([key,icon,title,description])=>`<button class="ops-home-tile" type="button" data-ops-home="${key}"><span aria-hidden="true">${icon}</span><b>${e(title)}</b><small>${e(description)}</small></button>`).join('')}</div>
    <div class="ops-section-heading"><h3>Coming up</h3><button class="secondary" type="button" data-ops-home="event">View calendar</button></div>
    ${upcoming.map(r=>`<button class="ops-upcoming" type="button" data-ops-upcoming="${e(r.id)}"><b>${e(r.title)}</b><small>${e(fmtDateTime(r.data.starts_at))} · ${e(r.data.status||'')}</small></button>`).join('')||'<p class="ops-sheet-note">No upcoming events in this view. Open Calendar to view or add dates.</p>'}`;
+  $o('opsSwitchTeams').hidden=!availableTeams.length;$o('opsSwitchTeams').nextElementSibling.hidden=!availableTeams.length;
   $o('opsSwitchTeams').onclick=()=>{closeSheets();openTeamSwitcher();};
   $o('opsContent').querySelectorAll('[data-ops-home]').forEach(b=>b.onclick=()=>{tab=b.dataset.opsHome;render();$o('opsHubSheet').scrollTop=0;});
   $o('opsContent').querySelectorAll('[data-ops-upcoming]').forEach(b=>b.onclick=()=>view([...hub.records,...list(hub.team_events)].find(r=>r.id===b.dataset.opsUpcoming)));
@@ -10989,9 +11133,9 @@ window.WMOperations=(()=>{
  async function feedback(){if(document.body.classList.contains('kiosk-locked'))return;closeSheets();feedbackId=crypto.randomUUID();note('feedbackStatus','');openSheet('feedbackSheet');await feedbackHistory();}
  async function feedbackHistory(){const target=$o('feedbackHistory');target.textContent='Loading…';try{const rows=await rpc(false,{action:'feedback',team_id:activeTeam?.id||null});target.innerHTML=list(rows).map(r=>`<article class="ops-card"><b>${e(r.category)}</b> ${badge(r.status)}<p>${e(r.body)}</p><small>${e(fmtDateTime(r.created_at))} · ${e(r.build)}</small>${r.response?'<p>Response: '+e(r.response)+'</p>':''}${actualIsTeamAdmin&&!managedLogin&&r.team_id===activeTeam?.id?`<div class="ops-actions"><button class="secondary" data-feedback-review="${r.id}">Review</button></div>`:''}</article>`).join('')||'<p>No feedback yet.</p>';target.querySelectorAll('[data-feedback-review]').forEach(b=>b.onclick=async()=>{const row=rows.find(r=>r.id===b.dataset.feedbackReview),result=await dialog({title:'Review feedback',fields:[{id:'status',label:'Status',options:['new','reviewing','planned','resolved'].map(s=>[s,s]),value:row.status},{id:'response',label:'Response',type:'textarea',value:row.response||''}],submit:'Save review'});if(!result)return;const {status,response}=result;try{await rpc(true,{action:'feedback_status',id:row.id,status,response});await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}});}catch(err){target.textContent=err.message;}}
  async function sendFeedback(ev){ev.preventDefault();if(!session?.user)return;$o('feedbackSend').disabled=true;try{await rpc(true,{action:'feedback',id:feedbackId||crypto.randomUUID(),team_id:activeTeam?.id||null,category:value('feedbackCategory'),body:value('feedbackBody'),build:'v0.20.26'});$o('feedbackBody').value='';feedbackId=crypto.randomUUID();note('feedbackStatus','Thanks—your feedback was saved.');await feedbackHistory();}catch(err){note('feedbackStatus',err.message,true)}finally{$o('feedbackSend').disabled=false}}
- function close(){window.WMVoting?.close();window.WMMeetings?.close();window.WMOrgStructure?.close();finishDialog(null);generation++;editor=null;$o('opsRosterContacts')?.replaceChildren();$o('opsFields').replaceChildren();hub=null;['opsHubSheet','opsEditorSheet','feedbackSheet'].forEach(id=>show(id,false));}
+ function close(){window.WMVoting?.close();window.WMMeetings?.close();window.WMOrgStructure?.close();window.WMOrgInvites?.close();finishDialog(null);generation++;editor=null;$o('opsRosterContacts')?.replaceChildren();$o('opsFields').replaceChildren();hub=null;['opsHubSheet','opsEditorSheet','feedbackSheet'].forEach(id=>show(id,false));}
  $o('opsDialogCancel').onclick=()=>finishDialog(null);
- $o('opsOrg').onchange=async()=>{window.WMVoting?.close();window.WMMeetings?.close();window.WMOrgStructure?.close();org=value('opsOrg');division='';tab='home';hub=null;$o('opsContent').replaceChildren();$o('opsTabs').replaceChildren();$o('opsHubTitle').textContent='Organization Hub';note('opsStatus','Loading organization…');try{await reload()}catch(err){note('opsStatus',err.message,true)}};
+ $o('opsOrg').onchange=async()=>{window.WMVoting?.close();window.WMMeetings?.close();window.WMOrgStructure?.close();window.WMOrgInvites?.close();org=value('opsOrg');division='';tab='home';hub=null;$o('opsContent').replaceChildren();$o('opsTabs').replaceChildren();$o('opsHubTitle').textContent='Organization Hub';note('opsStatus','Loading organization…');try{await reload()}catch(err){note('opsStatus',err.message,true)}};
  $o('opsDivision').onchange=()=>{division=value('opsDivision');render()};$o('opsEditorBack').onclick=()=>{editor=null;show('opsEditorSheet',false);openSheet('opsHubSheet')};$o('opsForm').onsubmit=saveEditor;
  $o('feedbackForm').onsubmit=sendFeedback;$o('organizationHubBtn').onclick=()=>open();$o('feedbackBtn').onclick=feedback;
  return {open,calendar,close,feedback,rpc,download,year,dialog,confirmAction};
@@ -14226,5 +14370,6 @@ window.WMMatchVideo = (() => {
 })();
 
 </script>
+<dialog id="organizationInviteReview" aria-labelledby="oiReviewTitle"></dialog>
 </body>
 </html>
