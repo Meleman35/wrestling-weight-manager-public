@@ -1,6 +1,6 @@
 {
   "engine": "PGlite/PostgreSQL, isolated fixture; live ops_member definition",
-  "passed": 18,
+  "passed": 20,
   "tests": [
     "Creation requires valid email, known role, adult attestation and explicit access approval",
     "Lost-response retries preserve one invitation; changed payload and duplicate pending admin invite rejected",
@@ -18,6 +18,8 @@
     "Revocation is idempotent and expired/revoked links grant nothing",
     "Removing an inviter also revokes their outstanding invitations",
     "Email context fixes recipient, verifies saved token and administrator, and limits duplicate requests",
+    "Email-bound ordinary member joins Board Room without board, administrator or team privileges; RLS hides other members",
+    "Administrator removal takes effect and accepted link cannot restore membership",
     "Raw invitation storage and anonymous RPC execution are blocked",
     "Only token hashes persist; no secrets in audit and no affiliate/team mutations"
   ]

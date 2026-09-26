@@ -14,10 +14,10 @@ base=subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).stri
 old=subprocess.check_output(['git','show',base+':index.html'],cwd=root).decode()
 new=(root/'index.html').read_text();checks=[]
 with tempfile.TemporaryDirectory() as td:
- temp=Path(td);(temp/'scripts').mkdir();(temp/'src').mkdir();(temp/'index.html').write_text(old)
+ temp=Path(td);(temp/'scripts').mkdir();(temp/'src').mkdir();(temp/'index.html').write_text(new)
  for rel in ['scripts/build-organization-invitations-045.py','src/organization-invitations.js','src/organization-invitations.css']:shutil.copy(root/rel,temp/rel)
  subprocess.run(['python',str(temp/'scripts/build-organization-invitations-045.py')],check=True)
- assert (temp/'index.html').read_text()==new;checks.append('Exact reproduction from current 0.20.48 base')
+ assert (temp/'index.html').read_text()==new;checks.append('Embedded invitation source matches current web build')
  subprocess.run(['python',str(temp/'scripts/build-organization-invitations-045.py')],check=True)
  assert (temp/'index.html').read_text()==new;checks.append('Build is idempotent')
  parser=Parser();parser.feed(new);syntax=0
@@ -25,6 +25,8 @@ with tempfile.TemporaryDirectory() as td:
   if attrs.get('src') or not code.strip() or attrs.get('type','') not in ('','text/javascript','module'):continue
   f=temp/f'{i}.js';f.write_text(code);subprocess.run(['node','--check',str(f)],capture_output=True,check=True);syntax+=1
  checks.append(f'All {syntax} inline scripts parse')
+ assert all(fragment in new for fragment in ["if(tab==='members')","mode:'members'","organization_member"])
+ checks.append('Board Room member tab opens separate invitation flow')
  before=Parser();before.feed(old)
  protected=[[attrs,code] for attrs,code in before.blocks if any(k in str(attrs) for k in ['profile-pin','biometric','wmMeetHub'])]
  for item in protected:assert item in parser.blocks
@@ -32,7 +34,8 @@ with tempfile.TemporaryDirectory() as td:
  for asset in ['app.js','styles.css','mat-mode.html','auth-confirm.html']:
   assert subprocess.check_output(['git','show',base+':'+asset],cwd=root)==(root/asset).read_bytes()
  checks.append('App assets, mat mode and confirmation page preserved')
-sql=re.sub(r'--[^\n]*','',next((root/'supabase/migrations').glob('*_organization_leadership_invitations_02045.sql')).read_text())
+sql=re.sub(r'--[^\n]*','',next((root/'supabase/migrations').glob('*_organization_leadership_invitations_02045.sql')).read_text()
+           +(root/'supabase/migrations/20260926155000_organization_general_members_02051.sql').read_text())
 for forbidden in ['insert into public.team_memberships','update public.team_memberships','delete from public.team_memberships','team_plan','billing','update private.organization_affiliates']:
  assert forbidden not in sql.lower(),forbidden
 checks.append('Migration contains no team membership, affiliate or paid entitlement mutation')

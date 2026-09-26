@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.50: Association Board Room navigation. -->
+<!-- Wrestling Manager v0.20.51: Invited organization members in Board Room. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -10793,12 +10793,13 @@ window.WMOrgInvites=(()=>{
  }
  function accessText(a){
   if(a?.access_role==='organization_admin')return 'Full organization administration, including administrator invitations and administration of teams managed by this organization. Affiliate links do not grant team administration.';
+  if(a?.access_role==='organization_member')return 'Organization membership and permitted Board Room information. No board position, ballot eligibility, team roster or administration access is assigned.';
   return (access.find(([key])=>key===(a?.access_role||''))?.[1]||'Assigned organization access')+'. A position does not make this person a team coach or organization administrator.';
  }
  function accessHtml(a){return `<p><b>${E(a?.title)}</b> · ${E(a?.scope||'Organization')}</p><p>${E(accessText(a))}</p><p class="ops-sheet-note">Meeting management: ${a?.can_manage_meetings?'Yes':'No'} · Vote management: ${a?.can_manage_votes?'Yes':'No'} · Voting position: ${a?.voting_member?'Yes · eligibility still checked for each vote':'No'}</p>`;}
- function shell(s,body){if(current(s))el('opsContent').innerHTML=`<section class="gs-root oi-root"><h3>Leadership invitations</h3><p>Invite an adult directly to this organization. They use their own account and do not need to join a team.</p><p id="oiStatus" role="status" aria-live="polite"></p>${body}</section>`;}
- async function open({org}){
-  close();const s=state={org,epoch,uid:session?.user?.id,team:activeTeam?.id,data:null,pending:null};
+ function shell(s,body){if(current(s))el('opsContent').innerHTML=`<section class="gs-root oi-root"><h3>${s.mode==='members'?'Organization members':'Leadership invitations'}</h3><p>${s.mode==='members'?'Invite an adult to join the organization with their own account. Membership does not assign a board position or team role.':'Invite an adult directly to organization leadership. They use their own account and do not need to join a team.'}</p><p id="oiStatus" role="status" aria-live="polite"></p>${body}</section>`;}
+ async function open({org,mode='leadership'}){
+  close();const s=state={org,mode,epoch,uid:session?.user?.id,team:activeTeam?.id,data:null,pending:null};
   shell(s,'<p>Loading invitations…</p>');await reload(s);
  }
  async function reload(s,msg=''){
@@ -10807,7 +10808,12 @@ window.WMOrgInvites=(()=>{
  }
  function render(s){
   if(!current(s))return;
-  shell(s,`<div class="ops-actions"><button id="oiNew">Invite organization leader</button><button id="oiRefresh" class="secondary">Refresh</button></div><h4>Organization administrators</h4>${s.data.administrators.map(a=>`<article class="ops-card"><b>${E(a.name)}</b>${a.user_id===s.uid?' · You':`<button class="secondary" data-oi-remove="${E(a.user_id)}">Remove administrator access</button>`}</article>`).join('')}<p class="ops-sheet-note">Position assignments are managed in Positions. Other team roles and access remain separate when a leadership role is removed.</p><h4>Invitations</h4>${s.data.invitations.map(i=>`<article class="ops-card"><b>${E(i.invited_email)}</b><p>${E(i.access_summary.title)} · ${E(i.status)}${i.status==='pending'?' · Expires '+E(new Date(i.expires_at).toLocaleDateString()):''}</p>${i.status==='pending'?`<button class="secondary" data-oi-revoke="${E(i.id)}">Revoke invitation</button>`:''}</article>`).join('')||'<p>No invitations yet.</p>'}`);
+  if(s.mode==='members'){
+   shell(s,`<div class="ops-actions"><button id="oiNew">Invite member</button><button id="oiRefresh" class="secondary">Refresh</button></div><h4>Members</h4>${s.data.members.map(m=>`<article class="ops-card"><b>${E(m.name)}</b><p>Joined ${E(new Date(m.joined_at).toLocaleDateString())}</p><button class="secondary" data-oi-member-remove="${E(m.user_id)}">Remove membership</button></article>`).join('')||'<p>No direct organization members yet.</p>'}<h4>Member invitations</h4>${s.data.invitations.filter(i=>i.kind==='member').map(i=>`<article class="ops-card"><b>${E(i.invited_email)}</b><p>${E(i.status)}${i.status==='pending'?' · Expires '+E(new Date(i.expires_at).toLocaleDateString()):''}</p>${i.status==='pending'?`<button class="secondary" data-oi-revoke="${E(i.id)}">Revoke invitation</button>`:''}</article>`).join('')||'<p>No member invitations yet.</p>'}`);
+   el('opsContent').querySelectorAll('[data-oi-member-remove]').forEach(b=>b.onclick=async()=>{const m=s.data.members.find(x=>x.user_id===b.dataset.oiMemberRemove);if(!confirm(`Remove ${m.name} from direct organization membership? Their separate team or leadership roles remain.`))return;b.disabled=true;try{await rpc({action:'remove_member',organization_id:s.org,user_id:m.user_id,confirm_remove:true},s.uid);if(current(s))await reload(s,'Membership removed.')}catch(error){note(s,error.message,true);if(b.isConnected)b.disabled=false;}});
+  }else{
+  shell(s,`<div class="ops-actions"><button id="oiNew">Invite organization leader</button><button id="oiRefresh" class="secondary">Refresh</button></div><h4>Organization administrators</h4>${s.data.administrators.map(a=>`<article class="ops-card"><b>${E(a.name)}</b>${a.user_id===s.uid?' · You':`<button class="secondary" data-oi-remove="${E(a.user_id)}">Remove administrator access</button>`}</article>`).join('')}<p class="ops-sheet-note">Position assignments are managed in Positions. Other team roles and access remain separate when a leadership role is removed.</p><h4>Leadership invitations</h4>${s.data.invitations.filter(i=>i.kind!=='member').map(i=>`<article class="ops-card"><b>${E(i.invited_email)}</b><p>${E(i.access_summary.title)} · ${E(i.status)}${i.status==='pending'?' · Expires '+E(new Date(i.expires_at).toLocaleDateString()):''}</p>${i.status==='pending'?`<button class="secondary" data-oi-revoke="${E(i.id)}">Revoke invitation</button>`:''}</article>`).join('')||'<p>No leadership invitations yet.</p>'}`);
+  }
   el('oiNew').onclick=()=>edit(s);el('oiRefresh').onclick=()=>reload(s);
   el('opsContent').querySelectorAll('[data-oi-revoke]').forEach(b=>b.onclick=async()=>{
    if(!confirm('Revoke this pending invitation? Its link will stop working.'))return;b.disabled=true;
@@ -10821,11 +10827,11 @@ window.WMOrgInvites=(()=>{
  }
  function edit(s){
   s.pending=null;
-  shell(s,`<form id="oiForm"><div class="gs-grid"><label>Invited email<input id="oiEmail" type="email" autocomplete="email" maxlength="254" required></label><label>Invitation role<select id="oiKind"><option value="position">Leadership position</option><option value="administrator">Organization administrator · full access</option></select></label><div id="oiPositionFields"><label>Vacant position<select id="oiPosition">${options([['','Choose a position'],...s.data.positions.map(p=>[p.id,p.title+' · '+p.division_name])])}</select></label><label>Operational access<select id="oiAccess">${options(access)}</select></label><p class="ops-sheet-note">Create vacant positions under Positions first. Titles and permissions are separate.</p></div></div><div id="oiAccessSummary" class="privacy-note"></div><label class="ops-check"><input id="oiAdult" type="checkbox" required>I confirm the recipient is at least 18 and will use their own personal account.</label><label class="ops-check"><input id="oiPermissions" type="checkbox" required>I approve the permissions displayed above.</label><p class="ops-sheet-note">The invitation expires in 14 days. It grants access only after the recipient signs in with this verified email and accepts.</p><div class="ops-actions"><button id="oiCreate" type="submit">Create private invitation</button><button id="oiCancel" class="secondary" type="button">Cancel</button></div></form>`);
+  shell(s,`<form id="oiForm"><div class="gs-grid"><label>Invited email<input id="oiEmail" type="email" autocomplete="email" maxlength="254" required></label><label>Invitation role<select id="oiKind">${s.mode==='members'?'<option value="member">Organization member · no board or team role</option>':'<option value="position">Leadership position</option><option value="administrator">Organization administrator · full access</option>'}</select></label><div id="oiPositionFields"><label>Vacant position<select id="oiPosition">${options([['','Choose a position'],...s.data.positions.map(p=>[p.id,p.title+' · '+p.division_name])])}</select></label><label>Operational access<select id="oiAccess">${options(access)}</select></label><p class="ops-sheet-note">Create vacant positions under Positions first. Titles and permissions are separate.</p></div></div><div id="oiAccessSummary" class="privacy-note"></div><label class="ops-check"><input id="oiAdult" type="checkbox" required>I confirm the recipient is at least 18 and will use their own personal account.</label><label class="ops-check"><input id="oiPermissions" type="checkbox" required>I approve the permissions displayed above.</label><p class="ops-sheet-note">The invitation expires in 14 days. It grants access only after the recipient signs in with this verified email and accepts.</p><div class="ops-actions"><button id="oiCreate" type="submit">Create private invitation</button><button id="oiCancel" class="secondary" type="button">Cancel</button></div></form>`);
   const summary=()=>{
-   const admin=el('oiKind').value==='administrator',p=s.data.positions.find(x=>x.id===el('oiPosition').value);
-   el('oiPositionFields').classList.toggle('hidden',admin);el('oiPosition').required=!admin;
-   el('oiAccessSummary').innerHTML=admin?accessHtml({title:'Organization administrator',scope:'Organization',access_role:'organization_admin',can_manage_meetings:true,can_manage_votes:true}):p?accessHtml({...p,scope:p.division_name,access_role:el('oiAccess').value}):'<p>Choose a vacant position to review its scope.</p>';
+   const kind=el('oiKind').value,admin=kind==='administrator',member=kind==='member',p=s.data.positions.find(x=>x.id===el('oiPosition').value);
+   el('oiPositionFields').classList.toggle('hidden',admin||member);el('oiPosition').required=kind==='position';
+   el('oiAccessSummary').innerHTML=member?accessHtml({title:'Organization member',scope:'Organization',access_role:'organization_member'}):admin?accessHtml({title:'Organization administrator',scope:'Organization',access_role:'organization_admin',can_manage_meetings:true,can_manage_votes:true}):p?accessHtml({...p,scope:p.division_name,access_role:el('oiAccess').value}):'<p>Choose a vacant position to review its scope.</p>';
    el('oiPermissions').checked=false;
   };
   ['oiKind','oiPosition','oiAccess'].forEach(id=>el(id).onchange=summary);summary();el('oiCancel').onclick=()=>render(s);
@@ -10891,7 +10897,7 @@ window.WMOrgInvites=(()=>{
   if(ticket!==homeEpoch||uid!==session?.user?.id||managedLogin)return;
   if(error){box.innerHTML='<h2>Organization access</h2><p>Could not check your organizations. Tap Check Access to retry.</p>';return;}
   const rows=Array.isArray(data)?data:[];box.classList.toggle('hidden',!rows.length);
-  box.innerHTML='<h2>Your Board Rooms</h2><p>Open an organization to see its meetings, clubs and programs. Your assigned role controls access.</p>'+rows.map(o=>`<button class="wide secondary" data-oi-org="${E(o.id)}">${E(o.name)} · Board Room</button>`).join('');
+  box.innerHTML='<h2>Your organizations</h2><p>Open your organization tools. Your assigned role controls access.</p>'+rows.map(o=>`<button class="wide secondary" data-oi-org="${E(o.id)}">${E(o.name)}</button>`).join('');
   box.querySelectorAll('[data-oi-org]').forEach(b=>b.onclick=()=>WMOperations.open(b.dataset.oiOrg));
   if(rows.length){el('setupAccessStatus').textContent='Your organization access is ready.';el('setupChoices').open=!!pendingInviteToken;}
  }
@@ -10904,10 +10910,10 @@ window.WMOrgInvites=(()=>{
 window.WMOperations=(()=>{
  let hub=null,org=null,division='',tab='home',generation=0,editor=null,feedbackId=null,dialogResolve=null;
  const $o=id=>document.getElementById(id),e=v=>esc(String(v??'')),list=v=>Array.isArray(v)?v:[];
- const labels={home:'Overview',invitations:'Leadership invitations',positions:'Positions',affiliates:'Affiliate clubs',meetings:'Meetings & minutes',voting:'Private voting',event:'Calendar',teams:'Managed teams',person:'Staff & credentials',assignment:'Officials',requirement:'Annual requirements',squad:'Dual rosters',budget:'Budgets',contract:'Contracts',settings:'Divisions & access'};
- const sections={home:[],board:['meetings','voting','budget','contract'],clubs:['affiliates','teams'],programs:['event','squad','assignment'],people:['positions','person','requirement'],admin:['invitations','settings']};
+ const labels={home:'Overview',members:'Members',invitations:'Leadership invitations',positions:'Positions',affiliates:'Affiliate clubs',meetings:'Meetings & minutes',voting:'Private voting',event:'Calendar',teams:'Managed teams',person:'Staff & credentials',assignment:'Officials',requirement:'Annual requirements',squad:'Dual rosters',budget:'Budgets',contract:'Contracts',settings:'Divisions & access'};
+ const sections={home:[],board:['meetings','voting','budget','contract'],clubs:['affiliates','teams'],programs:['event','squad','assignment'],people:['members','positions','person','requirement'],admin:['invitations','settings']};
  const sectionFor=key=>Object.keys(sections).find(section=>sections[section].includes(key))||'home';
- const visibleTools=section=>sections[section].filter(key=>key!=='invitations'||hub?.admin);
+ const visibleTools=section=>sections[section].filter(key=>!['invitations','members'].includes(key)||hub?.admin);
  const roles={athletic_director:'Athletic director',school_administrator:'School administrator',athletic_trainer:'Athletic trainer',team_manager:'Team manager',head_coach:'Head coach',assistant_coach:'Assistant coach',club_director:'Club director',membership_coordinator:'Membership coordinator',board_member:'Board member',president:'President',director:'Overall director',board:'Board member',division_director:'Division director',pairing_director:'Pairing director',mat_director:'Mat officials director',coach:'Coach',chaperone:'Chaperone',team_leader:'Team leader',official:'Official',pairing_official:'Pairing official',mat_official:'Mat official',all:'Everyone'};
  const year=()=>{const d=new Date(),y=d.getFullYear()-(d.getMonth()<7?1:0);return y+'–'+String(y+1).slice(-2)};
  const note=(id,msg,bad=false)=>{$o(id).textContent=msg;$o(id).classList.toggle('ops-error',bad)};
@@ -10959,7 +10965,7 @@ window.WMOperations=(()=>{
  }
  async function reload(){const ticket=++generation;const data=await rpc(false,{action:'hub',organization_id:org});if(ticket!==generation)return;hub=data;homeOrganizationGeneration++;acceptHomeOrganization(data);
   if(!hub.divisions.some(d=>d.id===division))division='';if(!division&&!hub.capabilities?.find(c=>c.division_id===null&&(c.event||c.records)))division=hub.capabilities?.find(c=>c.division_id&&(c.event||c.records))?.division_id||'';$o('opsDivision').innerHTML=opts([['','All divisions'],...hub.divisions.map(d=>[d.id,d.name])],division);note('opsStatus','');render();}
- function render(){window.WMVoting?.close();window.WMMeetings?.close();window.WMOrgStructure?.close();window.WMOrgInvites?.close();if(!hub)return;$o('opsDivision').disabled=['invitations','affiliates','meetings','voting'].includes(tab);
+ function render(){window.WMVoting?.close();window.WMMeetings?.close();window.WMOrgStructure?.close();window.WMOrgInvites?.close();if(!hub)return;$o('opsDivision').disabled=['members','invitations','affiliates','meetings','voting'].includes(tab);
   $o('opsHubTitle').textContent='Board Room · '+(hub.organizations?.find(o=>o.id===org)?.name||'Organization');
   const section=sectionFor(tab),names={home:'Overview',board:'Board',clubs:schoolOrg()?'Teams':'Clubs',programs:'Programs & events',people:'People',admin:'Administration'};
   $o('opsTabs').innerHTML=Object.keys(sections).map(key=>`<button type="button" class="secondary ${section===key?'selected':''}" data-ops-section="${key}" aria-current="${section===key?'page':'false'}">${e(names[key])}</button>`).join('');
@@ -10968,6 +10974,7 @@ window.WMOperations=(()=>{
   $o('opsSubtabs').querySelectorAll('[data-ops-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.opsTab;render()});
   roles.director=schoolOrg()?'Athletic program director':'Overall director';roles.division_director=schoolOrg()?'School / sport director':'Division director';
   if(tab==='home'){home();return;}
+  if(tab==='members'){if(hub.admin)WMOrgInvites.open({org,mode:'members'});else $o('opsContent').textContent='Organization administrator access required.';return;}
   if(tab==='invitations'){if(hub.admin)WMOrgInvites.open({org});else $o('opsContent').textContent='Organization administrator access required.';return;}
   if(tab==='teams'){teams();return;}
   if(tab==='meetings'){window.WMMeetings.open({org});return;}
@@ -11000,6 +11007,7 @@ window.WMOperations=(()=>{
    ['event','📅','Calendar','Board meetings, tournaments and shared dates'],
    ['squad','📋','Dual rosters','Red and Blue teams and tournament rosters'],
    ['assignment','🏅','Officials','Ranks, assignments and tournament counts'],
+   ...(hub.admin?[['members','👥','Members','Invite adults to join without a board or team role']]:[]),
    ['positions','🏛️','Board positions','Vacancies, adult assignments and explicit access'],
    ['person','🪪','Staff & credentials','Staff, certifications and missing requirements'],
    ['requirement','✓','Annual requirements','Credentials and required tournament counts'],

@@ -1,9 +1,10 @@
 {
-  "passed": 6,
+  "passed": 7,
   "tests": [
-    "Exact reproduction from current 0.20.48 base",
+    "Embedded invitation source matches current web build",
     "Build is idempotent",
     "All 46 inline scripts parse",
+    "Board Room member tab opens separate invitation flow",
     "2 native/security script blocks preserved",
     "App assets, mat mode and confirmation page preserved",
     "Migration contains no team membership, affiliate or paid entitlement mutation"
