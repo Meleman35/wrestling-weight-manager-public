@@ -1,8 +1,8 @@
-# theteammanager.app connection — prepared, not activated
+# theteammanager.app connection — active HTTPS
 
 Requested by Damon on September 26, 2026. The target is `theteammanager.app`. Public NS records confirm Squarespace DNS. The existing Google Workspace mail service must remain intact.
 
-No custom-domain binding or DNS edits have been applied. Do not publish a CNAME file or switch generated invitation URLs until the coordinated connection can be completed and HTTPS verified; an early GitHub custom-domain redirect could interrupt current testers.
+As of September 26, 2026, GitHub Pages is bound to theteammanager.app, the Squarespace records below are installed, and HTTPS returns 200. The former GitHub join and auth-confirm paths redirect to the corresponding custom-domain paths; a synthetic join query was preserved. Google Workspace mail records were retained.
 
 ## Required controls
 
@@ -24,10 +24,12 @@ GitHub's documented apex records:
 
 Avoid changing nameservers or root email records. Review existing A/AAAA records and forwarding rules so old website targets do not conflict. Verify the domain in GitHub when the owner controls are available, then set the custom domain before pointing DNS there, as GitHub documents. Use HTTPS once the certificate is issued; `.app` requires valid HTTPS.
 
-## Application changes after verification
+## Application migration status
 
-Update `JOIN_PUBLIC_BASE_042`, invitation/email entry URLs, the account-confirmation URL, and absolute preview-image URLs to the new origin. The published invitation path will be `https://theteammanager.app/join.html?invite=…`. Keep old links working through the host's redirect and verify that both query tokens and family-invitation fragments survive.
+Release 0.20.54 updates `JOIN_PUBLIC_BASE_042`, team/athlete/family/organization invitation builders, organization invitation emails, and absolute preview-image URLs. QR codes and share buttons consume these same generated links. Existing invitation codes and backend permissions are unchanged. Local tests preserve query tokens and family fragments on both the old and new entry routes.
 
-Check the native app's actual configured web origin before any native release. Browser storage is origin-specific: preserve current on-device recordings and settings, do not uninstall or clear storage, and plan recovery of old-origin local recordings before moving affected recording sessions.
+The account-confirmation callback remains the established GitHub URL until the exact new `https://theteammanager.app/auth-confirm.html` callback is confirmed in Supabase Auth's allowlist. Its old HTTP route currently redirects to the new corresponding page. No real confirmation email/acceptance was triggered for this migration; a complete confirmation flow still needs device verification. Keep the old callback allowed when adding the new one; do not add a wildcard.
 
-Verify DNS, a valid HTTPS response, app/asset loading, a synthetic invitation redirect, email-confirmation return and existing invitation acceptance. Do not send a real invitation without a designated recipient and authorization.
+Native revision 8 trusts only the old GitHub origin for several bridges. A separate private revision 9 source package adds the exact custom-domain app route and keeps the legacy route. It must be rebuilt/installed to repair PIN and Face ID; a web release alone cannot replace an installed native guard. Preserve recordings and keychain/app data; do not uninstall or clear storage. Browser storage remains origin-specific.
+
+Verification: HTTPS root, old/new synthetic join URL and old auth-confirm route return 200; 14 local routing cases preserve query/fragment tokens; all invitation builders produce the canonical domain; seven isolated email-handler cases pass with fake transport and no real mail. Full account/invitation acceptance and native PIN/biometrics remain user-device checks.
