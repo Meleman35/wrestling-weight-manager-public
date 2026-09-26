@@ -99,6 +99,15 @@ declare
 begin
  if u is null or exists(select 1 from private.team_logins where user_id=u) then raise exception 'Personal account required'; end if;
  if not private.video_team_enabled(t) then raise exception 'Video pilot is not enabled for this team'; end if;
+ if p_action='recorder_test' then
+  if not coalesce((private.video_pilot_context(t)->>'allowed')::boolean,false) then raise exception 'Approved recorder access required for a camera test'; end if;
+  rid=gen_random_uuid();
+  d=jsonb_build_object('id',rid,'video_test',true,'book_type','test','flowVersion',1,'nfhs',false,'rules_authority','custom','ruleset','Test rules','style','folkstyle',
+   'periods','[120,120,120]'::jsonb,'original_periods','[120,120,120]'::jsonb,'breakSeconds',0,'takedown',3,
+   'red_id',null,'other_id',null,'red_name','Test Athlete Red','other_name','Test Athlete Green','label','Recorder test · device only',
+   'period',0,'phase','period','remainingMs',120000,'deadline',null,'ledger','[]'::jsonb,'status','live');
+  return jsonb_build_object('id',rid,'data',d,'team_id',t);
+ end if;
  if p_action='permission' then
   if not private.tournament_guardian(t,a) then raise exception 'Linked parent required'; end if;
   insert into private.video_athlete_permissions values(t,a,u,coalesce((p_data->>'allowed')::boolean,false),now())
@@ -139,7 +148,10 @@ begin
    where w.team_id=t and s.active and (p_action='assignments' or en.athlete_id=a) and b.status in ('queued','in_hole','on_deck','up_next','on_mat')
    and private.video_can_record(t,en.athlete_id,e.id) and e.starts_at between now()-interval '24 hours' and now()+interval '36 hours'
   )q;
-  return jsonb_build_object('bouts',items,'can_manage',public.is_team_staff(t),'can_set_permission',private.tournament_guardian(t,a),'permission',(select recording_allowed from private.video_athlete_permissions where team_id=t and athlete_id=a and guardian_id=u),
+  return jsonb_build_object('bouts',items,
+   'can_scorebook',public.is_team_staff(t) or exists(select 1 from public.team_memberships where team_id=t and user_id=u and active and role in ('athlete','manager')) or coalesce((private.video_pilot_context(t)->>'allowed')::boolean,false),
+   'can_record_test',coalesce((private.video_pilot_context(t)->>'allowed')::boolean,false),
+   'can_manage',public.is_team_staff(t) and exists(select 1 from private.video_pilot_grants where team_id=t and user_id=u and expires_at>now() and revoked_at is null),'can_set_permission',private.tournament_guardian(t,a),'permission',(select recording_allowed from private.video_athlete_permissions where team_id=t and athlete_id=a and guardian_id=u),
    'recordings',(select coalesce(jsonb_agg(jsonb_build_object('id',v.id,'label',m.data->>'label','opponent',m.data->>'other_name','bout_number',m.data->>'bout_number','created_at',v.created_at,'partial',v.partial,'duration_ms',v.duration_ms) order by v.created_at desc),'[]') from private.video_recordings v join private.video_scored_matches m on m.id=v.match_id where v.team_id=t and v.athlete_id=a and v.status='ready' and private.video_can_view(t,a)),
    'cloud_enabled',(select cloud_enabled from private.video_pilot_control where id),'live_available',false);
  end if;

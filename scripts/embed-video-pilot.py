@@ -40,6 +40,11 @@ change("return{open,close,parseTime,remaining,scores,videoSnapshot};", """async 
   await showScore(row);await window.WMVideoPilot?.sync();
  }
  return{open,openVideo,close,parseTime,remaining,scores,videoSnapshot};""")
+# Team-member scorebooks route to scoped recording actions, not coach-only operations.
+change("A personal team coach or administrator must score matches.", "Use your personal team account to score and record matches.")
+change("return;}closeSheets();owner=session?.user?.id;team=activeTeam?.id;season=activeSeason?.id||null;", "return;}if(!actualIsStaff){try{return await WMMatchVideo.scorebook();}catch(err){message(err.message,true);return;}}closeSheets();owner=session?.user?.id;team=activeTeam?.id;season=activeSeason?.id||null;")
+change("async function save(){if(!validContext()||busy)return false;busy=true;", "async function save(){if(!validContext()||busy)return false;if(match.video_test===true){persist();status('Test score saved on this device.');return true;}busy=true;")
+change("return;}const source=match;pause();if(!await WMOperations.confirmAction('Save this match and open setup for the next bout?", "return;}if(!actualIsStaff&&(match.bout_id||match.video_test)){if(await save())await WMMatchVideo.scorebook();return;}const source=match;pause();if(!await WMOperations.confirmAction('Save this match and open setup for the next bout?")
 for name in ['video-pilot-core','video-upload','video-pilot','video-pilot-native','match-video']:
  tag='<script id="wm-'+name+'-046">\n'+(root/f'src/{name}.js').read_text()+'\n</script>'
  s=re.sub(r'\n*<script id="wm-'+name+r'-046">.*?</script>\n*','',s,flags=re.S)

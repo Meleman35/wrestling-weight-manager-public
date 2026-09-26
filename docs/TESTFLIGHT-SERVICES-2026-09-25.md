@@ -36,6 +36,8 @@ At the browser pilot target of 2.5 Mbps video + 96 Kbps audio, the same 100 orig
 
 ## Draft implemented in PR #5
 
+- Athletes and student managers can open Match Book from Locker Room and their existing menu. Scoped assigned matches and a permitted synthetic Test scorebook use their personal accounts without referee or coach privileges. Coach-only match/challenge data stays restricted.
+
 - Athlete profile: **Score & record match**, using server-owned athlete, event, opponent, mat and stable bout UUID. Existing Tournament Day data is coach-entered; official USA Bracketing import is still pending approved access.
 - Coach-confirmed event scoring rules and filming permission. Exact event/athlete recorder assignments expire after 24 hours and do not grant other coach rights. Guardian controls determine private recording/sharing. A restrictive linked-parent decision wins.
 - Separate scoped match records and optimistic scoring saves. Reopening the same bout reuses its recording match; another recorder cannot silently take over.

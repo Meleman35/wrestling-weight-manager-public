@@ -85,6 +85,32 @@ const root=path.resolve(__dirname,'..');
  await p.screenshot({path:path.join(root,'validation/athlete-match-recording-phone.png')});
  await p.locator('#vpStop').click();await p.waitForFunction(()=>!WMVideoPilot.active());
  pass('One athlete-profile action starts assigned teammate recording with imported bout/opponent; device recording dot never falsely indicates live');
+ // Both everyday recorder roles can reach Match Book and test without coach operations.
+ for(const role of ['athlete','manager']){
+  await p.evaluate(async role=>{
+   closeSheets();WMMatch.close();WMVideoPilot.reset();WMMatchVideo.reset();localStorage.clear();
+   actualIsStaff=isStaff=isTeamAdmin=actualIsTeamAdmin=false;actualIsManager=isManager=role==='manager';viewMode=role==='manager'?'staff':'athlete';
+   fixture.coachBookCalls=0;const original=client.rpc.bind(client);
+   client.rpc=async(name,args)=>{
+    if(name==='get_operations'&&args.p_request?.action==='matches'||name==='save_operations'){fixture.coachBookCalls++;return{data:null,error:{message:'Coach operations denied'}};}
+    if(name==='video_match_request'&&args.p_action==='assignments')return{data:{bouts:[],can_scorebook:true,can_record_test:true,can_manage:false},error:null};
+    if(name==='video_match_request'&&args.p_action==='recorder_test'){const id=crypto.randomUUID();return{data:{id,team_id:activeTeam.id,data:{id,video_test:true,book_type:'test',flowVersion:1,nfhs:false,style:'folkstyle',periods:[120,120,120],breakSeconds:0,takedown:3,red_id:null,other_id:null,red_name:'Test Athlete Red',other_name:'Test Athlete Green',label:'Recorder test',period:0,phase:'period',remainingMs:120000,deadline:null,ledger:[],status:'live'}},error:null};}
+    return original(name,args);
+   };
+   applyRoleUI();await WMMatchVideo.sync();
+  },role);
+  await p.waitForFunction(()=>document.getElementById('lockerMatchBookBtn')&&!document.getElementById('matchBookBtn').classList.contains('hidden-role'));
+  if(role==='manager'){
+   await p.locator('.nav-btn[data-tab="more"]').click();await p.locator('[data-clipboard-category="practice"]').click();await p.locator('[data-clipboard-tool="matchBookBtn"]').click();
+  }else {await p.locator('.nav-btn[data-tab="home"]').click();await p.locator('#lockerMatchBookBtn').click();}
+  await p.getByRole('button',{name:'Test scorebook',exact:true}).click();await p.waitForFunction(()=>!document.getElementById('vpPanel').hidden);
+  assert(await p.locator('#vpPermission').isVisible());assert.equal(await p.locator('#vpPermission').isChecked(),false);
+  await p.locator('#vpPermission').check();await p.locator('#vpPreview').click();await p.waitForFunction(()=>!document.getElementById('vpStart').disabled);await p.locator('#vpStart').click();await p.waitForFunction(()=>WMVideoPilot.active());
+  await p.locator('#matchCorners [data-corner="red"][data-award="td"]').click();await p.locator('#vpStop').click();await p.waitForFunction(()=>!WMVideoPilot.active());await p.locator('#matchSave').click();
+  assert.match(await p.locator('#matchStatus').innerText(),/Test score saved on this device/);assert.equal(await p.evaluate(()=>fixture.coachBookCalls),0);
+  pass(role+' can open Match Book, confirm permission, record and save a test without coach operations');
+ }
+ await p.evaluate(()=>{WMMatch.close();WMMatchVideo.reset();});assert.equal(await p.locator('#lockerMatchBookBtn').count(),0);assert(await p.locator('#matchBookBtn').evaluate(b=>b.classList.contains('hidden-role')));
  assert.deepEqual(errors,[]);
  fs.writeFileSync(path.join(root,'validation/video-pilot-native-browser.json'),JSON.stringify({passed,engine:'Chromium full app with a synthetic native-message fixture. No AVFoundation, Xcode compilation, device storage, native replay or iOS permission behavior verified.'},null,2));
  await browser.close();
