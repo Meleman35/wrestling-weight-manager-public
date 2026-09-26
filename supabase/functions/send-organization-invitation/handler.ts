@@ -18,7 +18,7 @@ export function createHandler(deps:Dependencies){return async(req:Request)=>{
   if(!checked.ok)return json(checked.status===401?401:403,{error:'Invitation email was not authorized. Check your access, invitation status, or wait a minute before retrying.'});
   const data=await checked.json();
   if(data.id!==b.id||data.request_id!==b.request_id||typeof data.email!=='string'||!data.access)return json(502,{error:'Invitation details could not be verified.'});
-  const link=new URL('https://meleman35.github.io/wrestling-weight-manager-public/');link.searchParams.set('invite',b.token);
+  const link=new URL('https://meleman35.github.io/wrestling-weight-manager-public/join.html');link.searchParams.set('invite',b.token);
   const organization=String(data.organization_name||'Your organization'),title=String(data.access.title||'Organization leadership');
   const access=data.access.access_role==='organization_admin'?'Full organization administration, including administration of its managed teams.':data.access.access_role==='organization_member'?'Organization membership; no board position, voting right or team access.':String(data.access.access_role||'Title only').replaceAll('_',' ');
   const text=`You are invited to join ${organization} as ${title}.\n\nScope: ${data.access.scope||'Organization'}\nAccess: ${access}\n\nOpen your private invitation: ${link}\n\nSign in or create your own personal account using ${data.email}. Confirm your email, then review and accept the invitation. You do not need to join a team.\n\nExpires: ${data.expires_at}. Do not forward this private link. Check Junk or Spam if you are waiting for an account confirmation email.`;

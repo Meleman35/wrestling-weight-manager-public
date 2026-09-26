@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#163a67">
+  <title>Wrestling Manager invitation</title>
+  <meta name="description" content="Open your private invitation to connect with your team or organization in Wrestling Manager.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Wrestling Manager">
+  <meta property="og:title" content="Wrestling Manager invitation">
+  <meta property="og:description" content="Open your private invitation and sign in to connect with your team or organization.">
+  <meta property="og:image" content="https://meleman35.github.io/wrestling-weight-manager-public/assets/wrestling-manager-icon.png">
+  <meta property="og:image:width" content="1254">
+  <meta property="og:image:height" content="1254">
+  <meta property="og:image:alt" content="Wrestling Manager WM logo with two wrestlers">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Wrestling Manager invitation">
+  <meta name="twitter:description" content="Connect with your team or organization in Wrestling Manager.">
+  <meta name="twitter:image" content="https://meleman35.github.io/wrestling-weight-manager-public/assets/wrestling-manager-icon.png">
+  <link rel="icon" type="image/png" href="./assets/wrestling-manager-icon.png">
+  <link rel="apple-touch-icon" href="./assets/wrestling-manager-icon.png">
+  <style>
+    :root{color-scheme:dark;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#06152e;color:#fff}
+    *{box-sizing:border-box}body{margin:0;min-height:100dvh;display:grid;place-items:center;padding:24px}
+    main{width:min(100%,420px);text-align:center}img{width:120px;height:120px;border-radius:24px}
+    h1{font-size:1.75rem;line-height:1.2;margin:24px 0 12px}p{font-size:1rem;line-height:1.6;color:#d8e5f5}
+    a{display:block;margin-top:24px;padding:16px;border-radius:14px;background:#fff;color:#163a67;font-size:1rem;font-weight:750;text-decoration:none}
+    a:focus-visible{outline:3px solid #77bfff;outline-offset:5px}
+  </style>
+</head>
+<body>
+  <main>
+    <img src="./assets/wrestling-manager-icon.png" alt="Wrestling Manager" width="120" height="120">
+    <h1>Wrestling Manager</h1>
+    <p id="joinStatus">Your invitation is opening. If it doesn’t open automatically, tap below.</p>
+    <a id="openInvitation" href="./">Open Wrestling Manager</a>
+    <noscript><p>Enable JavaScript, then reopen this private invitation to continue.</p></noscript>
+  </main>
+  <script>
+    // Preview clients read the static metadata. Browsers keep the original private link.
+    // The destination is always this app, never a caller-provided redirect.
+    (()=>{
+      const target=new URL('./',window.location.href);
+      target.search=window.location.search;
+      target.hash=window.location.hash;
+      document.getElementById('openInvitation').href=target.href;
+      try{window.location.replace(target.href);}catch{
+        document.getElementById('joinStatus').textContent='Tap below to open your invitation.';
+      }
+    })();
+  </script>
+</body>
+</html>

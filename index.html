@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.52: Direct board-position invitations and accurate build label. -->
+<!-- Wrestling Manager v0.20.53: Branded invitation link previews. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -7,6 +7,15 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <meta name="theme-color" content="#163a67">
   <title>Wrestling Manager</title>
+  <meta name="description" content="Wrestling Manager brings your teams, athletes, families and organizations together.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Wrestling Manager">
+  <meta property="og:title" content="Wrestling Manager">
+  <meta property="og:description" content="Connect with your team or organization in Wrestling Manager.">
+  <meta property="og:image" content="https://meleman35.github.io/wrestling-weight-manager-public/assets/wrestling-manager-icon.png">
+  <meta property="og:image:alt" content="Wrestling Manager WM logo with two wrestlers">
+  <link rel="icon" type="image/png" href="./assets/wrestling-manager-icon.png">
+  <link rel="apple-touch-icon" href="./assets/wrestling-manager-icon.png">
   <style>
 :root{
   --bg:#f3f5f8;--card:#fff;--ink:#12161b;--muted:#69717d;--line:#e3e7ec;
@@ -2198,7 +2207,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.52</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.53</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -3288,10 +3297,10 @@ function eventLabel(type){
 
 const JOIN_PUBLIC_BASE_042 = 'https://meleman35.github.io/wrestling-weight-manager-public/';
 function teamJoinUrl(code){
-  const u=new URL(/^https?:$/.test(location.protocol)?location.href:JOIN_PUBLIC_BASE_042); u.search=''; u.hash=''; u.searchParams.set('join',code); return u.toString();
+  const u=new URL('join.html',JOIN_PUBLIC_BASE_042); u.searchParams.set('join',code); return u.toString();
 }
 function inviteUrl(token){
-  const u=new URL(location.href); u.search=''; u.hash=''; u.searchParams.set('invite',token); return u.toString();
+  const u=new URL('join.html',JOIN_PUBLIC_BASE_042); u.searchParams.set('invite',token); return u.toString();
 }
 function makeQr(targetId,text){
   const el=$(targetId); if(!el)return; el.innerHTML='';
@@ -10877,7 +10886,7 @@ window.WMOrgInvites=(()=>{
   };
  }
  function share(s,invite){
-  const publicUrl=new URL('./',EMAIL_CONFIRM_REDIRECT_URL);publicUrl.searchParams.set('invite',invite.token);const url=publicUrl.toString();
+  const publicUrl=new URL('join.html',EMAIL_CONFIRM_REDIRECT_URL);publicUrl.searchParams.set('invite',invite.token);const url=publicUrl.toString();
   shell(s,`<h4>Invitation ready for ${E(invite.email)}</h4>${accessHtml(invite.access)}<p>Expires ${E(new Date(invite.expires_at).toLocaleDateString())}. The recipient must sign in or create an account using this email.</p><label>Private invitation link<input id="oiLink" readonly value="${E(url)}"></label><div class="ops-actions"><button id="oiSend">Email invitation</button><button id="oiCopy" class="secondary">Copy link</button><button id="oiDone" class="secondary">Back to invitations</button></div><p class="ops-sheet-note">Keep this screen open if you need to retry sending. For privacy, saved invitation lists do not reveal the link. Revoke and replace an invitation if you lose its link.</p>`);
   el('oiDone').onclick=()=>reload(s);el('oiLink').onclick=()=>el('oiLink').select();
   el('oiCopy').onclick=async()=>{
@@ -11888,7 +11897,7 @@ window.WMFamily=(()=>{
  function render(s){$('familyBody').innerHTML=s;sheet.scrollTop=0;}
  async function open(id=null){if(!session?.user||managedLogin||document.body.classList.contains('kiosk-locked')||document.querySelector('#appLockOverlay:not(.hidden)'))return;closeSheets();openSheet('extendedFamilySheet');profile=id;note('');await (id?manage():received());}
  async function manage(){const t=++revision,id=profile;note('Loading…');const [rows,events]=await Promise.all([call({action:'manage',profile_id:id}),call({action:'events',profile_id:id})]);if(t!==revision)return;note('Family can view only approved profile fields and selected events. No guardian powers, messaging access, weights or medical records.');render(`<button type="button" data-family-inbox>My family invitations</button><h3>Invite family</h3><form id="familyInvite"><label>Relationship<select id="familyRelation">${opts(['Grandparent','Aunt / uncle','Cousin','Sibling','Other family'].map(x=>[x,x]))}</select></label><label class="toggle-row">Share approved profile fields<input id="familyProfile" type="checkbox" checked></label><label class="toggle-row">Share selected schedule events<input id="familySchedule" type="checkbox"></label><button type="submit">Create invitation</button></form><div id="familyInviteLink"></div><h3>Selected schedule events</h3><p>Only checked events are shared, including their title, time and location name. New events start unshared.</p><form id="familyEvents">${events.map(e=>`<label class="toggle-row"><span>${E(e.title)}<small>${E(new Date(e.starts_at).toLocaleString())}</small></span><input type="checkbox" value="${e.id}" ${e.shared?'checked':''}></label>`).join('')||'<p>No upcoming events available for this profile.</p>'}<button type="submit">Save shared events</button></form><h3>Family access</h3>${rows.map(r=>`<article class="wp-panel"><b>${E(r.name)}</b><p>${E(r.relationship)} · ${E(r.status)}</p>${r.status==='pending'?`<button data-family-approve="${r.id}">Approve this person</button>`:''}<button data-family-revoke="${r.id}">Revoke / deny</button></article>`).join('')||'<p>No invitations yet.</p>'}`);
- $('familyInvite').onsubmit=async e=>{e.preventDefault();try{const r=await call({action:'invite',profile_id:id,relationship:$('familyRelation').value,share_profile:$('familyProfile').checked,share_schedule:$('familySchedule').checked});if(t!==revision)return;const url=new URL(location.origin+location.pathname);url.hash='family-invite='+r.token;$('familyInviteLink').innerHTML='<label>Copy and send this invitation link<input readonly id="familyURL"></label><p>Expires in 7 days. The recipient signs in and requests access; you must then approve their name here.</p>';$('familyURL').value=url.href;$('familyURL').select();}catch(e){note(e.message);}};
+ $('familyInvite').onsubmit=async e=>{e.preventDefault();try{const r=await call({action:'invite',profile_id:id,relationship:$('familyRelation').value,share_profile:$('familyProfile').checked,share_schedule:$('familySchedule').checked});if(t!==revision)return;const url=new URL('join.html',JOIN_PUBLIC_BASE_042);url.hash='family-invite='+r.token;$('familyInviteLink').innerHTML='<label>Copy and send this invitation link<input readonly id="familyURL"></label><p>Expires in 7 days. The recipient signs in and requests access; you must then approve their name here.</p>';$('familyURL').value=url.href;$('familyURL').select();}catch(e){note(e.message);}};
  $('familyEvents').onsubmit=async e=>{e.preventDefault();try{await call({action:'events_save',profile_id:id,events:[...$('familyEvents').querySelectorAll('input:checked')].map(x=>x.value)});note('Shared events saved.');}catch(e){note(e.message);}};
  }
  async function received(){const t=++revision;const rows=await call({action:'received'});if(t!==revision)return;const token=location.hash.match(/^#family-invite=([a-f0-9-]{36})$/i)?.[1];render(`<h3>Invitations and family profiles</h3><form id="familyClaim"><label>Invitation link or code<input id="familyCode" value="${E(token||'')}" required></label><button type="submit">Request family access</button></form><p>The profile owner or parent reviews your request before you can see anything.</p>${rows.map(r=>`<article class="wp-panel"><b>${E(r.name)}</b><p>${E(r.relationship)} · ${E(r.status)}</p>${r.status==='accepted'?`<button data-family-view="${r.id}">Profile & schedule</button>`:''}</article>`).join('')}`);$('familyClaim').onsubmit=async e=>{e.preventDefault();try{const raw=$('familyCode').value.trim(),token=raw.match(/(?:family-invite=)?([a-f0-9-]{36})$/i)?.[1];if(!token)throw Error('Use the invitation link or code.');await call({action:'claim',token});await received();note('Request sent. Your relative must approve your account.');}catch(e){note(e.message);}};}
@@ -13150,7 +13159,7 @@ window.WMAgreementPDF = (() => {
     const row=result.data?.[0]||result.data,token=row?.invitation_token;
     if(!token)throw Error('Invitation response missing. Reload before trying again.');
     let url=inviteUrl(token);
-    if(!/^https?:\/\//i.test(url)){const publicUrl=new URL('https://meleman35.github.io/wrestling-weight-manager-public/');publicUrl.searchParams.set('invite',token);url=publicUrl.toString();}
+    if(!/^https?:\/\//i.test(url)){const publicUrl=new URL('join.html',JOIN_PUBLIC_BASE_042);publicUrl.searchParams.set('invite',token);url=publicUrl.toString();}
     const invitation={id:row.invitation_id,email,url,role:adultRoleLabel(p.role_key),roleKey:p.role_key,teamName:activeTeam.name,sending:false,submitted:false};
     pendingInvite=invitation;
     el('adultInviteBox').innerHTML='<p class="fine">Invitation created. They must sign in with the invited email. Ask them to check Junk or Spam for their invitation and confirmation email.</p><button type="button" id="peopleRetryInviteEmail" disabled>Sending Email…</button><button type="button" id="peopleCopyInvite" class="secondary">Copy Invitation Link</button><button type="button" id="peopleShareInvite" class="secondary">Share Invitation</button>';
