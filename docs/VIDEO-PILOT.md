@@ -1,3 +1,15 @@
+# Current draft: athlete recording and private sharing
+
+Updated September 25, 2026. The sections below describe the earlier recording-only pilot; this section supersedes their statements that cloud-upload code is absent. Production remains unchanged and all new database work is unapplied.
+
+The current draft adds athlete-profile **Score & record match**, coach-confirmed event rules, exact event/athlete assignments, linked-parent recording/sharing permission, server-imported bout/opponent identity, private Storage upload records/policies, browser and native foreground TUS upload queues, verified-upload device removal, and athlete/family watch/download. Go live remains disabled because provider ingestion, live playback authorization, and parent live-alert integration are unfinished. A device-recording dot is explicitly labeled not live.
+
+Validation: nine PGlite authorization/storage groups, seven upload protocol/resume groups, nine native-adapter browser groups (including one-click assigned-teammate capture), shared scoring/source preservation and JavaScript syntax. These are synthetic fixtures. Native upload Swift passes grammar parsing only; it has not been compiled in Xcode or exercised against real Supabase Storage.
+
+See [TestFlight services, costs and acceptance gates](TESTFLIGHT-SERVICES-2026-09-25.md) for the complete current rollout state, service inventory, external dependencies and required hardware tests. Original device files are not automatically deleted. Family removal revokes shared access; physical object purge remains pending implementation. Initial bout preparation requires a connection; an already-authorized open recording can continue through temporary service loss.
+
+---
+
 # Video Pilot — private recording and synchronized replay
 
 Prepared September 25, 2026. Draft branch `work/video-pilot-046` from published main `82e89ca2ec9cd3f28ed205e19ce3a9d28fb62eb4` (0.20.42).

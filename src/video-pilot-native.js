@@ -7,7 +7,7 @@
   let generation = 0, grant = null, phase = 'idle', previewMatch = '', refreshing = false, authorization = null;
   let lastToken = '', previousState = null, statusText = '', listTicket = 0;
   const context = () => ({user: session?.user?.id, team: activeTeam?.id,
-    allowed: !!session?.user?.id && !!activeTeam?.id && !managedLogin && !!actualIsStaff && viewMode === 'staff' &&
+    allowed: !!session?.user?.id && !!activeTeam?.id && !managedLogin &&
       !document.body.classList.contains('kiosk-locked') && !document.querySelector('#appLockOverlay:not(.hidden)')});
   const scope = c => c.user + ':' + c.team;
   const valid = () => context().allowed && grant?.scope === scope(context()) && performance.now() < grant.until;
@@ -48,10 +48,11 @@
       case 'stopping': phase = 'stopping'; note(value.reason || 'Finishing the device recording…'); break;
       case 'saved':
         phase = 'idle'; previewMatch = '';
-        note(value.take?.status === 'ready' ? 'Saved on this device · no cloud copy.' :
+        note(value.take?.status === 'ready' ? 'Saved on this device · upload status is shown below.' :
           value.take?.status === 'partial' ? 'Partial recording saved on this device. ' + (value.take.reason || '') :
             'Playback was not verified. Original files were kept; use Check recovery.', value.take?.status === 'failed');
         if (valid()) list().catch(report); break;
+      case 'uploadChanged': if(valid())list().catch(report); break;
       case 'failed': phase = 'idle'; previewMatch = ''; note(value.reason || 'The device save could not be confirmed.', true); break;
       case 'closed':
         if (!['starting', 'recording', 'stopping'].includes(phase)) { phase = 'idle'; previewMatch = ''; }
@@ -85,7 +86,7 @@
       <label class="vp-check"><input id="vpPermission" type="checkbox">I have permission to record these participants at this event.</label>
       <div class="vp-stage" id="vpStage" hidden aria-label="Native match camera preview"></div>
       <div class="vp-actions"><button id="vpPreview" type="button" class="secondary">Open camera</button><button id="vpStart" type="button" class="vp-record" disabled>Record privately</button><button id="vpStop" type="button" disabled>Stop &amp; save video</button><button id="vpClock" type="button" class="secondary" hidden>Start clock</button><button id="vpCameraClose" type="button" class="secondary" hidden>Close camera</button></div>
-      <p id="vpStatus" class="vp-status" role="status"></p><p>Keep the app open. Recording stops in the background. Up to 20 minutes per take. Device copies only: export before deleting the app. Cloud upload and Go Live are not connected.</p>
+      <p id="vpStatus" class="vp-status" role="status"></p><p>Keep the app open. Recording stops in the background. Up to 20 minutes per take. Tournament videos upload when service returns while the app is open. Keep device copies until upload is verified. Go live is not connected.</p>
       <details><summary>Saved videos on this device</summary><div id="vpTakes"></div></details>`;
     $('matchScoreSheet').insertBefore(panel, $('matchPeriodLabel'));
     $('vpPreview').onclick = () => preview().catch(report);
@@ -98,6 +99,7 @@
     $('matchListSheet').append(library);
   }
   function controls() {
+    window.WMMatchVideo?.recorderControls(phase === 'recording');
     if (!$('vpPanel')) return;
     const ready = valid(), snap = snapshot(), recording = ['starting', 'recording', 'stopping'].includes(phase);
     $('vpPanel').hidden = !ready || !snap; $('vpLibrary').hidden = !ready;
@@ -191,11 +193,11 @@
     if (g !== generation || ticket !== listTicket || !valid()) return;
     const rows = result.takes || [];
     function render(container, matches) {
-      container.innerHTML = matches.length ? matches.map(row => `<div class="vp-take"><b>${row.demo ? 'Demo · ' : ''}${esc(row.label)}</b><p>${esc(row.status === 'ready' ? 'Saved on this device' : row.status === 'partial' ? 'Partial recording on this device' : 'Interrupted recording · recovery check needed')} · ${esc(new Date(row.createdAt).toLocaleString())}</p><p>${esc(row.reason || '')}</p><div class="vp-actions">${['ready', 'partial'].includes(row.status) ? `<button type="button" data-action="play" data-id="${esc(row.id)}">Replay &amp; export</button>` : `<button type="button" data-action="recover" data-id="${esc(row.id)}">Check recovery</button>`}<button type="button" class="secondary" data-action="delete" data-id="${esc(row.id)}">Delete device copy</button></div></div>`).join('') : '<p>No saved videos for this account and team on this device.</p>';
+      container.innerHTML = matches.length ? matches.map(row => `<div class="vp-take"><b>${row.demo ? 'Demo · ' : ''}${esc(row.label)}</b><p>${esc(row.status === 'ready' ? 'Saved on this device' : row.status === 'partial' ? 'Partial recording on this device' : 'Interrupted recording · recovery check needed')} · ${esc(new Date(row.createdAt).toLocaleString())}</p><p>${esc(row.reason || '')}${row.boutId?' · '+(row.upload?.status==='ready'?'Uploaded · available to athlete & family':row.upload?.status==='uploading'?'Uploading '+(row.upload.progress||0)+'%':'Waiting to upload'):''}</p><div class="vp-actions">${['ready', 'partial'].includes(row.status) ? `<button type="button" data-action="play" data-id="${esc(row.id)}">Replay &amp; export</button>` : `<button type="button" data-action="recover" data-id="${esc(row.id)}">Check recovery</button>`}<button type="button" class="secondary" data-action="delete" data-id="${esc(row.id)}">Delete device copy</button></div></div>`).join('') : '<p>No saved videos for this account and team on this device.</p>';
       container.querySelectorAll('button').forEach(button => button.onclick = async () => {
         try {
           ensure(); if (active()) throw Error('Stop and save your recording first.');
-          if (button.dataset.action === 'delete' && !confirm('Delete this device recording and its score timeline? There is no cloud copy.')) return;
+          if(button.dataset.action==='delete'){const row=rows.find(r=>r.id===button.dataset.id);if(row?.boutId&&row.upload?.status!=='ready')throw Error('Wait for the verified upload before removing this device copy.');if(!confirm(row?.upload?.status==='ready'?'Remove the device copy? The uploaded video stays available to the athlete and family.':'Delete this device recording and its score timeline? There is no cloud copy.'))return;}
           post('close'); phase = 'idle'; previewMatch = ''; controls();
           button.disabled = true;
           await request(button.dataset.action, {id: button.dataset.id});
@@ -222,5 +224,9 @@
   document.addEventListener('visibilitychange', () => { if (document.hidden) leaving(); });
   window.addEventListener('pagehide', reset);
   window.addEventListener('beforeunload', event => { if (active()) { event.preventDefault(); event.returnValue = ''; } });
-  window.WMVideoPilot = {sync, onScore, leaving, reset, active};
+  async function uploadQueue(){if(!valid()||active()||!navigator.onLine||document.hidden)return;await request('uploadNext');}
+  window.addEventListener('online',()=>uploadQueue().catch(()=>{}));
+  setInterval(()=>uploadQueue().catch(()=>{}),30000);
+  async function quickStart(){await sync();ensure();if(!snapshot()?.bout_id)throw Error('Open an assigned tournament bout.');$('vpPermission').checked=true;await preview();await start();}
+  window.WMVideoPilot = {sync, onScore, leaving, reset, active,quickStart};
 })();

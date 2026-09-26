@@ -64,6 +64,27 @@ const root=path.resolve(__dirname,'..');
  await p.evaluate(()=>{nativeVideoFixture.denied=true;WMVideoPilot.reset();});await p.evaluate(()=>WMMatch.open());await p.waitForTimeout(100);assert(await p.locator('#vpLibrary').isHidden());pass('Server denial keeps native pilot controls closed');
  await p.evaluate(()=>{nativeVideoFixture.denied=false;nativeVideoFixture.holdAuthorization=true;WMVideoPilot.reset();WMMatch.open();});await p.waitForFunction(()=>nativeVideoFixture.held.length>0);
  await p.evaluate(()=>{WMVideoPilot.reset();nativeVideoFixture.held.splice(0).forEach(fn=>fn());});await p.waitForTimeout(100);assert(await p.locator('#vpLibrary').isHidden());pass('An authorization response arriving after reset cannot reopen the pilot');
+ // Athlete-profile shortcut uses server bout identity and works for an assigned teammate.
+ await p.evaluate(async()=>{
+  nativeVideoFixture.denied=false;nativeVideoFixture.holdAuthorization=false;nativeVideoFixture.failSave=false;
+  WMVideoPilot.reset();WMMatchVideo.reset();localStorage.clear();actualIsStaff=isStaff=false;viewMode='athlete';
+  const original=client.rpc.bind(client),athlete='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',bout='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',id='cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+  fixture.videoActions=[];
+  client.rpc=async(name,args)=>{if(name!=='video_match_request')return original(name,args);fixture.videoActions.push(args);const action=args.p_action;
+   if(action==='athlete')return{data:{bouts:[{id:bout,athlete_id:athlete,athlete_name:'Assigned Athlete',opponent:'Imported Opponent',event_name:'Sample Invitational',bout_number:'101',mat:'3',updated_at:new Date().toISOString()}],recordings:[],can_set_permission:false},error:null};
+   if(action==='begin')return{data:{id,team_id:activeTeam.id,season_id:activeSeason.id,revision:1,data:{id,bout_id:bout,athlete_id:athlete,event_id:'dddddddd-dddd-4ddd-8ddd-dddddddddddd',bout_number:'101',red_id:athlete,other_id:null,red_name:'Assigned Athlete',other_name:'Imported Opponent',label:'Sample Invitational',style:'folkstyle',book_type:'competition',flowVersion:1,nfhs:false,periods:[120,120,120],breakSeconds:0,takedown:3,period:0,phase:'period',remainingMs:120000,deadline:null,ledger:[],status:'live'}},error:null};
+   return{data:{revision:2,bouts:[]},error:null};};
+  closeSheets();openSheet('athleteViewSheet');await WMMatchVideo.profile(athlete);
+ });
+ await p.getByRole('button',{name:'Score & record match',exact:true}).click();
+ await p.waitForFunction(()=>document.getElementById('vpStatus').textContent.includes('Recording privately'));
+ const imported=await p.evaluate(()=>nativeVideoFixture.calls.filter(m=>m.command==='start').at(-1).state);
+ assert.equal(imported.red_name,'Assigned Athlete');assert.equal(imported.other_name,'Imported Opponent');assert.equal(imported.bout_number,'101');assert.equal(imported.bout_id,'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');
+ assert(await p.locator('#vpGoLive').isDisabled());assert.match(await p.locator('#vpLiveState').innerText(),/not live/);assert(await p.locator('.mv-record-dot').isVisible());
+ assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+ await p.screenshot({path:path.join(root,'validation/athlete-match-recording-phone.png')});
+ await p.locator('#vpStop').click();await p.waitForFunction(()=>!WMVideoPilot.active());
+ pass('One athlete-profile action starts assigned teammate recording with imported bout/opponent; device recording dot never falsely indicates live');
  assert.deepEqual(errors,[]);
  fs.writeFileSync(path.join(root,'validation/video-pilot-native-browser.json'),JSON.stringify({passed,engine:'Chromium full app with a synthetic native-message fixture. No AVFoundation, Xcode compilation, device storage, native replay or iOS permission behavior verified.'},null,2));
  await browser.close();

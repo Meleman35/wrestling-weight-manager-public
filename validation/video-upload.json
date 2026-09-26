@@ -1,0 +1,12 @@
+{
+  "passed": [
+    "Interrupted upload keeps device data and persisted upload address",
+    "Retry resumes from server offset without duplicating committed chunks",
+    "Cloud-ready requires both completed objects and verified playback",
+    "Upload requests are bounded to six MiB",
+    "Untrusted saved upload addresses rejected before transmitting credentials",
+    "Server-confirmed video is preserved when only its timeline needs retrying",
+    "Wrong account cannot resume the previous recorder upload"
+  ],
+  "engine": "Node VM protocol/storage fixtures; no production upload"
+}

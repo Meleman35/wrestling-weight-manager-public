@@ -9,7 +9,7 @@ window.WMVideoPilot = (() => {
   let opening = false, captureStarted = false, interrupted = false, monitor = null, refreshBusy = false, wake = null;
   let previewKey = '', replay = null, replayURL = null, listTicket = 0, statusText = '', accessRequest = 0;
   const context = () => ({user: session?.user?.id, team: activeTeam?.id,
-    allowed: !!session?.user?.id && !!activeTeam?.id && !managedLogin && !!actualIsStaff && viewMode === 'staff' &&
+    allowed: !!session?.user?.id && !!activeTeam?.id && !managedLogin &&
       !document.body.classList.contains('kiosk-locked') && !document.querySelector('#appLockOverlay:not(.hidden)')});
   const key = c => c.user + ':' + c.team;
   const valid = () => { const c = context(); return c.allowed && grant?.scope === key(c) && performance.now() < grant.until; };
@@ -52,7 +52,7 @@ window.WMVideoPilot = (() => {
       <label class="vp-check"><input id="vpPermission" type="checkbox">I have permission to record these participants at this event.</label>
       <div class="vp-stage" id="vpStage" hidden><video id="vpCamera" muted playsinline autoplay></video><div id="vpOverlay" class="vp-overlay"></div></div>
       <div class="vp-actions"><button id="vpPreview" type="button" class="secondary">Open camera</button><button id="vpStart" type="button" class="vp-record" disabled>Record privately</button><button id="vpStop" type="button" disabled>Stop &amp; save video</button><button id="vpClock" type="button" class="secondary" hidden>Start clock</button><button id="vpCameraClose" type="button" class="secondary" hidden>Close camera</button></div>
-      <p id="vpStatus" class="vp-status" role="status"></p><p>Keep this screen open while recording. Up to 20 minutes per take. Cloud upload and Go Live are not connected in this pilot. Export copies before clearing app data; your browser can remove device storage.</p>
+      <p id="vpStatus" class="vp-status" role="status"></p><p>Keep this screen open while recording. Up to 20 minutes per take. Tournament videos upload when service returns while the app is open. Go Live is not connected yet. Export copies before clearing app data; your browser can remove device storage.</p>
       <details><summary>Saved videos on this device</summary><div id="vpTakes"></div></details>`;
     $('matchScoreSheet').insertBefore(panel, $('matchPeriodLabel'));
     $('vpPreview').onclick = () => preview().catch(report);
@@ -65,6 +65,7 @@ window.WMVideoPilot = (() => {
     $('matchListSheet').append(library);
   }
   function controls() {
+    window.WMMatchVideo?.recorderControls(!!recorder && captureStarted);
     if (!$('vpPanel')) return;
     const ready = valid(), snap = snapshot();
     $('vpPanel').hidden = !ready || !snap;
@@ -144,7 +145,7 @@ window.WMVideoPilot = (() => {
       if (g !== generation || !valid() || !stream || currentMatch() !== snap.id || document.hidden) throw Error('Screen changed before recording started.');
       const mime = C.mimeType();
       take = {id: crypto.randomUUID(), scope: grant.scope, teamId: grant.team, userId: grant.user, matchId: snap.id,
-        athleteIds, label: snap.red_name + ' vs ' + snap.other_name, demo: snap.book_type === 'test', mime,
+        boutId: snap.bout_id || null, athleteIds, label: snap.red_name + ' vs ' + snap.other_name, demo: snap.book_type === 'test', mime,
         createdAt: new Date().toISOString(), status: 'recording', chunks: 0, bytes: 0, durationMs: 0, events: [], reason: ''};
       writing = Promise.resolve(); writeError = null; pendingBytes = 0; interrupted = false; stopping = null; captureStarted = false;
       await store.put(take);
@@ -206,7 +207,7 @@ window.WMVideoPilot = (() => {
       await store.put(saved);
       const file = await store.assemble(saved); await C.playable(file);
       saved.status = interrupted ? 'partial' : 'ready'; await store.put(saved);
-      if (valid() && grant.scope === saved.scope) note(interrupted ? 'Partial video saved on this device. ' + saved.reason : 'Saved on this device · video playback checked. No cloud copy.');
+      if (valid() && grant.scope === saved.scope) note(interrupted ? 'Partial video saved on this device. ' + saved.reason : 'Saved on this device · video playback checked. Upload status is shown below.');
     } catch (e) {
       saved.status = 'interrupted'; saved.reason ||= e.message; await store.put(saved).catch(() => {});
       if (valid() && grant.scope === saved.scope) note('Recording is incomplete. Saved segments were kept for recovery; no complete video was confirmed.', true);
@@ -228,7 +229,7 @@ window.WMVideoPilot = (() => {
         const ongoing = take?.id === r.id;
         const ready = ['ready', 'partial'].includes(r.status);
         const label = ongoing ? 'Recording / saving' : r.status === 'ready' ? 'Saved on this device' : r.status === 'partial' ? 'Partial recording · saved on this device' : 'Interrupted · recovery needed';
-        return `<article class="vp-take"><b>${r.demo ? 'TEST · ' : ''}${esc(r.label)}</b><p>${esc(new Date(r.createdAt).toLocaleString())} · ${format(r.durationMs)} · ${(r.bytes / 1048576).toFixed(1)} MB<br>${label}</p><div class="vp-actions">${!ongoing ? `<button type="button" class="secondary" data-vp-${ready ? 'play' : 'recover'}="${r.id}">${ready ? 'Watch & review score' : 'Try partial recovery'}</button><button type="button" class="secondary" data-vp-delete="${r.id}">Delete device copy</button>` : ''}</div></article>`;
+        return `<article class="vp-take"><b>${r.demo ? 'TEST · ' : ''}${esc(r.label)}</b><p>${esc(new Date(r.createdAt).toLocaleString())} · ${format(r.durationMs)} · ${(r.bytes / 1048576).toFixed(1)} MB<br>${label}${r.boutId?' · '+(r.upload?.status==='ready'?'Uploaded · available to athlete & family':r.upload?.status==='uploading'?'Uploading '+(r.upload.progress||0)+'%':'Waiting to upload') : ''}</p><div class="vp-actions">${!ongoing ? `<button type="button" class="secondary" data-vp-${ready ? 'play' : 'recover'}="${r.id}">${ready ? 'Watch & review score' : 'Try partial recovery'}</button><button type="button" class="secondary" data-vp-delete="${r.id}">Delete device copy</button>` : ''}</div></article>`;
       }).join('') : '<p>No saved videos here yet.</p>';
       el.querySelectorAll('[data-vp-play]').forEach(b => b.onclick = () => watch(b.dataset.vpPlay).catch(report));
       el.querySelectorAll('[data-vp-recover]').forEach(b => b.onclick = () => recover(b.dataset.vpRecover).catch(report));
@@ -251,6 +252,7 @@ window.WMVideoPilot = (() => {
   }
   async function remove(id) {
     const row = await owned(id);
+    if(row.boutId){if(row.upload?.status!=='ready')throw Error('Wait for the verified upload before removing this device copy.');await WMMatchVideo.verifyCloud(row.id);}
     if (prompt('Type DELETE to permanently remove this video and score timeline from this device. Export it first if you need a copy.') !== 'DELETE') return;
     ensure(); if (row.scope !== grant.scope) return;
     await store.remove(row); note('Device video deleted.'); await list();
@@ -265,7 +267,7 @@ window.WMVideoPilot = (() => {
     ensure(); if (row.scope !== grant.scope) return;
     closeReplay(); replayURL = URL.createObjectURL(file);
     replay = document.createElement('section'); replay.className = 'vp-replay'; replay.setAttribute('role', 'dialog'); replay.setAttribute('aria-modal', 'true'); replay.setAttribute('aria-label', 'Video replay');
-    replay.innerHTML = `<div><div class="vp-head"><h2>${row.demo ? 'Test · ' : ''}${esc(row.label)}</h2><button id="vpReplayClose" type="button">Close</button></div><p>${row.status === 'partial' ? 'Partial recording · ' + esc(row.reason) : 'Saved on this device'} · No cloud copy</p><div class="vp-stage"><video id="vpPlayer" controls playsinline preload="auto"></video><div id="vpReplayOverlay" class="vp-overlay"></div></div><p id="vpReplayNote" role="status"></p><div class="vp-actions"><a id="vpExport" class="button" download="Match-video.${row.mime.includes('mp4') ? 'mp4' : 'webm'}">Export original video</a><button id="vpExportTimeline" type="button" class="secondary">Export score timeline</button></div><p>The scoreboard is shown in this player. Exported video does not have the scoreboard embedded.</p><h3>Jump to a scoring event</h3><div id="vpEvents" class="vp-events"></div></div>`;
+    replay.innerHTML = `<div><div class="vp-head"><h2>${row.demo ? 'Test · ' : ''}${esc(row.label)}</h2><button id="vpReplayClose" type="button">Close</button></div><p>${row.status === 'partial' ? 'Partial recording · ' + esc(row.reason) : 'Saved on this device'} · ${row.boutId ? (row.upload?.status === 'ready' ? 'Uploaded · available to athlete & family' : 'Waiting to upload') : 'Device copy only'}</p><div class="vp-stage"><video id="vpPlayer" controls playsinline preload="auto"></video><div id="vpReplayOverlay" class="vp-overlay"></div></div><p id="vpReplayNote" role="status"></p><div class="vp-actions"><a id="vpExport" class="button" download="Match-video.${row.mime.includes('mp4') ? 'mp4' : 'webm'}">Export original video</a><button id="vpExportTimeline" type="button" class="secondary">Export score timeline</button></div><p>The scoreboard is shown in this player. Exported video does not have the scoreboard embedded.</p><h3>Jump to a scoring event</h3><div id="vpEvents" class="vp-events"></div></div>`;
     document.body.append(replay); const player = $('vpPlayer'); player.src = replayURL;
     $('vpExport').href = replayURL;
     const paint = () => overlay($('vpReplayOverlay'), C.stateAt(row.events, player.currentTime * 1000));
@@ -311,5 +313,9 @@ window.WMVideoPilot = (() => {
   window.addEventListener('pagehide', () => interrupt('Page closed during recording.'));
   window.addEventListener('beforeunload', e => { if (active()) { e.preventDefault(); e.returnValue = ''; } });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && replay) closeReplay(); });
-  return {sync, onScore, leaving, reset, active};
+  async function uploadQueue(){if(!valid()||active()||!store)return;await WMVideoUpload.queue(store,grant.scope);if(valid())await list();}
+  window.addEventListener('online',()=>uploadQueue().catch(()=>{}));
+  setInterval(()=>uploadQueue().catch(()=>{}),30000);
+  async function quickStart(){await sync();ensure();if(!snapshot()?.bout_id)throw Error('Open an assigned tournament bout.');$('vpPermission').checked=true;await preview();await start();}
+  return {sync, onScore, leaving, reset, active,quickStart};
 })();
