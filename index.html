@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.47: Landscape camera scoring, saved video access and explicit fall results. -->
+<!-- Wrestling Manager v0.20.48: Larger Locker Room recording entry for phones. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -774,6 +774,14 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
 #vpCameraWorkspace #matchCorners .match-score-actions{overflow:auto;overscroll-behavior:contain;min-height:0;flex-shrink:1}
 #vpCameraWorkspace .match-fall-button{flex-shrink:0}
 #vpCameraWorkspace .vp-camera-clock #matchOvertime{margin-top:8px;background:#fff2c6;color:#25231b;width:100%}
+
+/* The recorder entry is a primary Locker Room action on a phone. */
+#lockerMatchBookBtn.mv-entry{display:block;width:100%;min-height:64px;margin:8px 0 18px;padding:14px 18px!important;border:2px solid #113b76!important;border-radius:16px!important;background:#174f9e!important;color:#fff!important;box-shadow:0 5px 14px #112a4830!important;text-align:left;font-size:17px!important;font-weight:800!important;line-height:1.3;touch-action:manipulation}
+#lockerMatchBookBtn.mv-entry::before{content:'🎥';display:inline-block;margin-right:10px}
+#lockerMatchBookBtn.mv-entry::after{content:'Open camera, scorebook & saved videos';display:block;margin:4px 0 0 34px;font-size:13px;font-weight:600;opacity:.94}
+#lockerMatchBookBtn.mv-entry:focus-visible{outline:3px solid #f2b94b;outline-offset:3px}
+#lockerMatchBookBtn.mv-entry:disabled{opacity:.65}
+#lockerMatchBookBtn.mv-entry[hidden]{display:none!important}
 
 </style>
 </head>
@@ -2188,7 +2196,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.47</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.48</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -14185,7 +14193,7 @@ window.WMMatchVideo = (() => {
  function reset(){generation++;replay?.querySelector('video')?.pause();replay?.remove();replay=null;document.querySelectorAll('[data-video-profile]').forEach(x=>x.remove());$('videoAssignmentsBtn')?.remove();$('lockerMatchBookBtn')?.remove();bookAccess();}
  function button(text,run){const b=document.createElement('button');b.type='button';b.textContent=text;b.onclick=async()=>{b.disabled=true;try{await run();}catch(e){message(e.message,true);}finally{b.disabled=false;}};return b;}
  async function sync(){const g=++generation;try{const data=await rpc('assignments');if(g!==generation)return;bookAccess(data.can_scorebook===true);
-  let entry=$('lockerMatchBookBtn');if(data.can_scorebook&&!entry){entry=button('Match Book · score & record',scorebook);entry.id='lockerMatchBookBtn';entry.className='wide secondary mv-entry';$('lockerGoalsTab')?.parentElement?.after(entry);}if(entry)entry.hidden=!data.can_scorebook;
+  let entry=$('lockerMatchBookBtn');if(data.can_scorebook&&!entry){entry=button('Score & record a match',scorebook);entry.id='lockerMatchBookBtn';entry.className='wide mv-entry';$('lockerGoalsTab')?.parentElement?.after(entry);}if(entry)entry.hidden=!data.can_scorebook;
   let b=$('videoAssignmentsBtn');if(!b){b=button('Record team matches',scorebook);b.id='videoAssignmentsBtn';$('tournamentDayBtn')?.parentElement?.append(b);}if(b)b.hidden=!data.can_scorebook;
  }catch{if(g!==generation)return;$('videoAssignmentsBtn')?.remove();$('lockerMatchBookBtn')?.remove();bookAccess();}}
  async function scorebook(){const data=await rpc('assignments');if(!data.can_scorebook)throw Error('Your coach needs to give this personal account recorder access.');closeSheets();const box=sheet('Match Book');box.innerHTML=data.test_only?'<p>Private recording test · saved on this device. Use the Test scorebook to check your camera, scoring and replay.</p>':'<p>Score and record your assigned team matches. Athletes and student managers use their own accounts.</p>';
