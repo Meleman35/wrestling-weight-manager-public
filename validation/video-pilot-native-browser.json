@@ -1,0 +1,16 @@
+{
+  "passed": [
+    "Native handler selects one adapter; event permission is required before camera access",
+    "Native permission errors are actionable and cannot mark a recording saved",
+    "Existing scorer supplies clock, award and correction history; native preview receives bounded geometry and score display",
+    "Existing lease permits an offline stop; replay routes to native without transferring movie bytes to JavaScript",
+    "Unverified save requires recovery; recovered footage is labeled partial",
+    "Team change resets native access and excludes prior-team rows",
+    "Server denial keeps native pilot controls closed",
+    "An authorization response arriving after reset cannot reopen the pilot",
+    "One athlete-profile action starts assigned teammate recording with imported bout/opponent; device recording dot never falsely indicates live",
+    "athlete can open Match Book, confirm permission, record and save a test without coach operations",
+    "manager can open Match Book, confirm permission, record and save a test without coach operations"
+  ],
+  "engine": "Chromium full app with a synthetic native-message fixture. No AVFoundation, Xcode compilation, device storage, native replay or iOS permission behavior verified."
+}

@@ -1,0 +1,17 @@
+{
+  "passed": [
+    "Pilot remains off, including family endpoints",
+    "Test-only pilot allows exact personal grants, returns no athlete IDs and blocks real bouts/cloud",
+    "Event and guardian permission required; teammate shortcut respects restricted opponent visibility",
+    "Assigned teammate imports trusted bout identity; retries deduplicate; concurrent recorder blocked",
+    "Student managers can open assigned/test scorebooks without coach rights; removal closes access",
+    "Scoped scoring saves cannot reassign athlete/opponent; stale revision rejected",
+    "Private upload is idempotent; cannot publish before both exact-size objects exist",
+    "Athlete and linked parent can read; unrelated account has no object or playback access",
+    "Consent withdrawal revokes upload, shared playback and storage reads",
+    "Family removal denies playback and prevents re-publishing the same removed recording",
+    "Recorder has no coach/raw data permissions; anonymous blocked; live cannot falsely activate"
+  ],
+  "engine": "PGlite synthetic data; actual migrations and storage policies",
+  "productionApplied": false
+}

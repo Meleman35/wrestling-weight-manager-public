@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.42: Reliable team link copying, customizable Clipboard categories and manual Tournament Day. -->
+<!-- Wrestling Manager v0.20.46: Guarded private Test scorebook recording pilot and scoped recorder access. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -699,6 +699,16 @@ body.kiosk-locked #messageReactionDialog,body:has(#appLockOverlay:not(.hidden)) 
 #manualCopyDialog{border:1px solid #536582;border-radius:20px;background:#fff;color:#10243c;max-width:440px;width:calc(100% - 32px);padding:24px}#manualCopyDialog::backdrop{background:#0009}#teamJoinCopyValue,#manualCopyValue{width:100%;font-size:16px;user-select:text;-webkit-user-select:text}#teamJoinCopyStatus{min-height:1.5em}#clipboardCustomizeBtn{margin-bottom:12px}.tournament-source,.tournament-card-head,.tournament-heading,.tournament-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.tournament-source{border:1px solid #bfd2e7;border-radius:12px;padding:12px;margin:12px 0}.tournament-source b{color:#815513}.tournament-source span{font-size:.8rem}.tournament-toolbar label{flex:1;min-width:180px}.tournament-toolbar{margin:12px 0}.tournament-toolbar button{width:auto;flex:0 1 auto}.tournament-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px;margin:14px 0}.tournament-bout{border:1px solid #c8d7e8;border-radius:18px;padding:18px;background:#fff;color:#10243c}.tournament-bout h3{margin:4px 0;font-size:1.1rem}.tournament-bout p{margin:10px 0}.tournament-bout>small{display:block;margin-top:12px;font-size:.75rem;color:#526982}.tournament-bout>button{margin-top:12px}.tournament-assignment{display:flex;gap:12px;margin:14px 0}.tournament-assignment b{padding:10px 14px;background:#e9f2fc;color:#153c68;border-radius:10px;font-size:1.2rem}.tournament-status-pill{padding:6px 10px;border-radius:20px;background:#e4f4ee;color:#145540;font-size:.75rem}.tournament-stale{border-color:#b98231}.tournament-stale .tournament-time{color:#875718}.tournament-filters,.tournament-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.tournament-editor,.tournament-family,.tournament-demo-controls,.tournament-alerts{padding:16px;margin:16px 0;border:1px solid #c8d7e8;border-radius:14px}.tournament-visibility{display:flex;align-items:end;gap:12px;margin:12px 0}.tournament-visibility label{flex:1;min-width:0}#tournamentSheet{max-width:980px}#tournamentSheet label{display:block;font-size:.85rem}#tournamentSheet select,#tournamentSheet input{width:100%;min-width:0;margin-top:6px}#tournamentSheet input,#tournamentSheet select{font-size:16px}#tournamentSheet a{color:#1756a3}.tournament-heading{margin-top:20px}.tournament-heading h3{margin:0}.tournament-heading p{font-size:.85rem;color:#526982}.tournament-bout,.tournament-bout *{overflow-wrap:anywhere}@media(max-width:540px){.tournament-form-grid,.tournament-filters{grid-template-columns:1fr}.tournament-visibility{flex-wrap:wrap}.tournament-toolbar button{flex:1 1 140px}}
 
 #tournamentStatus:empty{display:none}.tournament-filter-details{margin:12px 0;padding:10px 0}.tournament-filter-details summary{font-weight:700;color:#294f7d;cursor:pointer}.tournament-filter-details[open] summary{margin-bottom:12px}
+
+</style>
+<style id="wm-video-pilot-046">
+.vp-panel{padding:16px;margin:14px 0;border:1px solid #adc1d8;border-radius:16px;background:#f3f7fc;color:#112a48}.vp-panel h3{margin:0 0 8px}.vp-panel p{font-size:14px;line-height:1.5}.vp-stage{position:relative;background:#0b182b;border-radius:12px;overflow:hidden;aspect-ratio:16/9;margin:12px 0}.vp-stage video{display:block;width:100%;height:100%;object-fit:contain}.vp-overlay{position:absolute;top:8px;left:8px;right:8px;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:4px;color:#fff;pointer-events:none;font-variant-numeric:tabular-nums}.vp-overlay span{padding:7px;background:#992039e8;min-width:0;overflow-wrap:anywhere;font-size:13px}.vp-overlay span:last-child{background:#174f9ee8;text-align:right}.vp-overlay .vp-green{background:#11613ee8!important}.vp-overlay b{font-size:25px;display:block}.vp-overlay .vp-time{background:#0b182bea;text-align:center;font-size:12px;min-width:66px}.vp-actions{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.vp-actions button,.vp-actions a{min-height:46px}.vp-badge{display:inline-block;color:#713d08;background:#fff1cf;padding:5px 9px;border-radius:8px;font-size:12px;font-weight:800}.vp-record{background:#ad1c38!important;color:white!important}.vp-check{display:flex!important;gap:10px;align-items:flex-start}.vp-check input{width:auto!important;margin-top:4px}.vp-take{border-top:1px solid #c7d3e2;padding:14px 0;overflow-wrap:anywhere}.vp-events{max-height:240px;overflow:auto;display:grid;gap:6px}.vp-events button{text-align:left;font-size:14px}.vp-status{font-weight:600;overflow-wrap:anywhere}.vp-replay{position:fixed;inset:0;z-index:1800;background:#eef3f8;overflow:auto;padding:calc(14px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));color:#112a48}.vp-replay>div{max-width:900px;margin:auto}.vp-replay .vp-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.vp-replay .vp-head h2{font-size:22px}.vp-replay video{max-height:65dvh}.vp-replay .vp-stage{max-height:65dvh}.vp-error{color:#a01d32}@media(max-width:420px){.vp-overlay span{font-size:11px;padding:4px}.vp-overlay b{font-size:21px}.vp-overlay .vp-time{min-width:55px}.vp-panel{padding:12px}}
+.vp-replay .vp-head{align-items:flex-start}.vp-replay .vp-head h2{min-width:0;overflow-wrap:anywhere}.vp-replay .vp-head button{flex-shrink:0;min-width:68px}.vp-panel.vp-capturing{position:sticky;top:0;z-index:5;box-shadow:0 5px 14px #112a4830;padding:8px}.vp-panel.vp-capturing>h3,.vp-panel.vp-capturing>.vp-badge,.vp-panel.vp-capturing>.vp-check,.vp-panel.vp-capturing>p:not(.vp-status),.vp-panel.vp-capturing>details,.vp-panel.vp-capturing #vpPreview,.vp-panel.vp-capturing #vpStart{display:none}.vp-panel.vp-capturing .vp-stage{max-height:24dvh;margin:0}.vp-panel.vp-capturing .vp-actions{margin:6px 0}.vp-panel.vp-capturing .vp-status{margin:4px 0;font-size:12px}
+.vp-panel.vp-capturing>.vp-check{display:none!important}
+
+.mv-live-state{display:flex;align-items:center;gap:8px}.mv-record-dot{width:10px;height:10px;background:#c51f39;border-radius:50%;animation:mv-blink 1.2s ease-in-out infinite}.mv-replay-score{position:absolute;top:8px;left:8px;right:8px;padding:8px;background:#102139d9;color:white;pointer-events:none}@keyframes mv-blink{50%{opacity:.3}}@media(prefers-reduced-motion:reduce){.mv-record-dot{animation:none}}
+
+#vpGoLive:disabled{opacity:.5;cursor:not-allowed}.vp-panel.vp-capturing .mv-live-state{display:flex!important}
 
 </style>
 </head>
@@ -2113,7 +2123,7 @@ body.kiosk-locked #messageReactionDialog,body:has(#appLockOverlay:not(.hidden)) 
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.42</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.46</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -4607,6 +4617,7 @@ async function saveEditTeam(){
 }
 
 async function activateTeam(teamId,{persist=true}={}){
+  window.WMVideoPilot?.reset();window.WMMatchVideo?.reset();
   window.WMTournaments?.reset();show('tournamentSheet',false);
   window.WMReactions?.reset();
   const team=availableTeams.find(t=>t.id===teamId);
@@ -4761,6 +4772,8 @@ function applyMoreTabMode(){
 }
 
 function applyRoleUI(){
+  window.WMVideoPilot?.reset();window.WMMatchVideo?.reset();
+  setTimeout(()=>window.WMMatchVideo?.sync(),0);
   window.WMTournaments?.sync();
   window.WMKioskScan?.tick();
   window.WMGoals?.sync();
@@ -7842,7 +7855,7 @@ async function openAthleteOverview(athleteId){
   show('viewAthleteGuardiansBtn',!!viewer.staff);
   show('viewAthleteTeamsBtn',!!isTeamAdmin);
 
-  closeSheets();openSheet('athleteViewSheet');
+  closeSheets();openSheet('athleteViewSheet');window.WMMatchVideo?.profile(athleteId);
 }
 
 async function openAthleteProfile(athleteId){
@@ -7881,7 +7894,7 @@ async function openAthleteProfile(athleteId){
   if(staffReadOnly)$('profileSensitiveNote').textContent='Sensitive contact, birthday and medical fields are view-only for coaching staff. Team admins and families control those details and permissions.';
   $('profilePhotoBox').className='profile-photo-placeholder';
   if(data.photo_path){ const {data:signed}=await client.storage.from('athlete-photos').createSignedUrl(data.photo_path,3600); $('profilePhotoBox').innerHTML=`<img class="profile-photo" src="${esc(signed?.signedUrl||'')}" alt="Profile photo">`; } else { $('profilePhotoBox').innerHTML='👤'; }
-  closeSheets();openSheet('athleteProfileSheet');
+  closeSheets();openSheet('athleteProfileSheet');window.WMMatchVideo?.profile(athleteId,'athleteProfileSheet');
 }
 
 async function saveAthleteProfile(){
@@ -10379,7 +10392,7 @@ client.auth.onAuthStateChange((event,nextSession)=>{
  setTimeout(()=>handleAuthViewChange(event,nextSession).catch(e=>message(e.message,true)),0);
 });
 async function handleAuthViewChange(event,nextSession){
-  if(session?.user?.id!==nextSession?.user?.id){window.WMTournaments?.reset();show('tournamentSheet',false);window.WMNotificationSync?.reset();window.WMReactions?.reset();finishTileEditing(false);tileEditUser=null;pendingUiLayout=null;window.WMKioskScan?.reset();window.WMGoals?.reset();window.WMProfiles?.reset();window.WMFamily?.reset();resetAthleteCard();nativeCameraScanContext=null;weightCardPhotoCache.clear();}
+  if(session?.user?.id!==nextSession?.user?.id){window.WMVideoPilot?.reset();window.WMTournaments?.reset();show('tournamentSheet',false);window.WMNotificationSync?.reset();window.WMReactions?.reset();finishTileEditing(false);tileEditUser=null;pendingUiLayout=null;window.WMKioskScan?.reset();window.WMGoals?.reset();window.WMProfiles?.reset();window.WMFamily?.reset();resetAthleteCard();nativeCameraScanContext=null;weightCardPhotoCache.clear();}
   if(session?.user?.id!==nextSession?.user?.id&&(myWeightCheckMode==='teammate'||myWeightCheckMode==='test'||myWeightCheckMode==='staff'||!$('weightTestAthleteSheet').classList.contains('hidden')||!$('teammateWeightCheckSheet').classList.contains('hidden')||!$('weightPinSheet').classList.contains('hidden')))closeSheets();
   session=nextSession||null;
   window.WMProfilePIN?.select().catch(()=>{});window.WMProfilePINUI?.refresh();
@@ -10980,7 +10993,7 @@ window.WMMatch=(()=>{
  function remaining(at=now()){return !match?0:match.deadline===null?match.remainingMs:Math.max(0,match.deadline-at);}
  function key(){return 'wm-match-draft-v1:'+owner+':'+team;}
  function validContext(){return !!match&&session?.user?.id===owner&&activeTeam?.id===team&&!managedLogin;}
- function persist(){if(!match||!owner||!team)return;try{localStorage.setItem(key(),JSON.stringify({data:match,revision,challenge_id:challenge,season_id:season,team_id:team,owner}));}catch{status('This device could not save a recovery copy. Use Save match before leaving.',true);}}
+ function persist(){if(!match||!owner||!team)return;window.WMVideoPilot?.onScore(videoSnapshot());try{localStorage.setItem(key(),JSON.stringify({data:match,revision,challenge_id:challenge,season_id:season,team_id:team,owner}));}catch{status('This device could not save a recovery copy. Use Save match before leaving.',true);}}
  function log(label,corner='none',points=0,extra={}){match.ledger.push({id:crypto.randomUUID(),label,corner,points,period:match.period+1,phase:match.phase,remaining_ms:remaining(),at:new Date().toISOString(),...extra});if(match.style==='beach'&&match.phase==='period'&&Math.max(scores().red,scores().other)>=3){match.remainingMs=remaining();match.deadline=null;}persist();}
  function pause(reason=null){if(!match||match.deadline===null)return;match.remainingMs=remaining();match.deadline=null;if(reason)log(reason);persist();paintClock();}
  function start(){if(!validContext()||match.status==='complete')return;if(match.style==='beach'&&Math.max(scores().red,scores().other)>=3){status('Three points reached. Confirm Finish match or correct the score.',true);return;}if(match.phase==='period'&&WMScoring.state(match)==='unknown'){status('Set the referee’s starting position before starting the clock.',true);return;}if(remaining()<=0){status('The clock is at zero. Advance the period or adjust the clock.');return;}if(match.phase==='period')delete match.recoveryPending;match.deadline=now()+match.remainingMs;log('Clock started');persist();paintClock();}
@@ -11110,8 +11123,8 @@ window.WMMatch=(()=>{
  }
  async function guardDraft(incomingId){let draft;try{draft=JSON.parse(localStorage.getItem(key())||'null')}catch{}if(draft?.data?.status==='live'&&draft.data.id!==incomingId)return await WMOperations.confirmAction('Replace the unfinished device draft? Resume or save it first if you want to keep its unsaved changes.');return true;}
  async function showScore(saved){if(saved&&!await guardDraft(saved.data?.id))return;if(saved){match=structuredClone(saved.data);revision=saved.revision||null;challenge=saved.challenge_id||null;season=saved.season_id||activeSeason?.id||null;team=saved.team_id||activeTeam?.id;owner=session?.user?.id;if(match.deadline!==null){match.remainingMs=Math.max(0,match.deadline-now());match.deadline=null;log('Recovered match; clock paused');}}
-  if(!validContext()){message('Open this match with its team and personal account.',true);return;}['matchListSheet','matchSetupSheet'].forEach(id=>show(id,false));openSheet('matchScoreSheet');status(match.status==='complete'?'Saved result: '+match.result:'Clock is paused.');render();clearInterval(timer);timer=setInterval(tick,100);persist();}
- async function open(){if(document.body.classList.contains('kiosk-locked'))return;if(managedLogin){message('A personal team coach or administrator must score matches.',true);return;}closeSheets();owner=session?.user?.id;team=activeTeam?.id;season=activeSeason?.id||null;if(!owner||!team){message('Choose a team first.',true);return;}openSheet('matchListSheet');el('matchListStatus').textContent='Loading match book…';const ticket=++version;
+  if(!validContext()){message('Open this match with its team and personal account.',true);return;}['matchListSheet','matchSetupSheet'].forEach(id=>show(id,false));openSheet('matchScoreSheet');status(match.status==='complete'?'Saved result: '+match.result:'Clock is paused.');render();clearInterval(timer);timer=setInterval(tick,100);persist();window.WMVideoPilot?.sync();}
+ async function open(){if(document.body.classList.contains('kiosk-locked'))return;if(managedLogin){message('Use your personal team account to score and record matches.',true);return;}if(!actualIsStaff){try{return await WMMatchVideo.scorebook();}catch(err){message(err.message,true);return;}}closeSheets();owner=session?.user?.id;team=activeTeam?.id;season=activeSeason?.id||null;if(!owner||!team){message('Choose a team first.',true);return;}openSheet('matchListSheet');window.WMVideoPilot?.sync();el('matchListStatus').textContent='Loading match book…';const ticket=++version;
   try{catalogue=await WMOperations.rpc(false,{action:'matches',team_id:team});if(ticket!==version)return;el('matchListStatus').textContent='';el('matchList').innerHTML=catalogue.matches.map(r=>{const d=r.data;const s=d.ledger.reduce((s,a)=>{if(!a.voided&&['red','other'].includes(a.corner))s[a.corner]+=Number(a.points)||0;return s},{red:0,other:0});return `<article class="ops-card" data-book-type="${e(d.book_type||(r.challenge_id?'challenge':'competition'))}"><h3>${e(d.red_name)} vs ${e(d.other_name)}</h3><p>${s.red}–${s.other} · ${e(d.status==='complete'?d.result:'In progress')} · ${e(d.style)} · ${e(d.book_type||(r.challenge_id?'challenge':'competition'))}</p><p class="ops-meta">${e(fmtDateTime(r.updated_at))}</p><button type="button" class="wide secondary" data-match-open="${r.id}">Open match</button></article>`}).join('')||'<p>No saved matches yet.</p>';
    filterBooks();el('matchList').querySelectorAll('[data-match-open]').forEach(b=>b.onclick=()=>showScore(catalogue.matches.find(r=>r.id===b.dataset.matchOpen)));
    let draft=null;try{draft=JSON.parse(localStorage.getItem(key())||'null');}catch{}el('matchDraft').innerHTML=draft?.owner===owner&&draft?.team_id===team&&draft?.data?.status!=='complete'?'<div class="ops-card"><h3>Match saved on this device</h3><button type="button" id="matchResume" class="wide secondary">Resume draft</button><button type="button" id="matchDiscard" class="wide secondary">Discard device draft</button></div>':'';
@@ -11125,13 +11138,13 @@ window.WMMatch=(()=>{
   if(el('matchStyle').value==='folkstyle'&&el('matchRules').value==='nfhs'&&(periods.length!==3||![60,120].includes(periods[0])||periods[1]!==120||periods[2]!==120||breakSeconds!==0||Number(el('matchTD').value)!==3)){el('matchSetupStatus').textContent='NFHS uses three periods (2,2,2 or consolation 1,2,2), no scheduled break and 3-point takedowns. Select Custom event · folkstyle for event-specific settings.';return;}
   match={bout_number:el('matchBoutSetup').value.trim(),book_type:book,original_periods:periods.slice(),challenge_weight:book==='challenge'?Number(el('matchChallengeWeight').value):null,flowVersion:1,nfhs:el('matchStyle').value==='folkstyle'&&el('matchRules').value==='nfhs',ruleset:rulesNames[el('matchRules').value],rules_authority:el('matchRules').value,id:crypto.randomUUID(),style:el('matchStyle').value,red_id:el('matchRedAthlete').value||null,other_id:el('matchOtherAthlete').value||null,red_name:el('matchRedName').value.trim(),other_name:el('matchOtherName').value.trim(),label:el('matchLabel').value.trim(),periods,breakSeconds,takedown:Number(el('matchTD').value),period:0,phase:'period',remainingMs:periods[0]*1000,deadline:null,ledger:[],status:'live'};if(book==='challenge'){save().then(ok=>{if(ok)showScore();else{el('matchSetupStatus').textContent='Challenge could not be saved. Check current weights and settings, then retry.';}});}else showScore();
  }
- async function save(){if(!validContext()||busy)return false;busy=true;el('matchSave').disabled=true;status('Saving…');const current=match;try{const data=structuredClone(match);data.remainingMs=remaining();data.deadline=null;const row=await WMOperations.rpc(true,{action:'match',id:match.id,team_id:team,season_id:season,challenge_id:challenge,revision,data});if(match!==current)return false;revision=row.revision;persist();status(match.ledger.length===data.ledger.length?'Match saved.':'Snapshot saved. Save again to sync the newest scoring actions.');return true;}catch(err){status(err.message+' Your device draft is still available.',true);return false;}finally{busy=false;el('matchSave').disabled=false}}
+ async function save(){if(!validContext()||busy)return false;if(match.video_test===true){persist();status('Test score saved on this device.');return true;}busy=true;el('matchSave').disabled=true;status('Saving…');const current=match;try{const data=structuredClone(match);data.remainingMs=remaining();data.deadline=null;const row=match.bout_id?await WMMatchVideo.rpc('save',{id:match.id,revision,data}):await WMOperations.rpc(true,{action:'match',id:match.id,team_id:team,season_id:season,challenge_id:challenge,revision,data});if(match!==current)return false;revision=row.revision;persist();status(match.ledger.length===data.ledger.length?'Match saved.':'Snapshot saved. Save again to sync the newest scoring actions.');return true;}catch(err){status(err.message+' Your device draft is still available.',true);return false;}finally{busy=false;el('matchSave').disabled=false}}
  async function finish(){if(!validContext()||match.status==='complete')return;pause();const answer=await WMOperations.dialog({title:'Finish match',description:match.style==='beach'?'Confirm the referee’s result. For a tied score: last point scored, then lighter official weigh-in weight, then lower draw/rank number. Classification points and event-wide challenge allowances are not calculated here.':'Confirm the referee’s winner and result.',fields:[{id:'winner',label:'Winner',options:[['red',match.red_name+' · Red'],['other',match.other_name+(match.style==='folkstyle'?' · Green':' · Blue')],['none','No winner']],value:scores().other>scores().red?'other':'red'},{id:'result',label:'Result',options:(match.style==='beach'?['Points / tie criteria','3-point throw','Three points reached','Three cautions','Injury','Disqualification','Forfeit','No contest']:['Decision','Fall','Technical fall','Major decision','Default','Disqualification','Forfeit','No contest']).map(x=>[x,x]),value:match.style==='beach'?'Points / tie criteria':'Decision'}],submit:'Save final result'});if(!answer||!validContext())return;const normal=answer.winner,result=answer.result;match.status='complete';match.winner=normal==='green'||normal==='blue'?'other':normal;match.result=result.slice(0,100);log('Match finished: '+match.result);render();if(await save()){localStorage.removeItem(key());status('Final result saved.');}else{match.status='live';persist();render();}}
  function exportMatch(){if(!match)return;const s=scores();WMOperations.download('Match_'+match.red_name+'_vs_'+match.other_name+'.txt',`Bout ${match.bout_number||'—'}\n${match.red_name} ${s.red} – ${s.other} ${match.other_name}\n${match.style} · ${match.book_type||'competition'} · ${match.result||'In progress'}\n${match.label||''}\n\n`+match.ledger.map(a=>`${a.at} | P${a.period} ${fmt(a.remaining_ms)} | ${a.corner} | ${a.label} ${a.points||''}${a.voided?' [UNDONE]':''}`).join('\n'));}
- function close(){version++;if(match){pause('Clock paused when leaving scoreboard');persist();}clearInterval(timer);timer=null;match=null;['matchListSheet','matchSetupSheet','matchScoreSheet'].forEach(id=>show(id,false));}
+ function close(){window.WMVideoPilot?.leaving();version++;if(match){pause('Clock paused when leaving scoreboard');persist();}clearInterval(timer);timer=null;match=null;['matchListSheet','matchSetupSheet','matchScoreSheet'].forEach(id=>show(id,false));}
  async function boutEdit(){if(!validContext()||busy)return;const source=match;const q=await WMOperations.dialog({title:'Bout number',fields:[{id:'bout',label:'Bout number',value:match.bout_number||''}],submit:'Update bout'});if(!q||source!==match||!validContext())return;match.bout_number=String(q.bout||'').trim().slice(0,24);log('Bout number updated');render();await save();}
  async function resetMatch(){if(!validContext()||busy)return;const source=match;pause();if(!await WMOperations.confirmAction('Reset this match to period 1 and zero points? The previous scoring timeline will be kept in the reset history.'))return;if(source!==match||!validContext())return;const old=structuredClone(match);match.reset_history=[...(match.reset_history||[]),{at:new Date().toISOString(),ledger:match.ledger,period:match.period,remaining_ms:remaining(),result:match.result||null}];match.periods=match.original_periods||match.periods.slice(0,match.nfhsOT?.[0]?.period||match.periods.length);match.ledger=[];match.period=0;match.phase='period';match.remainingMs=match.periods[0]*1000;match.deadline=null;match.status='live';for(const k of ['activity','nfhsOT','periodLabels','timeoutInfo','resume','winner','result','recoveryPending','timeoutLabel'])delete match[k];log('Match reset · previous timeline retained');render();if(!await save()){match=old;persist();render();status('Reset was not saved. Previous match restored.',true);}}
- async function nextMatch(){if(!validContext()||busy)return;const source=match;pause();if(!await WMOperations.confirmAction('Save this match and open setup for the next bout? Use Finish match first if you want to record a final winner.'))return;if(source!==match||!validContext()||!await save())return;const book=match.book_type,bout=match.bout_number;localStorage.removeItem(key());show('matchScoreSheet',false);el('matchBookFilter').value=book;await setup();if(/^\d+$/.test(bout||''))el('matchBoutSetup').value=String(Number(bout)+1);}
+ async function nextMatch(){if(!validContext()||busy)return;if(window.WMVideoPilot?.active()){status('Stop and save the video before opening the next match.',true);return;}if(!actualIsStaff&&(match.bout_id||match.video_test)){if(await save())await WMMatchVideo.scorebook();return;}const source=match;pause();if(!await WMOperations.confirmAction('Save this match and open setup for the next bout? Use Finish match first if you want to record a final winner.'))return;if(source!==match||!validContext()||!await save())return;const book=match.book_type,bout=match.bout_number;localStorage.removeItem(key());show('matchScoreSheet',false);el('matchBookFilter').value=book;await setup();if(/^\d+$/.test(bout||''))el('matchBoutSetup').value=String(Number(bout)+1);}
  el('matchBoutEdit').onclick=boutEdit;el('matchReset').onclick=resetMatch;el('matchNext').onclick=nextMatch;
  el('matchActivity').onclick=activity;el('matchPosition').onclick=position;el('matchCorrection').onclick=correction;const rulesNames={nfhs:'NFHS 2026–27',usaw_folk:'USA Wrestling folkstyle · referee managed',college:'College folkstyle · manual officiating',manual:'Other folkstyle / event rules',usaw:'USA Wrestling freestyle / Greco-Roman',uww:'UWW January 2026',beach_uww:'UWW Beach March 2026'};
  function setupRules(styleChange=false){
@@ -11167,7 +11180,22 @@ window.WMMatch=(()=>{
  el('matchBookBtn').onclick=open;el('matchBookRoomBtn').onclick=open;
  document.addEventListener('visibilitychange',()=>{if(document.hidden&&match){pause('Clock paused when app moved to background');render();}});
  window.addEventListener('pagehide',()=>pause('Clock paused when page closed'));
- return{open,close,parseTime,remaining,scores};
+ function videoSnapshot(){
+  if(!validContext())return null;
+  const state={id:match.id,bout_id:match.bout_id,event_id:match.event_id,athlete_id:match.athlete_id,bout_number:match.bout_number,red_id:match.red_id,other_id:match.other_id,red_name:match.red_name,other_name:match.other_name,
+   style:match.style,book_type:match.book_type,status:match.status,period:match.period,phase:match.phase,
+   phaseLabel:match.phase==='timeout'?match.timeoutLabel:match.phase==='break'?'Break':'Period '+(match.period+1),
+   remainingMs:remaining(),running:match.deadline!==null,ledger:structuredClone(match.ledger)};
+  state.token=JSON.stringify([match.id,match.ledger,match.period,match.phase,match.remainingMs,match.deadline,match.status,match.red_name,match.other_name]);
+  return state;
+ }
+ async function openVideo(row){
+  if(window.WMVideoPilot?.active())return;
+  closeSheets();owner=session?.user?.id;team=activeTeam?.id;
+  if(!owner||!team||managedLogin||row.team_id!==team)return;
+  await showScore(row);await window.WMVideoPilot?.sync();
+ }
+ return{open,openVideo,close,parseTime,remaining,scores,videoSnapshot};
 })();
 
 document.getElementById('setupOrgHubBtn').onclick=()=>WMOperations.open();document.getElementById('setupFeedbackBtn').onclick=()=>WMOperations.feedback();
@@ -13269,6 +13297,754 @@ window.WMTournaments=(()=>{
  window.addEventListener('focus',()=>refresh(true));document.addEventListener('visibilitychange',()=>{if(document.hidden&&!demo&&visible()){board=null;el('tournamentContent')&&(el('tournamentContent').innerHTML='');}else refresh(true);});
  const observer=new MutationObserver(()=>{if(visible()&&!allowed()){reset();show('tournamentSheet',false);}});observer.observe(document.body,{attributes:true,attributeFilter:['class']});if(el('appLockOverlay'))observer.observe(el('appLockOverlay'),{attributes:true,attributeFilter:['class']});
  return {open,reset,sync,refresh,providers:WMTournamentProviders};
+})();
+
+</script><script id="wm-video-pilot-core-046">
+/* Device-only media and append-only scoring snapshots. No uploads or broadcasting. */
+(function (root) {
+  'use strict';
+  const copy = value => structuredClone(value);
+  function stateAt(events, atMs) {
+    let event = null;
+    for (const next of events) { if (next.atMs > atMs) break; event = next; }
+    if (!event) return null;
+    const s = copy(event.state);
+    s.remainingMs = Math.max(0, s.remainingMs - (s.running ? Math.max(0, atMs - event.atMs) : 0));
+    s.scores = {red: 0, other: 0};
+    for (const award of s.ledger) if (!award.voided && award.corner in s.scores) s.scores[award.corner] += Number(award.points) || 0;
+    return s;
+  }
+  class Timeline {
+    constructor(startedAt, clock = () => performance.now()) { this.startedAt = startedAt; this.clock = clock; this.events = []; this.token = null; }
+    append(snapshot, label) {
+      if (!snapshot || snapshot.token === this.token) return null;
+      this.token = snapshot.token;
+      const state = copy(snapshot); delete state.token;
+      const previous = this.events.at(-1)?.state;
+      const changedLedger = !previous || JSON.stringify(previous.ledger) !== JSON.stringify(state.ledger);
+      const inferredLabel = !previous ? 'Recording started' : changedLedger ? state.ledger.at(-1)?.label || 'Scoring history changed' :
+        previous.running !== state.running ? state.running ? 'Clock started' : 'Clock paused' : 'Match state updated';
+      const event = {seq: this.events.length, atMs: this.events.length ? Math.max(this.events.at(-1).atMs, this.clock() - this.startedAt) : 0,
+        label: label || inferredLabel, state};
+      this.events.push(event); return copy(event);
+    }
+  }
+  class DeviceStore {
+    async init() {
+      if (!navigator.storage?.getDirectory || !globalThis.indexedDB) throw Error('This device cannot save the video pilot safely. Use a supported browser for this test.');
+      this.root = await (await navigator.storage.getDirectory()).getDirectoryHandle('wm-video-pilot-v1', {create: true});
+      this.db = await new Promise((resolve, reject) => {
+        const r = indexedDB.open('wm-video-pilot-v1', 1);
+        r.onupgradeneeded = () => { const s = r.result.createObjectStore('takes', {keyPath: 'id'}); s.createIndex('scope', 'scope'); };
+        r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error);
+        r.onblocked = () => reject(Error('Close other app windows and retry device storage.'));
+      });
+      // Test an actual closed write before asking for the camera.
+      const probe = await this.root.getFileHandle('probe-' + crypto.randomUUID(), {create: true});
+      const writer = await probe.createWritable(); await writer.write('ok'); await writer.close(); await this.root.removeEntry(probe.name);
+      return this;
+    }
+    transaction(mode, action) {
+      return new Promise((resolve, reject) => {
+        const tx = this.db.transaction('takes', mode); let result;
+        const r = action(tx.objectStore('takes')); r.onsuccess = () => { result = r.result; };
+        tx.oncomplete = () => resolve(result); tx.onerror = tx.onabort = () => reject(tx.error || Error('Device save interrupted.'));
+      });
+    }
+    put(take) { return this.transaction('readwrite', s => s.put(copy(take))); }
+    get(id) { return this.transaction('readonly', s => s.get(id)); }
+    list(scope) { return this.transaction('readonly', s => s.index('scope').getAll(scope)); }
+    async directory(id) {
+      if (!/^[a-f0-9-]{36}$/.test(id)) throw Error('Invalid recording identifier.');
+      return this.root.getDirectoryHandle(id, {create: true});
+    }
+    async chunk(id, seq, blob) {
+      const dir = await this.directory(id), name = String(seq).padStart(6, '0') + '.part';
+      const handle = await dir.getFileHandle(name, {create: true}), w = await handle.createWritable();
+      try { await w.write(blob); await w.close(); } catch (e) { try { await w.abort(); } catch {} throw e; }
+      const file = await handle.getFile();
+      if (file.size !== blob.size) throw Error('The video segment did not finish saving.');
+      return file.size;
+    }
+    async assemble(take) {
+      const dir = await this.directory(take.id), output = await dir.getFileHandle('replay', {create: true});
+      const w = await output.createWritable(); let bytes = 0;
+      try {
+        for (let seq = 0; seq < take.chunks; seq++) {
+          const file = await (await dir.getFileHandle(String(seq).padStart(6, '0') + '.part')).getFile();
+          const reader = file.stream().getReader();
+          try { while (true) { const part = await reader.read(); if (part.done) break; await w.write(part.value); bytes += part.value.byteLength; } }
+          finally { reader.releaseLock(); }
+        }
+        await w.close();
+      } catch (e) { try { await w.abort(); } catch {} throw e; }
+      if (!bytes || bytes !== take.bytes) throw Error('Recording is incomplete. Saved segments have been kept.');
+      return this.file(take);
+    }
+    async file(take) {
+      const file = await (await (await this.directory(take.id)).getFileHandle('replay')).getFile();
+      if (!file.size || file.size !== take.bytes) throw Error('Replay file is missing or incomplete.');
+      return file.slice(0, file.size, take.mime);
+    }
+    async remove(take) {
+      await this.root.removeEntry(take.id, {recursive: true}).catch(e => { if (e.name !== 'NotFoundError') throw e; });
+      await this.transaction('readwrite', s => s.delete(take.id));
+    }
+  }
+  function mimeType() {
+    return ['video/mp4', 'video/webm;codecs=vp8,opus', 'video/webm'].find(t => globalThis.MediaRecorder?.isTypeSupported(t));
+  }
+  async function playable(blob) {
+    const url = URL.createObjectURL(blob), video = document.createElement('video');
+    video.muted = true; video.playsInline = true; video.preload = 'auto';
+    try {
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => finish(Error('Playback could not be verified. Saved segments have been kept.')), 15000);
+        function finish(error) { clearTimeout(timeout); video.onloadeddata = video.onerror = null; error ? reject(error) : resolve(); }
+        video.onloadeddata = () => finish(); video.onerror = () => finish(Error('This recording could not be played. Saved segments have been kept.'));
+        video.src = url; video.load();
+      });
+    } finally { video.removeAttribute('src'); video.load(); URL.revokeObjectURL(url); }
+  }
+  root.WMVideoCore = {Timeline, stateAt, DeviceStore, mimeType, playable};
+  if (typeof module !== 'undefined') module.exports = root.WMVideoCore;
+})(typeof window === 'undefined' ? globalThis : window);
+
+</script>
+<script id="wm-video-upload-046">
+/* Immutable, resumable private uploads. Device data survives every failure. */
+window.WMVideoUpload=(()=>{
+ 'use strict';
+ const ORIGIN='https://vfocpoyexnjsjpxhhyqr.storage.supabase.co',ENDPOINT=ORIGIN+'/storage/v1/upload/resumable',CHUNK=6*1024*1024;
+ let busy=false;
+ const same=row=>session?.user?.id===row.userId&&activeTeam?.id===row.teamId&&!managedLogin&&!document.hidden&&!window.WMVideoPilot?.active();
+ function safeURL(value){const u=new URL(value,ENDPOINT);if(u.origin!==ORIGIN||!u.pathname.startsWith('/storage/v1/upload/resumable/')||u.username||u.password)throw Error('Upload server address was not trusted.');return u.href;}
+ async function tus(blob,path,row,kind,save){
+  let url=row.upload?.[kind];if(url)url=safeURL(url);
+  const send=async(method,target,headers={},body)=>{if(!same(row))throw Error('Upload paused. Return to this account and team.');const r=await fetch(target,{method,headers:{'Tus-Resumable':'1.0.0',Authorization:'Bearer '+session.access_token,apikey:SUPABASE_KEY,...headers},body,redirect:'error',signal:AbortSignal.timeout(60000)});if(!same(row))throw Error('Upload paused after account or screen change.');return r;};
+  let offset=0;
+  if(url){const r=await send('HEAD',url);if([404,410].includes(r.status)){url=null;delete row.upload[kind];await save(row);}else{if(!r.ok)throw Error('Upload paused. Your device copy is safe.');const raw=r.headers.get('Upload-Offset');offset=Number(raw);if(raw===null||!Number.isSafeInteger(offset)||offset<0||offset>blob.size)throw Error('Upload offset is invalid. Keep the device copy.');}}
+  if(!url){const metadata={bucketName:'match-video-pilot',objectName:path,contentType:blob.type.split(';')[0],cacheControl:'0'};const r=await send('POST',ENDPOINT,{'Upload-Length':String(blob.size),'Upload-Metadata':Object.entries(metadata).map(([k,v])=>k+' '+btoa(v)).join(',')});if(r.status!==201)throw Error('Upload could not start. Your device copy is safe.');const location=r.headers.get('Location');if(!location)throw Error('Missing upload address.');url=safeURL(location);row.upload||={};row.upload[kind]=url;await save(row);}
+  while(offset<blob.size){const part=blob.slice(offset,offset+CHUNK),r=await send('PATCH',url,{'Content-Type':'application/offset+octet-stream','Upload-Offset':String(offset)},part);if(r.status!==204)throw Error('Upload interrupted. It will resume when you have service.');const next=Number(r.headers.get('Upload-Offset'));if(next!==offset+part.size)throw Error('Upload confirmation did not match. Keep the device copy.');offset=next;row.upload.progress=Math.round(offset/blob.size*100);await save(row);}
+ }
+ function timeline(row){return new Blob([JSON.stringify({schema:row.schema||1,id:row.id,matchId:row.matchId,athleteIds:row.athleteIds,label:row.label,createdAt:row.createdAt,events:row.events})],{type:'application/json'});}
+ async function run(store,row){if(busy||!same(row)||!navigator.onLine||!row.boutId||!['ready','partial'].includes(row.status)||row.upload?.status==='ready')return;busy=true;
+  const save=r=>store.put(r);
+  try{row.upload||={};row.upload.status='uploading';row.upload.error='';await save(row);const file=await store.file(row),score=timeline(row);const plan=await WMMatchVideo.rpc('prepare',{id:row.id,match_id:row.matchId,bytes:file.size,timeline_bytes:score.size,mime:row.mime.split(';')[0],duration_ms:Math.round(row.durationMs),partial:row.status==='partial'});
+   if(plan.status!=='ready'){
+    // Lost final responses are reconciled against server-owned object metadata first.
+    let complete=false;try{await WMMatchVideo.rpc('complete',{id:row.id});complete=true;}catch{}
+    if(!complete){if(!plan.video_uploaded)await tus(file,plan.video_path,row,'video',save);if(!plan.timeline_uploaded)await tus(score,plan.timeline_path,row,'timeline',save);await WMMatchVideo.rpc('complete',{id:row.id});}
+   }
+   await WMMatchVideo.verifyCloud(row.id);if(!same(row))throw Error('Return to the recording account to check upload.');row.upload={status:'ready',verifiedAt:new Date().toISOString()};await save(row);
+  }catch(e){row.upload||={};row.upload.status='waiting';row.upload.error=e.message;await save(row);}finally{busy=false;}}
+ async function queue(store,scope){if(busy||!navigator.onLine||document.hidden)return;for(const row of await store.list(scope)){if(!same(row))break;if(row.boutId&&row.upload?.status!=='ready'&&['ready','partial'].includes(row.status)){await run(store,row);break;}}}
+ return{queue,run,busy:()=>busy,tus,timeline};
+})();
+
+</script>
+<script id="wm-video-pilot-046">
+/* Free, allowlisted browser capture pilot. Server grants never create paid rights. */
+window.WMVideoPilot = (() => {
+  'use strict';
+  if (window.webkit?.messageHandlers?.wmVideoPilot) return null;
+  const $ = id => document.getElementById(id), C = WMVideoCore;
+  const MAX_MS = 20 * 60000, RESERVE = 256 * 1024 * 1024;
+  let generation = 0, grant = null, store = null, stream = null, recorder = null, take = null, timeline = null;
+  let writing = Promise.resolve(), pendingBytes = 0, writeError = null, stopping = null, stopResolve = null;
+  let opening = false, captureStarted = false, interrupted = false, monitor = null, refreshBusy = false, wake = null;
+  let previewKey = '', replay = null, replayURL = null, listTicket = 0, statusText = '', accessRequest = 0;
+  const context = () => ({user: session?.user?.id, team: activeTeam?.id,
+    allowed: !!session?.user?.id && !!activeTeam?.id && !managedLogin &&
+      !document.body.classList.contains('kiosk-locked') && !document.querySelector('#appLockOverlay:not(.hidden)')});
+  const key = c => c.user + ':' + c.team;
+  const valid = () => { const c = context(); return c.allowed && grant?.scope === key(c) && performance.now() < grant.until; };
+  const snapshot = () => window.WMMatch?.videoSnapshot();
+  const currentMatch = () => snapshot()?.id;
+  const active = () => !!recorder || opening || !!stopping;
+  function ensure() { if (!valid()) throw Error('Video test access ended. Reconnect and reopen Match Book.'); }
+  function note(text, bad = false) {
+    statusText = text;
+    for (const id of ['vpStatus', 'vpLibraryStatus']) if ($(id)) { $(id).textContent = text; $(id).classList.toggle('vp-error', bad); }
+  }
+  const format = ms => { const s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+  function overlay(el, s) {
+    if (!el || !s) return;
+    const sc = s.scores || C.stateAt([{atMs: 0, state: s}], 0).scores;
+    el.innerHTML = `<span>${esc(s.red_name)}<b>${sc.red}</b></span><span class="vp-time">${esc(s.phaseLabel)}<b>${format(s.remainingMs)}</b></span><span class="${s.style === 'folkstyle' ? 'vp-green' : ''}">${esc(s.other_name)}<b>${sc.other}</b></span>`;
+  }
+  function supported() { return isSecureContext && !!navigator.mediaDevices?.getUserMedia && !!C.mimeType() && !!navigator.storage?.getDirectory; }
+  async function storage() { if (!store) store = await new C.DeviceStore().init(); return store; }
+  async function authorize(force = false) {
+    const c = context(), g = generation;
+    if (!c.allowed) return false;
+    if (!force && valid()) return true;
+    const request = ++accessRequest;
+    const requestedAt = performance.now();
+    const {data, error} = await client.rpc('video_pilot_context', {p_team_id: c.team});
+    if (request !== accessRequest || g !== generation || key(c) !== key(context()) || !context().allowed) return false;
+    if (error) throw Error('Video pilot access could not be checked. Reconnect and try again.');
+    if (!data?.allowed || data.user_id !== c.user || data.team_id !== c.team || !(data.lease_seconds > 0)) {
+      grant = null; if (active()) stop('Test access was disabled.'); closeCamera(); closeReplay(); return false;
+    }
+    grant = {scope: key(c), user: c.user, team: c.team, until: requestedAt + Math.min(data.lease_seconds, 7200) * 1000,
+      athletes: data.athlete_ids || []};
+    return true;
+  }
+  function shell() {
+    if ($('vpPanel')) return;
+    const panel = document.createElement('section'); panel.id = 'vpPanel'; panel.className = 'vp-panel'; panel.hidden = true;
+    panel.innerHTML = `<span class="vp-badge">VIDEO PILOT · TEST ACCESS</span><h3>Record &amp; score</h3><p>Private recording on this device. Browser test · iPhone app recording still needs device verification.</p>
+      <label class="vp-check"><input id="vpPermission" type="checkbox">I have permission to record these participants at this event.</label>
+      <div class="vp-stage" id="vpStage" hidden><video id="vpCamera" muted playsinline autoplay></video><div id="vpOverlay" class="vp-overlay"></div></div>
+      <div class="vp-actions"><button id="vpPreview" type="button" class="secondary">Open camera</button><button id="vpStart" type="button" class="vp-record" disabled>Record privately</button><button id="vpStop" type="button" disabled>Stop &amp; save video</button><button id="vpClock" type="button" class="secondary" hidden>Start clock</button><button id="vpCameraClose" type="button" class="secondary" hidden>Close camera</button></div>
+      <p id="vpStatus" class="vp-status" role="status"></p><p>Keep this screen open while recording. Up to 20 minutes per take. Tournament videos upload when service returns while the app is open. Go Live is not connected yet. Export copies before clearing app data; your browser can remove device storage.</p>
+      <details><summary>Saved videos on this device</summary><div id="vpTakes"></div></details>`;
+    $('matchScoreSheet').insertBefore(panel, $('matchPeriodLabel'));
+    $('vpPreview').onclick = () => preview().catch(report);
+    $('vpStart').onclick = () => start().catch(report);
+    $('vpStop').onclick = () => stop().catch(report);
+    $('vpClock').onclick = () => { if (valid() && recorder && !stopping) $('matchToggle').click(); };
+    $('vpCameraClose').onclick = () => closeCamera();
+    const library = document.createElement('section'); library.id = 'vpLibrary'; library.className = 'vp-panel'; library.hidden = true;
+    library.innerHTML = '<span class="vp-badge">VIDEO PILOT · TEST ACCESS</span><h3>Saved match videos</h3><p>Device copies only · record from an open match scoreboard.</p><p id="vpLibraryStatus" role="status"></p><div id="vpAllTakes"></div>';
+    $('matchListSheet').append(library);
+  }
+  function controls() {
+    window.WMMatchVideo?.recorderControls(!!recorder && captureStarted);
+    if (!$('vpPanel')) return;
+    const ready = valid(), snap = snapshot();
+    $('vpPanel').hidden = !ready || !snap;
+    $('vpPanel').classList.toggle('vp-capturing', !!recorder);
+    $('vpLibrary').hidden = !ready;
+    $('vpPreview').disabled = !ready || active() || !!stream || !supported();
+    $('vpStart').disabled = !ready || active() || !stream || previewKey !== snap?.id || snap?.status === 'complete';
+    $('vpStop').disabled = !recorder || !!stopping || recorder.state === 'inactive';
+    $('vpClock').hidden = !recorder;
+    $('vpClock').disabled = !!stopping || snap?.status === 'complete';
+    $('vpCameraClose').hidden = !stream || active();
+    $('vpPermission').disabled = active();
+  }
+  function report(e) { note(e?.name === 'NotAllowedError' ? 'Camera or microphone permission was denied. Allow access in browser settings and try again.' : e?.message || 'Video action failed.', true); controls(); }
+  async function sync() {
+    shell(); const g = generation;
+    if (!context().allowed) { reset(); return; }
+    try {
+      if (!await authorize() || g !== generation) { controls(); return; }
+      controls();
+      await storage(); if (g !== generation || !valid()) return;
+      controls(); if (!supported()) note('This browser cannot capture and save this pilot. Native iPhone capture is not connected yet.', true);
+      else if (!statusText) note('Test access ready. Open the camera to record this match.');
+      await list();
+    } catch (e) { if (g === generation && valid()) report(e); }
+  }
+  async function preview() {
+    ensure(); if (active() || stream) return;
+    if (!$('vpPermission').checked) throw Error('Confirm recording permission before opening the camera.');
+    const snap = snapshot(); if (!snap || snap.status === 'complete') throw Error('Open an unfinished match to record.');
+    if (!supported()) throw Error('Recording is unsupported in this browser.');
+    const g = generation, scope = grant.scope;
+    opening = true; controls(); let acquired;
+    try {
+      await storage(); const estimate = await navigator.storage.estimate();
+      if (!Number.isFinite(estimate.quota) || estimate.quota - (estimate.usage || 0) < RESERVE) throw Error('Not enough device storage for this test. Export and remove older takes or free space first.');
+      if (navigator.storage.persist) await navigator.storage.persist().catch(() => false);
+      acquired = await navigator.mediaDevices.getUserMedia({video: {facingMode: {ideal: 'environment'}, width: {ideal: 1280}, height: {ideal: 720}, frameRate: {ideal: 30, max: 30}}, audio: true});
+      if (g !== generation || !valid() || grant.scope !== scope || currentMatch() !== snap.id || document.hidden) throw Error('Screen changed before the camera opened.');
+      stream = acquired; previewKey = snap.id;
+      for (const track of stream.getTracks()) {
+        track.addEventListener('ended', () => interrupt('Camera or microphone stopped.'));
+        track.addEventListener('mute', () => interrupt('Camera or microphone was interrupted.'));
+      }
+      $('vpCamera').srcObject = stream; $('vpStage').hidden = false; await $('vpCamera').play();
+      note('Camera ready · nothing is recording yet.');
+    } catch (e) { acquired?.getTracks().forEach(t => t.stop()); stream = null; throw e; }
+    finally { opening = false; controls(); }
+  }
+  function closeCamera() {
+    if (recorder) return;
+    stream?.getTracks().forEach(t => t.stop()); stream = null; previewKey = '';
+    if ($('vpCamera')) { $('vpCamera').srcObject = null; $('vpStage').hidden = true; }
+    controls();
+  }
+  function enqueue(fn) {
+    writing = writing.then(fn).catch(e => { if (!writeError) { writeError = e; interrupted = true; note('Device save failed. Recording stopped; partial segments were kept.', true); if (recorder?.state !== 'inactive') stop('Device storage failed.'); } });
+    return writing;
+  }
+  function onScore(snap) {
+    if (!captureStarted || !timeline || !recorder || stopping || snap?.id !== take?.matchId) return;
+    const event = timeline.append(snap);
+    if (event) enqueue(async () => { if (writeError) return; take.events.push(event); await store.put(take); });
+    overlay($('vpOverlay'), snap);
+  }
+  async function start() {
+    ensure(); if (active()) return;
+    const snap = snapshot(), g = generation;
+    if (!stream || previewKey !== snap?.id || snap.status === 'complete' || !$('vpPermission').checked) throw Error('Open the camera for this unfinished match first.');
+    const athleteIds = [snap.red_id, snap.other_id].filter(Boolean);
+    if (athleteIds.some(id => !grant.athletes.includes(id))) throw Error('An athlete is no longer on the approved team roster. Reopen the match.');
+    if (snap.book_type !== 'test' && !athleteIds.length) throw Error('Select at least one team athlete in Match Book, or use a Test scorebook.');
+    opening = true; controls();
+    try {
+      const estimate = await navigator.storage.estimate();
+      if (estimate.quota - (estimate.usage || 0) < RESERVE) throw Error('Not enough free device storage to start.');
+      if (g !== generation || !valid() || !stream || currentMatch() !== snap.id || document.hidden) throw Error('Screen changed before recording started.');
+      const mime = C.mimeType();
+      take = {id: crypto.randomUUID(), scope: grant.scope, teamId: grant.team, userId: grant.user, matchId: snap.id,
+        boutId: snap.bout_id || null, athleteIds, label: snap.red_name + ' vs ' + snap.other_name, demo: snap.book_type === 'test', mime,
+        createdAt: new Date().toISOString(), status: 'recording', chunks: 0, bytes: 0, durationMs: 0, events: [], reason: ''};
+      writing = Promise.resolve(); writeError = null; pendingBytes = 0; interrupted = false; stopping = null; captureStarted = false;
+      await store.put(take);
+      if (g !== generation || !valid() || !stream || currentMatch() !== snap.id || document.hidden) throw Error('Screen changed before recording started.');
+      recorder = new MediaRecorder(stream, {mimeType: mime, videoBitsPerSecond: 2500000, audioBitsPerSecond: 96000});
+      recorder.onstart = () => {
+        const source = snapshot();
+        if (g !== generation || !valid() || source?.id !== take.matchId || document.hidden) { stop('Screen changed during start.'); return; }
+        timeline = new C.Timeline(performance.now()); captureStarted = true;
+        onScore(source); note('Recording privately · segments saving on this device.'); controls();
+      };
+      recorder.ondataavailable = e => {
+        if (!e.data.size || writeError) return;
+        pendingBytes += e.data.size;
+        enqueue(async () => {
+          try {
+            if (writeError) return;
+            const bytes = await store.chunk(take.id, take.chunks, e.data);
+            take.chunks++; take.bytes += bytes;
+            take.durationMs = timeline ? performance.now() - timeline.startedAt : 0;
+            await store.put(take);
+          } finally { pendingBytes -= e.data.size; }
+        });
+        if (pendingBytes > 32 * 1024 * 1024) stop('Device storage could not keep up.');
+      };
+      recorder.onerror = () => { interrupted = true; take.reason = 'Camera recording error.'; stop(take.reason); };
+      recorder.onstop = () => { if (!stopping) { interrupted = true; take.reason ||= 'Capture ended unexpectedly.'; } finalize().catch(report); };
+      recorder.start(2000);
+      if (navigator.wakeLock?.request) navigator.wakeLock.request('screen').then(lock => { if (recorder && g === generation) wake = lock; else lock.release(); }).catch(() => {});
+    } catch (e) {
+      if (take && !captureStarted) { take.status = 'failed'; take.reason = e.message; await store.put(take).catch(() => {}); }
+      recorder = null; closeCamera(); throw e;
+    } finally { opening = false; controls(); }
+  }
+  function stop(reason = '') {
+    if (stopping) return stopping;
+    if (!recorder) { closeCamera(); return Promise.resolve(); }
+    if (reason) { interrupted = true; take.reason = reason; }
+    if (captureStarted && timeline) {
+      const snap = snapshot(); if (snap?.id === take.matchId) onScore(snap);
+      take.durationMs = performance.now() - timeline.startedAt;
+    }
+    stopping = new Promise(resolve => { stopResolve = resolve; });
+    note('Saving video on this device…'); controls();
+    if (recorder.state !== 'inactive') recorder.stop();
+    return stopping;
+  }
+  async function finalize() {
+    if (!stopping) stopping = new Promise(resolve => { stopResolve = resolve; });
+    const saved = take;
+    captureStarted = false;
+    const finishedAt = timeline ? performance.now() - timeline.startedAt : 0;
+    await writing;
+    saved.durationMs = finishedAt; saved.status = 'saving';
+    recorder = null; closeCamera(); controls();
+    await wake?.release().catch(() => {}); wake = null;
+    try {
+      if (writeError) throw writeError;
+      await store.put(saved);
+      const file = await store.assemble(saved); await C.playable(file);
+      saved.status = interrupted ? 'partial' : 'ready'; await store.put(saved);
+      if (valid() && grant.scope === saved.scope) note(interrupted ? 'Partial video saved on this device. ' + saved.reason : 'Saved on this device · video playback checked. Upload status is shown below.');
+    } catch (e) {
+      saved.status = 'interrupted'; saved.reason ||= e.message; await store.put(saved).catch(() => {});
+      if (valid() && grant.scope === saved.scope) note('Recording is incomplete. Saved segments were kept for recovery; no complete video was confirmed.', true);
+    } finally {
+      take = timeline = null; stopping = null; const resolve = stopResolve; stopResolve = null; resolve?.(); controls();
+      if (valid()) list().catch(report);
+    }
+  }
+  function interrupt(reason) { if (recorder) stop(reason); else closeCamera(); }
+  function leaving() { if (active()) interrupt('Recording stopped when leaving the match.'); else closeCamera(); }
+  async function list() {
+    if (!valid() || !store) return;
+    const ticket = ++listTicket, scope = grant.scope, matchId = currentMatch();
+    const rows = (await store.list(scope)).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    if (ticket !== listTicket || !valid() || grant.scope !== scope) return;
+    for (const [id, subset] of [['vpTakes', rows.filter(r => r.matchId === matchId)], ['vpAllTakes', rows]]) {
+      const el = $(id); if (!el) continue;
+      el.innerHTML = subset.length ? subset.map(r => {
+        const ongoing = take?.id === r.id;
+        const ready = ['ready', 'partial'].includes(r.status);
+        const label = ongoing ? 'Recording / saving' : r.status === 'ready' ? 'Saved on this device' : r.status === 'partial' ? 'Partial recording · saved on this device' : 'Interrupted · recovery needed';
+        return `<article class="vp-take"><b>${r.demo ? 'TEST · ' : ''}${esc(r.label)}</b><p>${esc(new Date(r.createdAt).toLocaleString())} · ${format(r.durationMs)} · ${(r.bytes / 1048576).toFixed(1)} MB<br>${label}${r.boutId?' · '+(r.upload?.status==='ready'?'Uploaded · available to athlete & family':r.upload?.status==='uploading'?'Uploading '+(r.upload.progress||0)+'%':'Waiting to upload') : ''}</p><div class="vp-actions">${!ongoing ? `<button type="button" class="secondary" data-vp-${ready ? 'play' : 'recover'}="${r.id}">${ready ? 'Watch & review score' : 'Try partial recovery'}</button><button type="button" class="secondary" data-vp-delete="${r.id}">Delete device copy</button>` : ''}</div></article>`;
+      }).join('') : '<p>No saved videos here yet.</p>';
+      el.querySelectorAll('[data-vp-play]').forEach(b => b.onclick = () => watch(b.dataset.vpPlay).catch(report));
+      el.querySelectorAll('[data-vp-recover]').forEach(b => b.onclick = () => recover(b.dataset.vpRecover).catch(report));
+      el.querySelectorAll('[data-vp-delete]').forEach(b => b.onclick = () => remove(b.dataset.vpDelete).catch(report));
+    }
+  }
+  async function owned(id) {
+    ensure(); const scope = grant.scope, row = await (await storage()).get(id);
+    ensure(); if (scope !== grant.scope || row?.scope !== scope) throw Error('This recording belongs to another account or team.');
+    if (take?.id === id) throw Error('Wait until this recording finishes saving.');
+    return row;
+  }
+  async function recover(id) {
+    const row = await owned(id); note('Checking saved segments…');
+    // Only committed segment counts are assembled. An orphan last segment is kept untouched.
+    const file = await store.assemble(row); await C.playable(file);
+    ensure(); if (row.scope !== grant.scope) return;
+    row.status = 'partial'; row.reason = 'Recovered after an interruption. The ending may be missing.'; await store.put(row);
+    note('Partial recording recovered. Check the ending before relying on it.'); await list();
+  }
+  async function remove(id) {
+    const row = await owned(id);
+    if(row.boutId){if(row.upload?.status!=='ready')throw Error('Wait for the verified upload before removing this device copy.');await WMMatchVideo.verifyCloud(row.id);}
+    if (prompt('Type DELETE to permanently remove this video and score timeline from this device. Export it first if you need a copy.') !== 'DELETE') return;
+    ensure(); if (row.scope !== grant.scope) return;
+    await store.remove(row); note('Device video deleted.'); await list();
+  }
+  function closeReplay() {
+    if (replay) { replay.querySelector('video')?.pause(); replay.remove(); replay = null; }
+    if (replayURL) URL.revokeObjectURL(replayURL); replayURL = null;
+  }
+  async function watch(id) {
+    if (active()) throw Error('Stop and save your recording before opening a replay.');
+    closeCamera(); const row = await owned(id), file = await store.file(row);
+    ensure(); if (row.scope !== grant.scope) return;
+    closeReplay(); replayURL = URL.createObjectURL(file);
+    replay = document.createElement('section'); replay.className = 'vp-replay'; replay.setAttribute('role', 'dialog'); replay.setAttribute('aria-modal', 'true'); replay.setAttribute('aria-label', 'Video replay');
+    replay.innerHTML = `<div><div class="vp-head"><h2>${row.demo ? 'Test · ' : ''}${esc(row.label)}</h2><button id="vpReplayClose" type="button">Close</button></div><p>${row.status === 'partial' ? 'Partial recording · ' + esc(row.reason) : 'Saved on this device'} · ${row.boutId ? (row.upload?.status === 'ready' ? 'Uploaded · available to athlete & family' : 'Waiting to upload') : 'Device copy only'}</p><div class="vp-stage"><video id="vpPlayer" controls playsinline preload="auto"></video><div id="vpReplayOverlay" class="vp-overlay"></div></div><p id="vpReplayNote" role="status"></p><div class="vp-actions"><a id="vpExport" class="button" download="Match-video.${row.mime.includes('mp4') ? 'mp4' : 'webm'}">Export original video</a><button id="vpExportTimeline" type="button" class="secondary">Export score timeline</button></div><p>The scoreboard is shown in this player. Exported video does not have the scoreboard embedded.</p><h3>Jump to a scoring event</h3><div id="vpEvents" class="vp-events"></div></div>`;
+    document.body.append(replay); const player = $('vpPlayer'); player.src = replayURL;
+    $('vpExport').href = replayURL;
+    const paint = () => overlay($('vpReplayOverlay'), C.stateAt(row.events, player.currentTime * 1000));
+    player.ontimeupdate = player.onseeked = player.onloadeddata = paint; paint();
+    player.onerror = () => { $('vpReplayNote').textContent = 'This browser cannot play this saved file. Export the original for recovery.'; };
+    // Some WebM files report Infinity. Force a duration probe, then restore the start.
+    player.onloadedmetadata = () => { if (!Number.isFinite(player.duration)) { player.currentTime = 1e10; player.addEventListener('seeked', () => { player.currentTime = 0; }, {once: true}); } };
+    $('vpEvents').innerHTML = row.events.map((e, i) => `<button type="button" class="secondary" data-vp-seek="${i}">${format(e.atMs)} · ${esc(e.label)}</button>`).join('');
+    $('vpEvents').querySelectorAll('button').forEach(b => b.onclick = () => {
+      // Media seek times may round down; land just after the exact snapshot boundary.
+      const seconds = row.events[Number(b.dataset.vpSeek)].atMs / 1000 + .001;
+      player.currentTime = Math.min(seconds, Number.isFinite(player.duration) ? Math.max(0, player.duration - .05) : seconds); paint();
+    });
+    $('vpReplayClose').onclick = closeReplay;
+    $('vpExportTimeline').onclick = () => {
+      const url = URL.createObjectURL(new Blob([JSON.stringify({schema: 1, matchId: row.matchId, mime: row.mime, durationMs: row.durationMs, events: row.events}, null, 2)], {type: 'application/json'}));
+      const a = document.createElement('a'); a.href = url; a.download = 'Match-score-timeline.json'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 3000);
+    };
+    $('vpReplayClose').focus();
+  }
+  function reset() { generation++; grant = null; listTicket++; leaving(); closeReplay(); if ($('vpPanel')) { $('vpPanel').hidden = $('vpLibrary').hidden = true; $('vpTakes').replaceChildren(); $('vpAllTakes').replaceChildren(); $('vpPermission').checked = false; } statusText = ''; }
+  function monitorState() {
+    if (grant && !valid()) { reset(); return; }
+    if (stream && (document.hidden || currentMatch() !== previewKey)) { interrupt('Recording interrupted by a screen change.'); return; }
+    if (recorder && timeline) {
+      if (performance.now() - timeline.startedAt > MAX_MS) stop('The 20-minute test limit was reached.');
+      else { const s = snapshot(); overlay($('vpOverlay'), s); if ($('vpClock')) $('vpClock').textContent = s?.running ? 'Stop clock' : 'Start clock'; }
+    }
+  }
+  setInterval(monitorState, 200);
+  setInterval(async () => {
+    if (!grant || !context().allowed || refreshBusy || !navigator.onLine) return;
+    refreshBusy = true;
+    try { await authorize(true); controls(); } catch { /* Existing bounded in-memory lease supports an offline arena. */ }
+    finally { refreshBusy = false; }
+  }, 60000);
+  monitor = setInterval(async () => {
+    if (!recorder) return;
+    try { const q = await navigator.storage.estimate(); if (q.quota - q.usage < 64 * 1024 * 1024) stop('Device storage is almost full.'); }
+    catch { stop('Device storage could not be checked.'); }
+  }, 5000);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) interrupt('Recording stopped when the app moved to the background.'); });
+  window.addEventListener('pagehide', () => interrupt('Page closed during recording.'));
+  window.addEventListener('beforeunload', e => { if (active()) { e.preventDefault(); e.returnValue = ''; } });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && replay) closeReplay(); });
+  async function uploadQueue(){if(!valid()||active()||!store)return;await WMVideoUpload.queue(store,grant.scope);if(valid())await list();}
+  window.addEventListener('online',()=>uploadQueue().catch(()=>{}));
+  setInterval(()=>uploadQueue().catch(()=>{}),30000);
+  async function quickStart(){await sync();ensure();if(!snapshot()?.bout_id)throw Error('Open an assigned tournament bout.');$('vpPermission').checked=true;await preview();await start();}
+  return {sync, onScore, leaving, reset, active,quickStart};
+})();
+
+</script>
+<script id="wm-video-pilot-native-046">
+/* Native AVFoundation adapter. Uses the same Match Book hooks and scorer snapshots. */
+(() => {
+  'use strict';
+  const bridge = window.webkit?.messageHandlers?.wmVideoPilot;
+  if (!bridge) return;
+  const $ = id => document.getElementById(id), pending = new Map();
+  let generation = 0, grant = null, phase = 'idle', previewMatch = '', refreshing = false, authorization = null;
+  let lastToken = '', previousState = null, statusText = '', listTicket = 0;
+  const context = () => ({user: session?.user?.id, team: activeTeam?.id,
+    allowed: !!session?.user?.id && !!activeTeam?.id && !managedLogin &&
+      !document.body.classList.contains('kiosk-locked') && !document.querySelector('#appLockOverlay:not(.hidden)')});
+  const scope = c => c.user + ':' + c.team;
+  const valid = () => context().allowed && grant?.scope === scope(context()) && performance.now() < grant.until;
+  const snapshot = () => window.WMMatch?.videoSnapshot();
+  const active = () => ['opening', 'starting', 'recording', 'stopping'].includes(phase);
+  function post(command, fields = {}) { bridge.postMessage({command, ...fields}); }
+  function request(command, fields = {}) {
+    return new Promise((resolve, reject) => {
+      const requestId = crypto.randomUUID();
+      const timer = setTimeout(() => {
+        pending.delete(requestId);
+        reset();
+        reject(Error('The iPhone video action did not finish. Reopen Match Book and check saved videos before recording again.'));
+      }, command === 'preview' ? 60000 : 30000);
+      pending.set(requestId, {resolve, reject, timer});
+      try { post(command, {requestId, ...fields}); }
+      catch (e) { clearTimeout(timer); pending.delete(requestId); reject(e); }
+    });
+  }
+  function note(text, bad = false) {
+    statusText = text;
+    for (const id of ['vpStatus', 'vpLibraryStatus']) if ($(id)) { $(id).textContent = text; $(id).classList.toggle('vp-error', bad); }
+  }
+  function report(error) { note(error?.message || 'The native video action failed.', true); controls(); }
+  window.wrestlingManagerVideoPilotMessage = message => {
+    if (message.requestId) {
+      const task = pending.get(message.requestId); if (!task) return;
+      clearTimeout(task.timer); pending.delete(message.requestId);
+      message.ok ? task.resolve(message.value) : task.reject(Error(message.error || 'Video action failed.'));
+      return;
+    }
+    if (message.scope && message.scope !== scope(context())) return;
+    const value = message.value || {};
+    switch (message.event) {
+      case 'recording':
+        if (phase === 'starting') phase = 'recording';
+        onScore(snapshot()); note('Recording privately · saving on this iPhone or iPad.'); break;
+      case 'stopping': phase = 'stopping'; note(value.reason || 'Finishing the device recording…'); break;
+      case 'saved':
+        phase = 'idle'; previewMatch = '';
+        note(value.take?.status === 'ready' ? 'Saved on this device · upload status is shown below.' :
+          value.take?.status === 'partial' ? 'Partial recording saved on this device. ' + (value.take.reason || '') :
+            'Playback was not verified. Original files were kept; use Check recovery.', value.take?.status === 'failed');
+        if (valid()) list().catch(report); break;
+      case 'uploadChanged': if(valid())list().catch(report); break;
+      case 'failed': phase = 'idle'; previewMatch = ''; note(value.reason || 'The device save could not be confirmed.', true); break;
+      case 'closed':
+        if (!['starting', 'recording', 'stopping'].includes(phase)) { phase = 'idle'; previewMatch = ''; }
+        break;
+      case 'revoked': reset(); return;
+      default: return;
+    }
+    controls(); layout();
+  };
+  async function authorize(force = false) {
+    if (!context().allowed) return false;
+    if (!force && valid()) return true;
+    if (authorization) return authorization;
+    const c = context(), g = generation, requestedAt = performance.now();
+    const operation = (async () => {
+      const result = await request('authorize', {teamId: c.team, userId: c.user, accessToken: session.access_token, apiKey: SUPABASE_KEY});
+      if (g !== generation || scope(c) !== scope(context()) || !context().allowed) return false;
+      if (!result?.allowed || result.user_id !== c.user || result.team_id !== c.team || !(result.lease_seconds > 0)) { reset(); return false; }
+      // Conservative: transport time is subtracted again rather than extending the native lease.
+      grant = {scope: scope(c), until: requestedAt + Math.min(7200, result.lease_seconds) * 1000};
+      return valid();
+    })();
+    authorization = operation;
+    try { return await operation; } finally { if (authorization === operation) authorization = null; }
+  }
+  function shell() {
+    if ($('vpPanel') || !$('matchScoreSheet') || !$('matchListSheet')) return;
+    const panel = document.createElement('section'); panel.id = 'vpPanel'; panel.className = 'vp-panel'; panel.hidden = true;
+    panel.innerHTML = `<span class="vp-badge">VIDEO PILOT · TEST ACCESS</span><h3>Record &amp; score</h3>
+      <p>Private recording on this iPhone or iPad. Rotate your device before opening the camera.</p>
+      <label class="vp-check"><input id="vpPermission" type="checkbox">I have permission to record these participants at this event.</label>
+      <div class="vp-stage" id="vpStage" hidden aria-label="Native match camera preview"></div>
+      <div class="vp-actions"><button id="vpPreview" type="button" class="secondary">Open camera</button><button id="vpStart" type="button" class="vp-record" disabled>Record privately</button><button id="vpStop" type="button" disabled>Stop &amp; save video</button><button id="vpClock" type="button" class="secondary" hidden>Start clock</button><button id="vpCameraClose" type="button" class="secondary" hidden>Close camera</button></div>
+      <p id="vpStatus" class="vp-status" role="status"></p><p>Keep the app open. Recording stops in the background. Up to 20 minutes per take. Tournament videos upload when service returns while the app is open. Keep device copies until upload is verified. Go live is not connected.</p>
+      <details><summary>Saved videos on this device</summary><div id="vpTakes"></div></details>`;
+    $('matchScoreSheet').insertBefore(panel, $('matchPeriodLabel'));
+    $('vpPreview').onclick = () => preview().catch(report);
+    $('vpStart').onclick = () => start().catch(report);
+    $('vpStop').onclick = () => stop().catch(report);
+    $('vpClock').onclick = () => { if (valid() && phase === 'recording') $('matchToggle').click(); };
+    $('vpCameraClose').onclick = () => { post('close'); phase = 'idle'; previewMatch = ''; controls(); };
+    const library = document.createElement('section'); library.id = 'vpLibrary'; library.className = 'vp-panel'; library.hidden = true;
+    library.innerHTML = '<span class="vp-badge">VIDEO PILOT · TEST ACCESS</span><h3>Saved match videos</h3><p>Device copies only · open a match scoreboard to record.</p><p id="vpLibraryStatus" role="status"></p><div id="vpAllTakes"></div>';
+    $('matchListSheet').append(library);
+  }
+  function controls() {
+    window.WMMatchVideo?.recorderControls(phase === 'recording');
+    if (!$('vpPanel')) return;
+    const ready = valid(), snap = snapshot(), recording = ['starting', 'recording', 'stopping'].includes(phase);
+    $('vpPanel').hidden = !ready || !snap; $('vpLibrary').hidden = !ready;
+    $('vpPanel').classList.toggle('vp-capturing', recording);
+    $('vpStage').hidden = !ready || !['preview', 'starting', 'recording'].includes(phase);
+    $('vpPreview').disabled = !ready || phase !== 'idle';
+    $('vpStart').disabled = !ready || phase !== 'preview' || previewMatch !== snap?.id || snap?.status === 'complete';
+    $('vpStop').disabled = !ready || !['starting', 'recording'].includes(phase);
+    $('vpClock').hidden = !recording; $('vpClock').disabled = phase !== 'recording' || snap?.status === 'complete';
+    $('vpClock').textContent = snap?.running ? 'Stop clock' : 'Start clock';
+    $('vpCameraClose').hidden = phase !== 'preview'; $('vpPermission').disabled = active();
+  }
+  async function sync() {
+    shell(); const g = generation;
+    if (!context().allowed) { reset(); return; }
+    try {
+      if (!await authorize() || g !== generation) { controls(); return; }
+      controls();
+      if (!statusText) note('Test access ready. Open the camera to record this match.');
+      await list();
+    } catch (e) { if (g === generation && valid()) report(e); }
+  }
+  function ensure() { if (!valid()) throw Error('Video test access ended. Reconnect and reopen Match Book.'); }
+  async function preview() {
+    ensure(); if (phase !== 'idle') return;
+    if (!$('vpPermission').checked) throw Error('Confirm recording permission before opening the camera.');
+    const state = snapshot(), g = generation;
+    if (!state || state.status === 'complete') throw Error('Open an unfinished match to record.');
+    phase = 'opening'; controls();
+    try {
+      await request('preview', {state, permissionConfirmed: true});
+      if (g !== generation || !valid() || snapshot()?.id !== state.id || document.hidden) { post('close'); if (g === generation) { phase = 'idle'; previewMatch = ''; } return; }
+      previewMatch = state.id; phase = 'preview'; note('Camera ready · nothing is recording yet.');
+    } catch (e) { if (g === generation) phase = 'idle'; throw e; }
+    finally { controls(); layout(); }
+  }
+  async function start() {
+    ensure(); if (phase !== 'preview') return;
+    const state = snapshot(), g = generation;
+    if (!state || state.id !== previewMatch || state.status === 'complete' || !$('vpPermission').checked) throw Error('Open the camera for this unfinished match first.');
+    phase = 'starting'; lastToken = ''; previousState = null; controls();
+    try {
+      await request('start', {state, permissionConfirmed: true});
+      if (g !== generation || !valid()) post('stop');
+    } catch (e) { post('close'); if (g === generation) { phase = 'idle'; previewMatch = ''; } throw e; }
+    finally { controls(); layout(); }
+  }
+  function onScore(state) {
+    if (!valid() || !['starting', 'recording'].includes(phase) || !state || state.id !== previewMatch || state.token === lastToken) return;
+    const changedLedger = !previousState || JSON.stringify(previousState.ledger) !== JSON.stringify(state.ledger);
+    const label = !previousState ? 'Recording started' : changedLedger ? state.ledger.at(-1)?.label || 'Scoring history changed' :
+      previousState.running !== state.running ? state.running ? 'Clock started' : 'Clock paused' : 'Match state updated';
+    post('snapshot', {state, label}); lastToken = state.token; previousState = structuredClone(state);
+  }
+  async function stop() {
+    if (!['starting', 'recording'].includes(phase)) return;
+    onScore(snapshot()); phase = 'stopping'; controls(); layout(); note('Finishing and checking the device recording…');
+    try { await request('stop'); }
+    catch (e) { report(e); }
+  }
+  function leaving() {
+    if (['starting', 'recording'].includes(phase)) stop();
+    else if (phase === 'opening') reset();
+    else if (phase === 'preview') { post('close'); phase = 'idle'; previewMatch = ''; }
+    controls(); layout();
+  }
+  function reset() {
+    generation++; grant = null; authorization = null; listTicket++; phase = 'idle'; previewMatch = ''; lastToken = ''; previousState = null;
+    post('reset'); statusText = '';
+    for (const task of pending.values()) { clearTimeout(task.timer); task.reject(Error('The video screen changed. Reopen Match Book to continue.')); }
+    pending.clear();
+    if ($('vpPanel')) {
+      $('vpPanel').hidden = $('vpLibrary').hidden = true; $('vpStage').hidden = true; $('vpPermission').checked = false;
+      $('vpTakes').replaceChildren(); $('vpAllTakes').replaceChildren();
+    }
+  }
+  function display(state) {
+    const s = WMVideoCore.stateAt([{atMs: 0, state}], 0), seconds = Math.ceil(s.remainingMs / 1000);
+    return `${String(s.red_name).slice(0, 55)}  ${s.scores.red}   •   ${s.scores.other}  ${String(s.other_name).slice(0, 55)}\n${s.phaseLabel}   ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+  }
+  function layout() {
+    if (!['preview', 'starting', 'recording'].includes(phase) || !$('vpStage') || !valid()) return;
+    const rect = $('vpStage').getBoundingClientRect(), cx = Math.min(innerWidth - 1, Math.max(0, rect.x + rect.width / 2)), cy = Math.min(innerHeight - 1, Math.max(0, rect.y + rect.height / 2));
+    const visible = !$('vpStage').hidden && rect.width > 0 && rect.height > 0 && !!document.elementFromPoint(cx, cy)?.closest('#vpStage');
+    post('layout', {visible, x: rect.x, y: rect.y, width: rect.width, height: rect.height, viewportWidth: innerWidth,
+      text: snapshot() ? display(snapshot()) : ''});
+  }
+  async function list() {
+    ensure(); const g = generation, ticket = ++listTicket;
+    const result = await request('list');
+    if (g !== generation || ticket !== listTicket || !valid()) return;
+    const rows = result.takes || [];
+    function render(container, matches) {
+      container.innerHTML = matches.length ? matches.map(row => `<div class="vp-take"><b>${row.demo ? 'Demo · ' : ''}${esc(row.label)}</b><p>${esc(row.status === 'ready' ? 'Saved on this device' : row.status === 'partial' ? 'Partial recording on this device' : 'Interrupted recording · recovery check needed')} · ${esc(new Date(row.createdAt).toLocaleString())}</p><p>${esc(row.reason || '')}${row.boutId?' · '+(row.upload?.status==='ready'?'Uploaded · available to athlete & family':row.upload?.status==='uploading'?'Uploading '+(row.upload.progress||0)+'%':'Waiting to upload'):''}</p><div class="vp-actions">${['ready', 'partial'].includes(row.status) ? `<button type="button" data-action="play" data-id="${esc(row.id)}">Replay &amp; export</button>` : `<button type="button" data-action="recover" data-id="${esc(row.id)}">Check recovery</button>`}<button type="button" class="secondary" data-action="delete" data-id="${esc(row.id)}">Delete device copy</button></div></div>`).join('') : '<p>No saved videos for this account and team on this device.</p>';
+      container.querySelectorAll('button').forEach(button => button.onclick = async () => {
+        try {
+          ensure(); if (active()) throw Error('Stop and save your recording first.');
+          if(button.dataset.action==='delete'){const row=rows.find(r=>r.id===button.dataset.id);if(row?.boutId&&row.upload?.status!=='ready')throw Error('Wait for the verified upload before removing this device copy.');if(!confirm(row?.upload?.status==='ready'?'Remove the device copy? The uploaded video stays available to the athlete and family.':'Delete this device recording and its score timeline? There is no cloud copy.'))return;}
+          post('close'); phase = 'idle'; previewMatch = ''; controls();
+          button.disabled = true;
+          await request(button.dataset.action, {id: button.dataset.id});
+          if (valid()) await list();
+        } catch (e) { report(e); } finally { button.disabled = false; }
+      });
+    }
+    if ($('vpTakes')) render($('vpTakes'), rows.filter(row => row.matchId === snapshot()?.id));
+    if ($('vpAllTakes')) render($('vpAllTakes'), rows);
+  }
+  function monitor() {
+    if (grant && !valid()) { reset(); return; }
+    if (previewMatch && (document.hidden || snapshot()?.id !== previewMatch)) { leaving(); return; }
+    if (['preview', 'starting', 'recording'].includes(phase)) { post('heartbeat'); controls(); layout(); }
+  }
+  setInterval(monitor, 250);
+  setInterval(async () => {
+    if (!grant || !context().allowed || refreshing || !navigator.onLine) return;
+    refreshing = true;
+    try { await authorize(true); controls(); } catch { /* The bounded native lease supports temporary arena outages. */ }
+    finally { refreshing = false; }
+  }, 60000);
+  document.addEventListener('scroll', layout, true); window.addEventListener('resize', layout);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) leaving(); });
+  window.addEventListener('pagehide', reset);
+  window.addEventListener('beforeunload', event => { if (active()) { event.preventDefault(); event.returnValue = ''; } });
+  async function uploadQueue(){if(!valid()||active()||!navigator.onLine||document.hidden)return;await request('uploadNext');}
+  window.addEventListener('online',()=>uploadQueue().catch(()=>{}));
+  setInterval(()=>uploadQueue().catch(()=>{}),30000);
+  async function quickStart(){await sync();ensure();if(!snapshot()?.bout_id)throw Error('Open an assigned tournament bout.');$('vpPermission').checked=true;await preview();await start();}
+  window.WMVideoPilot = {sync, onScore, leaving, reset, active,quickStart};
+})();
+
+</script>
+<script id="wm-match-video-046">
+/* Athlete-first tournament recording. Every action is authorized by the server. */
+window.WMMatchVideo = (() => {
+ 'use strict';
+ const $=id=>document.getElementById(id), E=v=>esc(String(v??''));
+ let generation=0, replay=null, busy=false;
+ const bookButtons=['matchBookBtn','clipboardMatchBookBtn','matchBookRoomBtn'];
+ function bookAccess(allowed=false){for(const id of bookButtons)$(id)?.classList.toggle('hidden-role',!isStaff&&!allowed);window.WMClipboard?.sync();}
+ const context=()=>({user:session?.user?.id,team:activeTeam?.id});
+ const valid=c=>c.user&&c.team&&c.user===session?.user?.id&&c.team===activeTeam?.id&&!managedLogin&&!document.body.classList.contains('kiosk-locked')&&!document.querySelector('#appLockOverlay:not(.hidden)');
+ async function rpc(action,data={}) { const c=context();if(!valid(c))throw Error('Open your personal team account.');const r=await client.rpc('video_match_request',{p_action:action,p_data:{...data,team_id:c.team}});if(!valid(c))throw Error('Your account or team changed.');if(r.error)throw Error(r.error.message);return r.data; }
+ function reset(){generation++;replay?.querySelector('video')?.pause();replay?.remove();replay=null;document.querySelectorAll('[data-video-profile]').forEach(x=>x.remove());$('videoAssignmentsBtn')?.remove();$('lockerMatchBookBtn')?.remove();bookAccess();}
+ function button(text,run){const b=document.createElement('button');b.type='button';b.textContent=text;b.onclick=async()=>{b.disabled=true;try{await run();}catch(e){message(e.message,true);}finally{b.disabled=false;}};return b;}
+ async function sync(){const g=++generation;try{const data=await rpc('assignments');if(g!==generation)return;bookAccess(data.can_scorebook===true);
+  let entry=$('lockerMatchBookBtn');if(data.can_scorebook&&!entry){entry=button('Match Book · score & record',scorebook);entry.id='lockerMatchBookBtn';entry.className='wide secondary mv-entry';$('lockerGoalsTab')?.parentElement?.after(entry);}if(entry)entry.hidden=!data.can_scorebook;
+  let b=$('videoAssignmentsBtn');if(!b){b=button('Record team matches',scorebook);b.id='videoAssignmentsBtn';$('tournamentDayBtn')?.parentElement?.append(b);}if(b)b.hidden=!data.can_scorebook;
+ }catch{if(g!==generation)return;$('videoAssignmentsBtn')?.remove();$('lockerMatchBookBtn')?.remove();bookAccess();}}
+ async function scorebook(){const data=await rpc('assignments');if(!data.can_scorebook)throw Error('Your coach needs to give this personal account recorder access.');closeSheets();const box=sheet('Match Book');box.innerHTML=data.test_only?'<p>Private recording test · saved on this device. Use the Test scorebook to check your camera, scoring and replay.</p>':'<p>Score and record your assigned team matches. Athletes and student managers use their own accounts.</p>';
+  if(data.can_record_test)box.append(button('Test scorebook',test));else box.insertAdjacentHTML('beforeend','<p>Your coach can assign a match to enable your camera test.</p>');
+  if(!data.test_only)renderBouts(box,data.bouts);if(data.can_manage)box.append(button('Set event rules & recorder access',manage));
+  const c=context();try{const draft=JSON.parse(localStorage.getItem('wm-match-draft-v1:'+c.user+':'+c.team)||'null');if(data.can_record_test&&draft?.owner===c.user&&draft?.team_id===c.team&&draft?.data?.video_test)box.append(button('Resume test scorebook',async()=>{await rpc('recorder_test');replay?.remove();replay=null;await WMMatch.openVideo(draft);}));}catch{}
+ }
+ async function test(){if(window.WMVideoPilot?.active())throw Error('Stop and save your current recording first.');const row=await rpc('recorder_test');replay?.remove();replay=null;await WMMatch.openVideo(row);$('vpPanel')?.scrollIntoView({block:'start'});}
+
+ function sheet(title){replay?.remove();const box=document.createElement('section');box.className='vp-replay';box.innerHTML=`<div><div class="vp-head"><h2>${E(title)}</h2><button type="button">Close</button></div><div class="mv-content"></div></div>`;box.querySelector('button').onclick=()=>{box.querySelector('video')?.pause();box.remove();replay=null;};document.body.append(box);replay=box;return box.querySelector('.mv-content');}
+
+ function renderBouts(box,bouts){if(!bouts.length){box.insertAdjacentHTML('beforeend','<p>No upcoming bouts ready to record. Your coach sets the event rules and assigns recorders; a linked parent controls recording permission.</p>');return;}
+  for(const b of bouts){const card=document.createElement('article');card.className='vp-take';card.innerHTML=`<h3>${E(b.athlete_name)}</h3><p>${E(b.event_name)} · Bout ${E(b.bout_number)} · Mat ${E(b.mat||'pending')}</p><p>vs ${E(b.opponent||'Opponent pending')}</p><p class="fine">Coach entered · ${E(new Date(b.updated_at).toLocaleString())}</p>`;card.append(button('Score & record match',()=>start(b.id)));box.append(card);}}
+ async function start(boutId){if(busy)return;if(window.WMVideoPilot?.active())throw Error('Stop and save the current video first.');busy=true;try{const row=await rpc('begin',{bout_id:boutId});replay?.remove();replay=null;await WMMatch.openVideo(row);if(WMMatch.videoSnapshot()?.id!==row.id)return;await WMVideoPilot.quickStart();$('vpPanel')?.scrollIntoView({block:'start'});}finally{busy=false;}}
+ async function profile(athleteId,host='athleteViewSheet'){const g=generation,c=context();try{const data=await rpc('athlete',{athlete_id:athleteId});if(g!==generation||!valid(c))return;const root=$(host);if(!root||root.classList.contains('hidden'))return;root.querySelector('[data-video-profile]')?.remove();const box=document.createElement('section');box.className='vp-panel';box.dataset.videoProfile=athleteId;box.innerHTML='<h3>Match videos</h3>';root.append(box);
+   renderBouts(box,data.bouts);
+   if(data.recordings.length){for(const r of data.recordings){const card=document.createElement('article');card.className='vp-take';card.innerHTML=`<b>${E(r.label)} · Bout ${E(r.bout_number)}</b><p>vs ${E(r.opponent)}${r.partial?' · Partial recording':''}</p>`;card.append(button('Watch / download',()=>play(r.id)));if(data.can_set_permission||data.can_manage)card.append(button('Remove shared video',async()=>{if(!confirm('Remove access to this shared video? Downloads already saved by family cannot be recalled.'))return;await rpc('remove',{id:r.id});await profile(athleteId,host);}));box.append(card);}}
+   else box.insertAdjacentHTML('beforeend','<p>No uploaded videos yet. Recordings waiting for service stay on the recorder’s device.</p>');
+   if(data.can_set_permission){const label=document.createElement('label');label.className='vp-check';label.innerHTML=`<input type="checkbox" ${data.permission===true?'checked':''}>Allow match recording and private athlete/family sharing`;const input=label.querySelector('input');input.onchange=async()=>{input.disabled=true;try{await rpc('permission',{athlete_id:athleteId,allowed:input.checked});await profile(athleteId,host);}catch(e){input.checked=!input.checked;message(e.message,true);}finally{input.disabled=false;}};box.append(label);box.insertAdjacentHTML('beforeend','<p class="fine">Turning this off blocks new recordings and shared access. A restriction from either linked parent takes priority.</p>');}
+  }catch{/* Pilot not enabled or this viewer has no access: do not expose the entry point. */}}
+ async function urls(id,download=false){const row=await rpc('playback',{id}),c=context();const [video,timeline]=await Promise.all([client.storage.from(row.bucket).createSignedUrl(row.video_path,120,download?{download:'Match-video'}:undefined),client.storage.from(row.bucket).createSignedUrl(row.timeline_path,120)]);if(!valid(c))throw Error('Account changed.');if(video.error||timeline.error)throw Error('The saved video is temporarily unavailable. Try again.');return{video:video.data.signedUrl,timeline:timeline.data.signedUrl};}
+ async function verifyCloud(id){const links=await urls(id);await new Promise((resolve,reject)=>{const v=document.createElement('video');v.muted=true;v.playsInline=true;const timer=setTimeout(()=>done(Error('Cloud playback could not be checked. Keep the device copy.')),20000);const done=e=>{clearTimeout(timer);v.removeAttribute('src');v.load();e?reject(e):resolve();};v.onloadeddata=()=>done();v.onerror=()=>done(Error('Cloud playback could not be checked. Keep the device copy.'));v.src=links.video;v.load();});return true;}
+ async function play(id){const links=await urls(id),box=sheet('Match video'),c=context();box.innerHTML='<div class="vp-stage"><video controls playsinline preload="metadata"></video><div class="mv-replay-score"></div></div><p class="fine">Private family video. Download links expire after two minutes.</p>';const video=box.querySelector('video');video.src=links.video;let retrying=false;video.onerror=async()=>{if(retrying||!valid(c)||!box.isConnected)return;retrying=true;const at=video.currentTime,paused=video.paused;try{const fresh=await urls(id);if(!valid(c)||!box.isConnected)return;video.onloadedmetadata=()=>{video.currentTime=at;if(!paused)video.play().catch(()=>{});};video.src=fresh.video;video.load();}catch{box.insertAdjacentHTML('beforeend','<p>Playback access expired or was removed. Reopen this video to check access.</p>');}};box.append(button('Download video',async()=>{const fresh=await urls(id,true);if(!valid(c))return;const a=document.createElement('a');a.href=fresh.video;a.rel='noopener';a.target='_blank';a.click();}));
+  try{const response=await fetch(links.timeline);if(!response.ok)throw Error();const row=await response.json();if(!valid(c)||!box.isConnected)return;video.ontimeupdate=()=>{const s=WMVideoCore.stateAt(row.events||[],video.currentTime*1000+1);if(s)box.querySelector('.mv-replay-score').textContent=`${s.red_name} ${s.scores.red} · ${s.scores.other} ${s.other_name} · ${s.phaseLabel}`;};}catch{box.insertAdjacentHTML('beforeend','<p>Score timeline unavailable; original video is still playable.</p>');}}
+ async function manage(){const data=await rpc('manage');const opts=rows=>rows.map(r=>[r.id,r.name]);const q=await WMOperations.dialog({title:'Tournament recording setup',description:'Use the event’s actual rules. Recording must be permitted by the event. Linked parents control private sharing.',fields:[{id:'event_id',label:'Tournament',options:opts(data.events)},{id:'preset',label:'Scoring rules',options:[['folkstyle','Folkstyle · custom event'],['freestyle','Freestyle'],['greco','Greco-Roman'],['beach','Beach']]},{id:'periods',label:'Period lengths in seconds, separated by commas',value:'120,120,120',required:true},{id:'breakSeconds',label:'Break between periods (seconds)',type:'number',value:'0'},{id:'takedown',label:'Takedown points',type:'number',value:'3'},{id:'permitted',label:'Event filming permission',options:[['no','Not confirmed / turn recording off'],['yes','Confirmed: recording is permitted']]},{id:'athlete_id',label:'Assign an athlete (optional)',options:[['','No assignment'],...opts(data.athletes)]},{id:'user_id',label:'Recorder · athlete, student manager or team member',options:opts(data.members)},{id:'assignment',label:'Assignment action',options:[['grant','Allow for 24 hours'],['revoke','Revoke access']]}],submit:'Save recording setup'});if(!q)return;await rpc('event_settings',{event_id:q.event_id,permitted:q.permitted==='yes',rules:{style:q.preset,periods:q.periods.split(',').map(Number),breakSeconds:Number(q.breakSeconds),takedown:Number(q.takedown)}});if(q.athlete_id)await rpc('assign',{event_id:q.event_id,athlete_id:q.athlete_id,user_id:q.user_id,revoke:q.assignment==='revoke'});message('Recording setup saved.');await sync();}
+ function recorderControls(recording){let live=$('vpGoLive');if(!live&&$('vpStart')){live=button('Go live',()=>rpc('go_live'));live.id='vpGoLive';live.disabled=true;live.title='Live streaming is not connected yet';$('vpStart').parentElement.append(live);const p=document.createElement('p');p.id='vpLiveState';p.className='mv-live-state vp-status';p.setAttribute('role','status');$('vpStart').parentElement.after(p);}if($('vpLiveState')){$('vpLiveState').innerHTML=recording?'<span class="mv-record-dot" aria-hidden="true"></span> Recording on this device · not live':'Live streaming not connected';}}
+ window.addEventListener('pagehide',reset);
+ return{rpc,sync,reset,profile,start,scorebook,test,urls,verifyCloud,recorderControls};
 })();
 
 </script>

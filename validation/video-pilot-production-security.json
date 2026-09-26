@@ -1,0 +1,10 @@
+{
+  "scope": "Post-install security advisor and SQL grant checks; before web publication",
+  "newWarnings": 0,
+  "newInformationalFindings": 7,
+  "explanation": "Seven private RLS tables intentionally have no direct-client policies; raw table privileges are revoked and scoped RPCs provide access. Existing warnings are unchanged.",
+  "anonymousPilotExecution": false,
+  "authenticatedRawGrantRead": false,
+  "testOnlyDefault": true,
+  "cloudDefault": false
+}

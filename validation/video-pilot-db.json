@@ -1,0 +1,12 @@
+{
+  "engine": "PGlite; synthetic existing schema, actual pilot migration",
+  "passed": [
+    "Pilot disabled with no initial grants",
+    "Exact active coach/team grant returns bounded lease and active roster only",
+    "Wrong teams, parents, athletes, unrelated accounts and shared logins denied",
+    "Client cannot read raw grants, enable pilot or grant itself access",
+    "Anonymous access denied",
+    "Revocation, expiry, membership removal and two-hour maximum enforced"
+  ],
+  "productionApplied": false
+}
