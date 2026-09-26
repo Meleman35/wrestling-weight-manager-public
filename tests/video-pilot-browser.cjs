@@ -21,6 +21,10 @@ const root=path.resolve(__dirname,'..');
  await p.locator('#matchToggle').click();await p.waitForTimeout(1100);
  await p.locator('#matchCorners [data-corner="red"][data-award="td"]').click();await p.waitForTimeout(1100);
  await p.screenshot({path:path.join(root,'validation/video-pilot-recording-phone.png')});
+ await p.setViewportSize({width:844,height:390});await p.waitForTimeout(250);
+ await p.screenshot({path:path.join(root,'validation/video-pilot-recording-landscape.png')});
+ assert(await p.locator('#matchCorners [data-fall="red"]').isVisible());assert(await p.locator('#matchCorners [data-fall="other"]').isVisible());
+ await p.setViewportSize({width:390,height:844});
  await p.locator('#matchToggle').click();await p.waitForTimeout(900);await p.locator('#matchUndo').click();await p.waitForTimeout(1000);
  // Network loss must not prevent same-device recording/scoring/saving after the grant.
  await ctx.setOffline(true);await p.waitForTimeout(500);await p.locator('#vpStop').click();

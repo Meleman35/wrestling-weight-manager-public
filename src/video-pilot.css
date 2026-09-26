@@ -5,3 +5,68 @@
 .mv-live-state{display:flex;align-items:center;gap:8px}.mv-record-dot{width:10px;height:10px;background:#c51f39;border-radius:50%;animation:mv-blink 1.2s ease-in-out infinite}.mv-replay-score{position:absolute;top:8px;left:8px;right:8px;padding:8px;background:#102139d9;color:white;pointer-events:none}@keyframes mv-blink{50%{opacity:.3}}@media(prefers-reduced-motion:reduce){.mv-record-dot{animation:none}}
 
 #vpGoLive:disabled{opacity:.5;cursor:not-allowed}.vp-panel.vp-capturing .mv-live-state{display:flex!important}
+
+/* Landscape/portrait camera workspace. Original scoring controls retain their handlers. */
+.vp-saved-entry{border-top:1px solid #c7d3e2;padding-top:12px;margin-top:12px}.vp-saved-entry button{width:100%;min-height:48px}.vp-saved-entry p{font-weight:650}
+body.vp-camera-mode{zoom:1!important;overflow:hidden;background:#08111c!important}
+body.vp-camera-mode> :not(#matchScoreSheet):not(#opsDialogSheet):not(.vp-replay){visibility:hidden!important}
+html:has(body.vp-native-camera),body.vp-native-camera{background:transparent!important}
+body.vp-camera-mode #sheetBackdrop{display:none!important}
+#matchScoreSheet.vp-camera-sheet{position:fixed!important;inset:0!important;transform:none!important;width:100%!important;height:100dvh!important;max-width:none!important;max-height:none!important;border:0!important;border-radius:0!important;padding:0!important;overflow:hidden!important;background:transparent!important;box-shadow:none!important;z-index:1400}
+#matchScoreSheet.vp-camera-sheet> :not(#vpCameraWorkspace){display:none!important}
+#vpCameraWorkspace{position:absolute;inset:0;color:white;isolation:isolate;--vp-edge-left:max(10px,env(safe-area-inset-left));--vp-edge-right:max(10px,env(safe-area-inset-right));--vp-top:max(10px,env(safe-area-inset-top));--vp-bottom:max(10px,env(safe-area-inset-bottom))}
+#vpCameraWorkspace [hidden]{display:none!important}
+#vpCameraWorkspace #vpStage{position:absolute;inset:0;z-index:-1;aspect-ratio:auto;margin:0;border-radius:0;max-height:none;background:#08111c}
+.vp-native-camera #vpCameraWorkspace #vpStage{background:transparent}
+#vpCameraWorkspace #vpCamera{object-fit:contain}
+#vpCameraWorkspace #vpOverlay{display:none}
+#vpCameraWorkspace button{min-height:44px;padding:8px 10px;font-size:13px;line-height:1.2;border-radius:10px;white-space:normal;touch-action:manipulation}
+#vpCameraWorkspace button:focus-visible{outline:3px solid #ffd166;outline-offset:2px}
+#vpCameraWorkspace .vp-camera-clock{position:absolute;top:var(--vp-top);left:50%;transform:translateX(-50%);width:150px;text-align:center;padding:8px;background:#08111cc9;border-radius:14px}
+#vpCameraWorkspace #matchClock{font-size:38px;color:white;margin:2px 0 6px}
+#vpCameraWorkspace #matchClock.match-running{color:#6ff0ad}
+#vpCameraWorkspace #matchClock.match-end{color:#ff8e9c}
+#vpCameraWorkspace #matchPeriodLabel{font-size:12px}
+#vpCameraWorkspace #matchToggle{width:100%}
+#vpCameraWorkspace #matchCorners{position:absolute;top:var(--vp-top);left:var(--vp-edge-left);right:var(--vp-edge-right);bottom:calc(68px + var(--vp-bottom));display:flex;justify-content:space-between;align-items:flex-start;gap:0;pointer-events:none}
+#vpCameraWorkspace #matchCorners .match-corner{pointer-events:auto;width:clamp(140px,22vw,210px);max-height:100%;overflow:auto;overscroll-behavior:contain;padding:9px;border-radius:14px}
+#vpCameraWorkspace .match-corner.red{background:#86162cce}
+#vpCameraWorkspace .match-corner.green{background:#074b30ce}
+#vpCameraWorkspace .match-corner.blue{background:#103d83ce}
+#vpCameraWorkspace #matchCorners h3{font-size:14px;line-height:1.25}
+#vpCameraWorkspace .match-corner .eyebrow{font-size:10px;color:#fff}
+#vpCameraWorkspace .match-score{font-size:36px}
+#vpCameraWorkspace #matchCorners .match-score-actions{grid-template-columns:1fr;gap:6px}
+#vpCameraWorkspace #matchCorners .match-score-actions button{font-size:13px;padding:8px 5px;min-height:44px}
+#vpCameraWorkspace .vp-camera-bar{position:absolute;bottom:var(--vp-bottom);left:50%;transform:translateX(-50%);display:flex;gap:8px;justify-content:center;max-width:48%}
+#vpCameraWorkspace .vp-camera-bar button{background:#a71e38;color:#fff;box-shadow:0 2px 12px #0005;min-width:120px}
+#vpCameraWorkspace:not(.vp-is-recording) #vpStop,#vpCameraWorkspace.vp-is-recording #vpStart{display:none}
+#vpCameraWorkspace .vp-camera-foot{position:absolute;bottom:var(--vp-bottom);left:var(--vp-edge-left);right:var(--vp-edge-right);display:flex;justify-content:space-between;align-items:flex-end;pointer-events:none}
+#vpCameraWorkspace .vp-camera-foot button{pointer-events:auto;max-width:22%;background:#101e30ed;color:white}
+#vpCameraWorkspace #vpLiveState{position:absolute;bottom:55px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:11px;background:#08111ccc;color:white;padding:5px 8px;border-radius:8px;margin:0}
+#vpMorePanel{position:absolute;inset:var(--vp-top) var(--vp-edge-right) var(--vp-bottom) var(--vp-edge-left);z-index:4;background:#f3f7fc;color:#112a48;border:1px solid #adc1d8;border-radius:16px;padding:16px;overflow:auto;overscroll-behavior:contain}
+#vpMorePanel .vp-head{display:flex;justify-content:space-between;align-items:center;gap:12px;position:sticky;top:-16px;background:#f3f7fc;padding:8px 0;z-index:1}
+#vpMorePanel .vp-head h3{margin:0}
+#vpMoreControls .ops-actions{margin:10px 0}
+@media(orientation:portrait){
+ #vpCameraWorkspace #matchCorners{top:auto;bottom:calc(130px + var(--vp-bottom));height:41%;gap:10px;align-items:stretch}
+ #vpCameraWorkspace #matchCorners .match-corner{width:calc(50% - 5px)}
+ #vpCameraWorkspace .vp-camera-clock{width:158px}
+ #vpCameraWorkspace .vp-camera-bar{bottom:calc(60px + var(--vp-bottom));max-width:95%;width:100%}
+ #vpCameraWorkspace .vp-camera-foot button{max-width:45%}
+ #vpCameraWorkspace #vpLiveState{bottom:110px;font-size:11px}
+}
+@media(orientation:landscape) and (max-height:390px){
+ #vpCameraWorkspace .vp-camera-clock{padding:5px;width:134px}
+ #vpCameraWorkspace #matchClock{font-size:30px}
+ #vpCameraWorkspace #matchCorners .match-corner{padding:6px}
+ #vpCameraWorkspace .match-score{font-size:28px}
+}
+
+#matchScoreSheet .match-fall-button{width:100%;min-height:44px;margin-top:6px;background:#fff2c6;color:#25231b;font-size:14px}
+#matchScoreSheet [hidden]{display:none!important}
+#vpCameraWorkspace #matchCorners .match-corner{display:flex;flex-direction:column;overflow:hidden}
+#vpCameraWorkspace .match-corner> :not(.match-score-actions){flex-shrink:0}
+#vpCameraWorkspace #matchCorners .match-score-actions{overflow:auto;overscroll-behavior:contain;min-height:0;flex-shrink:1}
+#vpCameraWorkspace .match-fall-button{flex-shrink:0}
+#vpCameraWorkspace .vp-camera-clock #matchOvertime{margin-top:8px;background:#fff2c6;color:#25231b;width:100%}

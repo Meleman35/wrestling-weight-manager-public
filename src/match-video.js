@@ -16,6 +16,7 @@ window.WMMatchVideo = (() => {
  }catch{if(g!==generation)return;$('videoAssignmentsBtn')?.remove();$('lockerMatchBookBtn')?.remove();bookAccess();}}
  async function scorebook(){const data=await rpc('assignments');if(!data.can_scorebook)throw Error('Your coach needs to give this personal account recorder access.');closeSheets();const box=sheet('Match Book');box.innerHTML=data.test_only?'<p>Private recording test · saved on this device. Use the Test scorebook to check your camera, scoring and replay.</p>':'<p>Score and record your assigned team matches. Athletes and student managers use their own accounts.</p>';
   if(data.can_record_test)box.append(button('Test scorebook',test));else box.insertAdjacentHTML('beforeend','<p>Your coach can assign a match to enable your camera test.</p>');
+  box.append(button('Saved videos on this device',()=>WMVideoPilot.openLibrary()));
   if(!data.test_only)renderBouts(box,data.bouts);if(data.can_manage)box.append(button('Set event rules & recorder access',manage));
   const c=context();try{const draft=JSON.parse(localStorage.getItem('wm-match-draft-v1:'+c.user+':'+c.team)||'null');if(data.can_record_test&&draft?.owner===c.user&&draft?.team_id===c.team&&draft?.data?.video_test)box.append(button('Resume test scorebook',async()=>{await rpc('recorder_test');replay?.remove();replay=null;await WMMatch.openVideo(draft);}));}catch{}
  }

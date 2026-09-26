@@ -61,8 +61,9 @@ window.WMVideoPilot = (() => {
     $('vpClock').onclick = () => { if (valid() && recorder && !stopping) $('matchToggle').click(); };
     $('vpCameraClose').onclick = () => closeCamera();
     const library = document.createElement('section'); library.id = 'vpLibrary'; library.className = 'vp-panel'; library.hidden = true;
-    library.innerHTML = '<span class="vp-badge">VIDEO PILOT · TEST ACCESS</span><h3>Saved match videos</h3><p>Device copies only · record from an open match scoreboard.</p><p id="vpLibraryStatus" role="status"></p><div id="vpAllTakes"></div>';
+    library.innerHTML = '<span class="vp-badge">VIDEO PILOT · TEST ACCESS</span><h3>Saved match videos</h3><p>Saved inside Wrestling Manager on this device, for this account and team. Test videos stay here. Use replay and export to save a copy outside the app.</p><p id="vpLibraryStatus" role="status"></p><div id="vpAllTakes"></div>';
     $('matchListSheet').append(library);
+    WMVideoUI.mount();
   }
   function controls() {
     window.WMMatchVideo?.recorderControls(!!recorder && captureStarted);
@@ -78,6 +79,9 @@ window.WMVideoPilot = (() => {
     $('vpClock').disabled = !!stopping || snap?.status === 'complete';
     $('vpCameraClose').hidden = !stream || active();
     $('vpPermission').disabled = active();
+    WMVideoUI.camera(ready && !!stream && !stopping);
+    if ($('vpCameraWorkspace')) $('vpCameraWorkspace').classList.toggle('vp-is-recording', !!recorder);
+    if ($('vpSavedVideos')) $('vpSavedVideos').disabled = active();
   }
   function report(e) { note(e?.name === 'NotAllowedError' ? 'Camera or microphone permission was denied. Allow access in browser settings and try again.' : e?.message || 'Video action failed.', true); controls(); }
   async function sync() {
@@ -213,7 +217,7 @@ window.WMVideoPilot = (() => {
       if (valid() && grant.scope === saved.scope) note('Recording is incomplete. Saved segments were kept for recovery; no complete video was confirmed.', true);
     } finally {
       take = timeline = null; stopping = null; const resolve = stopResolve; stopResolve = null; resolve?.(); controls();
-      if (valid()) list().catch(report);
+      if (valid()) list().then(() => {if(grant?.scope===saved.scope)WMVideoUI.saved(['ready','partial'].includes(saved.status));}).catch(report);
     }
   }
   function interrupt(reason) { if (recorder) stop(reason); else closeCamera(); }
@@ -223,6 +227,7 @@ window.WMVideoPilot = (() => {
     const ticket = ++listTicket, scope = grant.scope, matchId = currentMatch();
     const rows = (await store.list(scope)).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     if (ticket !== listTicket || !valid() || grant.scope !== scope) return;
+    WMVideoUI.count(rows.length);
     for (const [id, subset] of [['vpTakes', rows.filter(r => r.matchId === matchId)], ['vpAllTakes', rows]]) {
       const el = $(id); if (!el) continue;
       el.innerHTML = subset.length ? subset.map(r => {
@@ -288,7 +293,7 @@ window.WMVideoPilot = (() => {
     };
     $('vpReplayClose').focus();
   }
-  function reset() { generation++; grant = null; listTicket++; leaving(); closeReplay(); if ($('vpPanel')) { $('vpPanel').hidden = $('vpLibrary').hidden = true; $('vpTakes').replaceChildren(); $('vpAllTakes').replaceChildren(); $('vpPermission').checked = false; } statusText = ''; }
+  function reset() { WMVideoUI.reset(); generation++; grant = null; listTicket++; leaving(); closeReplay(); if ($('vpPanel')) { $('vpPanel').hidden = $('vpLibrary').hidden = true; $('vpTakes').replaceChildren(); $('vpAllTakes').replaceChildren(); $('vpPermission').checked = false; } statusText = ''; }
   function monitorState() {
     if (grant && !valid()) { reset(); return; }
     if (stream && (document.hidden || currentMatch() !== previewKey)) { interrupt('Recording interrupted by a screen change.'); return; }
@@ -317,5 +322,6 @@ window.WMVideoPilot = (() => {
   window.addEventListener('online',()=>uploadQueue().catch(()=>{}));
   setInterval(()=>uploadQueue().catch(()=>{}),30000);
   async function quickStart(){await sync();ensure();if(!snapshot()?.bout_id)throw Error('Open an assigned tournament bout.');$('vpPermission').checked=true;await preview();await start();}
-  return {sync, onScore, leaving, reset, active,quickStart};
+  async function openLibrary(){if(active())throw Error('Stop and save your recording first.');await sync();ensure();closeCamera();WMVideoUI.openLibrary();await list();}
+  return {sync, onScore, leaving, reset, active,quickStart,openLibrary};
 })();
