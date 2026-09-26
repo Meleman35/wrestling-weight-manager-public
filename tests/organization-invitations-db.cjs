@@ -22,6 +22,7 @@ async function main(){
  const migrations=fs.readdirSync(path.join(root,'supabase/migrations'));
  for(const suffix of ['_organization_structure_02036.sql','_organization_leadership_invitations_02045.sql'])await db.exec(fs.readFileSync(path.join(root,'supabase/migrations',migrations.find(n=>n.endsWith(suffix))),'utf8'));
  await db.exec(fs.readFileSync(path.join(__dirname,'organization-invitations-existing.sql'),'utf8'));
+ await db.exec(fs.readFileSync(path.join(root,'supabase/migrations','20260926155000_organization_general_members_02051.sql'),'utf8'));
  const as=async uid=>{await db.exec('reset role');await db.query("select set_config('request.jwt.claim.sub',$1,false)",[uid||'']);await db.exec('set role authenticated')};
  const req=async q=>(await db.query('select public.organization_leadership_invites($1::jsonb) result',[JSON.stringify({organization_id:org,...q})])).rows[0].result;
  const denied=(q,re)=>assert.rejects(()=>req(q),re);
@@ -76,6 +77,13 @@ async function main(){
  const emailContext=await req(send);assert.equal(emailContext.email,'wrong@example.test');assert.deepEqual(await req(send),emailContext);
  await denied({...send,request_id:crypto.randomUUID()},/Wait one minute/);await denied({...send,token:adminInvite.token},/no longer/);
  await as(users.wrong);await denied(send,/administrator/);pass('Email context fixes recipient, verifies saved token and administrator, and limits duplicate requests');
+ await as(users.admin);const memberInvite=create('second',{kind:'member'});await req(memberInvite);
+ await as(users.wrong);await denied({action:'preview',token:memberInvite.token},/unavailable/);
+ await as(users.second);const memberPreview=await req({action:'preview',token:memberInvite.token});assert.equal(memberPreview.access.access_role,'organization_member');await req(accept(memberInvite));
+ let memberRows=await sql('select (select count(*) from private.organization_general_members where user_id=$1)::int members,(select count(*) from public.organization_memberships where user_id=$1)::int admins,(select count(*) from public.team_memberships where user_id=$1)::int teams',[users.second]);assert.deepEqual(memberRows.rows[0],{members:1,admins:0,teams:0});
+ await as(users.second);assert.equal((await db.query('select count(*)::int n from private.organization_general_members')).rows[0].n,1);assert.equal((await sql('select private.ops_member($1) member',[org])).rows[0].member,true);await as(users.second);await denied({action:'context'},/administrator/);await as(users.wrong);assert.equal((await db.query('select count(*)::int n from private.organization_general_members')).rows[0].n,0);pass('Email-bound ordinary member joins Board Room without board, administrator or team privileges; RLS hides other members');
+ await as(users.admin);assert.ok((await req({action:'context'})).members.some(m=>m.user_id===users.second));await req({action:'remove_member',user_id:users.second,confirm_remove:true});
+ await as(users.second);assert.equal((await req(accept(memberInvite))).already_accepted,true);assert.equal((await sql('select private.ops_member($1) member',[org])).rows[0].member,false);pass('Administrator removal takes effect and accepted link cannot restore membership');
  await as(users.admin);await assert.rejects(()=>db.query('select * from private.organization_leadership_invitations'),/permission denied/);
  await db.exec('set role anon');await assert.rejects(()=>db.query("select public.organization_leadership_invites('{}')"),/permission denied/);pass('Raw invitation storage and anonymous RPC execution are blocked');
  await db.exec('reset role');const audits=await db.query("select count(*)::int n from private.ops_audit where detail::text like $1",['%'+emailInvite.token+'%']);assert.equal(audits.rows[0].n,0);
