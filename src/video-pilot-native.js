@@ -51,7 +51,8 @@
         note(value.take?.status === 'ready' ? 'Saved on this device · upload status is shown below.' :
           value.take?.status === 'partial' ? 'Partial recording saved on this device. ' + (value.take.reason || '') :
             'Playback was not verified. Original files were kept; use Check recovery.', value.take?.status === 'failed');
-        if (valid()) list().catch(report); break;
+        const savedGeneration = generation;
+        controls(); if (valid()) list().then(() => {if(savedGeneration===generation&&valid())WMVideoUI.saved(['ready','partial'].includes(value.take?.status));}).catch(report); break;
       case 'uploadChanged': if(valid())list().catch(report); break;
       case 'failed': phase = 'idle'; previewMatch = ''; note(value.reason || 'The device save could not be confirmed.', true); break;
       case 'closed':
@@ -72,7 +73,7 @@
       if (g !== generation || scope(c) !== scope(context()) || !context().allowed) return false;
       if (!result?.allowed || result.user_id !== c.user || result.team_id !== c.team || !(result.lease_seconds > 0)) { reset(); return false; }
       // Conservative: transport time is subtracted again rather than extending the native lease.
-      grant = {scope: scope(c), until: requestedAt + Math.min(7200, result.lease_seconds) * 1000};
+      grant = {scope: scope(c), overlay: result.camera_overlay === true, until: requestedAt + Math.min(7200, result.lease_seconds) * 1000};
       return valid();
     })();
     authorization = operation;
@@ -82,7 +83,7 @@
     if ($('vpPanel') || !$('matchScoreSheet') || !$('matchListSheet')) return;
     const panel = document.createElement('section'); panel.id = 'vpPanel'; panel.className = 'vp-panel'; panel.hidden = true;
     panel.innerHTML = `<span class="vp-badge">VIDEO PILOT · TEST ACCESS</span><h3>Record &amp; score</h3>
-      <p>Private recording on this iPhone or iPad. Rotate your device before opening the camera.</p>
+      <p>Private recording on this iPhone or iPad. Turn your device sideways for landscape. Choose the orientation before tapping Record; it stays fixed for that take.</p>
       <label class="vp-check"><input id="vpPermission" type="checkbox">I have permission to record these participants at this event.</label>
       <div class="vp-stage" id="vpStage" hidden aria-label="Native match camera preview"></div>
       <div class="vp-actions"><button id="vpPreview" type="button" class="secondary">Open camera</button><button id="vpStart" type="button" class="vp-record" disabled>Record privately</button><button id="vpStop" type="button" disabled>Stop &amp; save video</button><button id="vpClock" type="button" class="secondary" hidden>Start clock</button><button id="vpCameraClose" type="button" class="secondary" hidden>Close camera</button></div>
@@ -95,8 +96,9 @@
     $('vpClock').onclick = () => { if (valid() && phase === 'recording') $('matchToggle').click(); };
     $('vpCameraClose').onclick = () => { post('close'); phase = 'idle'; previewMatch = ''; controls(); };
     const library = document.createElement('section'); library.id = 'vpLibrary'; library.className = 'vp-panel'; library.hidden = true;
-    library.innerHTML = '<span class="vp-badge">VIDEO PILOT · TEST ACCESS</span><h3>Saved match videos</h3><p>Device copies only · open a match scoreboard to record.</p><p id="vpLibraryStatus" role="status"></p><div id="vpAllTakes"></div>';
+    library.innerHTML = '<span class="vp-badge">VIDEO PILOT · TEST ACCESS</span><h3>Saved match videos</h3><p>Saved inside Wrestling Manager on this device, for this account and team. Test videos stay here. Use replay and export to save a copy outside the app.</p><p id="vpLibraryStatus" role="status"></p><div id="vpAllTakes"></div>';
     $('matchListSheet').append(library);
+    WMVideoUI.mount();
   }
   function controls() {
     window.WMMatchVideo?.recorderControls(phase === 'recording');
@@ -111,6 +113,9 @@
     $('vpClock').hidden = !recording; $('vpClock').disabled = phase !== 'recording' || snap?.status === 'complete';
     $('vpClock').textContent = snap?.running ? 'Stop clock' : 'Start clock';
     $('vpCameraClose').hidden = phase !== 'preview'; $('vpPermission').disabled = active();
+    WMVideoUI.camera(ready && !!grant?.overlay && ['preview','starting','recording'].includes(phase), true);
+    if ($('vpCameraWorkspace')) $('vpCameraWorkspace').classList.toggle('vp-is-recording', recording);
+    if ($('vpSavedVideos')) $('vpSavedVideos').disabled = active();
   }
   async function sync() {
     shell(); const g = generation;
@@ -167,7 +172,7 @@
     controls(); layout();
   }
   function reset() {
-    generation++; grant = null; authorization = null; listTicket++; phase = 'idle'; previewMatch = ''; lastToken = ''; previousState = null;
+    WMVideoUI.reset(); generation++; grant = null; authorization = null; listTicket++; phase = 'idle'; previewMatch = ''; lastToken = ''; previousState = null;
     post('reset'); statusText = '';
     for (const task of pending.values()) { clearTimeout(task.timer); task.reject(Error('The video screen changed. Reopen Match Book to continue.')); }
     pending.clear();
@@ -183,15 +188,16 @@
   function layout() {
     if (!['preview', 'starting', 'recording'].includes(phase) || !$('vpStage') || !valid()) return;
     const rect = $('vpStage').getBoundingClientRect(), cx = Math.min(innerWidth - 1, Math.max(0, rect.x + rect.width / 2)), cy = Math.min(innerHeight - 1, Math.max(0, rect.y + rect.height / 2));
-    const visible = !$('vpStage').hidden && rect.width > 0 && rect.height > 0 && !!document.elementFromPoint(cx, cy)?.closest('#vpStage');
-    post('layout', {visible, x: rect.x, y: rect.y, width: rect.width, height: rect.height, viewportWidth: innerWidth,
+    const overlay = !!$('vpCameraWorkspace');
+    const visible = !$('vpStage').hidden && rect.width > 0 && rect.height > 0 && (overlay ? !$('matchScoreSheet').classList.contains('hidden') : !!document.elementFromPoint(cx, cy)?.closest('#vpStage'));
+    post('layout', {visible, overlay, x: rect.x, y: rect.y, width: rect.width, height: rect.height, viewportWidth: innerWidth,
       text: snapshot() ? display(snapshot()) : ''});
   }
   async function list() {
     ensure(); const g = generation, ticket = ++listTicket;
     const result = await request('list');
     if (g !== generation || ticket !== listTicket || !valid()) return;
-    const rows = result.takes || [];
+    const rows = result.takes || []; WMVideoUI.count(rows.length);
     function render(container, matches) {
       container.innerHTML = matches.length ? matches.map(row => `<div class="vp-take"><b>${row.demo ? 'Demo · ' : ''}${esc(row.label)}</b><p>${esc(row.status === 'ready' ? 'Saved on this device' : row.status === 'partial' ? 'Partial recording on this device' : 'Interrupted recording · recovery check needed')} · ${esc(new Date(row.createdAt).toLocaleString())}</p><p>${esc(row.reason || '')}${row.boutId?' · '+(row.upload?.status==='ready'?'Uploaded · available to athlete & family':row.upload?.status==='uploading'?'Uploading '+(row.upload.progress||0)+'%':'Waiting to upload'):''}</p><div class="vp-actions">${['ready', 'partial'].includes(row.status) ? `<button type="button" data-action="play" data-id="${esc(row.id)}">Replay &amp; export</button>` : `<button type="button" data-action="recover" data-id="${esc(row.id)}">Check recovery</button>`}<button type="button" class="secondary" data-action="delete" data-id="${esc(row.id)}">Delete device copy</button></div></div>`).join('') : '<p>No saved videos for this account and team on this device.</p>';
       container.querySelectorAll('button').forEach(button => button.onclick = async () => {
@@ -228,5 +234,6 @@
   window.addEventListener('online',()=>uploadQueue().catch(()=>{}));
   setInterval(()=>uploadQueue().catch(()=>{}),30000);
   async function quickStart(){await sync();ensure();if(!snapshot()?.bout_id)throw Error('Open an assigned tournament bout.');$('vpPermission').checked=true;await preview();await start();}
-  window.WMVideoPilot = {sync, onScore, leaving, reset, active,quickStart};
+  async function openLibrary(){if(active())throw Error('Stop and save your recording first.');await sync();ensure();post('close');phase='idle';previewMatch='';controls();WMVideoUI.openLibrary();await list();}
+  window.WMVideoPilot = {sync, onScore, leaving, reset, active,quickStart,openLibrary};
 })();

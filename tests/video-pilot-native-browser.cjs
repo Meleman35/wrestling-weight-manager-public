@@ -9,14 +9,14 @@ const root=path.resolve(__dirname,'..');
     if(name==='save_operations')return {data:{revision:1},error:null};
     F.calls.push`);
  await ctx.addInitScript({content:init});
- await ctx.addInitScript(()=>{
+ await ctx.addInitScript(({overlay})=>{
    const N=window.nativeVideoFixture={calls:[],takes:[],current:null,scope:'',denied:false,permissionDenied:false,failSave:false,holdAuthorization:false,held:[]};
    const emit=(event,value,scope=N.scope)=>window.wrestlingManagerVideoPilotMessage?.({event,value,scope});N.emit=emit;
    window.webkit={messageHandlers:{wmVideoPilot:{postMessage(m){
      N.calls.push(structuredClone(m));
      const reply=(value={},error)=>setTimeout(()=>window.wrestlingManagerVideoPilotMessage?.({requestId:m.requestId,ok:!error,value,error}),0);
      if(m.command==='authorize'){
-       const complete=()=>{N.scope=m.userId+':'+m.teamId;reply({allowed:!N.denied,user_id:m.userId,team_id:m.teamId,lease_seconds:7200,athlete_ids:[]});};
+       const complete=()=>{N.scope=m.userId+':'+m.teamId;reply({allowed:!N.denied,user_id:m.userId,team_id:m.teamId,lease_seconds:7200,athlete_ids:[],camera_overlay:overlay});};
        if(N.holdAuthorization)N.held.push(complete);else complete();return;
      }
      if(m.command==='preview'){reply({},N.permissionDenied?'Allow Camera and Microphone for Wrestling Manager in iPhone Settings, then retry.':null);return;}
@@ -35,14 +35,14 @@ const root=path.resolve(__dirname,'..');
      if(m.command==='play'){reply();return;}
      if(m.requestId)reply();
    }}}};
- });
+ },{overlay:process.env.WM_CAMERA_OVERLAY==='1'});
  await p.route('**/*',r=>r.request().url()==='https://wm.test/'?r.fulfill({contentType:'text/html',body:fs.readFileSync(path.join(root,'index.html'),'utf8')}):r.request().url().includes('supabase-js')?r.fulfill({contentType:'text/javascript',body:''}):r.abort());
  async function setup(){await p.evaluate(()=>{session=fixture.session={access_token:'synthetic-token',user:{id:'11111111-1111-4111-8111-111111111111'}};activeTeam={id:'22222222-2222-4222-8222-222222222222',name:'Synthetic Team'};activeSeason={id:'SEASON-A'};accountProfileData={id:session.user.id,ui_preferences:{}};isStaff=actualIsStaff=isTeamAdmin=actualIsTeamAdmin=true;isManager=false;viewMode='staff';show('authView',false);show('appView',true);show('appLockOverlay',false);applyRoleUI();});}
  await p.goto('https://wm.test/');await setup();
  await p.evaluate(()=>{navigator.mediaDevices.getUserMedia=()=>{throw Error('Native adapter must not use browser camera');};WMVideoCore.DeviceStore.prototype.init=()=>{throw Error('Native adapter must not use browser storage');};});
  await p.evaluate(()=>WMMatch.open());await p.locator('#matchNew').click();await p.locator('#matchBookType').selectOption('test');await p.locator('#matchSetupForm').evaluate(f=>f.requestSubmit());
  await p.waitForFunction(()=>!document.getElementById('vpPanel').hidden);
- assert.equal(await p.locator('#vpPanel').count(),1);assert.match(await p.locator('#vpPanel').innerText(),/iPhone or iPad/);
+ assert.equal(await p.locator('#matchImminent').isVisible(),false);assert.equal(await p.locator('#vpPanel').count(),1);assert.match(await p.locator('#vpPanel').innerText(),/iPhone or iPad/);
  await p.locator('#vpPreview').click();assert.match(await p.locator('#vpStatus').innerText(),/Confirm recording permission/);
  assert.equal(await p.evaluate(()=>nativeVideoFixture.calls.filter(m=>m.command==='preview').length),0);
  pass('Native handler selects one adapter; event permission is required before camera access');
@@ -110,8 +110,76 @@ const root=path.resolve(__dirname,'..');
   assert.match(await p.locator('#matchStatus').innerText(),/Test score saved on this device/);assert.equal(await p.evaluate(()=>fixture.coachBookCalls),0);
   pass(role+' can open Match Book, confirm permission, record and save a test without coach operations');
  }
+
+ if(process.env.WM_CAMERA_OVERLAY==='1'){
+  await p.locator('#vpPreview').click();await p.waitForSelector('#vpCameraWorkspace');
+  assert.equal(await p.locator('#matchImminent').isVisible(),false);
+  await p.locator('#vpStart').click();await p.waitForFunction(()=>nativeVideoFixture.current);
+  for(const viewport of [{width:390,height:844},{width:844,height:390},{width:667,height:375},{width:1024,height:768}]){
+   await p.setViewportSize(viewport);await p.waitForTimeout(300);
+   const geometry=await p.evaluate(()=>{
+    const ids=['matchToggle','matchUndo','vpStop','vpMore'];
+    return ids.map(id=>{const b=document.getElementById(id),r=b.getBoundingClientRect();return{id,rect:{x:r.x,y:r.y,right:r.right,bottom:r.bottom},zoom:getComputedStyle(document.body).zoom,sheetZoom:getComputedStyle(document.getElementById("matchScoreSheet")).zoom,width:r.width,height:r.height,inFrame:r.x>=0&&r.y>=0&&r.right<=innerWidth+1&&r.bottom<=innerHeight+1,hit:document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)===b};});
+   });
+   assert(geometry.every(b=>b.inFrame&&b.hit&&b.height>=44),JSON.stringify({viewport,geometry}));
+   await p.locator('#matchToggle').click();await p.locator('#matchToggle').click();
+   await p.locator('#matchCorners [data-corner="other"][data-award="escape"]').click();await p.locator('#matchUndo').click();
+   assert(await p.evaluate(()=>nativeVideoFixture.calls.some(m=>m.command==='layout'&&m.overlay&&m.visible&&m.width===innerWidth)));
+  }
+  pass('Camera controls stay tappable at portrait, both phone landscape sizes and tablet size; original awards and undo still work');
+  await p.locator('#vpMore').click();
+  for(const id of ['matchAdvance','matchPosition','matchCorrection','matchClockEdit','matchTimeout','matchOvertime','matchSave','matchFinish','matchExport'])assert(await p.locator('#vpMoreControls #'+id).isVisible(),id);
+  assert(await p.locator('#vpMorePanel').evaluate(e=>e.scrollWidth<=e.clientWidth));
+  await p.locator('#vpMoreClose').click();
+  await p.locator('#matchCorners [data-fall="other"]').click();
+  assert.equal(await p.locator('#od_result').inputValue(),'Fall');assert.equal(await p.locator('#od_winner').inputValue(),'other');
+  await p.locator('#opsDialogCancel').click();assert.equal(await p.evaluate(()=>WMMatch.videoSnapshot().status),'live');
+  await p.locator('#matchCorners [data-fall="other"]').click();await p.locator('#opsDialogSubmit').click();
+  await p.waitForFunction(()=>WMMatch.videoSnapshot().status==='complete');
+  assert(await p.evaluate(()=>WMMatch.videoSnapshot().ledger.some(x=>x.label==='Match finished: Fall')));
+  assert.equal(await p.evaluate(()=>fixture.coachBookCalls),0);
+  pass('More controls retains the existing scorer; Fall/pin preselects the clicked winner and Fall, requires confirmation, and records the result without an injury action');
+  await p.locator('#vpStop').click();await p.waitForFunction(()=>!WMVideoPilot.active());
+  await p.waitForFunction(()=>document.getElementById('vpSavedNotice').textContent.includes('Video saved in this app'));
+  assert(await p.locator('#vpTakes').evaluate(e=>e.closest('details').open));
+  assert.equal(await p.locator('#vpCameraWorkspace').count(),0);
+  assert.equal(await p.locator('#matchCorners').evaluate(e=>e.parentElement.id),'matchScoreSheet');
+  await p.evaluate(()=>WMMatchVideo.scorebook());
+  await p.getByRole('button',{name:'Saved videos on this device',exact:true}).click();
+  await p.waitForSelector('#vpDeviceLibrary');
+  await p.waitForSelector('#vpDeviceLibrary [data-action="play"]');assert((await p.locator('#vpDeviceLibrary [data-action="play"]').count())>0);
+  await p.locator('#vpDeviceLibrary [data-action="play"]').first().click();
+  assert(await p.evaluate(()=>nativeVideoFixture.calls.some(m=>m.command==='play')));
+  await p.locator('#vpLibraryClose').click();
+  // Reconnect the same account without an active match: all device takes remain listed.
+  await p.evaluate(()=>{WMVideoPilot.reset();WMMatch.close();});
+  await p.evaluate(()=>WMMatchVideo.scorebook());await p.getByRole('button',{name:'Saved videos on this device',exact:true}).click();
+  await p.waitForSelector('#vpDeviceLibrary [data-action="play"]');assert((await p.locator('#vpDeviceLibrary [data-action="play"]').count())>0);
+  await p.evaluate(()=>WMVideoPilot.reset());assert.equal(await p.locator('#vpDeviceLibrary').count(),0);
+  pass('Save expands replay and explains device storage; Match Book lists earlier takes without reopening the original match; reset closes the library');
+  await p.evaluate(async()=>{
+   closeSheets();WMMatchVideo.reset();localStorage.clear();const id=crypto.randomUUID();
+   await WMMatch.openVideo({id,team_id:activeTeam.id,data:{id,video_test:true,book_type:'test',flowVersion:1,nfhs:true,style:'folkstyle',periods:[120,120,120],breakSeconds:0,takedown:3,red_id:null,other_id:null,red_name:'Test Red',other_name:'Test Green',period:2,phase:'period',remainingMs:0,deadline:null,ledger:[],status:'live'}});
+  });
+  await p.locator('#vpPermission').check();await p.locator('#vpPreview').click();await p.waitForSelector('#vpCameraWorkspace');
+  await p.waitForSelector('.vp-camera-clock #matchOvertime');
+  assert.equal(await p.locator('#matchOvertime').innerText(),'Sudden victory (OT)');
+  await p.locator('#matchOvertime').click();assert.match(await p.locator('#opsDialogTitle').innerText(),/Sudden victory/);
+  await p.locator('#opsDialogSubmit').click();
+  assert.equal(await p.evaluate(()=>WMMatch.videoSnapshot().remainingMs),60000);
+  assert.equal(await p.evaluate(()=>WMMatch.videoSnapshot().status),'live');
+  await p.locator('#vpMore').click();await p.locator('#matchTimeout').click();
+  await p.locator('#od_label').selectOption('Injury');await p.locator('#opsDialogSubmit').click();
+  assert(await p.locator('#matchImminent').isVisible());
+  await p.locator('#matchImminent').click();assert.match(await p.locator('#opsDialogTitle').innerText(),/Injury interrupted imminent scoring/);
+  await p.locator('#opsDialogCancel').click();await p.locator('#matchAdvance').click();
+  assert.equal(await p.locator('#matchImminent').isVisible(),false);
+  await p.locator('#vpMoreClose').click();await p.locator('#vpCameraClose').click();
+  pass('Tied regulation exposes Sudden victory beside the clock and starts the existing one-minute overtime; injury awards appear only inside an eligible timeout');
+
+ }
  await p.evaluate(()=>{WMMatch.close();WMMatchVideo.reset();});assert.equal(await p.locator('#lockerMatchBookBtn').count(),0);assert(await p.locator('#matchBookBtn').evaluate(b=>b.classList.contains('hidden-role')));
  assert.deepEqual(errors,[]);
- fs.writeFileSync(path.join(root,'validation/video-pilot-native-browser.json'),JSON.stringify({passed,engine:'Chromium full app with a synthetic native-message fixture. No AVFoundation, Xcode compilation, device storage, native replay or iOS permission behavior verified.'},null,2));
+ fs.writeFileSync(path.join(root,process.env.WM_CAMERA_OVERLAY==='1'?'validation/video-landscape-native-browser.json':'validation/video-pilot-native-browser.json'),JSON.stringify({passed,engine:'Chromium full app with a synthetic native-message fixture. No AVFoundation, Xcode compilation, device storage, native replay or iOS permission behavior verified.'},null,2));
  await browser.close();
 })().catch(e=>{console.error(e);process.exit(1);});

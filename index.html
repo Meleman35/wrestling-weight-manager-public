@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.46: Guarded private Test scorebook recording pilot and scoped recorder access. -->
+<!-- Wrestling Manager v0.20.47: Landscape camera scoring, saved video access and explicit fall results. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -710,6 +710,71 @@ body.kiosk-locked #messageReactionDialog,body:has(#appLockOverlay:not(.hidden)) 
 
 #vpGoLive:disabled{opacity:.5;cursor:not-allowed}.vp-panel.vp-capturing .mv-live-state{display:flex!important}
 
+/* Landscape/portrait camera workspace. Original scoring controls retain their handlers. */
+.vp-saved-entry{border-top:1px solid #c7d3e2;padding-top:12px;margin-top:12px}.vp-saved-entry button{width:100%;min-height:48px}.vp-saved-entry p{font-weight:650}
+body.vp-camera-mode{zoom:1!important;overflow:hidden;background:#08111c!important}
+body.vp-camera-mode> :not(#matchScoreSheet):not(#opsDialogSheet):not(.vp-replay){visibility:hidden!important}
+html:has(body.vp-native-camera),body.vp-native-camera{background:transparent!important}
+body.vp-camera-mode #sheetBackdrop{display:none!important}
+#matchScoreSheet.vp-camera-sheet{position:fixed!important;inset:0!important;transform:none!important;width:100%!important;height:100dvh!important;max-width:none!important;max-height:none!important;border:0!important;border-radius:0!important;padding:0!important;overflow:hidden!important;background:transparent!important;box-shadow:none!important;z-index:1400}
+#matchScoreSheet.vp-camera-sheet> :not(#vpCameraWorkspace){display:none!important}
+#vpCameraWorkspace{position:absolute;inset:0;color:white;isolation:isolate;--vp-edge-left:max(10px,env(safe-area-inset-left));--vp-edge-right:max(10px,env(safe-area-inset-right));--vp-top:max(10px,env(safe-area-inset-top));--vp-bottom:max(10px,env(safe-area-inset-bottom))}
+#vpCameraWorkspace [hidden]{display:none!important}
+#vpCameraWorkspace #vpStage{position:absolute;inset:0;z-index:-1;aspect-ratio:auto;margin:0;border-radius:0;max-height:none;background:#08111c}
+.vp-native-camera #vpCameraWorkspace #vpStage{background:transparent}
+#vpCameraWorkspace #vpCamera{object-fit:contain}
+#vpCameraWorkspace #vpOverlay{display:none}
+#vpCameraWorkspace button{min-height:44px;padding:8px 10px;font-size:13px;line-height:1.2;border-radius:10px;white-space:normal;touch-action:manipulation}
+#vpCameraWorkspace button:focus-visible{outline:3px solid #ffd166;outline-offset:2px}
+#vpCameraWorkspace .vp-camera-clock{position:absolute;top:var(--vp-top);left:50%;transform:translateX(-50%);width:150px;text-align:center;padding:8px;background:#08111cc9;border-radius:14px}
+#vpCameraWorkspace #matchClock{font-size:38px;color:white;margin:2px 0 6px}
+#vpCameraWorkspace #matchClock.match-running{color:#6ff0ad}
+#vpCameraWorkspace #matchClock.match-end{color:#ff8e9c}
+#vpCameraWorkspace #matchPeriodLabel{font-size:12px}
+#vpCameraWorkspace #matchToggle{width:100%}
+#vpCameraWorkspace #matchCorners{position:absolute;top:var(--vp-top);left:var(--vp-edge-left);right:var(--vp-edge-right);bottom:calc(68px + var(--vp-bottom));display:flex;justify-content:space-between;align-items:flex-start;gap:0;pointer-events:none}
+#vpCameraWorkspace #matchCorners .match-corner{pointer-events:auto;width:clamp(140px,22vw,210px);max-height:100%;overflow:auto;overscroll-behavior:contain;padding:9px;border-radius:14px}
+#vpCameraWorkspace .match-corner.red{background:#86162cce}
+#vpCameraWorkspace .match-corner.green{background:#074b30ce}
+#vpCameraWorkspace .match-corner.blue{background:#103d83ce}
+#vpCameraWorkspace #matchCorners h3{font-size:14px;line-height:1.25}
+#vpCameraWorkspace .match-corner .eyebrow{font-size:10px;color:#fff}
+#vpCameraWorkspace .match-score{font-size:36px}
+#vpCameraWorkspace #matchCorners .match-score-actions{grid-template-columns:1fr;gap:6px}
+#vpCameraWorkspace #matchCorners .match-score-actions button{font-size:13px;padding:8px 5px;min-height:44px}
+#vpCameraWorkspace .vp-camera-bar{position:absolute;bottom:var(--vp-bottom);left:50%;transform:translateX(-50%);display:flex;gap:8px;justify-content:center;max-width:48%}
+#vpCameraWorkspace .vp-camera-bar button{background:#a71e38;color:#fff;box-shadow:0 2px 12px #0005;min-width:120px}
+#vpCameraWorkspace:not(.vp-is-recording) #vpStop,#vpCameraWorkspace.vp-is-recording #vpStart{display:none}
+#vpCameraWorkspace .vp-camera-foot{position:absolute;bottom:var(--vp-bottom);left:var(--vp-edge-left);right:var(--vp-edge-right);display:flex;justify-content:space-between;align-items:flex-end;pointer-events:none}
+#vpCameraWorkspace .vp-camera-foot button{pointer-events:auto;max-width:22%;background:#101e30ed;color:white}
+#vpCameraWorkspace #vpLiveState{position:absolute;bottom:55px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:11px;background:#08111ccc;color:white;padding:5px 8px;border-radius:8px;margin:0}
+#vpMorePanel{position:absolute;inset:var(--vp-top) var(--vp-edge-right) var(--vp-bottom) var(--vp-edge-left);z-index:4;background:#f3f7fc;color:#112a48;border:1px solid #adc1d8;border-radius:16px;padding:16px;overflow:auto;overscroll-behavior:contain}
+#vpMorePanel .vp-head{display:flex;justify-content:space-between;align-items:center;gap:12px;position:sticky;top:-16px;background:#f3f7fc;padding:8px 0;z-index:1}
+#vpMorePanel .vp-head h3{margin:0}
+#vpMoreControls .ops-actions{margin:10px 0}
+@media(orientation:portrait){
+ #vpCameraWorkspace #matchCorners{top:auto;bottom:calc(130px + var(--vp-bottom));height:41%;gap:10px;align-items:stretch}
+ #vpCameraWorkspace #matchCorners .match-corner{width:calc(50% - 5px)}
+ #vpCameraWorkspace .vp-camera-clock{width:158px}
+ #vpCameraWorkspace .vp-camera-bar{bottom:calc(60px + var(--vp-bottom));max-width:95%;width:100%}
+ #vpCameraWorkspace .vp-camera-foot button{max-width:45%}
+ #vpCameraWorkspace #vpLiveState{bottom:110px;font-size:11px}
+}
+@media(orientation:landscape) and (max-height:390px){
+ #vpCameraWorkspace .vp-camera-clock{padding:5px;width:134px}
+ #vpCameraWorkspace #matchClock{font-size:30px}
+ #vpCameraWorkspace #matchCorners .match-corner{padding:6px}
+ #vpCameraWorkspace .match-score{font-size:28px}
+}
+
+#matchScoreSheet .match-fall-button{width:100%;min-height:44px;margin-top:6px;background:#fff2c6;color:#25231b;font-size:14px}
+#matchScoreSheet [hidden]{display:none!important}
+#vpCameraWorkspace #matchCorners .match-corner{display:flex;flex-direction:column;overflow:hidden}
+#vpCameraWorkspace .match-corner> :not(.match-score-actions){flex-shrink:0}
+#vpCameraWorkspace #matchCorners .match-score-actions{overflow:auto;overscroll-behavior:contain;min-height:0;flex-shrink:1}
+#vpCameraWorkspace .match-fall-button{flex-shrink:0}
+#vpCameraWorkspace .vp-camera-clock #matchOvertime{margin-top:8px;background:#fff2c6;color:#25231b;width:100%}
+
 </style>
 </head>
 <body>
@@ -1179,7 +1244,7 @@ body.kiosk-locked #messageReactionDialog,body:has(#appLockOverlay:not(.hidden)) 
 </section>
 <section id="matchScoreSheet" class="sheet ops-sheet hidden" aria-modal="true" role="dialog" aria-labelledby="matchScoreTitle">
  <div class="sheet-handle"></div><div class="sheet-head"><div><div class="eyebrow" id="matchStyleLabel">WRESTLE-OFF</div><h2 id="matchScoreTitle">Scoreboard</h2></div><button class="icon-close" id="matchClose" aria-label="Pause and close">×</button></div>
- <div class="ops-actions"><button id="matchBoutEdit" type="button" class="secondary">Set bout number</button><button id="matchReset" type="button" class="secondary">Reset match</button><button id="matchNext" type="button" class="secondary">Next match</button></div><div id="matchRulesNote" class="ops-sheet-note" role="status"></div><div id="matchTimerSummary" class="ops-sheet-note"></div><button id="matchImminent" type="button" class="wide secondary" hidden>Referee award · injury stopped scoring</button><button id="matchRideout" type="button" class="wide secondary" hidden>Confirm ultimate tiebreaker ride-out · +1</button><div id="matchPeriodLabel" class="match-period"></div><div id="matchClock" class="match-clock" aria-live="off">1:30</div>
+ <div class="ops-actions"><button id="matchBoutEdit" type="button" class="secondary">Set bout number</button><button id="matchReset" type="button" class="secondary">Reset match</button><button id="matchNext" type="button" class="secondary">Next match</button></div><div id="matchRulesNote" class="ops-sheet-note" role="status"></div><div id="matchTimerSummary" class="ops-sheet-note"></div><button id="matchImminent" type="button" class="wide secondary" hidden>Injury stoppage · record awarded points</button><button id="matchRideout" type="button" class="wide secondary" hidden>Confirm ultimate tiebreaker ride-out · +1</button><div id="matchPeriodLabel" class="match-period"></div><div id="matchClock" class="match-clock" aria-live="off">1:30</div>
  <div class="match-clock-actions"><button id="matchToggle" type="button">Start clock</button><button id="matchAdvance" type="button" class="secondary">Next period / break</button></div>
  <div id="matchActivityStatus" class="ops-sheet-note" role="status"></div><button id="matchActivity" class="wide secondary" type="button" hidden>Freestyle activity clock</button><div id="matchPositionLabel" class="ops-sheet-note" role="status"></div><button id="matchPosition" class="wide secondary" type="button">Set start / restart position</button><div id="matchCorners" class="match-score-grid"></div><div class="ops-actions"><button id="matchUndo" type="button" class="secondary">Undo last action</button><button id="matchCorrection" class="secondary" type="button">Score correction</button><button id="matchClockEdit" type="button" class="secondary">Adjust clock</button><button id="matchTimeout" type="button" class="secondary">Timeout clock</button><button id="matchOvertime" type="button" class="secondary">Add overtime</button></div>
  <div id="matchStatus" class="ops-status" role="status"></div><div class="ops-actions"><button id="matchSave" type="button">Save match</button><button id="matchFinish" type="button" class="secondary">Finish match</button><button id="matchExport" type="button" class="secondary">Export match</button></div>
@@ -2123,7 +2188,7 @@ body.kiosk-locked #messageReactionDialog,body:has(#appLockOverlay:not(.hidden)) 
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.46</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.47</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -11011,12 +11076,13 @@ window.WMMatch=(()=>{
   if(match.phase!=='period'||remaining()<30000){status('Start activity time during a wrestling period with at least 30 seconds remaining.',true);return;}pause();
   const r=await WMOperations.dialog({title:'Start 30-second activity clock',description:match.style==='beach'?'First negative-wrestling offense: verbal warning; second: 30-second activity period. At 0–0 after 1:30, the referee must designate an inactive wrestler. Follow the referee’s whistle.':'For USAW 16U and younger / Masters, the first confirmed passivity call starts activity time. Junior and older first receive a verbal warning. Follow the referee’s instruction.',fields:[{id:'passive',label:'Passive wrestler',options:[['red','Red'],['other','Blue']]}],submit:'Set activity clock'});if(!r||source!==match||!validContext())return;match.activity={passive:r.passive,period:match.period,remainingMs:30000,anchor:remaining(),after:match.ledger.length,ended:false};log('30-second activity set for '+WMScoring.corner(match,r.passive));render();status('Press Start clock: both clocks run together.');
  }
- function paintClock(){if(!match)return;paintActivity();paintNFHS();paintBeach();el('matchClock').textContent=fmt(remaining());el('matchClock').classList.toggle('match-running',match.deadline!==null);el('matchClock').classList.toggle('match-end',remaining()<=0);el('matchPeriodLabel').textContent=match.phase==='timeout'?match.timeoutLabel:match.phase==='break'?'Break after period '+(match.period+1):(match.periodLabels?.[match.period]||'Period '+(match.period+1)+' of '+match.periods.length);el('matchToggle').textContent=match.deadline!==null?'Stop clock':'Start clock';el('matchToggle').disabled=match.status==='complete';el('matchAdvance').textContent=match.phase==='timeout'?'Return to match':match.phase==='break'?'Start next period':'Next period / break';el('matchAdvance').disabled=match.status==='complete';}
+ function paintClock(){if(!match)return;paintActivity();paintNFHS();paintBeach();el('matchClock').textContent=fmt(remaining());el('matchClock').classList.toggle('match-running',match.deadline!==null);el('matchClock').classList.toggle('match-end',remaining()<=0);el('matchPeriodLabel').textContent=match.phase==='timeout'?match.timeoutLabel:match.phase==='break'?'Break after period '+(match.period+1):(match.periodLabels?.[match.period]||'Period '+(match.period+1)+' of '+match.periods.length);el('matchToggle').textContent=match.deadline!==null?'Stop clock':'Start clock';el('matchToggle').disabled=match.status==='complete';el('matchAdvance').textContent=match.phase==='timeout'?'Return to match':match.phase==='break'?'Start next period':'Next period / break';el('matchAdvance').disabled=match.status==='complete';const nextOT=match.nfhs?WMNFHS.stages[match.nfhsOT?.length||0]:null;el('matchOvertime').textContent=match.nfhs?(nextOT?nextOT.label+' (OT)':'Overtime complete'):'Add overtime';const sc=scores();window.WMVideoUI?.overtime(!!nextOT&&match.status!=='complete'&&match.phase==='period'&&remaining()<=0&&match.period===match.periods.length-1&&match.periods.length===3+(match.nfhsOT?.length||0)&&(nextOT.key==='tb2'||sc.red===sc.other));}
  function scores(){return match.ledger.reduce((s,a)=>{if(!a.voided&&['red','other'].includes(a.corner))s[a.corner]+=Number(a.points)||0;return s;},{red:0,other:0});}
  function actions(c){return WMScoring.actions(match,c);}
  function render(){if(!match)return;const s=scores();el('matchScoreTitle').textContent=(match.bout_number?'Bout '+match.bout_number+' · ':'')+(match.label||'Scoreboard');el('matchBoutEdit').textContent=match.bout_number?'Bout '+match.bout_number+' · Edit':'Set bout number';el('matchStyleLabel').textContent=match.style.toUpperCase()+' · '+(match.book_type||'competition').toUpperCase()+(match.status==='complete'?' · COMPLETE':' MATCH');
-  el('matchCorners').innerHTML=['red','other'].map(c=>`<div class="match-corner ${c==='red'?'red':match.style==='folkstyle'?'green':'blue'}"><div class="eyebrow">${WMScoring.corner(match,c)} · ${WMScoring.state(match)==='neutral'?'Neutral':WMScoring.state(match)===c?'Top':WMScoring.state(match)==='grounded'?'Grounded · no control':WMScoring.state(match)==='unknown'?'Set position':'Bottom'}</div><h3>${e(c==='red'?match.red_name:match.other_name)}</h3><div class="match-score" aria-label="${c==='red'?'Red':match.style==='folkstyle'?'Green':'Blue'} score">${s[c]}</div><div class="match-score-actions">${actions(c).map(({id,label,points})=>`<button type="button" data-award="${id}" data-corner="${c}" ${match.status==='complete'?'disabled':''}>${e(label.replace(/ · \d$/,''))}${typeof points==='number'&&points>0?' +'+points:''}</button>`).join('')}</div></div>`).join('');
+  el('matchCorners').innerHTML=['red','other'].map(c=>`<div class="match-corner ${c==='red'?'red':match.style==='folkstyle'?'green':'blue'}"><div class="eyebrow">${WMScoring.corner(match,c)} · ${WMScoring.state(match)==='neutral'?'Neutral':WMScoring.state(match)===c?'Top':WMScoring.state(match)==='grounded'?'Grounded · no control':WMScoring.state(match)==='unknown'?'Set position':'Bottom'}</div><h3>${e(c==='red'?match.red_name:match.other_name)}</h3><div class="match-score" aria-label="${c==='red'?'Red':match.style==='folkstyle'?'Green':'Blue'} score">${s[c]}</div><div class="match-score-actions">${actions(c).map(({id,label,points})=>`<button type="button" data-award="${id}" data-corner="${c}" ${match.status==='complete'?'disabled':''}>${e(label.replace(/ · \d$/,''))}${typeof points==='number'&&points>0?' +'+points:''}</button>`).join('')}</div>${match.style!=='beach'?`<button type="button" class="match-fall-button" data-fall="${c}" ${match.status==='complete'?'disabled':''}>Fall / pin</button>`:''}</div>`).join('');
   el('matchCorners').querySelectorAll('[data-award]').forEach(b=>b.onclick=()=>award(b.dataset.corner,b.dataset.award));
+  el('matchCorners').querySelectorAll('[data-fall]').forEach(b=>b.onclick=()=>finish(b.dataset.fall,'Fall'));
   el('matchLog').innerHTML=[...match.ledger].reverse().map(a=>`<p style="${a.voided?'text-decoration:line-through;opacity:.65':''}"><b>${a.corner==='red'?'Red':a.corner==='other'?match.style==='folkstyle'?'Green':'Blue':''}</b> ${e(a.label)} ${a.points?e((a.points>0?'+':'')+a.points):''} <span class="ops-meta">P${a.period} · ${fmt(a.remaining_ms)} · ${e(WMScoring.recordedTime(a.at))}${a.voided?' · undone':''}</span></p>`).join('')||'<p>No scoring actions yet.</p>';
   el('matchPositionLabel').textContent=WMScoring.state(match)==='unknown'?'Set the current position to continue this older match.':WMScoring.state(match)==='neutral'?'Neutral · both athletes standing':WMScoring.state(match)==='grounded'?'Grounded from standing · no score or control':WMScoring.corner(match,WMScoring.state(match))+' controls';
   for(const id of ['matchPosition','matchCorrection','matchUndo','matchClockEdit','matchTimeout','matchOvertime','matchFinish'])el(id).disabled=match.status==='complete';paintClock();
@@ -11075,7 +11141,7 @@ window.WMMatch=(()=>{
  async function rideout(){if(!validContext()||!rideoutEligible())return;const source=match;if(!await WMOperations.confirmAction('Confirm the referee awarded the ultimate tiebreaker to the top wrestler with no scoring during this period?'))return;if(source!==match||!rideoutEligible())return;const t=match.nfhsOT.find(x=>x.period===match.period);log('Ultimate tiebreaker ride-out',t.top,1,{scoring:true,action_id:'utb_rideout'});render();status('One point recorded. Use Finish match to confirm the result.');}
  function paintNFHS(){
   el('matchRideout').hidden=!rideoutEligible();
-  el('matchImminent').hidden=!match.nfhs;el('matchImminent').disabled=match.status==='complete'||match.phase!=='timeout'||!['Injury','HNC'].includes(match.timeoutInfo?.type);
+  el('matchImminent').hidden=!match.nfhs||match.status==='complete'||match.phase!=='timeout'||!['Injury','HNC'].includes(match.timeoutInfo?.type);el('matchImminent').disabled=match.status==='complete'||match.phase!=='timeout'||!['Injury','HNC'].includes(match.timeoutInfo?.type);
   if(!match.nfhs){el('matchRulesNote').textContent='';el('matchTimerSummary').textContent='';return;}
   const stage=match.nfhsOT?.find(x=>x.period===match.period)?.key;
   el('matchRulesNote').textContent=stage==='sv'?'Sudden victory: first scoring decides the match, but a takedown straight to near fall continues until near-fall criteria end. Confirm Finish match.':stage==='utb'?'Ultimate tiebreaker: confirm the referee’s result. If no scoring occurs, the top wrestler wins and receives one point.':stage==='tb1'||stage==='tb2'?'Wrestle both 30-second tiebreakers to completion unless a fall or other match-ending ruling occurs.':'NFHS 2026–27 · record referee calls. Near fall: 2 seconds = 2, 3 seconds = 3, 4 seconds = 4. Only one award per pinning situation.';
@@ -11139,7 +11205,7 @@ window.WMMatch=(()=>{
   match={bout_number:el('matchBoutSetup').value.trim(),book_type:book,original_periods:periods.slice(),challenge_weight:book==='challenge'?Number(el('matchChallengeWeight').value):null,flowVersion:1,nfhs:el('matchStyle').value==='folkstyle'&&el('matchRules').value==='nfhs',ruleset:rulesNames[el('matchRules').value],rules_authority:el('matchRules').value,id:crypto.randomUUID(),style:el('matchStyle').value,red_id:el('matchRedAthlete').value||null,other_id:el('matchOtherAthlete').value||null,red_name:el('matchRedName').value.trim(),other_name:el('matchOtherName').value.trim(),label:el('matchLabel').value.trim(),periods,breakSeconds,takedown:Number(el('matchTD').value),period:0,phase:'period',remainingMs:periods[0]*1000,deadline:null,ledger:[],status:'live'};if(book==='challenge'){save().then(ok=>{if(ok)showScore();else{el('matchSetupStatus').textContent='Challenge could not be saved. Check current weights and settings, then retry.';}});}else showScore();
  }
  async function save(){if(!validContext()||busy)return false;if(match.video_test===true){persist();status('Test score saved on this device.');return true;}busy=true;el('matchSave').disabled=true;status('Saving…');const current=match;try{const data=structuredClone(match);data.remainingMs=remaining();data.deadline=null;const row=match.bout_id?await WMMatchVideo.rpc('save',{id:match.id,revision,data}):await WMOperations.rpc(true,{action:'match',id:match.id,team_id:team,season_id:season,challenge_id:challenge,revision,data});if(match!==current)return false;revision=row.revision;persist();status(match.ledger.length===data.ledger.length?'Match saved.':'Snapshot saved. Save again to sync the newest scoring actions.');return true;}catch(err){status(err.message+' Your device draft is still available.',true);return false;}finally{busy=false;el('matchSave').disabled=false}}
- async function finish(){if(!validContext()||match.status==='complete')return;pause();const answer=await WMOperations.dialog({title:'Finish match',description:match.style==='beach'?'Confirm the referee’s result. For a tied score: last point scored, then lighter official weigh-in weight, then lower draw/rank number. Classification points and event-wide challenge allowances are not calculated here.':'Confirm the referee’s winner and result.',fields:[{id:'winner',label:'Winner',options:[['red',match.red_name+' · Red'],['other',match.other_name+(match.style==='folkstyle'?' · Green':' · Blue')],['none','No winner']],value:scores().other>scores().red?'other':'red'},{id:'result',label:'Result',options:(match.style==='beach'?['Points / tie criteria','3-point throw','Three points reached','Three cautions','Injury','Disqualification','Forfeit','No contest']:['Decision','Fall','Technical fall','Major decision','Default','Disqualification','Forfeit','No contest']).map(x=>[x,x]),value:match.style==='beach'?'Points / tie criteria':'Decision'}],submit:'Save final result'});if(!answer||!validContext())return;const normal=answer.winner,result=answer.result;match.status='complete';match.winner=normal==='green'||normal==='blue'?'other':normal;match.result=result.slice(0,100);log('Match finished: '+match.result);render();if(await save()){localStorage.removeItem(key());status('Final result saved.');}else{match.status='live';persist();render();}}
+ async function finish(selectedWinner=null,selectedResult=null){if(!validContext()||match.status==='complete')return;const source=match;pause();const answer=await WMOperations.dialog({title:'Finish match',description:match.style==='beach'?'Confirm the referee’s result. For a tied score: last point scored, then lighter official weigh-in weight, then lower draw/rank number. Classification points and event-wide challenge allowances are not calculated here.':'Confirm the referee’s winner and result.',fields:[{id:'winner',label:'Winner',options:[['red',match.red_name+' · Red'],['other',match.other_name+(match.style==='folkstyle'?' · Green':' · Blue')],['none','No winner']],value:['red','other'].includes(selectedWinner)?selectedWinner:scores().other>scores().red?'other':'red'},{id:'result',label:'Result',options:(match.style==='beach'?['Points / tie criteria','3-point throw','Three points reached','Three cautions','Injury','Disqualification','Forfeit','No contest']:['Decision','Fall','Technical fall','Major decision','Default','Disqualification','Forfeit','No contest']).map(x=>[x,x]),value:match.style==='beach'?'Points / tie criteria':selectedResult==='Fall'?'Fall':'Decision'}],submit:'Save final result'});if(!answer||source!==match||!validContext())return;const normal=answer.winner,result=answer.result;match.status='complete';match.winner=normal==='green'||normal==='blue'?'other':normal;match.result=result.slice(0,100);log('Match finished: '+match.result);render();if(await save()){localStorage.removeItem(key());status('Final result saved.');}else{match.status='live';persist();render();}}
  function exportMatch(){if(!match)return;const s=scores();WMOperations.download('Match_'+match.red_name+'_vs_'+match.other_name+'.txt',`Bout ${match.bout_number||'—'}\n${match.red_name} ${s.red} – ${s.other} ${match.other_name}\n${match.style} · ${match.book_type||'competition'} · ${match.result||'In progress'}\n${match.label||''}\n\n`+match.ledger.map(a=>`${a.at} | P${a.period} ${fmt(a.remaining_ms)} | ${a.corner} | ${a.label} ${a.points||''}${a.voided?' [UNDONE]':''}`).join('\n'));}
  function close(){window.WMVideoPilot?.leaving();version++;if(match){pause('Clock paused when leaving scoreboard');persist();}clearInterval(timer);timer=null;match=null;['matchListSheet','matchSetupSheet','matchScoreSheet'].forEach(id=>show(id,false));}
  async function boutEdit(){if(!validContext()||busy)return;const source=match;const q=await WMOperations.dialog({title:'Bout number',fields:[{id:'bout',label:'Bout number',value:match.bout_number||''}],submit:'Update bout'});if(!q||source!==match||!validContext())return;match.bout_number=String(q.bout||'').trim().slice(0,24);log('Bout number updated');render();await save();}
@@ -13443,6 +13509,96 @@ window.WMVideoUpload=(()=>{
 })();
 
 </script>
+<script id="wm-video-workspace-046">
+/* Camera presentation only. Move the actual scorer controls; never duplicate scoring logic. */
+window.WMVideoUI = (() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  let workspace = null, moved = [], library = null, libraryMark = null, previousFocus = null, overtimeMark = null;
+  function move(node, parent) {
+    if (!node) return;
+    const mark = document.createComment('video control position');
+    node.before(mark); moved.push([node, mark]); parent.append(node);
+  }
+  function camera(enabled, native = false) {
+    if (!enabled) {
+      if (!workspace) return;
+      overtime(false);
+      for (const [node, mark] of moved.reverse()) mark.replaceWith(node);
+      moved = []; workspace.remove(); workspace = null;
+      $('matchScoreSheet')?.classList.remove('vp-camera-sheet');
+      document.body.classList.remove('vp-camera-mode', 'vp-native-camera');
+      return;
+    }
+    if (workspace || !$('vpStage')) return;
+    closeLibrary();
+    const sheet = $('matchScoreSheet');
+    workspace = document.createElement('div'); workspace.id = 'vpCameraWorkspace';
+    workspace.innerHTML = `<div class="vp-camera-clock"></div><div class="vp-camera-bar"></div>
+      <div class="vp-camera-foot"><button id="vpMore" class="secondary" type="button" aria-expanded="false" aria-controls="vpMorePanel">More controls</button></div>
+      <section id="vpMorePanel" hidden><div class="vp-head"><h3>Match controls</h3><button id="vpMoreClose" type="button">Back to camera</button></div><div id="vpMoreControls"></div></section>`;
+    sheet.append(workspace);
+    move($('vpStage'), workspace);
+    move($('matchCorners'), workspace);
+    for (const id of ['matchPeriodLabel', 'matchClock', 'matchToggle']) move($(id), workspace.querySelector('.vp-camera-clock'));
+    for (const id of ['vpStart', 'vpStop', 'vpCameraClose']) move($(id), workspace.querySelector('.vp-camera-bar'));
+    move($('vpLiveState'), workspace.querySelector('.vp-camera-foot'));
+    move($('matchUndo'), workspace.querySelector('.vp-camera-foot'));
+    // Keep every remaining scoring action, including conditionally available actions, intact.
+    for (const node of [...sheet.children]) {
+      if (node === workspace || node.id === 'vpPanel' || node.classList.contains('sheet-handle') || node.classList.contains('sheet-head')) continue;
+      move(node, $('vpMoreControls'));
+    }
+    const more = open => { $('vpMorePanel').hidden = !open; $('vpMore').setAttribute('aria-expanded', String(open)); (open ? $('vpMoreClose') : $('vpMore')).focus({preventScroll:true}); };
+    $('vpMore').onclick = () => more(true); $('vpMoreClose').onclick = () => more(false);
+    sheet.classList.add('vp-camera-sheet'); document.body.classList.add('vp-camera-mode');
+    document.body.classList.toggle('vp-native-camera', native); sheet.scrollTop = 0;
+  }
+  function overtime(ready) {
+    if (!workspace) return;
+    const button = $('matchOvertime');
+    if (ready && !overtimeMark) { overtimeMark = document.createComment('overtime control position'); button.before(overtimeMark); workspace.querySelector('.vp-camera-clock').append(button); }
+    else if (!ready && overtimeMark) { overtimeMark.replaceWith(button); overtimeMark = null; }
+  }
+  function mount() {
+    if (!$('vpPanel') || $('vpSavedVideos')) return;
+    const row = document.createElement('div'); row.className = 'vp-saved-entry';
+    row.innerHTML = '<button id="vpSavedVideos" type="button" class="secondary">Saved videos</button><p id="vpSavedNotice" role="status" hidden></p>';
+    $('vpPanel').append(row);
+    $('vpSavedVideos').onclick = () => window.WMVideoPilot.openLibrary().catch(e => { $('vpSavedNotice').hidden = false; $('vpSavedNotice').textContent = e.message; });
+  }
+  function count(n) { if ($('vpSavedVideos')) $('vpSavedVideos').textContent = `Saved videos (${n})`; }
+  function saved(ok) {
+    if (!$('vpPanel')) return;
+    const details = $('vpTakes')?.closest('details'); if (details) details.open = true;
+    const notice = $('vpSavedNotice');
+    if (notice) { notice.hidden = false; notice.textContent = ok ? 'Video saved in this app. Replay below, or open Saved videos. It is not added to Photos automatically.' : 'Original files kept. Open Saved videos to check recovery.'; }
+    if (!$('matchScoreSheet').classList.contains('hidden')) {
+      $('vpSavedVideos')?.scrollIntoView({block:'center'}); $('vpSavedVideos')?.focus({preventScroll:true});
+    }
+  }
+  function closeLibrary() {
+    if (!library) return;
+    if (libraryMark) libraryMark.replaceWith($('vpLibrary'));
+    library.remove(); library = null; libraryMark = null;
+    if (previousFocus?.isConnected) previousFocus.focus({preventScroll:true}); previousFocus = null;
+  }
+  function openLibrary() {
+    if (library) return;
+    const content = $('vpLibrary'); if (!content || content.hidden) throw Error('Reconnect and reopen Match Book to check saved-video access.');
+    previousFocus = document.activeElement; libraryMark = document.createComment('saved video library'); content.before(libraryMark);
+    library = document.createElement('section'); library.className = 'vp-replay'; library.id = 'vpDeviceLibrary';
+    library.setAttribute('role','dialog'); library.setAttribute('aria-modal','true'); library.setAttribute('aria-label','Saved videos');
+    library.innerHTML = '<div><div class="vp-head"><h2>Saved videos</h2><button type="button" id="vpLibraryClose">Close</button></div></div>';
+    library.firstElementChild.append(content); document.body.append(library);
+    $('vpLibraryClose').onclick = closeLibrary; $('vpLibraryClose').focus();
+  }
+  function reset() { camera(false); closeLibrary(); if ($('vpSavedNotice')) { $('vpSavedNotice').hidden = true; $('vpSavedNotice').textContent = ''; } count(0); }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && library) { e.stopPropagation(); closeLibrary(); } });
+  return {camera, overtime, mount, saved, count, openLibrary, closeLibrary, reset};
+})();
+
+</script>
 <script id="wm-video-pilot-046">
 /* Free, allowlisted browser capture pilot. Server grants never create paid rights. */
 window.WMVideoPilot = (() => {
@@ -13507,8 +13663,9 @@ window.WMVideoPilot = (() => {
     $('vpClock').onclick = () => { if (valid() && recorder && !stopping) $('matchToggle').click(); };
     $('vpCameraClose').onclick = () => closeCamera();
     const library = document.createElement('section'); library.id = 'vpLibrary'; library.className = 'vp-panel'; library.hidden = true;
-    library.innerHTML = '<span class="vp-badge">VIDEO PILOT · TEST ACCESS</span><h3>Saved match videos</h3><p>Device copies only · record from an open match scoreboard.</p><p id="vpLibraryStatus" role="status"></p><div id="vpAllTakes"></div>';
+    library.innerHTML = '<span class="vp-badge">VIDEO PILOT · TEST ACCESS</span><h3>Saved match videos</h3><p>Saved inside Wrestling Manager on this device, for this account and team. Test videos stay here. Use replay and export to save a copy outside the app.</p><p id="vpLibraryStatus" role="status"></p><div id="vpAllTakes"></div>';
     $('matchListSheet').append(library);
+    WMVideoUI.mount();
   }
   function controls() {
     window.WMMatchVideo?.recorderControls(!!recorder && captureStarted);
@@ -13524,6 +13681,9 @@ window.WMVideoPilot = (() => {
     $('vpClock').disabled = !!stopping || snap?.status === 'complete';
     $('vpCameraClose').hidden = !stream || active();
     $('vpPermission').disabled = active();
+    WMVideoUI.camera(ready && !!stream && !stopping);
+    if ($('vpCameraWorkspace')) $('vpCameraWorkspace').classList.toggle('vp-is-recording', !!recorder);
+    if ($('vpSavedVideos')) $('vpSavedVideos').disabled = active();
   }
   function report(e) { note(e?.name === 'NotAllowedError' ? 'Camera or microphone permission was denied. Allow access in browser settings and try again.' : e?.message || 'Video action failed.', true); controls(); }
   async function sync() {
@@ -13659,7 +13819,7 @@ window.WMVideoPilot = (() => {
       if (valid() && grant.scope === saved.scope) note('Recording is incomplete. Saved segments were kept for recovery; no complete video was confirmed.', true);
     } finally {
       take = timeline = null; stopping = null; const resolve = stopResolve; stopResolve = null; resolve?.(); controls();
-      if (valid()) list().catch(report);
+      if (valid()) list().then(() => {if(grant?.scope===saved.scope)WMVideoUI.saved(['ready','partial'].includes(saved.status));}).catch(report);
     }
   }
   function interrupt(reason) { if (recorder) stop(reason); else closeCamera(); }
@@ -13669,6 +13829,7 @@ window.WMVideoPilot = (() => {
     const ticket = ++listTicket, scope = grant.scope, matchId = currentMatch();
     const rows = (await store.list(scope)).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     if (ticket !== listTicket || !valid() || grant.scope !== scope) return;
+    WMVideoUI.count(rows.length);
     for (const [id, subset] of [['vpTakes', rows.filter(r => r.matchId === matchId)], ['vpAllTakes', rows]]) {
       const el = $(id); if (!el) continue;
       el.innerHTML = subset.length ? subset.map(r => {
@@ -13734,7 +13895,7 @@ window.WMVideoPilot = (() => {
     };
     $('vpReplayClose').focus();
   }
-  function reset() { generation++; grant = null; listTicket++; leaving(); closeReplay(); if ($('vpPanel')) { $('vpPanel').hidden = $('vpLibrary').hidden = true; $('vpTakes').replaceChildren(); $('vpAllTakes').replaceChildren(); $('vpPermission').checked = false; } statusText = ''; }
+  function reset() { WMVideoUI.reset(); generation++; grant = null; listTicket++; leaving(); closeReplay(); if ($('vpPanel')) { $('vpPanel').hidden = $('vpLibrary').hidden = true; $('vpTakes').replaceChildren(); $('vpAllTakes').replaceChildren(); $('vpPermission').checked = false; } statusText = ''; }
   function monitorState() {
     if (grant && !valid()) { reset(); return; }
     if (stream && (document.hidden || currentMatch() !== previewKey)) { interrupt('Recording interrupted by a screen change.'); return; }
@@ -13763,7 +13924,8 @@ window.WMVideoPilot = (() => {
   window.addEventListener('online',()=>uploadQueue().catch(()=>{}));
   setInterval(()=>uploadQueue().catch(()=>{}),30000);
   async function quickStart(){await sync();ensure();if(!snapshot()?.bout_id)throw Error('Open an assigned tournament bout.');$('vpPermission').checked=true;await preview();await start();}
-  return {sync, onScore, leaving, reset, active,quickStart};
+  async function openLibrary(){if(active())throw Error('Stop and save your recording first.');await sync();ensure();closeCamera();WMVideoUI.openLibrary();await list();}
+  return {sync, onScore, leaving, reset, active,quickStart,openLibrary};
 })();
 
 </script>
@@ -13821,7 +13983,8 @@ window.WMVideoPilot = (() => {
         note(value.take?.status === 'ready' ? 'Saved on this device · upload status is shown below.' :
           value.take?.status === 'partial' ? 'Partial recording saved on this device. ' + (value.take.reason || '') :
             'Playback was not verified. Original files were kept; use Check recovery.', value.take?.status === 'failed');
-        if (valid()) list().catch(report); break;
+        const savedGeneration = generation;
+        controls(); if (valid()) list().then(() => {if(savedGeneration===generation&&valid())WMVideoUI.saved(['ready','partial'].includes(value.take?.status));}).catch(report); break;
       case 'uploadChanged': if(valid())list().catch(report); break;
       case 'failed': phase = 'idle'; previewMatch = ''; note(value.reason || 'The device save could not be confirmed.', true); break;
       case 'closed':
@@ -13842,7 +14005,7 @@ window.WMVideoPilot = (() => {
       if (g !== generation || scope(c) !== scope(context()) || !context().allowed) return false;
       if (!result?.allowed || result.user_id !== c.user || result.team_id !== c.team || !(result.lease_seconds > 0)) { reset(); return false; }
       // Conservative: transport time is subtracted again rather than extending the native lease.
-      grant = {scope: scope(c), until: requestedAt + Math.min(7200, result.lease_seconds) * 1000};
+      grant = {scope: scope(c), overlay: result.camera_overlay === true, until: requestedAt + Math.min(7200, result.lease_seconds) * 1000};
       return valid();
     })();
     authorization = operation;
@@ -13852,7 +14015,7 @@ window.WMVideoPilot = (() => {
     if ($('vpPanel') || !$('matchScoreSheet') || !$('matchListSheet')) return;
     const panel = document.createElement('section'); panel.id = 'vpPanel'; panel.className = 'vp-panel'; panel.hidden = true;
     panel.innerHTML = `<span class="vp-badge">VIDEO PILOT · TEST ACCESS</span><h3>Record &amp; score</h3>
-      <p>Private recording on this iPhone or iPad. Rotate your device before opening the camera.</p>
+      <p>Private recording on this iPhone or iPad. Turn your device sideways for landscape. Choose the orientation before tapping Record; it stays fixed for that take.</p>
       <label class="vp-check"><input id="vpPermission" type="checkbox">I have permission to record these participants at this event.</label>
       <div class="vp-stage" id="vpStage" hidden aria-label="Native match camera preview"></div>
       <div class="vp-actions"><button id="vpPreview" type="button" class="secondary">Open camera</button><button id="vpStart" type="button" class="vp-record" disabled>Record privately</button><button id="vpStop" type="button" disabled>Stop &amp; save video</button><button id="vpClock" type="button" class="secondary" hidden>Start clock</button><button id="vpCameraClose" type="button" class="secondary" hidden>Close camera</button></div>
@@ -13865,8 +14028,9 @@ window.WMVideoPilot = (() => {
     $('vpClock').onclick = () => { if (valid() && phase === 'recording') $('matchToggle').click(); };
     $('vpCameraClose').onclick = () => { post('close'); phase = 'idle'; previewMatch = ''; controls(); };
     const library = document.createElement('section'); library.id = 'vpLibrary'; library.className = 'vp-panel'; library.hidden = true;
-    library.innerHTML = '<span class="vp-badge">VIDEO PILOT · TEST ACCESS</span><h3>Saved match videos</h3><p>Device copies only · open a match scoreboard to record.</p><p id="vpLibraryStatus" role="status"></p><div id="vpAllTakes"></div>';
+    library.innerHTML = '<span class="vp-badge">VIDEO PILOT · TEST ACCESS</span><h3>Saved match videos</h3><p>Saved inside Wrestling Manager on this device, for this account and team. Test videos stay here. Use replay and export to save a copy outside the app.</p><p id="vpLibraryStatus" role="status"></p><div id="vpAllTakes"></div>';
     $('matchListSheet').append(library);
+    WMVideoUI.mount();
   }
   function controls() {
     window.WMMatchVideo?.recorderControls(phase === 'recording');
@@ -13881,6 +14045,9 @@ window.WMVideoPilot = (() => {
     $('vpClock').hidden = !recording; $('vpClock').disabled = phase !== 'recording' || snap?.status === 'complete';
     $('vpClock').textContent = snap?.running ? 'Stop clock' : 'Start clock';
     $('vpCameraClose').hidden = phase !== 'preview'; $('vpPermission').disabled = active();
+    WMVideoUI.camera(ready && !!grant?.overlay && ['preview','starting','recording'].includes(phase), true);
+    if ($('vpCameraWorkspace')) $('vpCameraWorkspace').classList.toggle('vp-is-recording', recording);
+    if ($('vpSavedVideos')) $('vpSavedVideos').disabled = active();
   }
   async function sync() {
     shell(); const g = generation;
@@ -13937,7 +14104,7 @@ window.WMVideoPilot = (() => {
     controls(); layout();
   }
   function reset() {
-    generation++; grant = null; authorization = null; listTicket++; phase = 'idle'; previewMatch = ''; lastToken = ''; previousState = null;
+    WMVideoUI.reset(); generation++; grant = null; authorization = null; listTicket++; phase = 'idle'; previewMatch = ''; lastToken = ''; previousState = null;
     post('reset'); statusText = '';
     for (const task of pending.values()) { clearTimeout(task.timer); task.reject(Error('The video screen changed. Reopen Match Book to continue.')); }
     pending.clear();
@@ -13953,15 +14120,16 @@ window.WMVideoPilot = (() => {
   function layout() {
     if (!['preview', 'starting', 'recording'].includes(phase) || !$('vpStage') || !valid()) return;
     const rect = $('vpStage').getBoundingClientRect(), cx = Math.min(innerWidth - 1, Math.max(0, rect.x + rect.width / 2)), cy = Math.min(innerHeight - 1, Math.max(0, rect.y + rect.height / 2));
-    const visible = !$('vpStage').hidden && rect.width > 0 && rect.height > 0 && !!document.elementFromPoint(cx, cy)?.closest('#vpStage');
-    post('layout', {visible, x: rect.x, y: rect.y, width: rect.width, height: rect.height, viewportWidth: innerWidth,
+    const overlay = !!$('vpCameraWorkspace');
+    const visible = !$('vpStage').hidden && rect.width > 0 && rect.height > 0 && (overlay ? !$('matchScoreSheet').classList.contains('hidden') : !!document.elementFromPoint(cx, cy)?.closest('#vpStage'));
+    post('layout', {visible, overlay, x: rect.x, y: rect.y, width: rect.width, height: rect.height, viewportWidth: innerWidth,
       text: snapshot() ? display(snapshot()) : ''});
   }
   async function list() {
     ensure(); const g = generation, ticket = ++listTicket;
     const result = await request('list');
     if (g !== generation || ticket !== listTicket || !valid()) return;
-    const rows = result.takes || [];
+    const rows = result.takes || []; WMVideoUI.count(rows.length);
     function render(container, matches) {
       container.innerHTML = matches.length ? matches.map(row => `<div class="vp-take"><b>${row.demo ? 'Demo · ' : ''}${esc(row.label)}</b><p>${esc(row.status === 'ready' ? 'Saved on this device' : row.status === 'partial' ? 'Partial recording on this device' : 'Interrupted recording · recovery check needed')} · ${esc(new Date(row.createdAt).toLocaleString())}</p><p>${esc(row.reason || '')}${row.boutId?' · '+(row.upload?.status==='ready'?'Uploaded · available to athlete & family':row.upload?.status==='uploading'?'Uploading '+(row.upload.progress||0)+'%':'Waiting to upload'):''}</p><div class="vp-actions">${['ready', 'partial'].includes(row.status) ? `<button type="button" data-action="play" data-id="${esc(row.id)}">Replay &amp; export</button>` : `<button type="button" data-action="recover" data-id="${esc(row.id)}">Check recovery</button>`}<button type="button" class="secondary" data-action="delete" data-id="${esc(row.id)}">Delete device copy</button></div></div>`).join('') : '<p>No saved videos for this account and team on this device.</p>';
       container.querySelectorAll('button').forEach(button => button.onclick = async () => {
@@ -13998,7 +14166,8 @@ window.WMVideoPilot = (() => {
   window.addEventListener('online',()=>uploadQueue().catch(()=>{}));
   setInterval(()=>uploadQueue().catch(()=>{}),30000);
   async function quickStart(){await sync();ensure();if(!snapshot()?.bout_id)throw Error('Open an assigned tournament bout.');$('vpPermission').checked=true;await preview();await start();}
-  window.WMVideoPilot = {sync, onScore, leaving, reset, active,quickStart};
+  async function openLibrary(){if(active())throw Error('Stop and save your recording first.');await sync();ensure();post('close');phase='idle';previewMatch='';controls();WMVideoUI.openLibrary();await list();}
+  window.WMVideoPilot = {sync, onScore, leaving, reset, active,quickStart,openLibrary};
 })();
 
 </script>
@@ -14021,6 +14190,7 @@ window.WMMatchVideo = (() => {
  }catch{if(g!==generation)return;$('videoAssignmentsBtn')?.remove();$('lockerMatchBookBtn')?.remove();bookAccess();}}
  async function scorebook(){const data=await rpc('assignments');if(!data.can_scorebook)throw Error('Your coach needs to give this personal account recorder access.');closeSheets();const box=sheet('Match Book');box.innerHTML=data.test_only?'<p>Private recording test · saved on this device. Use the Test scorebook to check your camera, scoring and replay.</p>':'<p>Score and record your assigned team matches. Athletes and student managers use their own accounts.</p>';
   if(data.can_record_test)box.append(button('Test scorebook',test));else box.insertAdjacentHTML('beforeend','<p>Your coach can assign a match to enable your camera test.</p>');
+  box.append(button('Saved videos on this device',()=>WMVideoPilot.openLibrary()));
   if(!data.test_only)renderBouts(box,data.bouts);if(data.can_manage)box.append(button('Set event rules & recorder access',manage));
   const c=context();try{const draft=JSON.parse(localStorage.getItem('wm-match-draft-v1:'+c.user+':'+c.team)||'null');if(data.can_record_test&&draft?.owner===c.user&&draft?.team_id===c.team&&draft?.data?.video_test)box.append(button('Resume test scorebook',async()=>{await rpc('recorder_test');replay?.remove();replay=null;await WMMatch.openVideo(draft);}));}catch{}
  }
