@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.54: Invitations use the verified custom domain. -->
+<!-- Wrestling Manager v0.20.55: Completed match and video controls show their actual state. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -780,6 +780,8 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
 #matchScoreSheet .match-fall-button{width:100%;min-height:44px;margin-top:6px;background:#fff2c6;color:#25231b;font-size:14px}
 #matchScoreSheet [hidden]{display:none!important}
 #vpCameraWorkspace #matchCorners .match-corner{display:flex;flex-direction:column;overflow:hidden}
+#vpPanel .vp-actions button:disabled,#matchFinish:disabled{background:#d5dde6!important;color:#617185!important;box-shadow:none!important;opacity:1;cursor:not-allowed}
+#vpStop[hidden]{display:none!important}
 #vpCameraWorkspace .match-corner> :not(.match-score-actions){flex-shrink:0}
 #vpCameraWorkspace #matchCorners .match-score-actions{overflow:auto;overscroll-behavior:contain;min-height:0;flex-shrink:1}
 #vpCameraWorkspace .match-fall-button{flex-shrink:0}
@@ -2207,7 +2209,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.54</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.55</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -11287,7 +11289,8 @@ window.WMMatch=(()=>{
   el('matchCorners').querySelectorAll('[data-fall]').forEach(b=>b.onclick=()=>finish(b.dataset.fall,'Fall'));
   el('matchLog').innerHTML=[...match.ledger].reverse().map(a=>`<p style="${a.voided?'text-decoration:line-through;opacity:.65':''}"><b>${a.corner==='red'?'Red':a.corner==='other'?match.style==='folkstyle'?'Green':'Blue':''}</b> ${e(a.label)} ${a.points?e((a.points>0?'+':'')+a.points):''} <span class="ops-meta">P${a.period} · ${fmt(a.remaining_ms)} · ${e(WMScoring.recordedTime(a.at))}${a.voided?' · undone':''}</span></p>`).join('')||'<p>No scoring actions yet.</p>';
   el('matchPositionLabel').textContent=WMScoring.state(match)==='unknown'?'Set the current position to continue this older match.':WMScoring.state(match)==='neutral'?'Neutral · both athletes standing':WMScoring.state(match)==='grounded'?'Grounded from standing · no score or control':WMScoring.corner(match,WMScoring.state(match))+' controls';
-  for(const id of ['matchPosition','matchCorrection','matchUndo','matchClockEdit','matchTimeout','matchOvertime','matchFinish'])el(id).disabled=match.status==='complete';paintClock();
+  for(const id of ['matchPosition','matchCorrection','matchUndo','matchClockEdit','matchTimeout','matchOvertime','matchFinish'])el(id).disabled=match.status==='complete';
+  el('matchFinish').textContent=match.status==='complete'?'Result recorded':'Finish match';paintClock();
  }
  function paintBeach(){if(match.style!=='beach')return;const sc=scores(),last=[...match.ledger].reverse().find(a=>!a.voided&&a.scoring&&a.points>0&&['red','other'].includes(a.corner));
   el('matchPosition').disabled=true;el('matchOvertime').disabled=true;
@@ -14238,12 +14241,13 @@ window.WMVideoPilot = (() => {
     window.WMMatchVideo?.recorderControls(phase === 'recording');
     if (!$('vpPanel')) return;
     const ready = valid(), snap = snapshot(), recording = ['starting', 'recording', 'stopping'].includes(phase);
-    $('vpPanel').hidden = !ready || !snap; $('vpLibrary').hidden = !ready;
+    $('vpPanel').hidden = !ready || !snap || (snap.status === 'complete' && !active()); $('vpLibrary').hidden = !ready;
     $('vpPanel').classList.toggle('vp-capturing', recording);
     $('vpStage').hidden = !ready || !['preview', 'starting', 'recording'].includes(phase);
     $('vpPreview').disabled = !ready || phase !== 'idle';
     $('vpStart').disabled = !ready || phase !== 'preview' || previewMatch !== snap?.id || snap?.status === 'complete';
     $('vpStop').disabled = !ready || !['starting', 'recording'].includes(phase);
+    $('vpStop').hidden = !['starting', 'recording', 'stopping'].includes(phase);
     $('vpClock').hidden = !recording; $('vpClock').disabled = phase !== 'recording' || snap?.status === 'complete';
     $('vpClock').textContent = snap?.running ? 'Stop clock' : 'Start clock';
     $('vpCameraClose').hidden = phase !== 'preview'; $('vpPermission').disabled = active();
