@@ -20,7 +20,14 @@ for (const style of ['freestyle', 'greco']) {
   match.ledger.push(takedown);
   assert(!ids(match, 'red').includes('reversal'), `${style}: top cannot reverse`);
   assert(ids(match, 'other').includes('reversal'), `${style}: bottom can reverse`);
-  assert(!ids(match, 'red').includes('action5'), `${style}: no five-point par terre button`);
+  assert(ids(match, 'red').includes('action5'), `${style}: top can score a new grand-amplitude par terre lift`);
+  const firstLift = scoring.apply(match, 'red', 'action5');
+  assert.equal(firstLift.points, 5);
+  match.ledger.push(firstLift);
+  assert.equal(scoring.apply(match, 'red', 'action5').points, 5, `${style}: another distinct lift can score five`);
+  assert(!ids(match, 'red').includes('stepout'), `${style}: controlled top has no automatic one-point step-out`);
+  assert(ids(match, 'red').includes('penalty'), `${style}: referee penalty remains available`);
+  assert(!ids(match, 'other').includes('action5'), `${style}: bottom has no top lift control`);
   assert(!ids(match, 'red').includes('stepout'), `${style}: no step-out after control`);
   const reversal = scoring.apply(match, 'other', 'reversal');
   assert.equal(reversal.points, 1);
