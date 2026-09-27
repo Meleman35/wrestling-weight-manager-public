@@ -1,0 +1,13 @@
+{
+  "passed": [
+    "Coach opt-in gives active athletes camera tests without role escalation or cloud activation",
+    "Student managers qualify; parents, outsiders and shared logins do not inherit access",
+    "Roster removal, membership removal and season close revoke new recording authorization",
+    "Real teammate recording needs parent consent, full visibility and event permission; scoring revisions protect conflicts",
+    "Two recorders keep separate matches and cannot overwrite each other or browse family libraries",
+    "Guardian withdrawal blocks new scores, uploads and teammate bout access",
+    "Coach disable works; direct table access and anonymous use are blocked; live remains unavailable"
+  ],
+  "engine": "PGlite synthetic data using actual migrations",
+  "productionDataChanged": false
+}
