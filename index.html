@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.55: Completed match and video controls show their actual state. -->
+<!-- Wrestling Manager v0.20.56: Guardian mirror alert preference. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -1527,6 +1527,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
       </div>
     </div>
     <div class="delivery-card"><h3>Weigh-ins</h3><label class="toggle-row"><span><b>Weight push alerts</b><small>For approved parents and team leaders. Includes athlete, source team, method and weight in the notification preview. In-app weight updates appear together in the Home snapshot.</small></span><input id="prefPushWeighIns" type="checkbox" checked></label></div>
+    <div id="guardianMirrorAlertPreference" class="delivery-card hidden"><h3>Guardian mirror alerts</h3><label class="toggle-row"><span><b>Yellow and red alerts only</b><small>Quiet routine mirrored messages. You can still open the full conversation. Safety alerts still arrive.</small></span><input id="prefGuardianAlertsOnly" type="checkbox"></label></div>
     <h3 class="subhead">Quiet hours</h3>
     <p class="fine">Ordinary alerts wait during quiet hours. Important announcements and safety alerts can still arrive immediately.</p>
     <div class="two-col"><div><label for="prefQuietStart">Start</label><input id="prefQuietStart" type="time" value="20:00"></div><div><label for="prefQuietEnd">End</label><input id="prefQuietEnd" type="time" value="08:00"></div></div>
@@ -2209,7 +2210,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.55</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.56</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -6655,6 +6656,9 @@ async function openCommunicationPreferences(){
   $('prefPushMessages').checked=data?.push_messages!==false;$('prefSmsMessages').checked=data?.sms_message_fallback!==false;$('prefEmailMessages').checked=!!data?.email_messages;
   $('prefPushAnnouncements').checked=data?.push_announcements!==false;$('prefSmsAnnouncements').checked=data?.sms_announcements!==false;$('prefEmailAnnouncements').checked=data?.email_announcements!==false;
   $('prefPushWeighIns').checked=data?.push_weigh_ins!==false;
+  const hasGuardianMirror=currentTeamMemberships.some(x=>x.role==='parent_guardian')||viewerRole==='parent_guardian';
+  show('guardianMirrorAlertPreference',hasGuardianMirror);
+  $('prefGuardianAlertsOnly').checked=!!data?.guardian_alerts_only;
   $('prefQuietStart').value=String(data?.quiet_start||'20:00').slice(0,5);$('prefQuietEnd').value=String(data?.quiet_end||'08:00').slice(0,5);
   renderNativeNotificationStatus();
   if(nativeNotificationsAvailable())postNativeNotification('status');
@@ -6665,7 +6669,11 @@ async function saveCommunicationPreferences(){
   const {error}=await client.rpc('set_communication_preferences',{p_team_id:activeTeam.id,p_push_messages:$('prefPushMessages').checked,p_sms_message_fallback:$('prefSmsMessages').checked,p_email_messages:$('prefEmailMessages').checked,p_push_announcements:$('prefPushAnnouncements').checked,p_sms_announcements:$('prefSmsAnnouncements').checked,p_email_announcements:$('prefEmailAnnouncements').checked,p_quiet_start:$('prefQuietStart').value,p_quiet_end:$('prefQuietEnd').value,p_time_zone:zone});
   let weightError=null;
   if(!error){const result=await client.rpc('set_weigh_in_push_preference',{p_team_id:activeTeam.id,p_enabled:$('prefPushWeighIns').checked});weightError=result.error;}
-  btn.disabled=false;btn.textContent='Save Notification Preferences';if(error||weightError){message((error||weightError).message,true);return;}message('Communication preferences saved.');
+  let guardianError=null;
+  if(!error&&!weightError&&!$('guardianMirrorAlertPreference').classList.contains('hidden')){
+    const result=await client.rpc('set_guardian_alert_preference',{p_team_id:activeTeam.id,p_alerts_only:$('prefGuardianAlertsOnly').checked});guardianError=result.error;
+  }
+  btn.disabled=false;btn.textContent='Save Notification Preferences';if(error||weightError||guardianError){message((error||weightError||guardianError).message,true);return;}message('Communication preferences saved.');
 }
 async function enableBrowserNotifications(){
   if(nativeNotificationsAvailable()){
