@@ -7,7 +7,7 @@
   let generation = 0, grant = null, phase = 'idle', previewMatch = '', refreshing = false, authorization = null;
   let lastToken = '', previousState = null, statusText = '', listTicket = 0;
   const context = () => ({user: session?.user?.id, team: activeTeam?.id,
-    allowed: !!session?.user?.id && !!activeTeam?.id && !managedLogin &&
+    allowed: !!session?.user?.id && !!activeTeam?.id && recordingAccountAllowed() &&
       !document.body.classList.contains('kiosk-locked') && !document.querySelector('#appLockOverlay:not(.hidden)')});
   const scope = c => c.user + ':' + c.team;
   const valid = () => context().allowed && grant?.scope === scope(context()) && performance.now() < grant.until;
@@ -104,12 +104,13 @@
     window.WMMatchVideo?.recorderControls(phase === 'recording');
     if (!$('vpPanel')) return;
     const ready = valid(), snap = snapshot(), recording = ['starting', 'recording', 'stopping'].includes(phase);
-    $('vpPanel').hidden = !ready || !snap; $('vpLibrary').hidden = !ready;
+    $('vpPanel').hidden = !ready || !snap || (snap.status === 'complete' && !active()); $('vpLibrary').hidden = !ready;
     $('vpPanel').classList.toggle('vp-capturing', recording);
     $('vpStage').hidden = !ready || !['preview', 'starting', 'recording'].includes(phase);
     $('vpPreview').disabled = !ready || phase !== 'idle';
     $('vpStart').disabled = !ready || phase !== 'preview' || previewMatch !== snap?.id || snap?.status === 'complete';
     $('vpStop').disabled = !ready || !['starting', 'recording'].includes(phase);
+    $('vpStop').hidden = !['starting', 'recording', 'stopping'].includes(phase);
     $('vpClock').hidden = !recording; $('vpClock').disabled = phase !== 'recording' || snap?.status === 'complete';
     $('vpClock').textContent = snap?.running ? 'Stop clock' : 'Start clock';
     $('vpCameraClose').hidden = phase !== 'preview'; $('vpPermission').disabled = active();

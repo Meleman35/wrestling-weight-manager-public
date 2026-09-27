@@ -5,7 +5,7 @@ const {JSDOM}=require(process.env.JSDOM_MODULE||'jsdom'),root=path.resolve(__dir
  w.eval(`var session={user:{id:'coach-test'}},activeTeam={id:'TEAM-A'},activeSeason={id:'SEASON-A'},isStaff=true,managedLogin=null;document.getElementById('appLockOverlay').classList.add('hidden');
  var writes=[],notice='',teamRecording=false,policyRevision=0;
  function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
- function message(s){notice=s;}function closeSheets(){}var WMVideoPilot={openLibrary(){}};
+ function recordingAccountAllowed(){return !managedLogin;}function message(s){notice=s;}function closeSheets(){}var WMVideoPilot={openLibrary(){}};
  var client={rpc:async function(name,args){const action=args.p_action;
  if(action==='assignments')return {data:{can_scorebook:true,can_record_test:true,can_manage_recorders:session.user.id==='coach-test',team_recorder:teamRecording,test_only:true,bouts:[]}};
  if(action==='recorder_settings')return {data:{test_only:true,seasons:[{id:'SEASON-A',name:'2026–27',enabled:teamRecording,revision:policyRevision}]}};

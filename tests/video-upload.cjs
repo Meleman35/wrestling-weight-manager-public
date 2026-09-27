@@ -3,6 +3,7 @@ const assert=require('node:assert/strict'),fs=require('fs'),vm=require('vm'),{ra
  const state={userId:'u',teamId:'t',id:randomUUID(),matchId:randomUUID(),boutId:randomUUID(),status:'ready',mime:'video/mp4',bytes:13*1024*1024,durationMs:1000,events:[],athleteIds:['a']};
  let saved=structuredClone(state),verified=false,fail=true,posts=0,patches=[],complete=false;
  const offsets={},sizes={},ctx={window:{WMVideoPilot:{active:()=>false}},session:{user:{id:'u'},access_token:'test'},activeTeam:{id:'t'},SUPABASE_KEY:'test-key',managedLogin:false,document:{hidden:false},navigator:{onLine:true},Blob,URL,AbortSignal,Error,Number,btoa,console};
+ ctx.recordingAccountAllowed=()=>!ctx.managedLogin;
  ctx.WMMatchVideo={rpc:async(action)=>{if(action==='prepare')return{status:complete?'ready':'uploading',video_path:'t/u/id/original',timeline_path:'t/u/id/timeline.json'};if(action==='complete'){if(Object.keys(offsets).length!==2||Object.keys(offsets).some(k=>offsets[k]!==sizes[k]))throw Error('not complete');complete=true;return{status:'ready'};}},verifyCloud:async()=>{assert(complete);verified=true;}};
  ctx.fetch=async(url,r)=>{if(r.method==='POST'){const target='https://vfocpoyexnjsjpxhhyqr.storage.supabase.co/storage/v1/upload/resumable/'+(++posts);offsets[target]=0;sizes[target]=Number(r.headers['Upload-Length']);return{status:201,headers:new Headers({Location:target})};}
   if(r.method==='HEAD')return{ok:true,status:200,headers:new Headers({'Upload-Offset':String(offsets[url])})};

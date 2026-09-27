@@ -9,7 +9,7 @@ window.WMVideoPilot = (() => {
   let opening = false, captureStarted = false, interrupted = false, monitor = null, refreshBusy = false, wake = null;
   let previewKey = '', replay = null, replayURL = null, listTicket = 0, statusText = '', accessRequest = 0;
   const context = () => ({user: session?.user?.id, team: activeTeam?.id,
-    allowed: !!session?.user?.id && !!activeTeam?.id && !managedLogin &&
+    allowed: !!session?.user?.id && !!activeTeam?.id && recordingAccountAllowed() &&
       !document.body.classList.contains('kiosk-locked') && !document.querySelector('#appLockOverlay:not(.hidden)')});
   const key = c => c.user + ':' + c.team;
   const valid = () => { const c = context(); return c.allowed && grant?.scope === key(c) && performance.now() < grant.until; };

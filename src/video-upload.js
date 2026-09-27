@@ -3,7 +3,7 @@ window.WMVideoUpload=(()=>{
  'use strict';
  const ORIGIN='https://vfocpoyexnjsjpxhhyqr.storage.supabase.co',ENDPOINT=ORIGIN+'/storage/v1/upload/resumable',CHUNK=6*1024*1024;
  let busy=false;
- const same=row=>session?.user?.id===row.userId&&activeTeam?.id===row.teamId&&!managedLogin&&!document.hidden&&!window.WMVideoPilot?.active();
+ const same=row=>session?.user?.id===row.userId&&activeTeam?.id===row.teamId&&recordingAccountAllowed()&&!document.hidden&&!window.WMVideoPilot?.active();
  function safeURL(value){const u=new URL(value,ENDPOINT);if(u.origin!==ORIGIN||!u.pathname.startsWith('/storage/v1/upload/resumable/')||u.username||u.password)throw Error('Upload server address was not trusted.');return u.href;}
  async function tus(blob,path,row,kind,save){
   let url=row.upload?.[kind];if(url)url=safeURL(url);

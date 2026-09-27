@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.65: Add season-scoped athlete and student manager recorder access. -->
+<!-- Wrestling Manager v0.20.66: Add coach-created Team Recorder logins for shared devices. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -968,6 +968,16 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
 </details><button id="setupOrgHubBtn" class="wide secondary" type="button">Board Room · for organization leaders</button><button id="setupFeedbackBtn" class="wide secondary" type="button">Feedback</button>
 </section>
 
+  <section id="teamRecorderView" class="center-shell hidden" aria-label="Team Recorder">
+    <div class="card"><div class="eyebrow">TEAM RECORDER</div><h1 id="teamRecorderTeamName">Your team</h1>
+      <p id="teamRecorderIdentity" class="muted"></p><p id="teamRecorderStatus" role="status" aria-live="polite"></p>
+      <button id="teamRecorderScoreBtn" class="wide" type="button" disabled>Score &amp; record a match</button>
+      <button id="teamRecorderLibraryBtn" class="wide secondary" type="button" disabled>Saved videos on this device</button>
+      <p class="fine">Several devices can use this login at once. Record a different match on each device. Unfinished drafts and original videos stay on the device that recorded them.</p>
+      <button id="teamRecorderRefreshBtn" class="wide secondary" type="button">Refresh access</button>
+      <button id="teamRecorderSignOutBtn" class="wide secondary" type="button">Sign Out</button>
+    </div>
+  </section>
   <section id="appView" class="app hidden">
     <button id="organizationHeading" class="wide secondary" type="button">Organization</button><details id="homeOrganizationPanel"><summary>Organization menu · teams, calendar & access</summary><p id="homeOrganizationNotice" class="fine"></p><div id="homeOrganizationTools"></div></details>
     <header class="app-header">
@@ -2216,17 +2226,18 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.65</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.66</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
     <div class="sheet-handle"></div><div class="sheet-head"><div><div class="eyebrow" id="teamLoginTeamName">YOUR TEAM</div><h2>Team Logins</h2></div><button class="icon-close" data-close-sheet>×</button></div>
-    <p class="muted">One team code, username and password opens both Team Device and Test Athlete. Choose the active profile on each phone after signing in.</p>
+    <p class="muted">Create a recording-only Team Recorder login for shared devices, or a Team Login with Team Device and Test Athlete profiles. Each phone signs in with your team login code, username and password.</p>
     <p id="teamLoginLoadStatus" role="status" aria-live="polite"></p>
     <div id="teamLoginAdminControls" class="hidden">
       <div class="feature-card"><label for="teamLoginCode">Team login code</label><input id="teamLoginCode" maxlength="24" autocapitalize="characters" spellcheck="false"><p class="fine">4–24 letters, numbers or hyphens. This is separate from your roster join code. Everyone using Team Login enters this code.</p><button id="saveTeamLoginCodeBtn" type="button" class="wide secondary">Save Team Code</button></div>
       <div id="teamLoginAccountList" class="stack-actions"></div>
-      <button id="newTeamLoginBtn" class="wide" type="button">Create Team Login</button>
+      <button id="newTeamRecorderLoginBtn" class="wide" type="button">Create Team Recorder Login</button>
+      <button id="newTeamLoginBtn" class="wide secondary" type="button">Create Team Device / Test Login</button>
       <div id="teamLoginEditor" class="feature-card hidden">
         <h3 id="teamLoginEditorTitle">Create Team Login</h3>
         <input id="teamLoginKind" type="hidden" value="shared">
@@ -3659,6 +3670,7 @@ async function endManagedLoginSession(){
   if(teamLoginEnding)return;teamLoginEnding=true;
   try{
     document.body.classList.remove('kiosk-locked');notifyNativeKioskState(false);clearWeighConsole(false);closeSheets();
+    window.WMMatch?.close();window.WMVideoPilot?.reset();window.WMMatchVideo?.reset();show('teamRecorderView',false);
     clearTeamProfileChoice();activeWeighInSession=null;managedLogin=null;show('appView',false);show('setupView',false);show('appLockOverlay',false);
     await client.auth.signOut({scope:'local'});session=null;show('authView',true);chooseSignInMode(true);
     message('This team login changed or was disabled. Sign in again or ask your team admin.',true);
@@ -3671,7 +3683,7 @@ async function pollManagedLogin(){
     const {data,error}=await client.rpc('get_my_team_login');
     if(session?.user?.id!==userId||teamProfileSelecting||teamLoginSigningOut)return;
     if(error?.message?.includes('TEAM_LOGIN_REVOKED')){await endManagedLoginSession();return;}
-    if(!error&&data&&managedLogin&&(managedLogin.photo_path||null)!==(data.photo_path||null)){
+    if(!isTeamRecorderLogin()&&!error&&data&&managedLogin&&(managedLogin.photo_path||null)!==(data.photo_path||null)){
       managedLogin.photo_path=data.photo_path||null;
       if(accountProfileData?.id===userId)accountProfileData={...accountProfileData,photo_path:data.photo_path||null};
       await refreshHeaderAvatar();
@@ -3679,10 +3691,11 @@ async function pollManagedLogin(){
     }
   }finally{teamLoginPollBusy=false;}
 }
-function resetTeamLoginEditor(account=null){
+function resetTeamLoginEditor(account=null,newKind='shared'){
   teamLoginEditingId=account?.id||null;teamLoginOperationId=account?.operation_id||crypto.randomUUID();
   $('teamLoginEditorTitle').textContent=account?(account.state==='provisioning'?'Finish Login Setup':'Edit Team Login'):'Create Team Login';
-  $('teamLoginKind').value=account?.kind||'shared';
+  $('teamLoginKind').value=account?(account.kind==='team_device'&&account.permissions?.record_matches===true?'team_recorder':account.kind):newKind;
+  if($('teamLoginKind').value==='team_recorder')$('teamLoginEditorTitle').textContent=account?'Edit Team Recorder Login':'Create Team Recorder Login';
   $('teamLoginName').value=account?.display_name||'';$('teamLoginUsername').value=account?.username||'';
   $('teamLoginPassword').value='';$('teamLoginPasswordConfirm').value='';$('teamLoginActive').checked=account?.active!==false;
   const choices=teamLoginAdminData?.test_athletes||[];
@@ -3701,14 +3714,14 @@ function resetTeamLoginEditor(account=null){
   $('teamLoginPhotoStatus').textContent='';renderTeamLoginPhoto(account);
 }
 function updateTeamLoginKind(){
-  const kind=$('teamLoginKind').value,test=kind!=='team_device';
-  show('teamLoginAthleteRow',test);show('teamLoginPermissionFields',kind!=='test_athlete');
-  $('teamLoginTypeHelp').textContent=kind==='shared'?'Includes both profiles. Team Device uses the tools enabled below. Test Athlete opens the designated test profile’s weight check, PIN, card and history. Each phone chooses independently. Test Athlete cannot message team members.':kind==='test_athlete'?'Existing Test Athlete login: opens its weight check, PIN, card and history.':'Existing Team Device login: uses the enabled team tools.';
+  const kind=$('teamLoginKind').value,recorder=kind==='team_recorder',test=!['team_device','team_recorder'].includes(kind);
+  show('teamLoginAthleteRow',test);show('teamLoginPermissionFields',!recorder&&kind!=='test_athlete');
+  $('teamLoginTypeHelp').textContent=recorder?'Recording only: score permitted team matches and save video on each device. Multiple phones can use this login at once. No athlete test profile is needed. Current pilot supports camera tests; cloud sharing and live streaming are not enabled.':kind==='shared'?'Includes both profiles. Team Device uses the tools enabled below. Test Athlete opens the designated test profile’s weight check, PIN, card and history. Each phone chooses independently. Test Athlete cannot message team members.':kind==='test_athlete'?'Existing Test Athlete login: opens its weight check, PIN, card and history.':'Existing Team Device login: uses the enabled team tools.';
   show('teamLoginNoTest',test&&!(teamLoginAdminData?.test_athletes||[]).length);
 }
 function renderTeamLoginAccounts(){
   const accounts=teamLoginAdminData?.accounts||[];$('teamLoginCode').value=teamLoginAdminData?.login_code||'';
-  $('teamLoginAccountList').innerHTML=accounts.length?accounts.map(a=>`<button class="wide secondary" type="button" data-edit-team-login="${esc(a.id)}"><span><b>${esc(a.display_name)}</b><br><small>${esc(a.username)} · ${a.kind==='shared'?'Team Device + Test Athlete':teamProfileLabel(a.kind)} · ${a.state==='ready'?(a.active?'Enabled':'Disabled'):(a.state==='provisioning'?'Finish setup':'Reset pending')}</small></span></button>`).join(''):'<div class="empty-card">No team logins yet. Create one below.</div>';
+  $('teamLoginAccountList').innerHTML=accounts.length?accounts.map(a=>`<button class="wide secondary" type="button" data-edit-team-login="${esc(a.id)}"><span><b>${esc(a.display_name)}</b><br><small>${esc(a.username)} · ${a.kind==='shared'?'Team Device + Test Athlete':a.permissions?.record_matches===true?'Team Recorder':teamProfileLabel(a.kind)} · ${a.state==='ready'?(a.active?'Enabled':'Disabled'):(a.state==='provisioning'?'Finish setup':'Reset pending')}</small></span></button>`).join(''):'<div class="empty-card">No team logins yet. Create one below.</div>';
   $('teamLoginAccountList').querySelectorAll('[data-edit-team-login]').forEach(b=>b.onclick=()=>{if(!teamLoginAdminBusy){resetTeamLoginEditor(accounts.find(a=>a.id===b.dataset.editTeamLogin));$('teamLoginEditor').scrollIntoView({block:'start',behavior:'smooth'});}});
 }
 async function renderTeamLoginPhoto(account){
@@ -3813,6 +3826,7 @@ async function saveTeamLogin(action){
       action=account&&account.state!=='provisioning'?'update':'create';
       fields={...fields,id:account?.id,display_name:$('teamLoginName').value.trim(),username:$('teamLoginUsername').value.trim(),kind:$('teamLoginKind').value,athlete_id:$('teamLoginKind').value!=='team_device'?$('teamLoginAthlete').value:null,active:$('teamLoginActive').checked,
         permissions:{weigh_in:$('teamLoginAllowWeighIn').checked,attendance:$('teamLoginAllowAttendance').checked,messages:$('teamLoginAllowMessages').checked},operation_id:teamLoginOperationId};
+      if(fields.kind==='team_recorder'){fields.kind='team_device';fields.athlete_id=null;fields.permissions={record_matches:true,weigh_in:false,attendance:false,messages:false};}
       if(fields.display_name.length<2||fields.display_name.length>60)throw new Error('Enter a display name with 2–60 characters.');
       if(!/^[a-z0-9][a-z0-9._-]{2,31}$/i.test(fields.username))throw new Error('Use a username with 3–32 letters, numbers, dots, hyphens or underscores.');
       if(fields.kind!=='team_device'&&!fields.athlete_id)throw new Error('An active, designated Test Athlete is required.');
@@ -3823,7 +3837,7 @@ async function saveTeamLogin(action){
     const data=await callTeamLogin(action,fields,true);
     if(version!==teamLoginAdminVersion||activeTeam?.id!==fields.team_id)return;
     teamLoginAdminData=data;renderTeamLoginAccounts();show('teamLoginEditor',false);$('teamLoginPassword').value='';$('teamLoginPasswordConfirm').value='';
-    $('teamLoginLoadStatus').textContent=action==='create'?'Login created. Sign in with the same team code, username and password on each phone, then choose Team Device or Test Athlete.':action==='reset_password'?'New password saved. Sign in again on the team phone.':'Changes saved.';
+    $('teamLoginLoadStatus').textContent=action==='create'?(fields.permissions?.record_matches?'Team Recorder created. On each device, choose Team Login and enter this team code, username and password. Each device keeps its own match draft and videos.':'Login created. Sign in with the same team code, username and password on each phone, then choose Team Device or Test Athlete.'):action==='reset_password'?'New password saved. Sign in again on the team phone.':'Changes saved.';
   }catch(error){$('teamLoginLoadStatus').textContent=error.message||'The account could not be updated.';}
   finally{teamLoginAdminBusy=false;$('teamLoginAdminControls').querySelectorAll('button').forEach(b=>b.disabled=false);}
 }
@@ -3966,6 +3980,26 @@ function refresh(){
  accountRefreshFlight=refreshAccountView().finally(()=>{accountRefreshFlight=null;});
  return accountRefreshFlight;
 }
+function isTeamRecorderLogin(){return !!session?.user?.id&&managedLogin?.kind==='team_device'&&managedLogin.permissions?.record_matches===true;}
+function recordingAccountAllowed(){return !managedLogin||(isTeamRecorderLogin()&&managedLogin.team_id===activeTeam?.id);}
+async function showTeamRecorderHome(){
+  const uid=session.user.id,teamId=managedLogin.team_id;
+  closeSheets();show('authView',false);show('setupView',false);show('appView',false);show('teamRecorderView',true);
+  activeTeam={id:teamId};activeSeason=null;actualIsStaff=false;isStaff=false;actualIsTeamAdmin=false;isTeamAdmin=false;
+  organizationMemberships=[];teamMemberships=[];
+  accountProfileData={id:uid,display_name:managedLogin.display_name,photo_path:null};
+  $('teamRecorderTeamName').textContent='Your team';$('teamRecorderIdentity').textContent=managedLogin.display_name+' · @'+managedLogin.username;
+  $('teamRecorderStatus').textContent='Checking recording access…';$('teamRecorderScoreBtn').disabled=true;$('teamRecorderLibraryBtn').disabled=true;
+  subscribeAccountMemberships();requestSecurityStatus();
+  const {data,error}=await client.rpc('video_match_request',{p_action:'device_context',p_data:{team_id:teamId}});
+  if(session?.user?.id!==uid||!isTeamRecorderLogin()||managedLogin.team_id!==teamId)return;
+  if(error){$('teamRecorderStatus').textContent=error.message.includes('TEAM_LOGIN_REVOKED')?'This login changed. Sign in again.':'Could not check recording access. Try Refresh access.';return;}
+  activeTeam=data.team;activeSeason=data.seasons?.[0]||null;
+  $('teamRecorderTeamName').textContent=data.team.name;
+  $('teamRecorderStatus').textContent=!data.available?'This login is ready. Recording is waiting for team pilot access.':data.test_only?'Camera test mode: use Test scorebook to check recording and replay. Cloud sharing and live streaming are not enabled.':'Choose a permitted team match to score and record.';
+  $('teamRecorderScoreBtn').disabled=!data.available;$('teamRecorderLibraryBtn').disabled=!data.available;
+}
+
 async function refreshAccountView(){
   if(teamProfileChoice||teamLoginSigningOut)return;
   window.WMOrgInvites?.resetHome();
@@ -3974,7 +4008,7 @@ async function refreshAccountView(){
   WMOnboarding.restore();
   renderSetupRole();
   ++staffWeightLoadVersion;$('staffPersonalWeightList').textContent='';show('staffPersonalWeightSection',false);
-  show('authView', !session);
+  show('authView', !session);show('teamRecorderView',false);
   if (!session){
     window.WMProfilePIN?.select().catch(()=>{});
     managedLogin=null;
@@ -3996,6 +4030,7 @@ async function refreshAccountView(){
     return;
   }
   managedLogin=loginContext.data||null;teamProfileReadyUserId=null;$('switchTeamProfileBtn').disabled=true;
+  if(isTeamRecorderLogin()){await showTeamRecorderHome();return;}
   show('homeOrganizationPanel',!managedLogin);
   show('personalAccountProfileCard',!managedLogin);show('managedAccountNote',!!managedLogin);
   show('switchTeamProfileBtn',!!managedLogin?.shared_login_id);
@@ -4273,7 +4308,7 @@ function scheduleAccountConnectionRefresh(){
   },250);
 }
 function subscribeAccountMemberships(){
-  const userId=session?.user?.id||null;
+  const userId=isTeamRecorderLogin()?null:session?.user?.id||null;
   if(userId===accountMembershipUserId&&accountMembershipChannel)return;
   if(accountMembershipChannel)client.removeChannel(accountMembershipChannel);
   accountMembershipChannel=null;accountMembershipUserId=userId;
@@ -4285,6 +4320,7 @@ function subscribeAccountMemberships(){
     .subscribe(status=>{if(status==='SUBSCRIBED')pollAccountMemberships();});
 }
 async function pollAccountMemberships(){
+  if(isTeamRecorderLogin())return;
   const userId=session?.user?.id;
   if(!userId||accountPollRunning||teamProfileSelecting||teamProfileChoice||teamLoginSigningOut||document.hidden||document.body.classList.contains('kiosk-locked'))return;
   accountPollRunning=true;
@@ -5494,6 +5530,7 @@ async function refreshCurrentTeamConnections(){
 }
 
 async function refreshTeamData({manual=false,force=false}={}){
+  if(isTeamRecorderLogin())return;
   if(!session||!activeTeam||!activeSeason||teamProfileChoice||teamProfileSelecting||teamLoginSigningOut||document.body.classList.contains('kiosk-locked'))return;
   const now=Date.now();
   if(!manual&&!force&&now-lastAutomaticTeamRefreshAt<4000)return teamRefreshPromise;
@@ -9960,6 +9997,11 @@ $('teamSignInFields').onsubmit=e=>{e.preventDefault();signInWithTeamLogin();};
 // Login keyboard events are handled centrally below.
 $('teamLoginsBtn').onclick=openTeamLogins;
 $('newTeamLoginBtn').onclick=()=>resetTeamLoginEditor();
+$('newTeamRecorderLoginBtn').onclick=()=>resetTeamLoginEditor(null,'team_recorder');
+$('teamRecorderScoreBtn').onclick=()=>window.WMMatchVideo.scorebook().catch(e=>message(e.message,true));
+$('teamRecorderLibraryBtn').onclick=()=>window.WMVideoPilot.openLibrary().catch(e=>message(e.message,true));
+$('teamRecorderRefreshBtn').onclick=()=>{if(window.WMVideoPilot?.active()){message('Stop and save your recording first.',true);return;}refresh().catch(e=>message(e.message,true));};
+$('teamRecorderSignOutBtn').onclick=()=>signOutCurrentPhone();
 $('switchTeamProfileBtn').onclick=openTeamProfileChoice;
 $('chooseTeamDeviceBtn').onclick=()=>selectTeamProfile('team_device');
 $('chooseTestAthleteBtn').onclick=()=>selectTeamProfile('test_athlete');
@@ -10498,7 +10540,7 @@ client.auth.onAuthStateChange((event,nextSession)=>{
  setTimeout(()=>handleAuthViewChange(event,nextSession).catch(e=>message(e.message,true)),0);
 });
 async function handleAuthViewChange(event,nextSession){
-  if(session?.user?.id!==nextSession?.user?.id){window.WMVideoPilot?.reset();window.WMTournaments?.reset();show('tournamentSheet',false);window.WMNotificationSync?.reset();window.WMReactions?.reset();finishTileEditing(false);tileEditUser=null;pendingUiLayout=null;window.WMKioskScan?.reset();window.WMGoals?.reset();window.WMProfiles?.reset();window.WMFamily?.reset();resetAthleteCard();nativeCameraScanContext=null;weightCardPhotoCache.clear();}
+  if(session?.user?.id!==nextSession?.user?.id){window.WMMatch?.close();window.WMMatchVideo?.reset();show('teamRecorderView',false);window.WMVideoPilot?.reset();window.WMTournaments?.reset();show('tournamentSheet',false);window.WMNotificationSync?.reset();window.WMReactions?.reset();finishTileEditing(false);tileEditUser=null;pendingUiLayout=null;window.WMKioskScan?.reset();window.WMGoals?.reset();window.WMProfiles?.reset();window.WMFamily?.reset();resetAthleteCard();nativeCameraScanContext=null;weightCardPhotoCache.clear();}
   if(session?.user?.id!==nextSession?.user?.id&&(myWeightCheckMode==='teammate'||myWeightCheckMode==='test'||myWeightCheckMode==='staff'||!$('weightTestAthleteSheet').classList.contains('hidden')||!$('teammateWeightCheckSheet').classList.contains('hidden')||!$('weightPinSheet').classList.contains('hidden')))closeSheets();
   session=nextSession||null;
   window.WMProfilePIN?.select().catch(()=>{});window.WMProfilePINUI?.refresh();
@@ -11283,7 +11325,7 @@ window.WMMatch=(()=>{
  function fmt(ms){const sec=Math.max(0,Math.ceil(ms/1000));return Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0');}
  function remaining(at=now()){return !match?0:match.deadline===null?match.remainingMs:Math.max(0,match.deadline-at);}
  function key(){return 'wm-match-draft-v1:'+owner+':'+team;}
- function validContext(){return !!match&&session?.user?.id===owner&&activeTeam?.id===team&&!managedLogin;}
+ function validContext(){return !!match&&session?.user?.id===owner&&activeTeam?.id===team&&recordingAccountAllowed();}
  function persist(){if(!match||!owner||!team)return;window.WMVideoPilot?.onScore(videoSnapshot());try{localStorage.setItem(key(),JSON.stringify({data:match,revision,challenge_id:challenge,season_id:season,team_id:team,owner}));}catch{status('This device could not save a recovery copy. Use Save match before leaving.',true);}}
  function log(label,corner='none',points=0,extra={}){match.ledger.push({id:crypto.randomUUID(),label,corner,points,period:match.period+1,phase:match.phase,remaining_ms:remaining(),at:new Date().toISOString(),...extra});if(match.style==='beach'&&match.phase==='period'&&Math.max(scores().red,scores().other)>=3){match.remainingMs=remaining();match.deadline=null;}persist();}
  function pause(reason=null){if(!match||match.deadline===null)return;match.remainingMs=remaining();match.deadline=null;if(reason)log(reason);persist();paintClock();}
@@ -11441,7 +11483,7 @@ window.WMMatch=(()=>{
  async function guardDraft(incomingId){let draft;try{draft=JSON.parse(localStorage.getItem(key())||'null')}catch{}if(draft?.data?.status==='live'&&draft.data.id!==incomingId)return await WMOperations.confirmAction('Replace the unfinished match on this device: '+(draft.data.red_name||'Red')+' vs '+(draft.data.other_name||'Opponent')+'? Unsaved scoring changes will be lost. Cancel to resume it, or use Next match after saving. Matches on other devices are separate.');return true;}
  async function showScore(saved){if(saved&&!await guardDraft(saved.data?.id))return;if(saved){match=structuredClone(saved.data);revision=saved.revision||null;challenge=saved.challenge_id||null;season=saved.season_id||activeSeason?.id||null;team=saved.team_id||activeTeam?.id;owner=session?.user?.id;if(match.deadline!==null){match.remainingMs=Math.max(0,match.deadline-now());match.deadline=null;log('Recovered match; clock paused');}}
   if(!validContext()){message('Open this match with its team and personal account.',true);return;}['matchListSheet','matchSetupSheet'].forEach(id=>show(id,false));openSheet('matchScoreSheet');status(match.status==='complete'?'Saved result: '+match.result:'Clock is paused.');render();clearInterval(timer);timer=setInterval(tick,100);persist();window.WMVideoPilot?.sync();}
- async function open(){if(document.body.classList.contains('kiosk-locked'))return;if(managedLogin){message('Use your personal team account to score and record matches.',true);return;}if(!actualIsStaff){try{return await WMMatchVideo.scorebook();}catch(err){message(err.message,true);return;}}closeSheets();owner=session?.user?.id;team=activeTeam?.id;season=activeSeason?.id||null;if(!owner||!team){message('Choose a team first.',true);return;}openSheet('matchListSheet');window.WMVideoPilot?.sync();el('matchListStatus').textContent='Loading match book…';const ticket=++version;
+ async function open(){if(document.body.classList.contains('kiosk-locked'))return;if(!recordingAccountAllowed()){message('Use your personal account or a Team Recorder login to score and record matches.',true);return;}if(!actualIsStaff){try{return await WMMatchVideo.scorebook();}catch(err){message(err.message,true);return;}}closeSheets();owner=session?.user?.id;team=activeTeam?.id;season=activeSeason?.id||null;if(!owner||!team){message('Choose a team first.',true);return;}openSheet('matchListSheet');window.WMVideoPilot?.sync();el('matchListStatus').textContent='Loading match book…';const ticket=++version;
   try{catalogue=await WMOperations.rpc(false,{action:'matches',team_id:team});if(ticket!==version)return;el('matchListStatus').textContent='';el('matchList').innerHTML=catalogue.matches.map(r=>{const d=r.data;const s=d.ledger.reduce((s,a)=>{if(!a.voided&&['red','other'].includes(a.corner))s[a.corner]+=Number(a.points)||0;return s},{red:0,other:0});return `<article class="ops-card" data-book-type="${e(d.book_type||(r.challenge_id?'challenge':'competition'))}"><h3>${e(d.red_name)} vs ${e(d.other_name)}</h3><p>${s.red}–${s.other} · ${e(d.status==='complete'?d.result:'In progress')} · ${e(d.style)} · ${e(d.book_type||(r.challenge_id?'challenge':'competition'))}</p><p class="ops-meta">${e(fmtDateTime(r.updated_at))}</p><button type="button" class="wide secondary" data-match-open="${r.id}">Open match</button></article>`}).join('')||'<p>No saved matches yet.</p>';
    filterBooks();el('matchList').querySelectorAll('[data-match-open]').forEach(b=>b.onclick=()=>showScore(catalogue.matches.find(r=>r.id===b.dataset.matchOpen)));
    let draft=null;try{draft=JSON.parse(localStorage.getItem(key())||'null');}catch{}el('matchDraft').innerHTML=draft?.owner===owner&&draft?.team_id===team&&draft?.data?.status!=='complete'?'<div class="ops-card"><h3>Match saved on this device</h3><button type="button" id="matchResume" class="wide secondary">Resume draft</button><button type="button" id="matchDiscard" class="wide secondary">Discard device draft</button></div>':'';
@@ -11509,7 +11551,7 @@ window.WMMatch=(()=>{
  async function openVideo(row){
   if(window.WMVideoPilot?.active())return;
   closeSheets();owner=session?.user?.id;team=activeTeam?.id;
-  if(!owner||!team||managedLogin||row.team_id!==team)return;
+  if(!owner||!team||!recordingAccountAllowed()||row.team_id!==team)return;
   await showScore(row);await window.WMVideoPilot?.sync();
  }
  return{open,openVideo,close,parseTime,remaining,scores,videoSnapshot};
@@ -13734,7 +13776,7 @@ window.WMVideoUpload=(()=>{
  'use strict';
  const ORIGIN='https://vfocpoyexnjsjpxhhyqr.storage.supabase.co',ENDPOINT=ORIGIN+'/storage/v1/upload/resumable',CHUNK=6*1024*1024;
  let busy=false;
- const same=row=>session?.user?.id===row.userId&&activeTeam?.id===row.teamId&&!managedLogin&&!document.hidden&&!window.WMVideoPilot?.active();
+ const same=row=>session?.user?.id===row.userId&&activeTeam?.id===row.teamId&&recordingAccountAllowed()&&!document.hidden&&!window.WMVideoPilot?.active();
  function safeURL(value){const u=new URL(value,ENDPOINT);if(u.origin!==ORIGIN||!u.pathname.startsWith('/storage/v1/upload/resumable/')||u.username||u.password)throw Error('Upload server address was not trusted.');return u.href;}
  async function tus(blob,path,row,kind,save){
   let url=row.upload?.[kind];if(url)url=safeURL(url);
@@ -13758,7 +13800,6 @@ window.WMVideoUpload=(()=>{
  async function queue(store,scope){if(busy||!navigator.onLine||document.hidden)return;for(const row of await store.list(scope)){if(!same(row))break;if(row.boutId&&row.upload?.status!=='ready'&&['ready','partial'].includes(row.status)){await run(store,row);break;}}}
  return{queue,run,busy:()=>busy,tus,timeline};
 })();
-
 </script>
 <script id="wm-video-workspace-046">
 /* Camera presentation only. Move the actual scorer controls; never duplicate scoring logic. */
@@ -13862,7 +13903,7 @@ window.WMVideoPilot = (() => {
   let opening = false, captureStarted = false, interrupted = false, monitor = null, refreshBusy = false, wake = null;
   let previewKey = '', replay = null, replayURL = null, listTicket = 0, statusText = '', accessRequest = 0;
   const context = () => ({user: session?.user?.id, team: activeTeam?.id,
-    allowed: !!session?.user?.id && !!activeTeam?.id && !managedLogin &&
+    allowed: !!session?.user?.id && !!activeTeam?.id && recordingAccountAllowed() &&
       !document.body.classList.contains('kiosk-locked') && !document.querySelector('#appLockOverlay:not(.hidden)')});
   const key = c => c.user + ':' + c.team;
   const valid = () => { const c = context(); return c.allowed && grant?.scope === key(c) && performance.now() < grant.until; };
@@ -14178,7 +14219,6 @@ window.WMVideoPilot = (() => {
   async function openLibrary(){if(active())throw Error('Stop and save your recording first.');await sync();ensure();closeCamera();WMVideoUI.openLibrary();await list();}
   return {sync, onScore, leaving, reset, active,quickStart,openLibrary};
 })();
-
 </script>
 <script id="wm-video-pilot-native-046">
 /* Native AVFoundation adapter. Uses the same Match Book hooks and scorer snapshots. */
@@ -14190,7 +14230,7 @@ window.WMVideoPilot = (() => {
   let generation = 0, grant = null, phase = 'idle', previewMatch = '', refreshing = false, authorization = null;
   let lastToken = '', previousState = null, statusText = '', listTicket = 0;
   const context = () => ({user: session?.user?.id, team: activeTeam?.id,
-    allowed: !!session?.user?.id && !!activeTeam?.id && !managedLogin &&
+    allowed: !!session?.user?.id && !!activeTeam?.id && recordingAccountAllowed() &&
       !document.body.classList.contains('kiosk-locked') && !document.querySelector('#appLockOverlay:not(.hidden)')});
   const scope = c => c.user + ':' + c.team;
   const valid = () => context().allowed && grant?.scope === scope(context()) && performance.now() < grant.until;
@@ -14421,7 +14461,6 @@ window.WMVideoPilot = (() => {
   async function openLibrary(){if(active())throw Error('Stop and save your recording first.');await sync();ensure();post('close');phase='idle';previewMatch='';controls();WMVideoUI.openLibrary();await list();}
   window.WMVideoPilot = {sync, onScore, leaving, reset, active,quickStart,openLibrary};
 })();
-
 </script>
 <script id="wm-match-video-046">
 /* Athlete-first tournament recording. Every action is authorized by the server. */
@@ -14432,8 +14471,8 @@ window.WMMatchVideo = (() => {
  const bookButtons=['matchBookBtn','clipboardMatchBookBtn','matchBookRoomBtn'];
  function bookAccess(allowed=false){for(const id of bookButtons)$(id)?.classList.toggle('hidden-role',!isStaff&&!allowed);window.WMClipboard?.sync();}
  const context=()=>({user:session?.user?.id,team:activeTeam?.id});
- const valid=c=>c.user&&c.team&&c.user===session?.user?.id&&c.team===activeTeam?.id&&!managedLogin&&!document.body.classList.contains('kiosk-locked')&&!document.querySelector('#appLockOverlay:not(.hidden)');
- async function rpc(action,data={}) { const c=context();if(!valid(c))throw Error('Open your personal team account.');const r=await client.rpc('video_match_request',{p_action:action,p_data:{...data,team_id:c.team}});if(!valid(c))throw Error('Your account or team changed.');if(r.error)throw Error(r.error.message);return r.data; }
+ const valid=c=>c.user&&c.team&&c.user===session?.user?.id&&c.team===activeTeam?.id&&recordingAccountAllowed()&&!document.body.classList.contains('kiosk-locked')&&!document.querySelector('#appLockOverlay:not(.hidden)');
+ async function rpc(action,data={}) { const c=context();if(!valid(c))throw Error('Open your personal account or a Team Recorder login.');const r=await client.rpc('video_match_request',{p_action:action,p_data:{...data,team_id:c.team}});if(!valid(c))throw Error('Your account or team changed.');if(r.error)throw Error(r.error.message);return r.data; }
  function reset(){generation++;replay?.querySelector('video')?.pause();replay?.remove();replay=null;document.querySelectorAll('[data-video-profile]').forEach(x=>x.remove());$('videoAssignmentsBtn')?.remove();$('lockerMatchBookBtn')?.remove();$('teamRecorderAccessBtn')?.remove();bookAccess();}
  function button(text,run){const b=document.createElement('button');b.type='button';b.textContent=text;b.onclick=async()=>{b.disabled=true;try{await run();}catch(e){message(e.message,true);}finally{b.disabled=false;}};return b;}
  async function sync(){const g=++generation;try{const data=await rpc('assignments');if(g!==generation)return;bookAccess(data.can_scorebook===true);
@@ -14442,7 +14481,7 @@ window.WMMatchVideo = (() => {
   let entry=$('lockerMatchBookBtn');if(data.can_scorebook&&!entry){entry=button('Score & record a match',scorebook);entry.id='lockerMatchBookBtn';entry.className='wide mv-entry';$('lockerGoalsTab')?.parentElement?.after(entry);}if(entry)entry.hidden=!data.can_scorebook;
   let b=$('videoAssignmentsBtn');if(!b){b=button('Record team matches',scorebook);b.id='videoAssignmentsBtn';$('tournamentDayBtn')?.parentElement?.append(b);}if(b)b.hidden=!data.can_scorebook;
  }catch{if(g!==generation)return;$('videoAssignmentsBtn')?.remove();$('lockerMatchBookBtn')?.remove();$('teamRecorderAccessBtn')?.remove();bookAccess();}}
- async function scorebook(){const data=await rpc('assignments');if(!data.can_scorebook)throw Error('Your coach needs to give this personal account recorder access.');closeSheets();const box=sheet('Match Book');box.innerHTML=data.test_only?'<p>Private recording test · saved on this device. Use the Test scorebook to check your camera, scoring and replay.</p>':(data.team_recorder?'<p>Your coach allows athletes and student managers to record teammates. Choose an available match below.</p>':'<p>Score and record your assigned team matches. Athletes and student managers use their own accounts.</p>');
+ async function scorebook(){const data=await rpc('assignments');if(!data.can_scorebook)throw Error('Your coach needs to enable recorder access.');closeSheets();const box=sheet('Match Book');box.innerHTML=data.test_only?'<p>Private recording test · saved on this device. Use the Test scorebook to check your camera, scoring and replay.</p>':(data.team_recorder?'<p>Your coach allows athletes and student managers to record teammates. Choose an available match below.</p>':'<p>Score and record your assigned team matches. Athletes and student managers use their own accounts.</p>');
   if(data.can_manage_recorders)box.append(button('Team recording access',recorderSettings));
   if(data.can_record_test)box.append(button('Test scorebook',test));else box.insertAdjacentHTML('beforeend','<p>Your coach can assign a match to enable your camera test.</p>');
   box.append(button('Saved videos on this device',()=>WMVideoPilot.openLibrary()));
@@ -14486,7 +14525,6 @@ window.WMMatchVideo = (() => {
  window.addEventListener('pagehide',reset);
  return{rpc,sync,reset,profile,start,scorebook,test,urls,verifyCloud,recorderControls};
 })();
-
 </script>
 <dialog id="organizationInviteReview" aria-labelledby="oiReviewTitle"></dialog>
 <script>const guardianShieldChoice=document.getElementById('guardianShieldChoice');if(guardianShieldChoice){guardianShieldChoice.value=document.documentElement.dataset.guardianShield||'silver';guardianShieldChoice.addEventListener('change',()=>{document.documentElement.dataset.guardianShield=guardianShieldChoice.value;try{localStorage.setItem('wm-guardian-shield',guardianShieldChoice.value)}catch{}})}</script>

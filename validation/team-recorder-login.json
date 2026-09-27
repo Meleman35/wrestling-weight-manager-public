@@ -1,0 +1,12 @@
+{
+  "passed": [
+    "Server forces recording-only permissions and preserves existing Team Device tools",
+    "Two registered devices share one login independently; test-only and cloud-off gates stay intact",
+    "Cross-team access, administration, family libraries and direct table access are denied",
+    "Separate bouts save independently; stale writes cannot overwrite a match; parent and event checks remain required",
+    "Guardian withdrawal removes authorized bouts and recording athletes",
+    "Password/access revision changes revoke both devices; disabled accounts and signed-out sessions fail authorization"
+  ],
+  "engine": "PGlite synthetic data using actual migrations and existing registered-session functions",
+  "productionDataChanged": false
+}

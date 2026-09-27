@@ -38,3 +38,18 @@ At expiry, deny new access and purge the video plus associated cloud derivatives
 A real stream requires native encoding alongside the local recorder, a server-owned live session per match, protected provider ingest credentials, signed playback and health-confirmed Starting / Live / Reconnecting / Ended states. Notify opted-in linked viewers only after playback is actually available. Local recording continues through network failure. This is native work that needs an Xcode/TestFlight build and a physical two-device test; a web button cannot provide it alone.
 
 Next concrete work: connect the video provider using secure account tooling, implement and test private upload/playback/download and capture-time expiry, then add the native broadcaster and parent live notifications. Provider billing and media deletion are not activated by this recorder permission release.
+
+## 0.20.66 — Shared Team Recorder login
+
+Coach/admin path: **Account & Team → Team Logins → Create Team Recorder Login**.
+Choose a display name, username and password (existing minimum 12 characters). Sign in on each device through **Team Login**, using the team's separate team-login code, username and password. A designated Test Athlete is not required. Existing Team Device / Test Athlete logins keep their behavior.
+
+This reuses the deployed `team-logins` Edge Function and its registered, independently scoped auth sessions. The account remains a limited `team_device` with the new `record_matches` permission. The permission sanitizer forces every other operational/admin permission off. Coaches can disable it or reset its password through the existing editor; account revisions and session registration revoke old sessions. No production login/password was created during deployment.
+
+Recorder sessions open a small dedicated screen: score/record, device video library, refresh and sign out. They do not load general team tables. The REST pre-request hook allows only login verification and the two video RPCs; video actions have an additional allowlist. Existing restrictive table/storage policies deny other resources. Camera authorization verifies the account, exact team, membership, registered auth session and revision. Guardian consent, opponent visibility, event filming permission and pilot controls still apply.
+
+Each physical device/browser storage keeps its own draft and original recordings. Concurrent sessions can save different bouts. Server revisions reject stale saves of the same bout; this is not collaborative editing of one bout. A shared login identifies the team recorder account, not which student held the device. Personal athlete accounts remain available through 0.20.65's season setting.
+
+Production remains test-only, with cloud and live off. This release does not activate uploads, a storage provider or automatic 30-day deletion. Shared recorder direct Storage access remains blocked pending the cloud rollout's scoped media policy. Future cloud retention remains the policy described above; no local originals are deleted by this release.
+
+Validation: PGlite tests execute the actual migration and existing registered-session checks on synthetic data, including two concurrent sessions, distinct bouts, stale saves, denied cross-team/admin access, guardian withdrawal and revoked/disabled sessions. JSDOM runs the actual login editor and startup/controller functions, including creation, disable and password-reset payloads, with all inline JavaScript parsed. No physical iPhone sign-in, camera capture or visual claim; the native shell is not rebuilt.
