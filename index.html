@@ -1,8 +1,9 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.61: Bottom tabs continue through the iPhone safe area. -->
+<!-- Wrestling Manager v0.20.62: Compact guardian safety notice and shield choices. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
+<script>try{const shield=localStorage.getItem('wm-guardian-shield');if(['silver','gold','blue','green','red'].includes(shield))document.documentElement.dataset.guardianShield=shield;}catch{}</script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <meta name="theme-color" content="#163a67">
@@ -321,6 +322,7 @@ button:focus-visible,.pressable:focus-visible{outline:3px solid color-mix(in srg
 .nav-btn{border:1px solid var(--team-nav-line);border-radius:13px 13px 0 0;padding-bottom:8px;box-shadow:inset 0 1px 0 rgba(255,255,255,.24),0 3px 0 rgba(0,0,0,.22)!important;min-height:58px}
 .bottom-nav .nav-btn::after{content:"";position:absolute;left:-1px;right:-1px;top:100%;height:env(safe-area-inset-bottom);background:inherit;border-left:1px solid var(--team-nav-line);border-right:1px solid var(--team-nav-line);pointer-events:none}
 .bottom-nav .nav-btn.active::after{height:calc(env(safe-area-inset-bottom) + 3px)}
+.safesport-banner{display:block}.safesport-banner summary{display:flex;align-items:center;gap:11px;cursor:pointer;list-style:none;min-height:38px}.safesport-banner summary::-webkit-details-marker{display:none}.safesport-banner summary b{flex:1}.safesport-banner summary::after{content:'⌄';font-size:22px;line-height:1;transition:transform .15s}.safesport-banner[open] summary::after{transform:rotate(180deg)}.safesport-banner .safety-explanation{padding:8px 0 2px 37px;line-height:1.45}.safesport-banner .safety-explanation p{margin:0 0 12px}.shield-choice-label{display:block;font-size:13px;font-weight:700}.shield-choice-label select{display:block;width:100%;margin-top:5px;background:#fff;color:#193b5d}.guardian-shield-icon{--shield:#71869b;display:inline-block;vertical-align:-3px;flex:none;width:23px;height:27px;background:var(--shield);clip-path:polygon(50% 0,93% 16%,88% 66%,50% 100%,12% 66%,7% 16%);position:relative}.guardian-shield-icon::after{content:'';position:absolute;inset:3px;background:linear-gradient(130deg,#ffffffaa,transparent 65%),var(--shield);clip-path:inherit;box-shadow:inset 0 0 0 2px #fff8}.guardian-shield-icon[data-shield="gold"],html[data-guardian-shield="gold"] .guardian-shield-icon{--shield:#ca9123}.guardian-shield-icon[data-shield="blue"],html[data-guardian-shield="blue"] .guardian-shield-icon{--shield:#276cac}.guardian-shield-icon[data-shield="green"],html[data-guardian-shield="green"] .guardian-shield-icon{--shield:#30835a}.guardian-shield-icon[data-shield="red"],html[data-guardian-shield="red"] .guardian-shield-icon{--shield:#b9494e}.guardian-thread-shield .guardian-shield-icon,.guardian-seen .guardian-shield-icon{width:15px;height:18px;vertical-align:-3px}
 .nav-btn.active{transform:translateY(-3px);box-shadow:inset 0 3px 0 var(--team-accent),0 5px 0 rgba(0,0,0,.24),0 8px 14px rgba(0,0,0,.18)!important}
 .menu-card{background:transparent;border:0;box-shadow:none;display:grid;gap:9px;overflow:visible}.menu-row{border:1px solid var(--line)!important;border-radius:16px!important;box-shadow:0 3px 0 #cbd4de,0 7px 14px rgba(14,28,45,.10)!important}.menu-row:last-child{border-bottom:1px solid var(--line)!important}
 .quick-card,.event-card,.family-athlete-card,.attention-card,.mode-card,.metric-btn,.medical-case-card,.search-athlete,.claim-match-card{box-shadow:0 4px 0 #cbd4de,0 9px 18px rgba(14,28,45,.11)!important}
@@ -1107,7 +1109,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
         <button id="otherTeamNotificationsBtn" type="button" class="wide hidden"></button>
         <button type="button" class="tab-back-btn" data-back-home><span>←</span> Back to Locker Room</button>
         <div class="communication-head top-space"><div><div class="eyebrow">SAFEGUARDED COMMUNICATION</div><h2 style="margin:3px 0 0">Messages</h2></div><div class="communication-actions"><button id="openNotificationsBtn" type="button" class="secondary">🔔 <span id="communicationUnreadCount">0</span></button><button id="newCommunicationBtn" type="button">+ New</button></div></div>
-        <div class="safesport-banner"><span>🛡️</span><div><b>Guardian-safe by design</b><small>Adults cannot privately message a minor without a connected parent or guardian receiving silent read access. Messages remain in the audit history after edits or removal. Automated checks flag secrecy, sexual-image requests, threats, off-app contact attempts and adult-to-minor phone-number sharing for human review.</small></div></div>
+        <details class="safesport-banner"><summary><span class="guardian-shield-icon" aria-hidden="true"></span><b>Guardian-safe by design</b></summary><div class="safety-explanation"><p>Adults cannot privately message a minor without a connected parent or guardian receiving silent read access. Messages remain in the audit history after edits or removal. Automated checks flag secrecy, sexual-image requests, threats, off-app contact attempts and adult-to-minor phone-number sharing for human review.</p><label class="shield-choice-label" for="guardianShieldChoice">Shield appearance<select id="guardianShieldChoice"><option value="silver">Silver</option><option value="gold">Gold</option><option value="blue">Blue</option><option value="green">Green</option><option value="red">Red</option></select></label></div></details>
         <button id="athleteChatPermissionsBtn" type="button" class="wide secondary hidden">👨‍👩‍👧 Manage My Athlete’s Chat Access</button>
         <button id="guardianSafetyTestBtn" type="button" class="wide secondary hidden">🧪 Run Guardian Safety Test</button>
         <div id="smsActionRow" class="sms-action-row hidden"><button id="massTextBtn" type="button">📱 Send Mass Text</button><button id="textRepliesBtn" type="button" class="secondary">↩ Private Text Replies <span id="smsReplyCount">0</span></button></div>
@@ -1425,7 +1427,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
   <section id="communicationThreadSheet" class="sheet hidden" aria-modal="true">
     <div class="sheet-handle"></div>
     <div class="chat-thread-header"><button class="chat-back" type="button" data-close-sheet aria-label="Back to messages">‹</button><div id="communicationThreadIdentity" class="chat-thread-identity"><div id="communicationThreadAvatar" class="chat-thread-avatar-placeholder">WM</div><div id="communicationThreadKind" class="eyebrow">CONVERSATION</div><h2 id="communicationThreadTitle">Messages</h2><p id="communicationThreadParticipants" class="muted"></p><small id="communicationMembersHint" class="hidden">View members ›</small></div><div class="chat-header-spacer" aria-hidden="true"></div></div>
-    <div id="communicationGuardianMirror" class="guardian-mirror-note hidden"><b>🛡️ Guardian mirror is active.</b> Connected parents or legal guardians can read this adult-to-minor conversation without appearing as chat participants.</div>
+    <div id="communicationGuardianMirror" class="guardian-mirror-note hidden"><b><span class="guardian-shield-icon" aria-hidden="true"></span> Guardian mirror is active.</b> Connected parents or legal guardians can read this adult-to-minor conversation without appearing as chat participants.</div>
     <div id="communicationSafetyTestBanner" class="sms-safety-note hidden"><b>🧪 Guardian Safety Test — simulation only.</b> Connected guardians can read it. SMS, email and external push are disabled.</div>
     <div id="communicationMessageList" class="message-list"><div class="empty-inline">Loading messages…</div></div>
     <div id="communicationSafetyTestRoleWrap" class="hidden"><label for="communicationSafetyTestRole">Send as</label><select id="communicationSafetyTestRole"><option value="coach">Test Coach</option><option value="athlete">Test Athlete</option></select></div>
@@ -2213,7 +2215,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.61</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.62</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -5834,9 +5836,9 @@ function communicationReceiptHtml(messageRow){
   }
   if(guardianSeen.length){
     const latest=guardianSeen.map(r=>r.read_at).sort().at(-1);
-    lines.push(`<span class="guardian-seen">🛡️ Seen by ${esc(communicationReceiptNames(guardianSeen))} (guardian)${latest?` · ${esc(fmtTime(latest))}`:''}</span>`);
+    lines.push(`<span class="guardian-seen"><span class="guardian-shield-icon" aria-hidden="true"></span> Seen by ${esc(communicationReceiptNames(guardianSeen))} (guardian)${latest?` · ${esc(fmtTime(latest))}`:''}</span>`);
   }else if(guardians.some(r=>r.delivered_at)){
-    lines.push(`<span class="guardian-seen">🛡️ Guardian copy delivered to ${esc(communicationReceiptNames(guardians))}</span>`);
+    lines.push(`<span class="guardian-seen"><span class="guardian-shield-icon" aria-hidden="true"></span> Guardian copy delivered to ${esc(communicationReceiptNames(guardians))}</span>`);
   }
   return lines.length?`<div class="message-receipts">${lines.join('')}</div>`:'';
 }
@@ -6176,7 +6178,7 @@ async function performOpenCommunicationThread(threadId,{keepOpen=false,preserveS
     ?String(activeCommunicationThread.title||'Safety Test').replace(/^🧪 TEST:\s*Test Coach\s*↔\s*/i,'🧪 Test: Coach ↔ ')
     :activeCommunicationThread.title||'Conversation';
   $('communicationThreadTitle').innerHTML=!safetyTest&&activeCommunicationThread.guardian_mirrored
-    ?`<span class="guardian-thread-shield" aria-label="Guardian safeguarded conversation" title="Guardian safeguarded conversation">🛡️</span>${esc(threadTitle)}`
+    ?`<span class="guardian-thread-shield" aria-label="Guardian safeguarded conversation" title="Guardian safeguarded conversation"><span class="guardian-shield-icon" aria-hidden="true"></span></span>${esc(threadTitle)}`
     :esc(threadTitle);
   $('communicationThreadParticipants').textContent=safetyTest?'Simulation only · External alerts disabled':activeCommunicationThread.participant_names||'';
   // The Messages screen explains guardian-safe design once. Inside a thread,
@@ -6317,8 +6319,8 @@ function renderCommunicationMessages(rows,{preserveScroll=false,distanceFromBott
         const content=String(m.attachment_mime_type||'').startsWith('video/')
           ?`<video src="${esc(m.attachment_url)}" controls playsinline preload="metadata"></video>`
           :`<button type="button" class="message-media-open" data-preview-communication-image="${esc(m.attachment_url)}" aria-label="Open shared photo"><img src="${esc(m.attachment_url)}" alt="Shared photo"></button>`;
-        media=`<div class="message-media">${content}${!labelOnly&&m.body?`<div class="message-media-caption">${esc(m.body)}</div>`:''}<div class="message-media-safety">🛡️ Media retained in the safeguarded message history${m.attachment_safety_status==='review'?' · review marked':''}</div></div>`;
-      }else media='<div class="message-media-hidden">🛡️ A parent or guardian has limited media viewing for this account.</div>';
+        media=`<div class="message-media">${content}${!labelOnly&&m.body?`<div class="message-media-caption">${esc(m.body)}</div>`:''}<div class="message-media-safety"><span class="guardian-shield-icon" aria-hidden="true"></span> Media retained in the safeguarded message history${m.attachment_safety_status==='review'?' · review marked':''}</div></div>`;
+      }else media='<div class="message-media-hidden"><span class="guardian-shield-icon" aria-hidden="true"></span> A parent or guardian has limited media viewing for this account.</div>';
     }
     const safetyLevel=String(m.safety_level||'none').toLowerCase();
     const safetyBubbleClass=!removed&&['high','medium','low'].includes(safetyLevel)?` safety-${safetyLevel}`:'';
@@ -14468,5 +14470,6 @@ window.WMMatchVideo = (() => {
 
 </script>
 <dialog id="organizationInviteReview" aria-labelledby="oiReviewTitle"></dialog>
+<script>const guardianShieldChoice=document.getElementById('guardianShieldChoice');if(guardianShieldChoice){guardianShieldChoice.value=document.documentElement.dataset.guardianShield||'silver';guardianShieldChoice.addEventListener('change',()=>{document.documentElement.dataset.guardianShield=guardianShieldChoice.value;try{localStorage.setItem('wm-guardian-shield',guardianShieldChoice.value)}catch{}})}</script>
 </body>
 </html>
