@@ -5,6 +5,7 @@ const {JSDOM}=require(process.env.JSDOM_MODULE||'jsdom'),root=path.resolve(__dir
  for(const [i,s] of [...w.document.querySelectorAll('script:not([src])')].entries())if(!s.type||s.type==='text/javascript')new vm.Script(s.textContent,{filename:'inline-'+i});
  function source(name){const m=html.match(new RegExp('^(?:async )?function '+name+'\\([^]*?^}', 'm'));assert(m,name);return m[0];}
  w.eval(`var session={user:{id:'coach'}},activeTeam={id:'team'},activeSeason=null,managedLogin=null,isStaff=true,isTeamAdmin=true,actualIsStaff=true,actualIsTeamAdmin=true;
+ var teamLoginPendingPhoto=null;
  var teamLoginEditingId=null,teamLoginOperationId=null,teamLoginAdminData={accounts:[],test_athletes:[]},teamLoginAdminBusy=false,teamLoginAdminVersion=1;
  var teamProfileChoice=null,teamLoginSigningOut=false,teamProfileSelecting=false,staffWeightLoadVersion=0,teamProfileReadyUserId=null;
  var organizationMemberships=[],teamMemberships=[],accountProfileData=null,writes=[],rpcCalls=[],closeCount=0;
@@ -13,7 +14,8 @@ const {JSDOM}=require(process.env.JSDOM_MODULE||'jsdom'),root=path.resolve(__dir
  function renderSetupRole(){}var WMOnboarding={restore(){}};
  var client={auth:{getSession:async()=>({data:{session}})},from(){throw Error('Recorder must not load general team tables');},rpc:async(name,args)=>{rpcCalls.push([name,args]);if(name==='get_my_team_login')return {data:managedLogin};if(name==='video_match_request'&&args.p_action==='device_context')return {data:{team:{id:'team',name:'Example Team'},seasons:[{id:'season',name:'2026–27'}],available:true,test_only:true}};if(name==='video_match_request'&&args.p_action==='assignments')return {data:{can_scorebook:true,can_record_test:true,test_only:true,bouts:[]}};throw Error('Unexpected RPC '+name);}};
  async function callTeamLogin(action,fields){writes.push({action,fields});return {accounts:[{...fields,id:'login',state:'ready'}],test_athletes:[]};}`);
- for(const name of ['resetTeamLoginEditor','updateTeamLoginKind','readTeamLoginPassword','saveTeamLogin','isTeamRecorderLogin','recordingAccountAllowed','showTeamRecorderHome','refreshAccountView'])w.eval(source(name));
+ w.HTMLElement.prototype.scrollIntoView=function(){};
+ for(const name of ['clearTeamLoginPendingPhoto','setTeamLoginStatus','teamLoginInputError','resetTeamLoginEditor','updateTeamLoginKind','readTeamLoginPassword','saveTeamLogin','isTeamRecorderLogin','recordingAccountAllowed','showTeamRecorderHome','refreshAccountView'])w.eval(source(name));
  const $=id=>w.document.getElementById(id);
  w.resetTeamLoginEditor(null,'team_recorder');assert.equal($('teamLoginKind').value,'team_recorder');assert($('teamLoginAthleteRow').classList.contains('hidden'));assert($('teamLoginPermissionFields').classList.contains('hidden'));assert.match($('teamLoginEditorTitle').textContent,/Recorder/);
  $('teamLoginName').value='Mat Team Recorder';$('teamLoginUsername').value='mat-recorder';$('teamLoginPassword').value='synthetic password only';$('teamLoginPasswordConfirm').value='synthetic password only';await w.saveTeamLogin('create');

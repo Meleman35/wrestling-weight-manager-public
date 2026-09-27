@@ -1,0 +1,13 @@
+{
+  "passed": [
+    "Create button exposes missing-password feedback next to the action without sending an invalid request",
+    "Photo can be selected and cropped before account creation; credentials survive the crop screen",
+    "Actual click handlers create the recorder once, upload its cropped photo and keep the editable profile open",
+    "Server failures remain visible and preserve form values for retry",
+    "Schedule filter labels fit their buttons at 320 and 390 pixels and every filter wraps within the screen",
+    "Family circle offers manageable profiles, creates a scoped invitation and copies the canonical join link"
+  ],
+  "engine": "Headless Chromium, actual app scripts and synthetic API/storage fixtures",
+  "productionAccountsCreated": false,
+  "nativeDeviceVerified": false
+}
