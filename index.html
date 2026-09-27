@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.57: Confirmed tech and beach score thresholds. -->
+<!-- Wrestling Manager v0.20.58: Position-aware freestyle and Greco scoring. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -2210,7 +2210,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.57</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.58</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -11229,13 +11229,20 @@ window.WMScoring = (() => {
     add('beach1','Ground contact (not hands)',1,'neutral');add('beach3','Back-exposure throw',3,'neutral');add('beachout','Out of bounds',1,'neutral');add('beachcaution','Opponent illegal-action caution',1,'neutral');add('beachchallenge','Opponent failed challenge',1,'neutral');add('beachwarning','Opponent verbal passivity warning',0,'neutral');
    } else {
     if(['neutral','grounded'].includes(p))add('td','Takedown',2,c);
-    // Officials can record a reversal even when the stored position lags the action.
-    add('reversal','Reversal',1,c);
-    if(p!=='unknown'){
+    // Only the defensive wrestler can earn a one-point par terre reversal.
+    if(p===other(c))add('reversal','Par terre reversal',1,c);
+    if(p==='neutral'){
+     add('hold2','Correct standing hold',2);
+     add('action4','Feet to danger / lift',4,c);
+     add('action5','Grand amplitude to danger',5,c);
+    } else if(p!=='unknown'){
      add('exposure','Exposure / counter',2);
-     if(p==='neutral'||p==='grounded'||p===c){add('hold2','Correct hold / lift',2);add('action4','Action',4);add('action5','Grand amplitude',5,c);}
-     if(p==='neutral'||p==='grounded')add('stepout','Step out',1,'neutral');
+     if(p===c||p==='grounded'){
+      add('hold2','Correct hold / lift',2);
+      add('action4','Short-amplitude lift to danger',4,c);
+     }
     }
+    if(p==='neutral'||p==='grounded')add('stepout','Step out',1,'neutral');
    }
   }
   if(m.style==='folkstyle'&&p===c)add('stoppage','Stoppage near fall',null);
@@ -11332,11 +11339,15 @@ window.WMMatch=(()=>{
   let detail={};if(match.style==='beach'){pause();detail.position_after='neutral';if(id==='beachcaution'){detail.offender=WMScoring.other(c);detail.beach_caution=true;}}
 
   if(id==='locked'||id==='penalty'){
-   const folk=match.style==='folkstyle';const pending=WMOperations.dialog({title:WMScoring.corner(match,c)+' award / opponent warning',fields:[
-    {id:'reason',label:'Referee call against '+WMScoring.corner(match,WMScoring.other(c)),options:(id==='locked'?['Locked hands']:folk?['Illegal hold / technical violation','Stalling','False start / incorrect start','Unnecessary roughness / misconduct']:['Illegal action / caution','Passivity / activity period','Failed challenge','Injury stoppage award','Other referee call']).map(x=>[x,x])},
+   const folk=match.style==='folkstyle';
+   const internationalPoints=match.style==='greco'?{'Passivity':1,'Offensive foul after warning':1,'Defensive leg foul / illegal hold':2,'Incorrect ordered par terre start':2,'Fleeing mat / hold':1,'Danger-position foul / flee':2,'Failed challenge':1,'Injury stoppage award':1,'Other referee call':0}:{'Passivity / activity period':1,'Illegal hold / caution':1,'Fleeing mat / hold':1,'Danger-position foul / flee':2,'Failed challenge':1,'Injury stoppage award':1,'Other referee call':0};
+   const reasons=id==='locked'?['Locked hands']:folk?['Illegal hold / technical violation','Stalling','False start / incorrect start','Unnecessary roughness / misconduct']:Object.keys(internationalPoints);
+   const pending=WMOperations.dialog({title:WMScoring.corner(match,c)+' award / opponent warning',fields:[
+    {id:'reason',label:'Referee call against '+WMScoring.corner(match,WMScoring.other(c)),options:reasons.map(x=>[x,x])},
     {id:'points',label:'Points awarded to '+WMScoring.corner(match,c),options:[['0','Warning / caution only'],['1','1 point'],['2','2 points'],['dq','Disqualification · confirm result separately']],value:id==='locked'?'1':'0'}],description:match.nfhs?'Cumulative suggestions use this match’s recorded calls, including overtime. Confirm the referee’s actual award. Stalling and starting cautions have separate counts. Team-point deductions are not individual match points.':'Record the referee’s actual award.',submit:'Record referee call'});
    const group=()=>el('od_reason').value==='Stalling'?'stalling':el('od_reason').value==='False start / incorrect start'?'start':'general';
    if(match.nfhs){const suggest=()=>{const q=WMNFHS.penalty(match,WMScoring.other(c),group());el('od_points').value=q.dq?'dq':String(q.points);};el('od_reason').onchange=suggest;suggest();}
+   else if(!folk){const suggest=()=>{el('od_points').value=String(internationalPoints[el('od_reason').value]??0);};el('od_reason').onchange=suggest;suggest();}
    const answer=await pending;
    if(!answer||source!==match||!validContext())return;
    detail={label:answer.reason+' against '+WMScoring.corner(match,WMScoring.other(c)),points:answer.points==='dq'?0:Number(answer.points),offender:WMScoring.other(c),penalty_group:answer.reason==='Stalling'?'stalling':answer.reason==='False start / incorrect start'?'start':'general',disqualification:answer.points==='dq'};if(detail.disqualification)detail.label+=' · disqualification';
