@@ -1,0 +1,10 @@
+{
+  "checks": [
+    "Arrange buttons removed; tiles suppress callouts and share the same edit mode",
+    "Individual can find a team, request a follow, see pending/accepted state and unfollow",
+    "Open Mats repeats selected weekdays before season start and retries the same request without duplicates",
+    "Daily and monthly previews handle inclusive end dates and missing monthly dates",
+    "Past-event form saves changes to the existing event and returns to that event"
+  ],
+  "errors": []
+}

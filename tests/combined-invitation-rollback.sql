@@ -5,12 +5,14 @@ declare owner_id uuid=gen_random_uuid();child_id uuid=gen_random_uuid();parent_i
 begin
  insert into auth.users(id,aud,role,email,email_confirmed_at,raw_user_meta_data) values
  (owner_id,'authenticated','authenticated','invite-coach@example.invalid',now(),'{"full_name":"Actual Coach"}'),
- (child_id,'authenticated','authenticated','invite-child@example.invalid',null,'{"full_name":"Actual Athlete"}'),
+ (child_id,'authenticated','authenticated','invite-child@example.invalid',null,'{"full_name":"Signup Athlete"}'),
  (parent_id,'authenticated','authenticated','invite-parent@example.invalid',now(),'{"full_name":"Actual Parent"}'),
  (other_id,'authenticated','authenticated','invite-other@example.invalid',now(),'{}');
  perform set_config('request.jwt.claim.sub',owner_id::text,true);
  select * into t from public.bootstrap_wrestling_organization('Synthetic Invitation Organization','Synthetic Invitation Team','school','girls','2026-27');
  insert into public.athletes(organization_id,first_name,last_name,birth_date) values(t.organization_id,'Actual','Athlete',current_date-interval '15 years') returning id into a;
+ insert into public.athlete_private_contact(athlete_id,email,phone) values(a,'saved-family-contact@example.invalid','3075550100') on conflict(athlete_id) do update set email=excluded.email,phone=excluded.phone;
+ insert into public.athlete_profile_details(athlete_id,grade_level,shirt_size) values(a,'8','Youth M') on conflict(athlete_id) do update set grade_level=excluded.grade_level,shirt_size=excluded.shirt_size;
  select id into ss from public.seasons where team_id=t.team_id limit 1;
  insert into public.roster_memberships(season_id,athlete_id) values(ss,a);
  select * into inv from public.create_athlete_claim_invitation(a,t.team_id,'invite-child@example.invalid');
@@ -31,7 +33,7 @@ begin
  denied:=false;begin perform public.accept_athlete_claim_invitation(current_setting('test.inv_token'));exception when others then denied:=true;end;if not denied then raise exception 'Wrong email accepted token';end if;
  perform set_config('request.jwt.claim.sub',current_setting('test.inv_child'),true);
  denied:=false;begin perform public.accept_verified_email_invitations();exception when others then denied:=true;end;if not denied then raise exception 'Unverified email accepted invitation';end if;
- if (select display_name from public.profiles where id=auth.uid())<>'Actual Athlete' then raise exception 'Signup still using email prefix';end if;
+ if (select display_name from public.profiles where id=auth.uid())<>'Signup Athlete' then raise exception 'Signup still using email prefix';end if;
 end $$;
 reset role;
 update auth.users set email_confirmed_at=now() where id=current_setting('test.inv_child')::uuid;
@@ -48,7 +50,8 @@ begin
 end $$;
 reset role;
 do $$begin
+ if not exists(select 1 from public.athletes a join public.athlete_private_contact c on c.athlete_id=a.id join public.athlete_profile_details d on d.athlete_id=a.id where a.id=current_setting('test.inv_a')::uuid and a.first_name='Actual' and a.last_name='Athlete' and c.email='saved-family-contact@example.invalid' and c.phone='3075550100' and d.grade_level='8' and d.shirt_size='Youth M') then raise exception 'Invitation acceptance overwrote seeded athlete information';end if;
  if has_function_privilege('anon','public.invitation_email_context(text,uuid)','execute') or has_function_privilege('anon','public.accept_verified_email_invitations()','execute') then raise exception 'Anonymous invitation endpoint exposed';end if;
 end $$;
-select 'PASS: bound recipient and real name, authenticated sender, duplicate prevention, verified email only, athlete and parent linking, idempotence and unrelated denial' as result;
+select 'PASS: bound recipient and real name, authenticated sender, duplicate prevention, verified email only, athlete and parent linking, seeded name/contact/grade/gear preserved, idempotence and unrelated denial' as result;
 rollback;

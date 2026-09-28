@@ -253,5 +253,15 @@
     "check": "syntax",
     "script": "teamBulletin079Script",
     "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "eventRepeat080Script",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "eventEdit080Script",
+    "passed": true
   }
 ]

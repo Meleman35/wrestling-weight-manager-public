@@ -10,7 +10,7 @@ const root=path.resolve(__dirname,'..'),passed=[];const pass=s=>{passed.push(s);
  async function setup(role){await p.evaluate(role=>{session=fixture.session={user:{id:role+'-layout'}};managedLogin=null;activeTeam={id:'team-a',name:'Layout Team'};accountProfileData=JSON.parse(localStorage.getItem('fixture-server-'+session.user.id)||'null')||{id:session.user.id,ui_preferences:{}};isStaff=actualIsStaff=role==='coach';isTeamAdmin=actualIsTeamAdmin=false;isManager=false;viewerRole=role==='parent'?'parent_guardian':role==='coach'?'coach':'athlete';viewMode=isStaff?'staff':'member';show('authView',false);show('setupView',false);show('appView',true);show('appLockOverlay',false);closeSheets();setTab('home');applyRoleUI();applyUiPreferences();document.querySelector('.locker-room-tabs').scrollLeft=0;},role);}
  const order=()=>p.locator('.locker-room-tabs>[data-layout-key]').evaluateAll(ns=>ns.map(n=>n.dataset.layoutKey));
  for(const role of ['coach','parent','athlete']){
-  await setup(role);assert.equal((await order())[0],'board');await p.locator('#lockerArrangeTilesBtn').click();
+  await setup(role);assert.equal((await order())[0],'board');await p.locator('.locker-room-tabs>[data-layout-key]:visible').first().press('Alt+ArrowRight');await p.locator('#tileEditSettings').click();
   await p.locator('[data-layout-move="locker:1:-1"]').click();
   assert.equal(await p.evaluate(()=>document.activeElement.getAttribute('data-layout-move')),'locker:0:1');
   await p.locator('[data-layout-move="locker:3:-1"]').click();await p.locator('[data-layout-visible="locker:trophy"]').uncheck();
@@ -24,10 +24,10 @@ const root=path.resolve(__dirname,'..'),passed=[];const pass=s=>{passed.push(s);
  await p.evaluate(()=>{activeTeam={id:'team-b',name:'Other team'};applyRoleUI();applyUiPreferences();});assert.equal((await order())[0],'my_profile');
  await setup('other');assert.equal((await order())[0],'board');assert(await p.locator('[data-layout-key="trophy"]').isVisible());
  pass('Saved account preferences restore without the device layout cache, survive team changes, and stay separate between accounts');
- await setup('athlete');await p.locator('#lockerArrangeTilesBtn').click();await p.locator('[data-layout-move="locker:1:-1"]').click();await p.locator('#layoutEditorSheet > .sheet-returnbar button').click();assert.equal((await order())[0],'my_profile');
- await p.locator('#lockerArrangeTilesBtn').click();await p.locator('[data-layout-move="locker:1:-1"]').click();await p.evaluate(()=>fixture.profileError=true);await p.locator('#saveLayoutBtn').click();assert.equal((await order())[0],'board');assert.match(await p.locator('#message').innerText(),/saved on this device/);
+ await setup('athlete');await p.locator('.locker-room-tabs>[data-layout-key]:visible').first().press('Alt+ArrowRight');await p.locator('#tileEditSettings').click();await p.locator('[data-layout-move="locker:1:-1"]').click();await p.locator('#layoutEditorSheet > .sheet-returnbar button').click();assert.equal((await order())[0],'my_profile');
+ await p.locator('.locker-room-tabs>[data-layout-key]:visible').first().press('Alt+ArrowRight');await p.locator('#tileEditSettings').click();await p.locator('[data-layout-move="locker:1:-1"]').click();await p.evaluate(()=>fixture.profileError=true);await p.locator('#saveLayoutBtn').click();assert.equal((await order())[0],'board');assert.match(await p.locator('#message').innerText(),/saved on this device/);
  await p.reload();await p.waitForFunction(()=>window.wrestlingManagerSignInReady);await setup('athlete');assert.equal((await order())[0],'board');
- await p.locator('#lockerArrangeTilesBtn').click();await p.locator('#saveLayoutBtn').click();assert.equal(await p.evaluate(()=>JSON.parse(localStorage.getItem('wm_ui_layout_athlete-layout')).pendingSync),false);
+ await p.locator('.locker-room-tabs>[data-layout-key]:visible').first().press('Alt+ArrowRight');await p.locator('#tileEditSettings').click();await p.locator('#saveLayoutBtn').click();assert.equal(await p.evaluate(()=>JSON.parse(localStorage.getItem('wm_ui_layout_athlete-layout')).pendingSync),false);
  pass('Cancel preserves the prior layout; offline saves stay on-device and sync when saved online');
  // Real touch events: swipe should scroll normally, while hold + drag edits without opening a tile.
  await setup('other');await p.evaluate(()=>{document.getElementById('lockerMyProfileTab').onclick=()=>{fixture.accidentalOpen=true;};});
@@ -49,7 +49,7 @@ const root=path.resolve(__dirname,'..'),passed=[];const pass=s=>{passed.push(s);
  box=await p.locator('[data-layout-key="board"]').boundingBox();const rb=await p.locator('.locker-room-tabs').boundingBox();await p.mouse.move(box.x+25,box.y+25);await p.mouse.down();await p.mouse.move(rb.x+rb.width-8,box.y+25,{steps:6});await p.waitForTimeout(420);await p.mouse.up();
  assert(await p.locator('.locker-room-tabs').evaluate(el=>el.scrollLeft)>30);await p.locator('#tileEditDone').click();assert.equal(await p.evaluate(()=>tileEditing),false);
  pass('Dragging toward the horizontal edge scrolls to offscreen tiles and Done saves the chosen order');
- await p.locator('#lockerArrangeTilesBtn').click();await p.screenshot({path:path.join(root,'validation/locker-layout-phone.png')});assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+ await p.locator('.locker-room-tabs>[data-layout-key]:visible').first().press('Alt+ArrowRight');await p.locator('#tileEditSettings').click();await p.screenshot({path:path.join(root,'validation/locker-layout-phone.png')});assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
  await p.setViewportSize({width:1200,height:900});await p.screenshot({path:path.join(root,'validation/locker-layout-desktop.png')});
  assert.deepEqual(errors,[]);fs.writeFileSync(path.join(root,'validation/locker-layout-browser.json'),JSON.stringify({passed,errors},null,2));await browser.close();
 })().catch(e=>{console.error(e);process.exit(1)});
