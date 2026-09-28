@@ -1,0 +1,15 @@
+{
+  "checks": [
+    "First/last/numeric weight sorting and saved preference",
+    "Active-only attendance picker; X closes sheet/backdrop and restores Team Board highlight",
+    "Back from Attendance returns to Locker Room",
+    "Back from roster attendance restores roster",
+    "Manage attendance closes panel and opens Schedule",
+    "Delayed attendance response cannot reopen a closed screen",
+    "Event attendance excludes standby/removed, includes all active wrestlers",
+    "Dated restrictions save, preserve practice by default and expire at local midnight; upcoming events use event dates",
+    "School/coach can also restrict practice until clearance",
+    "Clear restrictions restores both activities and editor closes"
+  ],
+  "errors": []
+}

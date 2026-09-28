@@ -32,6 +32,7 @@ window.WMSheetNavigation=(()=>{
   for(const panel of visible())panel.classList.add('hidden');
   const panel=document.getElementById(prior.id);if(!panel){closeSheets();return;}
   panel.classList.remove('hidden');panel.scrollTop=prior.scroll;
+  syncLockerRoomTabs(prior.id);
   if(prior.focus?.isConnected&&panel.contains(prior.focus))prior.focus.focus({preventScroll:true});
  }
  return {open,back,reset};
