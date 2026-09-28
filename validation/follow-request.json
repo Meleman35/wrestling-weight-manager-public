@@ -1,0 +1,11 @@
+{
+  "checks": [
+    "Sending gives immediate feedback and then an inline confirmation beside a disabled Request sent button",
+    "Reopening reads the saved request and changes Pending to Following after approval",
+    "Switching profiles has separate follow state; failures stay next to the button, and a saved request survives a status-refresh error",
+    "Rapid actor changes ignore old responses, denied connections remain unavailable, and phone layout fits",
+    "Late status reads cannot populate another signed-in account"
+  ],
+  "engine": "Chromium; actual app with synthetic follow responses",
+  "nativeDeviceVerified": false
+}
