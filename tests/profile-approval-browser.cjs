@@ -16,6 +16,7 @@ const root=path.resolve(__dirname,'..'),passed=[];const pass=x=>{passed.push(x);
     if(a.p_action==='save'){fixture.profile={...fixture.profile,...a.p_data};return {data:copy(fixture.profile)};}return {data:[]};
    }
    if(name==='wm_profile_approval_request'){
+    if(a.p_action==='settings')return {data:[]};
     const d=a.p_data,latest=fixture.records.filter(r=>['draft','pending','rejected'].includes(r.status)).at(-1);
     if(a.p_action==='context')return {data:{approval_required:!fixture.profile.manager,profile_id:'profile',draft:latest||null,expected:{v:1}}};
     if(a.p_action==='prepare'){if(fixture.profile.manager)return {data:{approval_required:false}};const id='request-'+(fixture.records.length+1),r={id,profile_id:'profile',name:fixture.profile.name,status:'uploading',proposal:d.proposal||latest?.proposal||copy(fixture.profile),path:d.new_photo?id+'.jpg':latest?.path||null};fixture.records.push(r);return {data:{...r,approval_required:true,bucket:'profile-photo-requests'}};}

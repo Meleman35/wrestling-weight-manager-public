@@ -82,7 +82,7 @@ window.WMTournaments=(()=>{
  }
  async function open(id=''){
   if(!allowed()){message('Sign in to your personal team account to open Tournament Day.',true);return;}
-  closeSheets();openSheet('tournamentSheet');identity=account();const g=++generation;note('Loading tournaments…');
+  openSheet('tournamentSheet');identity=account();const g=++generation;note('Loading tournaments…');
   try{const data=await rpc('context',{},g);if(!data)return;context=data;eventId=data.events.some(e=>e.id===id)?id:'';shell();if(eventId)await loadBoard();else{renderBoard();note('');}timer=setInterval(()=>refresh(false),20000);}catch(e){if(current(g)){note(e.message,true);el('tournamentBody').innerHTML='<p>Try Refresh after checking your connection.</p>';}}
  }
  function openDemo(){generation++;demo=true;editing=null;demoNow=Date.now();alertState={};alertLog=[];board={workspace_id:'demo',title:'Sample Wrestling Invitational',timezone:Intl.DateTimeFormat().resolvedOptions().timeZone,can_manage:false,athletes:[{id:'sample-a',name:'Sample Wrestler A'},{id:'sample-b',name:'Sample Wrestler B'}],bouts:[{id:'sample-bout-a',athlete_id:'sample-a',athlete_name:'Sample Wrestler A',division:'16U',weight_class:'120 lb',bout_number:'101',mat:'1',opponent:'Sample Opponent A',status:'queued',estimated_start:new Date(demoNow+35*60000).toISOString(),updated_at:new Date(demoNow).toISOString(),queue_order:1,revision:1},{id:'sample-bout-b',athlete_id:'sample-b',athlete_name:'Sample Wrestler B',division:'Junior',weight_class:'145 lb',bout_number:'101',mat:'2',opponent:'Sample Opponent B',status:'on_deck',estimated_start:null,updated_at:new Date(demoNow).toISOString(),queue_order:2,revision:1}]};shell();renderBoard();note('Demo only · no live tournament connection or notifications.');}

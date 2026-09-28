@@ -6,8 +6,18 @@ window.WMProfileApprovals=(()=>{
  async function finish(draft,file,saveOnly,isCurrent=()=>true){
   const uid=session?.user?.id,check=()=>{if(!allowed()||uid!==session?.user?.id||!isCurrent())throw Error('Screen changed. Reopen your profile draft.');};check();
   if(file){const {error}=await client.storage.from(draft.bucket).upload(draft.path,file,{contentType:'image/jpeg',upsert:false});check();if(error)throw Error(error.message);}
-  await call('save_draft',{id:draft.id});check();
-  if(!saveOnly){try{await call('submit',{id:draft.id});check();}catch(e){throw Error('Your private draft is saved. '+e.message);}}
+  const saved=await call('save_draft',{id:draft.id});check();if(saveOnly)return saved;
+  let result;
+  try{result=await call('submit',{id:draft.id});check();}catch(e){throw Error('Your private draft is saved. '+e.message);}
+  if(result.auto_photo){
+   try{
+    let photo=file;
+    if(!photo){const out=await client.storage.from(draft.bucket).download(draft.path);check();if(out.error||!out.data)throw Error('Reopen your saved photo and try again.');photo=out.data;}
+    await saveUnifiedProfilePhoto(photo,{kind:'social',id:draft.profile_id,approval_id:draft.id},isCurrent);check();
+    return {status:'approved',auto_approved:true,pending:false};
+   }catch(e){throw Error('Your changes are saved for review. The photo could not finish updating: '+e.message);}
+  }
+  return result;
  }
  async function preview(path,img,isCurrent=()=>true){
   const uid=session?.user?.id;const {data,error}=await client.storage.from('profile-photo-requests').download(path);
@@ -23,15 +33,29 @@ window.WMProfileApprovals=(()=>{
  const labels={draft:'Private draft · not sent',pending:'Waiting for parent approval',approved:'Approved · changes are live',rejected:'Changes requested · edit and send again'};
  const fields={roles:'Roles',affiliation:'Team / organization',bio:'About me / goals',age_division:'Age division',mat_rank:'Mat-official classification',pairing_rank:'Pairing-official classification',music_title:'Entrance Song',music_url:'Song link',photo:'Profile photo',corner:'My Corner',follow:'Accept follow requests',outgoing_follow:'Athlete may request follows and arrange My Corner',results:'Tournament results'};
  async function open(filter={}){
-  if(!allowed())return;const uid=session.user.id,t=++revision;closeSheets();openSheet(sheet.id);$('profileApprovalsBody').replaceChildren();$('profileApprovalsStatus').textContent='Loading profile drafts…';
+  if(!allowed())return;const uid=session.user.id,t=++revision;openSheet(sheet.id);$('profileApprovalsBody').replaceChildren();$('profileApprovalsStatus').textContent='Loading profile drafts…';
   const valid=()=>allowed()&&uid===session?.user?.id&&t===revision&&!sheet.classList.contains('hidden');
-  const rows=await call('list',filter);if(!valid())return;
-  $('profileApprovalsStatus').textContent='Drafts are private. A linked parent reviews the complete profile before any changes go live.';
-  const own=document.createElement('button');own.className='wide secondary';own.textContent='Build / edit my profile';own.onclick=()=>WMProfiles.open();$('profileApprovalsBody').append(own);
+  const [rows,settings]=await Promise.all([call('list',filter),call('settings',{profile_id:filter.profile_id||null})]);if(!valid())return;
+  $('profileApprovalsStatus').textContent='Edit anytime. Your last approved profile stays visible while changes wait for review.';
+  const own=document.createElement('button');own.className='wide secondary';own.textContent='My Profile';own.onclick=()=>WMProfiles.myProfile();$('profileApprovalsBody').append(own);
+  for(const item of Array.isArray(settings)?settings:[]){
+   const policy=item.policy||{},box=document.createElement('section');box.className='wp-panel';box.dataset.profilePolicy=item.profile_id;
+   box.innerHTML=`<h3>${E(item.name)} · parent controls</h3><p class="fine">Name, phone, contact email and contact-sharing changes always need parent approval.</p>${item.can_manage?`<label class="toggle-row"><span><b>Auto-approve profile edits</b><small>Off: approve every change.</small></span><input type="checkbox" data-auto-profile ${policy.auto_approve?'checked':''}></label><label class="toggle-row"><span><b>Review photo changes</b><small>When automatic approval is on, keep reviewing photos.</small></span><input type="checkbox" data-review-photos ${policy.review_photos!==false?'checked':''}></label><button type="button" data-save-profile-policy>Save parent settings</button><p class="profile-policy-note" role="status"></p>`:`<p>${policy.auto_approve?'Other profile edits save automatically. '+(policy.review_photos?'Photos need review.':'Photos save automatically.'):'Your parent reviews every change.'}</p>`}`;
+   $('profileApprovalsBody').append(box);
+   if(item.can_manage){
+    const auto=box.querySelector('[data-auto-profile]'),photos=box.querySelector('[data-review-photos]'),save=box.querySelector('button'),note=box.querySelector('[role="status"]');
+    auto.onchange=()=>{photos.disabled=!auto.checked;};auto.onchange();
+    save.onclick=async()=>{if(save.disabled||!valid())return;save.disabled=true;auto.disabled=true;photos.disabled=true;note.textContent='Saving…';
+     try{await call('set_settings',{profile_id:item.profile_id,auto_approve:auto.checked,review_photos:photos.checked});if(valid())note.textContent='Parent settings saved. These apply the next time your athlete saves changes.';}
+     catch(e){if(valid())note.textContent=e.message;}
+     finally{if(valid()){save.disabled=false;auto.disabled=false;photos.disabled=!auto.checked;}}
+    };
+   }
+  }
   if(!rows.length){const p=document.createElement('p');p.textContent='No profile requests yet. Open your profile to get started.';$('profileApprovalsBody').append(p);return;}
   for(const r of rows){
    const proposal=r.proposal||{},details=proposal.details||{};const card=document.createElement('article');card.className='wp-panel';card.dataset.profileRequest=r.id;
-   card.innerHTML=`<h3>${E(proposal.name||r.name)}</h3><p><strong>${E(labels[r.status]||r.status)}</strong></p>${r.path?'<img class="wp-photo" data-approval-photo alt="Requested profile photo">':'<p class="fine">Photo stays unchanged.</p>'}<dl>${Object.entries(fields).filter(([k])=>!['results','photo','corner','follow','outgoing_follow'].includes(k)&&details[k]).map(([k,l])=>`<dt><b>${E(l)}</b></dt><dd style="margin:0 0 12px;overflow-wrap:anywhere">${E(details[k]||'Not added')}</dd>`).join('')}</dl>${(details.results||[]).length?'<h4>Tournament results</h4>'+details.results.map(x=>`<p style="overflow-wrap:anywhere">${E([x.event,x.date,x.style,x.division,x.placement,x.url].filter(Boolean).join(' · '))}</p>`).join(''):''}<h4>Requested visibility</h4><p>${proposal.discoverable?'Allow discovery by signed-in members':'Keep shared profile private'}</p><p><b>Share:</b> ${E(Object.entries(fields).filter(([k])=>proposal.sharing?.[k]).map(([,label])=>label).join(', ')||'No optional fields selected')}</p><p class="fine">All other optional fields stay hidden.</p><div data-approval-actions></div><p data-approval-note role="status"></p>`;
+   card.innerHTML=`<h3>${E(proposal.name||r.name)}</h3><p><strong>${E(r.auto_approved?'Saved automatically · parent settings':labels[r.status]||r.status)}</strong></p>${r.path?'<img class="wp-photo" data-approval-photo alt="Requested profile photo">':'<p class="fine">Photo stays unchanged.</p>'}${proposal.contact?`<h4>Contact settings</h4><p>Email: ${E(proposal.contact.email||'Not added')}<br>Phone: ${E(proposal.contact.phone||'Not added')}</p><p>Share email with coaches: ${proposal.contact.share_email_with_coaches?'Yes':'No'}<br>Share phone with coaches: ${proposal.contact.share_phone_with_coaches?'Yes':'No'}</p><p class="fine">Sign-in email stays the same.</p>`:''}<dl>${Object.entries(fields).filter(([k])=>!['results','photo','corner','follow','outgoing_follow'].includes(k)&&details[k]).map(([k,l])=>`<dt><b>${E(l)}</b></dt><dd style="margin:0 0 12px;overflow-wrap:anywhere">${E(details[k]||'Not added')}</dd>`).join('')}</dl>${(details.results||[]).length?'<h4>Tournament results</h4>'+details.results.map(x=>`<p style="overflow-wrap:anywhere">${E([x.event,x.date,x.style,x.division,x.placement,x.url].filter(Boolean).join(' · '))}</p>`).join(''):''}<h4>Requested visibility</h4><p>${proposal.discoverable?'Allow discovery by signed-in members':'Keep shared profile private'}</p><p><b>Share:</b> ${E(Object.entries(fields).filter(([k])=>proposal.sharing?.[k]).map(([,label])=>label).join(', ')||'No optional fields selected')}</p><p class="fine">All other optional fields stay hidden.</p><div data-approval-actions></div><p data-approval-note role="status"></p>`;
    $('profileApprovalsBody').append(card);const actions=card.querySelector('[data-approval-actions]'),note=card.querySelector('[data-approval-note]');let photo=null,loaded=!r.path;
    if(r.path)preview(r.path,card.querySelector('img'),valid).then(blob=>{photo=blob;loaded=true;const b=actions.querySelector('[data-approve-profile]');if(b)b.disabled=false;}).catch(e=>{if(valid()){card.querySelector('img').hidden=true;note.textContent=e.message;}});
    if(r.can_review&&r.status==='pending'){

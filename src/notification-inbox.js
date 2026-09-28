@@ -110,7 +110,7 @@ window.WMNotificationSync = (() => {
     if(row.thread_id){closeSheets();setTab('messages');await openCommunicationThread(row.thread_id);return;}
     if(await mark([row]))message('Notification marked read.');
   }
-  async function openInbox(teamId=null){const userId=current();if(!userId)return;filterTeam=typeof teamId==='string'?teamId:null;closeSheets();openSheet('communicationNotificationsSheet');render();await refresh();if(current()!==userId)return;render();}
+  async function openInbox(teamId=null){const userId=current();if(!userId)return;filterTeam=typeof teamId==='string'?teamId:null;openSheet('communicationNotificationsSheet');render();await refresh();if(current()!==userId)return;render();}
   function foreground(){if(!document.hidden)refresh();}
   document.addEventListener('visibilitychange',foreground);window.addEventListener('focus',foreground);window.addEventListener('online',foreground);
   setInterval(()=>{if(!document.hidden&&available())refresh();else if(owner!==current())reset();},15000);

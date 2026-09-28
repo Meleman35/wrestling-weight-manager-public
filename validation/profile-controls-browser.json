@@ -1,0 +1,12 @@
+{
+  "passed": [
+    "My Profile opens the athlete directly; Back from Find Profile restores the query, results and scroll",
+    "Back moves from editing to the profile and then restores the account screen without losing its form",
+    "Linked parent can save both simple controls; review photos is disabled when every change needs review",
+    "Automatic edit success is distinguished from protected edits waiting for approval",
+    "Automatic photo flow uploads a private candidate then completes the authorized atomic photo commit",
+    "Close removes the approval backdrop; Back cannot restore private screens after an account switch"
+  ],
+  "engine": "Chromium; actual app with synthetic API fixtures",
+  "nativeDeviceVerified": false
+}

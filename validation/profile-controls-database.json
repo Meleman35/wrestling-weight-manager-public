@@ -1,0 +1,23 @@
+{
+  "version": "0.20.76",
+  "environment": "Supabase production schema with synthetic example.invalid accounts inside rolled-back transactions",
+  "passed": [
+    "Default policy requires review for every edit",
+    "Only a currently linked parent can save approval settings",
+    "Opted-in ordinary edits publish automatically",
+    "Name, phone, email and contact-sharing changes remain pending",
+    "Guardian-approved contact changes sync without changing sign-in email",
+    "Photo review remains on by default",
+    "Opted-in automatic photo approval commits profile and account paths atomically",
+    "Revoking automatic approval between prepare and commit blocks publication",
+    "Live profile photos cannot be overwritten in storage",
+    "Older account and athlete edit paths cannot bypass protected changes",
+    "A minor cannot change birth date to self-grant adult privileges",
+    "Unrelated users cannot read or change parent settings",
+    "Unlinking the parent disables that parent's automatic approval policy",
+    "Existing manual profile approval regression transaction passes"
+  ],
+  "realMessagesSent": false,
+  "fixtureDataRetained": false,
+  "nativeDeviceVerified": false
+}
