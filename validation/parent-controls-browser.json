@@ -1,0 +1,11 @@
+{
+  "passed": [
+    "One phone-friendly hub exposes real controls, conservative defaults and video availability",
+    "Unsaved changes block accidental child switches; saved policies remain scoped to the selected athlete",
+    "Failed saves retain edits; notification timezone and team scope are preserved without changing the active team",
+    "Back from approval review restores the hub and unsaved form; explicit section reload discards only that section",
+    "View-media remains independent of send-media; existing parent chat entry opens the same hub",
+    "Delayed responses cannot repopulate controls after an account change"
+  ],
+  "errors": []
+}

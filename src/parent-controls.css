@@ -1,0 +1,24 @@
+#parentControlsSheet{max-width:740px;width:calc(100% - 24px)}
+#parentControlsSheet .sheet-head{align-items:flex-start}
+#parentControlsSheet h2{margin-bottom:4px}
+#parentControlsSheet .sheet-head p{margin:0}
+.pc-selectors,.pc-hours{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.pc-selectors label,.pc-hours label{min-width:0}
+.pc-selectors select,.pc-hours input{width:100%;min-width:0;box-sizing:border-box}
+.pc-intro{padding:14px 0}
+.pc-intro h3{margin-bottom:6px}
+.pc-links,.pc-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.pc-section{border:1px solid var(--line,#cdd6e2);border-radius:14px;margin:12px 0;padding:14px;background:var(--card,#fff)}
+.pc-section>summary{cursor:pointer;font-weight:750;min-height:38px;list-style-position:inside}
+.pc-section>summary span:first-child{display:inline-block;vertical-align:middle;max-width:90%}
+.pc-section summary small{display:block;font-size:.82rem;font-weight:400;color:var(--muted,#536176);margin-top:4px}
+.pc-section form{margin-top:14px}
+.pc-section .toggle-row{gap:12px}
+.pc-section .toggle-row span{min-width:0;overflow-wrap:anywhere}
+.pc-section .toggle-row input{flex-shrink:0}
+.pc-section input:not([type=checkbox]),.pc-section select{max-width:100%;box-sizing:border-box}
+.pc-options{padding:10px 0}
+.pc-options summary{cursor:pointer;font-weight:650}
+.pc-section [data-parent-note]{font-size:.9rem;margin-bottom:0}
+.pc-section [data-parent-dirty]{color:#b45309}
+@media(max-width:430px){.pc-selectors{grid-template-columns:1fr}.pc-actions button{flex:1 1 130px}.pc-section{padding:12px}.pc-hours{gap:8px}}

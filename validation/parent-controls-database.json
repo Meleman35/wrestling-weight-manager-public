@@ -1,0 +1,20 @@
+{
+  "version": "0.20.77",
+  "migration": "20260928051209_parent_controls_hub_02077.sql",
+  "fixture": "tests/parent-controls-rollback.sql",
+  "result": "passed",
+  "checks": [
+    "Current parent team and child links only",
+    "Conservative defaults; no existing preferences changed by migration",
+    "Profile and contact/medical details preserved during sharing changes",
+    "Stale section saves rejected",
+    "Athlete and team scope remain isolated",
+    "Notification section saves atomically and preserves time zone",
+    "View-media permission remains separate from send-media permission",
+    "Goal sharing can be revoked while team goals are disabled",
+    "Tournament visibility uses existing server projection",
+    "Unavailable video features stay unavailable",
+    "Minor, unrelated, adult-management and revoked-link checks",
+    "Synthetic fixtures and all side effects rolled back"
+  ]
+}

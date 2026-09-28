@@ -6,7 +6,7 @@
   },
   {
     "check": "syntax",
-    "script": "2",
+    "script": "1",
     "passed": true
   },
   {
@@ -17,6 +17,11 @@
   {
     "check": "syntax",
     "script": "4",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "5",
     "passed": true
   },
   {
@@ -36,12 +41,7 @@
   },
   {
     "check": "syntax",
-    "script": "8",
-    "passed": true
-  },
-  {
-    "check": "syntax",
-    "script": "9",
+    "script": "wmOrgInvites045",
     "passed": true
   },
   {
@@ -117,6 +117,16 @@
   {
     "check": "syntax",
     "script": "24",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "25",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "26",
     "passed": true
   },
   {
@@ -201,12 +211,37 @@
   },
   {
     "check": "syntax",
+    "script": "wm-video-upload-046",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "wm-video-workspace-046",
+    "passed": true
+  },
+  {
+    "check": "syntax",
     "script": "wm-video-pilot-046",
     "passed": true
   },
   {
     "check": "syntax",
     "script": "wm-video-pilot-native-046",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "wm-match-video-046",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "48",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "49",
     "passed": true
   }
 ]
