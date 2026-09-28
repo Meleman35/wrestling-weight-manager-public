@@ -1,0 +1,9 @@
+{
+  "passed": [
+    "Authentication and server invitation authorization run before generating credentials or sending email",
+    "New recipient gets one fixed email with invitation, verification link and code; caller cannot change recipient or content",
+    "Existing accounts receive one magic-link invitation without overwriting their name or password",
+    "Uncertain email delivery reports failure without returning authentication secrets"
+  ],
+  "engine": "Node, injected HTTP transport; no real messages sent"
+}

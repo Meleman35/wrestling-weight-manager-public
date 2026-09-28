@@ -77,12 +77,14 @@ async function main() {
     pass('Signup from Team Login switches to Personal Login without copying shared credentials or replacing the invitation');
 
     await j.locator('[data-signup-role="athlete"]').click();
+    await j.locator('#signUpFirstName').fill('Real');await j.locator('#signUpLastName').fill('Athlete');
     await j.locator('#signUpEmail').fill('athlete@example.test');
     await j.locator('#signUpPassword').fill('example-personal-password');
     await j.locator('#createPersonalAccountBtn').click();
     await j.waitForSelector('#confirmationNotice:not(.hidden)');
     const saved = await j.evaluate(() => ({calls: fixture.signupCalls, memory: JSON.parse(localStorage.getItem('wm.onboarding.v1'))}));
     assert.equal(saved.calls.length, 1);
+    assert.equal(saved.calls[0].options.data.full_name,'Real Athlete');
     assert.equal(saved.calls[0].options.data.wm_onboarding_role, 'athlete');
     assert.equal(saved.calls[0].options.data.wm_onboarding_team.code, initial.join);
     assert.equal(saved.memory.join, initial.join);

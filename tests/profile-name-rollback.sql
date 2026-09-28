@@ -42,11 +42,12 @@ begin
   update public.profiles set display_name='Account Parent' where id=auth.uid();
   result:=public.wrestling_profiles_request('view',jsonb_build_object('id',own));
   if result->>'name'<>'Account Parent' then raise exception 'Account name did not sync'; end if;
-  -- Minor self is allowed to rename only, not change discovery/sharing.
+  -- Minor name changes now require the full profile approval flow.
   perform set_config('request.jwt.claim.sub',current_setting('test.name_child'),true);
   if (select display_name from public.profiles where id=auth.uid())<>'Renamed Child' then raise exception 'Linked child account not synced'; end if;
-  perform public.update_profile_name(pid,'Zoë O’Neill-Smith');
-  if (select display_name from public.profiles where id=auth.uid())<>'Zoë O’Neill-Smith' then raise exception 'Athlete own name not synced'; end if;
+  denied:=false;
+  begin perform public.update_profile_name(pid,'Zoë O’Neill-Smith'); exception when others then denied:=true; end;
+  if not denied then raise exception 'Minor bypassed profile approval'; end if;
   denied:=false;
   begin perform public.wrestling_profiles_request('save',jsonb_build_object('id',pid,'name','Unauthorized sharing','discoverable',true)); exception when others then denied:=true; end;
   if not denied then raise exception 'Minor gained sharing permissions'; end if;
@@ -68,7 +69,7 @@ end $$;
 reset role;
 do $$
 begin
-  if not exists(select 1 from private.wrestling_profiles where id=current_setting('test.name_profile')::uuid and name='Zoë O’Neill-Smith' and details='{"bio":"Keep this bio"}'::jsonb and sharing='{"bio":false,"outgoing_follow":false}'::jsonb and not discoverable) then raise exception 'Name-only save changed profile settings'; end if;
+  if not exists(select 1 from private.wrestling_profiles where id=current_setting('test.name_profile')::uuid and name='Renamed Child' and details='{"bio":"Keep this bio"}'::jsonb and sharing='{"bio":false,"outgoing_follow":false}'::jsonb and not discoverable) then raise exception 'Name-only save changed profile settings'; end if;
   if not exists(select 1 from public.team_staff_profiles where user_id=current_setting('test.name_owner')::uuid and team_id=current_setting('test.name_team')::uuid and display_name='Account Parent') then raise exception 'Coach directory name not synced'; end if;
   if has_function_privilege('anon','public.update_profile_name(uuid,text)','execute') then raise exception 'Anonymous execute allowed'; end if;
 end $$;

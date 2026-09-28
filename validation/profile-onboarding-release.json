@@ -1,0 +1,14 @@
+{
+  "release": "0.20.75",
+  "checks": {
+    "browser": "Signup names, complete private drafts, photo upload, parent review, email link/code session handoff, existing adult name edits",
+    "database": "Synthetic authenticated-role transactions rolled back; private storage, guardian authorization and revocation, atomic publication, stale edits, verified-email linking and email cooldown",
+    "edge": "Injected HTTP transport verifies one delivery with a link/code and server-bound recipient; no real email sent",
+    "source": "48 inline syntax checks passed",
+    "security_advisors": "No new warning-level findings; two expected info notices for private RLS tables with no direct grants or policies"
+  },
+  "limitations": [
+    "No new native-device test performed",
+    "Real inbox delivery not exercised during automated tests"
+  ]
+}

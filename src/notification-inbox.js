@@ -95,6 +95,7 @@ window.WMNotificationSync = (() => {
   async function open(row){
     const userId=current();
     if(!available()||!userId)return;
+    if(row.profile_request_id){await WMProfileApprovals.open({id:row.profile_request_id});return;}
     if(row.team_id&&!availableTeams.some(t=>t.id===row.team_id))await refreshCurrentTeamConnections();
     if(current()!==userId)return;
     if(row.team_id&&activeTeam?.id!==row.team_id){

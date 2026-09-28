@@ -1,0 +1,11 @@
+{
+  "passed": [
+    "One invitation click confirms email, hands session to the app, and joins by verified email without signup or a second email; scanners do not consume it on page load",
+    "Email-code fallback uses the same verified session handoff and team invitation",
+    "Expired links and mismatched email responses do not enter an account",
+    "Installed-app login accepts the invitation code without asking for a password or sending another email",
+    "Ordinary signup and returning email links also continue into a signed-in session"
+  ],
+  "engine": "Chromium with synthetic Auth responses; no real emails",
+  "nativeDeviceVerified": false
+}

@@ -42,14 +42,11 @@ const pass=s=>{passed.push(s);console.log('PASS',s);};
  await p.waitForFunction(()=>document.getElementById('accountProfileStatus').textContent.startsWith('Saved.'));
  await p.evaluate(()=>WMProfiles.openProfile('profile-own'));assert.equal(await p.locator('.wp-hero h2').innerText(),'Changed After Signup');
  pass('Adults edit from the profile or account settings, and reopening either screen shows the saved name');
- // A minor self can see name-only editing, while the existing visibility editor stays absent.
+ // Minor profile drafting and parent review are covered by profile-approval-browser.cjs.
  await p.evaluate(()=>{fixture.profile.manager=false;fixture.profile.athlete=true;return WMProfiles.openProfile('profile-own');});
- assert.equal(await p.locator('[data-wp-edit]').count(),0);await p.locator('[data-wp-name]').click();
- await p.locator('#wpNameOnly').fill('   ');await p.locator('#wpNameSave').click();assert.match(await p.locator('#wpNameStatus').innerText(),/Enter your name/);
- assert.equal(await p.evaluate(()=>fixture.nameWrites.length),1);
- await p.locator('#wpNameOnly').fill('Athlete Corrected');await p.locator('#wpNameSave').click();await p.waitForFunction(()=>document.getElementById('wpStatus').textContent==='Name saved.');
- assert.equal(await p.locator('.wp-hero h2').innerText(),'Athlete Corrected');
- pass('Minor athletes can edit their own name without gaining the profile visibility editor; whitespace is rejected');
+ assert.equal(await p.locator('[data-wp-name]').count(),0);assert.equal(await p.getByRole('button',{name:'Build / edit my profile',exact:true}).count(),1);
+ pass('Minor name editing routes through the full parent-reviewed profile draft');
+ await p.evaluate(()=>{fixture.profile.manager=true;fixture.profile.athlete=false;return WMProfiles.openProfile('profile-own');});
  await p.locator('[data-wp-name]').click();await p.locator('#wpNameOnly').fill('Retry Name');await p.evaluate(()=>fixture.failSave=true);
  await p.locator('#wpNameSave').click();await p.waitForFunction(()=>!document.getElementById('wpNameSave').disabled);
  assert.match(await p.locator('#wpNameStatus').innerText(),/Save failed/);assert.equal(await p.locator('#wpNameOnly').inputValue(),'Retry Name');
@@ -70,7 +67,7 @@ const pass=s=>{passed.push(s);console.log('PASS',s);};
  await p.locator('#saveAccountProfileBtn').click();await p.waitForFunction(()=>!document.getElementById('saveAccountProfileBtn').disabled);assert.match(await p.locator('#accountProfileStatus').innerText(),/Connection interrupted/);
  await p.evaluate(()=>{fixture.throwSave=false;managedLogin={id:'managed'};});const before=await p.evaluate(()=>fixture.accountWrites.length);await p.evaluate(()=>saveAccountProfile());assert.equal(await p.evaluate(()=>fixture.accountWrites.length),before);
  pass('Account save recovers from thrown network errors and managed team logins cannot use personal name saving');
- await p.evaluate(()=>{managedLogin=null;fixture.profile.self=true;fixture.delaySave=150;return WMProfiles.openProfile('profile-own');});
+ await p.evaluate(()=>{managedLogin=null;fixture.profile.manager=true;fixture.profile.self=true;fixture.delaySave=150;return WMProfiles.openProfile('profile-own');});
  await p.locator('[data-wp-name]').click();await p.locator('#wpNameOnly').fill('Delayed');await p.locator('#wpNameSave').click();
  await p.evaluate(()=>{session={user:{id:'different-account'}};WMProfiles.reset();});await p.waitForTimeout(250);assert.equal(await p.locator('#wpBody').innerText(),'');
  pass('A delayed response cannot reopen or populate a different account’s profile');

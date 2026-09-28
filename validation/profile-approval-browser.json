@@ -1,0 +1,12 @@
+{
+  "passed": [
+    "Minor can edit a complete profile and save privately without changing the published name or details",
+    "Reopening retains the draft; missing guardian leaves it saved; sending uses approval RPC without a live save",
+    "Account photo crop routes a minor upload to private storage and returns an explicit pending state",
+    "Parent sees full pending profile and photo; checked review publishes through the atomic approval commit",
+    "Unavailable photos cannot be approved; parent can request changes without altering the published profile",
+    "Approval view fits phones and resets private details when the account changes"
+  ],
+  "engine": "Chromium; actual app and synthetic API fixtures",
+  "nativeDeviceVerified": false
+}
