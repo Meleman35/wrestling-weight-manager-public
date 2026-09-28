@@ -1,0 +1,11 @@
+{
+  "passed": [
+    "First-team setup exposes High School, state, girls’ presets and a 14-class preview before saving",
+    "Switching gender replaces the options and rejects stale state-rule responses",
+    "First-team creation saves level, state and selected preset; interrupted weight save retries without duplicating the team",
+    "Additional teams save the chosen girls’ preset; missing state rules block guessing, and phone layout fits",
+    "Coed/club creation preserves custom classes without assigning a boys’ or girls’ preset"
+  ],
+  "engine": "Chromium; actual app with synthetic API fixtures",
+  "nativeDeviceVerified": false
+}

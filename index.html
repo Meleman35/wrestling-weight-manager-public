@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.69: Simplify athlete and family team signup. -->
+<!-- Wrestling Manager v0.20.70: Add high-school division and weight presets to both team-creation paths. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -956,16 +956,40 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
         <option value="state_team">State team</option>
         <option value="other">Other</option>
       </select>
-      <label>Team scope</label>
+      <label for="genderScope">Team division / weight-class gender</label>
       <select id="genderScope">
         <option value="girls">Girls</option>
         <option value="boys">Boys</option>
         <option value="coed">Coed</option>
         <option value="open">Open</option>
       </select>
+      <label>Programs served <span class="muted">select all that apply</span></label>
+      <div id="setupTeamLevels" class="level-check-grid">
+        <label class="level-check"><input type="checkbox" value="elementary">Elementary</label>
+        <label class="level-check"><input type="checkbox" value="middle_school">Middle School</label>
+        <label class="level-check"><input type="checkbox" value="high_school">High School</label>
+        <label class="level-check"><input type="checkbox" value="college">College</label>
+        <label class="level-check"><input type="checkbox" value="club">Club</label>
+      </div>
+      <label for="setupTeamState">State / association location</label>
+      <select id="setupTeamState"></select>
       <label>Season</label>
       <input id="seasonName" value="2026-27">
+    <div class="team-branding-block weight-class-settings">
+      <h3>Weight Classes</h3>
+      <p class="fine">Choose High School above for girls’ or boys’ high-school weights. Preview your classes before creating the team.</p>
+      <label for="setupWeightClassPreset">Weight class setup</label>
+      <select id="setupWeightClassPreset"></select>
+      <p id="setupWeightClassNote" class="weight-class-preset-note" role="status" aria-live="polite"></p>
+      <div id="setupWeightClassList" class="weight-class-chip-list"></div>
+      <div id="setupWeightClassCustomRow" class="weight-class-add-row">
+        <div><label for="setupWeightClassAdd">Add weight class (lb)</label><input id="setupWeightClassAdd" type="text" inputmode="decimal" autocomplete="off" placeholder="Example: 100"></div>
+        <button id="setupWeightClassAddBtn" class="secondary" type="button">Add Class</button>
+      </div>
+    </div>
+
       <button id="bootstrapTeamBtn" class="wide">Create Organization + Team</button>
+      <p id="bootstrapTeamStatus" class="onboarding-status" role="status" aria-live="polite"></p>
     </div>
   <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 </details><button id="setupOrgHubBtn" class="wide secondary" type="button">Board Room · for organization leaders</button><button id="setupFeedbackBtn" class="wide secondary" type="button">Feedback</button>
@@ -2150,7 +2174,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
       <option value="state_team">State Team</option>
       <option value="other">Other</option>
     </select>
-    <label>Team division</label>
+    <label for="newTeamGender">Team division / weight-class gender</label>
     <select id="newTeamGender">
       <option value="girls">Girls</option>
       <option value="boys">Boys</option>
@@ -2180,6 +2204,19 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     </div>
     <label>Season name</label>
     <input id="newTeamSeasonName" type="text" placeholder="2026-27">
+    <div class="team-branding-block weight-class-settings">
+      <h3>Weight Classes</h3>
+      <p class="fine">Choose High School above for girls’ or boys’ high-school weights. Preview your classes before creating the team.</p>
+      <label for="newTeamWeightClassPreset">Weight class setup</label>
+      <select id="newTeamWeightClassPreset"></select>
+      <p id="newTeamWeightClassNote" class="weight-class-preset-note" role="status" aria-live="polite"></p>
+      <div id="newTeamWeightClassList" class="weight-class-chip-list"></div>
+      <div id="newTeamWeightClassCustomRow" class="weight-class-add-row">
+        <div><label for="newTeamWeightClassAdd">Add weight class (lb)</label><input id="newTeamWeightClassAdd" type="text" inputmode="decimal" autocomplete="off" placeholder="Example: 100"></div>
+        <button id="newTeamWeightClassAddBtn" class="secondary" type="button">Add Class</button>
+      </div>
+    </div>
+
     <div class="two-col">
       <div><label>First day of season <span class="muted">optional unless reminder is on</span></label><input id="newTeamStarts" type="date"></div>
       <div><label>Last day of season <span class="muted">optional unless reminder is on</span></label><input id="newTeamEnds" type="date"></div>
@@ -2233,7 +2270,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.69</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.70</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -4415,10 +4452,9 @@ function recommendedWeightPreset(teamType,gender,levels){
   return 'custom';
 }
 
-function weightPresetOptions(teamType,gender,levels){
+function weightPresetOptions(teamType,gender,levels,stateLabel=activeStateWeightRule?.rule_label || `${stateName(activeTeam?.state_code)||'State'} high-school association preset`){
   const options=[];
   if(teamIsHighSchoolOnly(teamType,levels) && ['girls','boys'].includes(gender)){
-    const stateLabel=activeStateWeightRule?.rule_label || `${stateName(activeTeam?.state_code)||'State'} high-school association preset`;
     options.push(['state_high_school',stateLabel]);
     if(gender==='girls'){
       options.push(['nfhs_girls_12','NFHS Girls · 12 classes'],['nfhs_girls_13','NFHS Girls · 13 classes'],['nfhs_girls_14','NFHS Girls · 14 classes']);
@@ -4557,6 +4593,143 @@ function defaultSeasonName(){
   return `${start}-${String(start+1).slice(-2)}`;
 }
 
+const creationWeightSetups={setup:{generation:0,custom:[],rule:null},newTeam:{generation:0,custom:[],rule:null}};
+function creationWeightFields(scope){
+  return scope==='setup'
+    ? {type:'teamType',gender:'genderScope',levels:'setupTeamLevels',state:'setupTeamState',season:'seasonName'}
+    : {type:'newTeamType',gender:'newTeamGender',levels:'newTeamLevels',state:'newTeamState',season:'newTeamSeasonName'};
+}
+function creationWeightChoices(scope){
+  const ids=creationWeightFields(scope);
+  return {teamType:$(ids.type).value,gender:$(ids.gender).value,levels:selectedTeamLevels(ids.levels),stateCode:$(ids.state).value,seasonName:$(ids.season).value.trim()||defaultSeasonName()};
+}
+function creationWeightOptions(choices){
+  return weightPresetOptions(choices.teamType,choices.gender,choices.levels,`${stateName(choices.stateCode)||'State'} high-school association preset`);
+}
+function renderCreationWeightPreview(scope){
+  const setup=creationWeightSetups[scope],choices=creationWeightChoices(scope),preset=$(scope+'WeightClassPreset').value;
+  const note=$(scope+'WeightClassNote'),list=$(scope+'WeightClassList');
+  let weights=[];
+  show(scope+'WeightClassCustomRow',preset==='custom');
+  if(preset==='state_high_school'){
+    weights=setup.rule?.weights||[];
+    note.textContent=setup.loading?'Checking this state, season and division…':setup.rule
+      ? `${setup.rule.association_name} · ${setup.rule.season_name} · ${choices.gender==='girls'?'Girls':'Boys'}. Base classes in pounds; any verified growth allowance is applied separately.`
+      : !choices.stateCode?'Choose your state, or select the NFHS set used by your association.'
+      : setup.error?'Could not check the state preset. Try again, or choose the correct NFHS set or Custom.'
+      : `No verified ${choices.seasonName} ${choices.gender} preset is loaded for ${stateName(choices.stateCode)}. Select your association’s NFHS 12, 13 or 14-class set, or Custom.`;
+  }else if(preset==='custom'){
+    weights=setup.custom;
+    note.textContent=!choices.levels.length?'Select the programs this team serves. Choose High School to see girls’ or boys’ high-school presets.'
+      : ['coed','open'].includes(choices.gender)?'Coed and open teams use custom classes. Separate girls’ and boys’ teams can each use their own high-school preset.'
+      : 'Add your own classes, or leave them empty and finish later in Edit Team.';
+  }else{
+    weights=WEIGHT_CLASS_PRESETS[preset]?.weights||[];
+    note.textContent=preset.startsWith('nfhs_')?'Base classes in pounds. Choose the 12, 13 or 14-class set used by your state association for this season.':'College preset in pounds. Choose Custom if your program uses different classes.';
+  }
+  list.innerHTML=weights.map(w=>`<span class="weight-class-edit-chip">${esc(weightClassText(w))}${preset==='custom'?`<button type="button" aria-label="Remove ${esc(weightClassText(w))}" data-remove-creation-weight="${Number(w)}">×</button>`:''}</span>`).join('');
+  list.querySelectorAll('[data-remove-creation-weight]').forEach(btn=>btn.onclick=()=>{setup.custom=setup.custom.filter(w=>w!==Number(btn.dataset.removeCreationWeight));renderCreationWeightPreview(scope);});
+}
+async function refreshCreationWeightSetup(scope,reset=false){
+  const setup=creationWeightSetups[scope],ticket=++setup.generation,choices=creationWeightChoices(scope),key=JSON.stringify(choices);
+  const select=$(scope+'WeightClassPreset'),options=creationWeightOptions(choices),previous=select.value;
+  select.innerHTML=options.map(([value,label])=>`<option value="${value}">${esc(label)}</option>`).join('');
+  select.value=!reset&&options.some(([value])=>value===previous)?previous:recommendedWeightPreset(choices.teamType,choices.gender,choices.levels);
+  setup.rule=null;setup.error=null;
+  setup.loading=teamIsHighSchoolOnly(choices.teamType,choices.levels)&&['girls','boys'].includes(choices.gender)&&!!choices.stateCode;
+  renderCreationWeightPreview(scope);
+  if(!setup.loading)return;
+  try{
+    const result=await client.from('state_high_school_weight_rules')
+      .select('state_code,season_name,gender_scope,association_name,rule_label,weights,growth_allowance_lbs,growth_allowance_month,growth_allowance_day')
+      .eq('state_code',choices.stateCode).eq('season_name',choices.seasonName).eq('gender_scope',choices.gender).eq('active',true).maybeSingle();
+    if(ticket!==setup.generation||JSON.stringify(creationWeightChoices(scope))!==key)return;
+    setup.rule=result.error?null:result.data;setup.error=result.error;
+  }catch(error){if(ticket===setup.generation)setup.error=error;}
+  finally{if(ticket===setup.generation){setup.loading=false;renderCreationWeightPreview(scope);}}
+}
+function addCreationWeight(scope){
+  const input=$(scope+'WeightClassAdd'),raw=input.value.trim(),weight=Number(raw);
+  if(!raw||!Number.isFinite(weight)||weight<20||weight>500){$(scope+'WeightClassNote').textContent='Enter a weight class between 20 and 500 pounds.';input.focus();return;}
+  const setup=creationWeightSetups[scope];setup.custom=[...new Set([...setup.custom,weight])].sort((a,b)=>a-b);
+  input.value='';renderCreationWeightPreview(scope);
+}
+async function readCreationWeightSetup(scope){
+  const choices=creationWeightChoices(scope),key=JSON.stringify(choices),preset=$(scope+'WeightClassPreset').value;
+  if(!choices.levels.length)throw new Error('Select at least one program level, such as High School.');
+  if(!creationWeightOptions(choices).some(([value])=>value===preset))throw new Error('Choose a weight setup for this team’s division and program.');
+  if(preset==='state_high_school'){
+    await refreshCreationWeightSetup(scope);
+    if(JSON.stringify(creationWeightChoices(scope))!==key||$(scope+'WeightClassPreset').value!==preset)throw new Error('Your weight setup changed. Review the classes and press Create again.');
+    if(!creationWeightSetups[scope].rule)throw new Error('Choose a verified state preset, the correct NFHS 12, 13 or 14-class set, or Custom before creating the team.');
+  }
+  return {...choices,preset,weights:[...creationWeightSetups[scope].custom]};
+}
+async function applyCreatedTeamWeights(teamId,seasonId,setup){
+  const result=setup.preset==='custom'
+    ? await client.rpc('save_custom_team_weight_classes',{p_team_id:teamId,p_weights:setup.weights})
+    : setup.preset==='state_high_school'
+    ? await client.rpc('apply_state_high_school_weight_classes',{p_team_id:teamId,p_season_id:seasonId})
+    : await client.rpc('apply_team_weight_class_preset_v2',{p_team_id:teamId,p_preset:setup.preset});
+  if(result.error)throw result.error;
+  if(setup.preset==='state_high_school'&&!result.data?.applied)throw new Error('This state rule is no longer available. Select the correct NFHS set in Edit Team.');
+}
+function initializeCreationWeightSetups(){
+  populateStateSelect('setupTeamState');
+  $('seasonName').value=defaultSeasonName();
+  for(const scope of ['setup','newTeam']){
+    const ids=creationWeightFields(scope);
+    for(const id of [ids.type,ids.gender,ids.levels])$(id).addEventListener('change',()=>{void refreshCreationWeightSetup(scope,true);});
+    for(const id of [ids.state,ids.season])$(id).addEventListener('change',()=>{void refreshCreationWeightSetup(scope);});
+    $(scope+'WeightClassPreset').addEventListener('change',()=>renderCreationWeightPreview(scope));
+    $(scope+'WeightClassAddBtn').onclick=()=>addCreationWeight(scope);
+    $(scope+'WeightClassAdd').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();addCreationWeight(scope);}});
+    void refreshCreationWeightSetup(scope,true);
+  }
+}
+let bootstrapTeamSaving=false,bootstrapTeamPending=null;
+async function bootstrapTeamWithWeights(){
+  if(bootstrapTeamSaving)return;
+  const uid=session?.user?.id,status=$('bootstrapTeamStatus'),btn=$('bootstrapTeamBtn');
+  if(!uid||managedLogin){status.textContent='Sign in with your personal account to create a team.';return;}
+  if(bootstrapTeamPending?.uid!==uid)bootstrapTeamPending=null;
+  const name=$('teamName').value.trim(),orgName=$('orgName').value.trim();
+  if(!name||!orgName){status.textContent='Enter both an organization name and a team name.';return;}
+  const current=()=>session?.user?.id===uid&&!managedLogin;
+  bootstrapTeamSaving=true;btn.disabled=true;status.textContent='Saving your team and weight classes…';
+  try{
+    const setup=await readCreationWeightSetup('setup');
+    if(!current())return;
+    if(!bootstrapTeamPending){
+      const result=await client.rpc('bootstrap_wrestling_organization',{p_organization_name:orgName,p_team_name:name,p_team_type:setup.teamType,p_gender_scope:setup.gender,p_season_name:setup.seasonName});
+      if(!current())return;
+      if(result.error)throw result.error;
+      const row=Array.isArray(result.data)?result.data[0]:result.data;
+      if(!row?.team_id||!row?.season_id)throw new Error('Could not confirm the created team. Refresh your teams before trying again.');
+      bootstrapTeamPending={...row,uid};
+      $('orgName').disabled=true;$('seasonName').disabled=true;
+    }
+    const {team_id,season_id}=bootstrapTeamPending;
+    const result=await client.rpc('update_team_settings_v3',{p_team_id:team_id,p_name:name,p_team_type:setup.teamType,p_gender_scope:setup.gender,p_service_levels:setup.levels,p_state_code:setup.stateCode||null,p_primary_color:'#163A67',p_secondary_color:'#285E9E',p_accent_color:'#FFFFFF',p_banner_path:null,p_banner_position_y:50});
+    if(!current())return;
+    if(result.error)throw result.error;
+    await applyCreatedTeamWeights(team_id,season_id,setup);
+    if(!current())return;
+    localStorage.setItem('wm_active_team_id',team_id);
+    await refresh();
+    if(!current())return;
+    bootstrapTeamPending=null;$('orgName').disabled=false;$('seasonName').disabled=false;
+    status.textContent='Organization, team and weight classes created.';
+    message(`${name} created with your selected weight classes.`);
+  }catch(error){
+    if(current())status.textContent=bootstrapTeamPending
+      ? `Your team was created. ${error.message||'Weight setup could not finish.'} Press Finish Team Setup to retry without creating another team.`
+      : error.message||'Could not create the team. Please try again.';
+  }finally{
+    bootstrapTeamSaving=false;btn.disabled=false;btn.textContent=bootstrapTeamPending?'Finish Team Setup':'Create Organization + Team';
+  }
+}
+
 let newTeamSetupGeneration=0, teamCreationOrganizations=[], teamCreationUserId=null, teamCreationSaving=false;
 async function openCreateTeam(wantedOrg=null){
   if(!session?.user||managedLogin||document.body.classList.contains('kiosk-locked')){message('Use your personal organization administrator account to create a team.',true);return;}
@@ -4580,6 +4753,8 @@ async function openCreateTeam(wantedOrg=null){
   updateNewTeamBrandPreview();
   $('newTeamStarts').value='';$('newTeamEnds').value='';
   $('newTeamHomeWeighReminder').checked=false;
+  creationWeightSetups.newTeam.custom=[];
+  void refreshCreationWeightSetup('newTeam',true);
   openSheet('createTeamSheet');
   try{
     const memberships=await client.from('organization_memberships').select('organization_id,role').eq('user_id',uid).eq('role','organization_admin');
@@ -4620,21 +4795,21 @@ async function createTeam(){
   if(starts&&ends&&ends<starts){message('The last day of the season cannot be before the first day.',true);btn.disabled=false;btn.textContent='Create Team & Switch';return;}
   const levels=selectedTeamLevels('newTeamLevels');
   if(!levels.length){message('Select at least one program level this team serves.',true);btn.disabled=false;btn.textContent='Create Team & Switch';return;}
-  const newTeamType=$('newTeamType').value;
-  const newTeamGender=$('newTeamGender').value;
   teamCreationSaving=true;
   try{
+  const weightSetup=await readCreationWeightSetup('newTeam');
+  if(!contextStillValid())return;
   const {data,error}=await client.rpc('create_team_in_organization_v4',{
     p_organization_id:organizationId,
     p_team_name:name,
-    p_team_type:newTeamType,
-    p_gender_scope:newTeamGender,
-    p_service_levels:levels,
-    p_state_code:$('newTeamState').value||null,
+    p_team_type:weightSetup.teamType,
+    p_gender_scope:weightSetup.gender,
+    p_service_levels:weightSetup.levels,
+    p_state_code:weightSetup.stateCode||null,
     p_primary_color:normalizeTeamColor($('newTeamPrimaryHex').value,'#163A67'),
     p_secondary_color:normalizeTeamColor($('newTeamSecondaryHex').value,'#285E9E'),
     p_accent_color:normalizeTeamColor($('newTeamAccentHex').value,'#FFFFFF'),
-    p_season_name:$('newTeamSeasonName').value.trim()||defaultSeasonName(),
+    p_season_name:weightSetup.seasonName,
     p_starts_on:starts,
     p_ends_on:ends,
     p_timezone:organizationTeam?.timezone||'America/Denver'
@@ -4649,18 +4824,23 @@ async function createTeam(){
     if(seasonError){message(`Team created, but season Home settings could not save: ${seasonError.message}`,true);}
   }
   if(!contextStillValid())return;
+  let weightSetupError='';
   if(newTeamId&&newSeasonId){
-    const presetResult=await client.rpc('apply_recommended_team_weight_classes',{p_team_id:newTeamId,p_season_id:newSeasonId});
-    if(presetResult.error){message(`Team created, but weight classes could not be initialized: ${presetResult.error.message}`,true);}
-    else if(presetResult.data?.reason==='state_rule_not_verified'){message(`Team created. ${stateName($('newTeamState').value)} does not have a verified ${$('newTeamSeasonName').value.trim()||defaultSeasonName()} preset loaded yet, so weight classes were left Custom rather than using another state's rules.`);}
+    try{await applyCreatedTeamWeights(newTeamId,newSeasonId,weightSetup);}
+    catch(err){weightSetupError=err.message||'Weight classes could not be saved.';}
   }
   if(!contextStillValid())return;
   closeSheets();
   if(newTeamId) localStorage.setItem('wm_active_team_id',newTeamId);
   await refresh();
   if(!contextStillValid())return;
-  message(`${name} created in ${selectedOrganization.name}.`);
-  await window.WMOperations?.open(organizationId);
+  if(weightSetupError){
+    message(`${name} was created, but its weight setup needs attention: ${weightSetupError} Open Edit Team to finish.`,true);
+    await openEditTeam();
+  }else{
+    message(`${name} created in ${selectedOrganization.name} with your selected weight classes.`);
+    await window.WMOperations?.open(organizationId);
+  }
   }catch(err){if(contextStillValid())message(err.message||'Could not create the team. Please try again.',true);}
   finally{teamCreationSaving=false;btn.disabled=false;btn.textContent='Create Team & Switch';}
 }
@@ -10106,10 +10286,8 @@ $('staffViewModeBtn').onclick=()=>setViewMode('staff'); $('parentViewModeBtn').o
 $('acceptInviteBtn').onclick=acceptInvite;
 $('setupJoinBtn').onclick=()=>startJoinFlow($('setupJoinCode').value.trim());
 $('setupExistingOrgTeamBtn').onclick=()=>openCreateTeam();
-$('bootstrapTeamBtn').onclick=async()=>{
-  const {error}=await client.rpc('bootstrap_wrestling_organization',{p_organization_name:$('orgName').value.trim(),p_team_name:$('teamName').value.trim(),p_team_type:$('teamType').value,p_gender_scope:$('genderScope').value,p_season_name:$('seasonName').value.trim()});
-  if(error){message(error.message,true);return;} message('Organization and team created.'); await refresh();
-};
+$('bootstrapTeamBtn').onclick=bootstrapTeamWithWeights;
+initializeCreationWeightSetups();
 
 $('newEventBtn').onclick=prepareEventForm; $('saveEventBtn').onclick=saveEvent; $('attendanceBtn').onclick=openAttendance; $('deleteEventBtn').onclick=deleteEvent; $('addEventCalendarBtn').onclick=addActiveEventToCalendar;
 $('subscribeAppleCalendarBtn').onclick=subscribeAppleCalendar; $('exportCalendarBtn').onclick=exportTeamCalendar; $('schedulePrevBtn').onclick=()=>moveScheduleFocus(-1); $('scheduleNextBtn').onclick=()=>moveScheduleFocus(1); $('scheduleTodayBtn').onclick=()=>{scheduleFocusDate=new Date();renderSchedule();}; document.querySelectorAll('[data-schedule-view]').forEach(b=>b.onclick=()=>setScheduleView(b.dataset.scheduleView));
