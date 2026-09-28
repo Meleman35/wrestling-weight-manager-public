@@ -1,0 +1,13 @@
+{
+  "checks": [
+    "Deny prevents sending; later acceptance persists, and retrying a lost send response does not duplicate the message",
+    "Conversation drafts stay separate; a participant can stop the accepted chat without losing their draft",
+    "Corkboard, whiteboard and chalkboard render; posts default to Team only and lost publish responses recover without duplicates",
+    "Picture/clipping upload resizes into JPEG, uses private storage, and renders the saved image",
+    "Team search, follow request, acceptance, Following/Followed by and follower management work in the team profile",
+    "Parent board controls save viewing, posting, required review and outside sharing independently",
+    "Phone/desktop layouts fit and late responses cannot expose content after an account change"
+  ],
+  "errors": [],
+  "engine": "Chromium; synthetic accounts and storage; no real messages"
+}

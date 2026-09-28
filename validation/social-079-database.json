@@ -1,0 +1,23 @@
+{
+  "result": "passed",
+  "fixture": "Synthetic accounts and teams; transaction rolled back after every test",
+  "checks": [
+    "Cross-team chat requires an approved follow and recipient acceptance",
+    "Denied chat prevents sends; either participant can stop an accepted chat",
+    "Only each participant can change their own consent; stale updates rejected",
+    "Chat retries are idempotent",
+    "Unrelated adults cannot request minor chats",
+    "Parents approve each minor conversation; mirrors are read-only",
+    "Parent revocation and removed guardian links immediately deny access",
+    "Team profiles start private; only team leaders manage follows",
+    "Pending team follows reveal no posts",
+    "Approved follower teams see only explicitly shared posts, attributed to the team",
+    "Private and family-only connections stay private",
+    "Athlete board access/posting/outside sharing follow independent parent preferences",
+    "Coach approval cannot bypass required parent approval",
+    "Coaches can pin and review reported posts; blocked teams lose follower access",
+    "Private image reads obey current team, guardian and media permissions",
+    "Private tables cannot be read directly by authenticated clients"
+  ],
+  "real_messages_sent": false
+}

@@ -39,7 +39,7 @@ const pass=s=>{checks.push(s);console.log('PASS',s);};
  await p.locator('#wpFollowBox').scrollIntoViewIfNeeded();await p.screenshot({path:path.join(root,'validation/follow-request-phone.png')});
  pass('Sending gives immediate feedback and then an inline confirmation beside a disabled Request sent button');
  await open();assert.equal(await p.locator('#wpFollowBtn').innerText(),'✓ Request sent');
- await p.evaluate(()=>fixture.followStates.parent='approved');await open();assert.equal(await p.locator('#wpFollowBtn').innerText(),'✓ Following');assert.match(await p.locator('#wpFollowStatus').innerText(),/approved/);
+ await p.evaluate(()=>fixture.followStates.parent='approved');await open();assert.equal(await p.locator('#wpFollowBtn').innerText(),'✓ Following');assert(await p.locator('#wpFollowBtn').isHidden());assert(await p.locator('#wpFollowStatus').isHidden());assert(await p.locator('#wpFollowingBadge').isVisible());
  pass('Reopening reads the saved request and changes Pending to Following after approval');
  await p.locator('#wpActor').selectOption('child');await ready();assert.equal(await p.locator('#wpFollowBtn').innerText(),'Request to follow');
  await p.evaluate(()=>fixture.failSend=true);await p.locator('#wpFollowBtn').click();await p.waitForFunction(()=>!document.getElementById('wpFollowBtn').disabled);assert.match(await p.locator('#wpFollowStatus').innerText(),/Parent approval is required/);assert.equal(await p.locator('#wpActor').isDisabled(),false);

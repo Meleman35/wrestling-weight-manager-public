@@ -243,5 +243,15 @@
     "check": "syntax",
     "script": "49",
     "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "profileChat079Script",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "teamBulletin079Script",
+    "passed": true
   }
 ]
