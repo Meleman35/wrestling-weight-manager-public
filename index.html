@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.77: One Parent Controls hub for athlete protections and parent notifications. -->
+<!-- Wrestling Manager v0.20.78: Personal Locker Room tile order for coaches, parents and athletes. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -515,10 +515,14 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
 #tileEditBar{position:fixed;z-index:1300;top:calc(env(safe-area-inset-top) + 8px);left:50%;transform:translateX(-50%);width:min(94vw,680px);box-sizing:border-box;background:#fff;color:#132d47;border:2px solid #235b91;border-radius:18px;padding:10px;box-shadow:0 5px 24px #0004;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 #tileEditBar.hidden{display:none}#tileEditLabel{flex:1 1 100%;font-weight:800;font-size:15px}#tileEditBar button{font-size:14px;min-height:42px;padding:8px 12px;border-radius:10px}
 .tile-editing [data-layout-key]{touch-action:pan-y;position:relative;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:grab}
-.tile-editing #homeLayoutBlocks>[data-layout-key],.tile-editing .bottom-nav>[data-layout-key],.tile-editing #moreMenuCard>[data-layout-key],.tile-editing .quick-grid>[data-layout-key]{animation:tile-wiggle .3s ease-in-out infinite alternate;outline:1px dashed #6085a5;outline-offset:-2px}
+.tile-editing #homeLayoutBlocks>[data-layout-key],.tile-editing .bottom-nav>[data-layout-key],.tile-editing #moreMenuCard>[data-layout-key],.tile-editing .quick-grid>[data-layout-key],.tile-editing .locker-room-tabs>[data-layout-key]{animation:tile-wiggle .3s ease-in-out infinite alternate;outline:1px dashed #6085a5;outline-offset:-2px}
 body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-handle{display:none}
 .tile-editing .tile-drag-handle{display:flex;position:absolute;right:6px;top:6px;width:44px;height:44px;align-items:center;justify-content:center;z-index:5;background:#fff;color:#163a67;border:2px solid #6085a5;border-radius:12px;font-size:24px;touch-action:none;cursor:grab;box-shadow:0 2px 6px #0002}
-.tile-editing .bottom-nav [data-layout-key]{touch-action:none}
+.tile-editing .bottom-nav [data-layout-key],.tile-editing .locker-room-tabs [data-layout-key]{touch-action:none}
+#lockerLayoutHeading{scroll-margin-top:76px}
+.locker-room-arrange{display:flex;justify-content:flex-end;margin:-4px 0 4px}.locker-room-arrange button{min-height:44px}
+.tile-editing .locker-room-tabs{top:130px}
+.tile-editing .locker-room-tabs .locker-room-tab{padding-right:58px!important;min-height:58px}
 #matchSetupSheet [hidden]{display:none!important}
 .tile-editing .tile-selected{outline:3px solid #2266b2!important;outline-offset:-3px!important;cursor:grabbing}
 .tile-editing .content{padding-top:135px}
@@ -1059,14 +1063,15 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
           <div><div class="eyebrow">YOUR TEAM</div><h2>Locker Room</h2><p>Your team, your people, and what matters today.</p></div>
           <span class="feed-live-chip"><span class="feed-live-dot"></span> LIVE</span>
         </div>
+        <div class="locker-room-arrange"><button id="lockerArrangeTilesBtn" type="button" class="link-btn">Arrange tiles</button></div>
         <div class="locker-room-tabs" role="tablist" aria-label="Locker Room sections">
-          <button type="button" class="locker-room-tab active" data-locker-section="board" role="tab" aria-selected="true">📌 Team Board</button>
-          <button id="lockerMyProfileTab" type="button" class="locker-room-tab" aria-haspopup="dialog">👤 My Profile</button>
-          <button id="lockerParentControlsTab" type="button" class="locker-room-tab" aria-haspopup="dialog">🛡 Parent Controls</button>
-          <button id="lockerFindProfileTab" type="button" class="locker-room-tab" aria-haspopup="dialog">🔎 Find Profile</button>
-          <button type="button" class="locker-room-tab" data-locker-section="trophy" role="tab" aria-selected="false">🏆 Trophy Case</button>
-          <button type="button" class="locker-room-tab" data-locker-section="team" role="tab" aria-selected="false">👥 Team</button>
-          <button id="lockerGoalsTab" type="button" class="locker-room-tab" data-locker-section="goals" role="tab" aria-selected="false">🎯 Goals</button>
+          <button type="button" class="locker-room-tab active" data-locker-section="board" data-layout-key="board" role="tab" aria-selected="true">📌 Team Board</button>
+          <button id="lockerMyProfileTab" data-layout-key="my_profile" type="button" class="locker-room-tab" aria-haspopup="dialog">👤 My Profile</button>
+          <button id="lockerParentControlsTab" data-layout-key="parent_controls" type="button" class="locker-room-tab" aria-haspopup="dialog">🛡 Parent Controls</button>
+          <button id="lockerFindProfileTab" data-layout-key="find_profile" type="button" class="locker-room-tab" aria-haspopup="dialog">🔎 Find Profile</button>
+          <button type="button" class="locker-room-tab" data-locker-section="trophy" data-layout-key="trophy" role="tab" aria-selected="false">🏆 Trophy Case</button>
+          <button type="button" class="locker-room-tab" data-locker-section="team" data-layout-key="team" role="tab" aria-selected="false">👥 Team</button>
+          <button id="lockerGoalsTab" data-layout-key="goals" type="button" class="locker-room-tab" data-locker-section="goals" role="tab" aria-selected="false">🎯 Goals</button>
         </div>
         
         <button id="organizationHomeBtn" class="hidden" type="button">Organization tools</button>
@@ -2308,7 +2313,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.77</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.78</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -2360,7 +2365,8 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
 <section id="layoutEditorSheet" class="sheet hidden" aria-modal="true">
     <div class="sheet-handle"></div>
     <div class="sheet-head"><div><div class="eyebrow">YOUR APP</div><h2>Customize Layout</h2><p class="muted">Move the parts you use most. This layout follows your account across teams and devices.</p></div><button class="icon-close" data-close-sheet>×</button></div>
-    <div class="layout-note">Hold a tile for half a second to arrange it directly. Use the arrows here as an alternative, or turn Show tile off to hide it. Restore hidden tiles here anytime. Home, More, and Account stay available. Your access permissions do not change.</div>
+    <div class="layout-note">Hold a tile for half a second to arrange it directly. Use the arrows here as an alternative, or turn Show tile off to hide it. Restore hidden tiles here anytime. Team Board, Home, More, and Account stay available. Your access permissions do not change.</div>
+    <h3 class="subhead" id="lockerLayoutHeading">Locker Room tiles</h3><p class="fine">Arrange the scrollable row in any order. These choices are yours across teams.</p><div id="lockerLayoutEditor" class="layout-editor-list"></div>
     <h3 class="subhead">Home</h3><div id="homeLayoutEditor" class="layout-editor-list"></div>
     <h3 class="subhead">Quick Actions</h3><div id="quickLayoutEditor" class="layout-editor-list"></div>
     <h3 class="subhead">Bottom navigation</h3><div id="navLayoutEditor" class="layout-editor-list"></div>
@@ -2864,12 +2870,13 @@ const APPAREL_SIZES=['XS','S','M','L','XL','XXL','XXXL'];
 const YOUTH_SHOE_SIZES=['10','10.5','11','11.5','12','12.5','13','13.5','1','1.5','2','2.5','3','3.5','4','4.5','5','5.5','6','6.5','7'];
 const ADULT_SHOE_SIZES=['4','4.5','5','5.5','6','6.5','7','7.5','8','8.5','9','9.5','10','10.5','11','11.5','12','12.5','13','13.5','14','15','16','17','18'];
 const UI_LAYOUT_META={
+  locker:{board:['📌','Team Board'],my_profile:['👤','My Profile'],parent_controls:['🛡','Parent Controls'],find_profile:['🔎','Find Profile'],trophy:['🏆','Trophy Case'],team:['👥','Team'],goals:['🎯','Goals']},
   home:{my_corner:['👥','My Corner'],important:['📣','Important Announcements'],my_athletes:['👨‍👩‍👧','My Athletes'],quick_actions:['⚡','Quick Actions'],coach_weight_board:['🤼','Lineup by Weight Class'],attention:['✅','Needs Attention'],upcoming:['📅','Upcoming'],weight_snapshot:['⚖️','Weight Room Snapshot']},
   quick:{create_event:['＋','Create event'],attendance:['✓','Attendance'],weight:['⚖','Weight Room'],messages:['💬','Messages'],tools:['☰','Team tools']},
   nav:{home:['⌂','Home'],schedule:['▣','Schedule'],messages:['◯','Messages'],weight:['⚖','Weight Room'],more:['☰','More']},
   more:{organization_hub:['🏛️','Board Room'],match_book:['⏱️','Match Book'],feedback:['💬','Feedback'],roster:['👥','Roster'],join:['🔗','Team Join'],join_requests:['✅','Join Requests'],agreements:['✍️','Team Agreement'],medical:['🩺','Medical Clearance'],member_profiles:['👤','My Athlete Profiles'],family:['👨‍👩‍👧','Family'],staff_directory:['📇','Coaches & Staff'],staff_access:['🪪','Edit Team Leaders'],equipment:['🎽','Equipment'],files:['📁','Files & Photos'],account:['⚙️','Account & Team']}
 };
-const DEFAULT_UI_LAYOUT={home:Object.keys(UI_LAYOUT_META.home),nav:Object.keys(UI_LAYOUT_META.nav),quick:Object.keys(UI_LAYOUT_META.quick),more:Object.keys(UI_LAYOUT_META.more)};
+const DEFAULT_UI_LAYOUT={locker:Object.keys(UI_LAYOUT_META.locker),home:Object.keys(UI_LAYOUT_META.home),nav:Object.keys(UI_LAYOUT_META.nav),quick:Object.keys(UI_LAYOUT_META.quick),more:Object.keys(UI_LAYOUT_META.more)};
 let pendingUiLayout=null;
 
 const $ = id => document.getElementById(id);
@@ -3258,8 +3265,9 @@ function parseStoredSize(value,defaultCategory='Youth'){
 function storedApparelValue(prefix,id){const size=$(prefix+id)?.value;return size?`${$(prefix+'GearCategory')?.value||'Youth'} ${size}`:null;}
 function storedShoeValue(prefix){const size=$(prefix+'Shoe')?.value;return size?`${$(prefix+'ShoeCategory')?.value||'Youth'} ${size}`:null;}
 let tileEditing=false,tileEditUser=null,tileSelected=null,tileSaveBusy=false,tileGesture=null,tileSuppressClickUntil=0;
-const layoutParent=group=>group==='home'?$('homeLayoutBlocks'):group==='nav'?document.querySelector('.bottom-nav'):group==='quick'?document.querySelector('.quick-grid'):group==='more'?$('moreMenuCard'):window.WMClipboard?.parent(group);
-const layoutRequired=(group,key)=>(group==='nav'&&['home','more'].includes(key))||(group==='more'&&key==='account')||(group==='clipboard'&&key==='settings')||(group==='clip_settings'&&key==='accountBtn');
+const horizontalLayout=group=>group==='nav'||group==='locker';
+const layoutParent=group=>group==='locker'?document.querySelector('.locker-room-tabs'):group==='home'?$('homeLayoutBlocks'):group==='nav'?document.querySelector('.bottom-nav'):group==='quick'?document.querySelector('.quick-grid'):group==='more'?$('moreMenuCard'):window.WMClipboard?.parent(group);
+const layoutRequired=(group,key)=>(group==='locker'&&key==='board')||(group==='nav'&&['home','more'].includes(key))||(group==='more'&&key==='account')||(group==='clipboard'&&key==='settings')||(group==='clip_settings'&&key==='accountBtn');
 function normalizedLayout(source={}){
  source=window.WMClipboard?.upgrade(source)||source;
  const result={hidden:{}};
@@ -3281,11 +3289,11 @@ function applyUiPreferences(layout){
 }
 function renderLayoutGroup(group,id){
  const box=$(id),order=pendingUiLayout[group];if(!box)return;
- box.innerHTML=order.map((key,index)=>{const meta=UI_LAYOUT_META[group][key]||['↕',key],required=layoutRequired(group,key);return `<div class="layout-editor-row"><span>${meta[0]}</span><span><b>${esc(meta[1])}</b><label class="tile-visibility"><input type="checkbox" data-layout-visible="${group}:${key}" ${!pendingUiLayout.hidden[group].includes(key)?'checked':''} ${required?'disabled':''}> ${required?'Always available':'Show tile'}</label></span><button aria-label="Move ${esc(meta[1])} ${group==='nav'?'left':'up'}" class="layout-move" type="button" data-layout-move="${group}:${index}:-1" ${index===0?'disabled':''}>${group==='nav'?'←':'↑'}</button><button aria-label="Move ${esc(meta[1])} ${group==='nav'?'right':'down'}" class="layout-move" type="button" data-layout-move="${group}:${index}:1" ${index===order.length-1?'disabled':''}>${group==='nav'?'→':'↓'}</button></div>`;}).join('');
- box.querySelectorAll('[data-layout-move]').forEach(btn=>btn.onclick=()=>{const [g,i,d]=btn.dataset.layoutMove.split(':');const from=Number(i),to=from+Number(d);[pendingUiLayout[g][from],pendingUiLayout[g][to]]=[pendingUiLayout[g][to],pendingUiLayout[g][from]];renderAllLayoutEditors();});
+ box.innerHTML=order.map((key,index)=>{const meta=UI_LAYOUT_META[group][key]||['↕',key],required=layoutRequired(group,key);return `<div class="layout-editor-row"><span>${meta[0]}</span><span><b>${esc(meta[1])}</b><label class="tile-visibility"><input type="checkbox" data-layout-visible="${group}:${key}" ${!pendingUiLayout.hidden[group].includes(key)?'checked':''} ${required?'disabled':''}> ${required?'Always available':'Show tile'}</label></span><button aria-label="Move ${esc(meta[1])} ${horizontalLayout(group)?'left':'up'}" class="layout-move" type="button" data-layout-move="${group}:${index}:-1" ${index===0?'disabled':''}>${horizontalLayout(group)?'←':'↑'}</button><button aria-label="Move ${esc(meta[1])} ${horizontalLayout(group)?'right':'down'}" class="layout-move" type="button" data-layout-move="${group}:${index}:1" ${index===order.length-1?'disabled':''}>${horizontalLayout(group)?'→':'↓'}</button></div>`;}).join('');
+ box.querySelectorAll('[data-layout-move]').forEach(btn=>btn.onclick=()=>{const [g,i,d]=btn.dataset.layoutMove.split(':');const from=Number(i),to=from+Number(d);[pendingUiLayout[g][from],pendingUiLayout[g][to]]=[pendingUiLayout[g][to],pendingUiLayout[g][from]];renderAllLayoutEditors();const next=$(id)?.querySelector(`[data-layout-move="${g}:${to}:${d}"]`);const fallback=$(id)?.querySelector(`[data-layout-move="${g}:${to}:${-Number(d)}"]`);(next&&!next.disabled?next:fallback)?.focus({preventScroll:true});});
  box.querySelectorAll('[data-layout-visible]').forEach(input=>input.onchange=()=>{const [g,key]=input.dataset.layoutVisible.split(':');pendingUiLayout.hidden[g]=pendingUiLayout.hidden[g].filter(k=>k!==key);if(!input.checked&&!layoutRequired(g,key))pendingUiLayout.hidden[g].push(key);});
 }
-function renderAllLayoutEditors(){renderLayoutGroup('home','homeLayoutEditor');renderLayoutGroup('nav','navLayoutEditor');renderLayoutGroup('more','moreLayoutEditor');renderLayoutGroup('quick','quickLayoutEditor');window.WMClipboard?.editors();}
+function renderAllLayoutEditors(){renderLayoutGroup('locker','lockerLayoutEditor');renderLayoutGroup('home','homeLayoutEditor');renderLayoutGroup('nav','navLayoutEditor');renderLayoutGroup('more','moreLayoutEditor');renderLayoutGroup('quick','quickLayoutEditor');window.WMClipboard?.editors();}
 function canEditTiles(){return !!session?.user?.id&&!document.body.classList.contains('kiosk-locked')&&!document.querySelector('#appLockOverlay:not(.hidden)');}
 function openLayoutEditor(){if(!canEditTiles())return;if(tileEditing)finishTileEditing(false);tileEditUser=session.user.id;pendingUiLayout=currentUiLayout();renderAllLayoutEditors();openSheet('layoutEditorSheet');}
 async function saveUiLayout(){
@@ -3309,12 +3317,12 @@ function finishTileEditing(saved=false){
 }
 function selectEditingTile(el,group){
  document.querySelectorAll('.tile-selected').forEach(n=>n.classList.remove('tile-selected'));tileSelected={el,group};el.classList.add('tile-selected');
- $('tileEditLabel').textContent=(UI_LAYOUT_META[group][el.dataset.layoutKey]?.[1]||'Tile')+(group==='nav'?' · Drag ↔ left or right':' · Swipe to scroll; drag ↕ to move');
+ $('tileEditLabel').textContent=(UI_LAYOUT_META[group][el.dataset.layoutKey]?.[1]||'Tile')+(horizontalLayout(group)?' · Drag ↔ left or right':' · Swipe to scroll; drag ↕ to move');
  $('tileEditHide').disabled=layoutRequired(group,el.dataset.layoutKey);
 }
 function beginTileEditing(el,group){
  if(!canEditTiles()||tileSaveBusy||document.querySelector('.sheet:not(.hidden)'))return false;
- document.querySelectorAll('[data-layout-key]').forEach(n=>{if(!n.querySelector(':scope > .tile-drag-handle')){const grip=document.createElement('span');grip.className='tile-drag-handle';grip.textContent=layoutParent('nav')===n.parentElement?'↔':'↕';grip.setAttribute('aria-hidden','true');grip.title='Drag to move this tile';n.appendChild(grip);}});tileEditing=true;tileEditUser=session.user.id;pendingUiLayout=currentUiLayout();document.body.classList.add('tile-editing');$('tileEditBar').classList.remove('hidden');
+ document.querySelectorAll('[data-layout-key]').forEach(n=>{if(!n.querySelector(':scope > .tile-drag-handle')){const grip=document.createElement('span');grip.className='tile-drag-handle';grip.textContent=horizontalLayout(tileAt(n)?.group)?'↔':'↕';grip.setAttribute('aria-hidden','true');grip.title='Drag to move this tile';n.appendChild(grip);}});tileEditing=true;tileEditUser=session.user.id;pendingUiLayout=currentUiLayout();document.body.classList.add('tile-editing');$('tileEditBar').classList.remove('hidden');
  if(typeof resetPullRefresh==='function')resetPullRefresh();selectEditingTile(el,group);return true;
 }
 function tileAt(target){
@@ -3333,7 +3341,11 @@ function tileDragTarget(g){const target=document.elementsFromPoint(g.lastX,g.las
 function startTileAutoScroll(g){stopTileAutoScroll();let previous=performance.now();
  const frame=now=>{if(tileGesture!==g||!g.drag||!tileEditing||!canEditTiles()){stopTileAutoScroll();return;}
   const elapsed=Math.min(40,now-previous);previous=now;
-  if(g.group!=='nav'){
+  if(g.group==='locker'){
+   const node=layoutParent('locker'),r=node.getBoundingClientRect(),zone=Math.min(64,r.width/4);
+   const speed=g.lastX<r.left+zone?-Math.min(1,(r.left+zone-g.lastX)/zone):g.lastX>r.right-zone?Math.min(1,(g.lastX-r.right+zone)/zone):0;
+   if(speed){node.scrollLeft+=speed*520*elapsed/1000;tileDragTarget(g);}
+  }else if(g.group!=='nav'){
    const node=g.scroller,root=node===document.scrollingElement,r=root?{top:0,bottom:innerHeight}:node.getBoundingClientRect();
    const bar=$('tileEditBar').getBoundingClientRect(),nav=document.querySelector('.bottom-nav')?.getBoundingClientRect();
    const top=Math.max(r.top,bar.bottom+8),bottom=Math.min(r.bottom,nav?.height?nav.top-8:innerHeight),zone=Math.min(95,(bottom-top)/3);
@@ -3344,6 +3356,7 @@ function startTileAutoScroll(g){stopTileAutoScroll();let previous=performance.no
  };tileScrollFrame=requestAnimationFrame(frame);
 }
 function initTileEditing(){
+ $('lockerArrangeTilesBtn').onclick=()=>{openLayoutEditor();requestAnimationFrame(()=>$('lockerLayoutHeading').scrollIntoView({block:'start'}));};
  $('tileEditDone').onclick=saveUiLayout;
  $('tileEditCancel').onclick=()=>{if(!tileSaveBusy)finishTileEditing(false);};
  $('tileEditHide').onclick=()=>{if(!tileSelected||tileSaveBusy)return;const {el,group}=tileSelected,key=el.dataset.layoutKey;if(layoutRequired(group,key))return;pendingUiLayout.hidden[group].push(key);applyUiPreferences(pendingUiLayout);el.classList.remove('tile-selected');tileSelected=null;$('tileEditLabel').textContent='Tile hidden · choose another';$('tileEditHide').disabled=true;};
@@ -3355,7 +3368,7 @@ function initTileEditing(){
   if(!tileEditing&&e.target.closest('input,textarea,select,a,video,audio'))return;
   if(tileGesture){clearTimeout(tileGesture.timer);tileGesture=null;return;}
   const grip=!!e.target.closest('.tile-drag-handle');
-  const drag=tileEditing&&(e.pointerType!=='touch'||grip||tile.group==='nav');
+  const drag=tileEditing&&(e.pointerType!=='touch'||grip||horizontalLayout(tile.group));
   const gesture={...tile,id:e.pointerId,x:e.clientX,y:e.clientY,lastX:e.clientX,lastY:e.clientY,drag,scroller:tileScrollContainer(tile.el)};tileGesture=gesture;
   if(tileEditing){selectEditingTile(tile.el,tile.group);if(drag){e.preventDefault();startTileAutoScroll(gesture);}}
   else gesture.timer=setTimeout(()=>{if(tileGesture===gesture&&beginTileEditing(tile.el,tile.group)){tileSuppressClickUntil=Date.now()+900;gesture.drag=e.pointerType!=='touch';if(gesture.drag)startTileAutoScroll(gesture);}},550);

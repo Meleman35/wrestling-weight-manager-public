@@ -1,0 +1,10 @@
+{
+  "passed": [
+    "Coach, parent and athlete accounts can reorder every Locker Room shortcut and hide optional tiles; arrow focus follows the moved tile",
+    "Saved account preferences restore without the device layout cache, survive team changes, and stay separate between accounts",
+    "Cancel preserves the prior layout; offline saves stay on-device and sync when saved online",
+    "Normal touch swipes scroll the row; long press and horizontal dragging reorder tiles without opening them; Cancel restores the order",
+    "Dragging toward the horizontal edge scrolls to offscreen tiles and Done saves the chosen order"
+  ],
+  "errors": []
+}
