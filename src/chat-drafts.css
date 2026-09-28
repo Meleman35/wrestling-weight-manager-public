@@ -1,0 +1,5 @@
+#communicationDraftStatus:empty{display:none}
+#communicationDraftStatus{margin:6px 4px 10px;overflow-wrap:anywhere}
+#communicationDraftCopies{margin:8px 0 14px}
+#communicationDraftCopies>div{display:grid;gap:8px;margin:12px 0}
+#communicationDraftCopies textarea{width:100%;box-sizing:border-box;min-height:76px}

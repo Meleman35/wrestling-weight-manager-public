@@ -1,0 +1,19 @@
+{
+  "checks": [
+    "Switching conversations saves and restores separate text drafts",
+    "Normal-chat draft survives a page restart in encrypted device storage",
+    "Late send acknowledgement clears only the sent draft, preserving another conversation",
+    "Typing during send is retained; repeated Send cannot start duplicate concurrent requests",
+    "Failed send keeps both the composer and saved draft",
+    "Offline typing persists immediately and is not falsely marked sent",
+    "Scheduling a message also preserves text typed before the acknowledgement",
+    "Storage failure retains the editor and blocks a destructive conversation switch",
+    "Account changes clear visible text and restore only that profile’s own drafts",
+    "Concurrent windows preserve conflicting draft copies and allow recovery",
+    "Read-only conversations do not expose or restore an editable draft",
+    "Draft status and recovery controls fit phone and tablet widths",
+    "An attachment finishing after a chat switch retains its original destination",
+    "Account changes stop a late attachment from posting under a different profile"
+  ],
+  "errors": []
+}

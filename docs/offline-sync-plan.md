@@ -1,6 +1,6 @@
 # Full offline operation — requested September 28, 2026
 
-Status: v0.20.88 adds a browser-first **Offline workspace** for personal coach accounts. It downloads a bounded, clearly labeled core team pack and enables durable attendance marks, individual event edits and queued text messages there. Full-app offline operation is still incomplete. The normal app screens remain online paths; this document preserves the remaining work.
+Status: v0.20.90 extends the v0.20.88 browser pilot with automatic incoming refresh and persistent normal-chat text drafts. The original pilot adds a browser-first **Offline workspace** for personal coach accounts. It downloads a bounded, clearly labeled core team pack and enables durable attendance marks, individual event edits and queued text messages there. Full-app offline operation is still incomplete. The normal app screens remain online paths; this document preserves the remaining work.
 
 Damon needs Wrestling Manager to remain usable underground, at school, and at tournaments without service. Download all records the signed-in person is authorized to access onto their device, allow offline work, preserve it across force quit/restart, then reconcile with the server on reconnect. Apple/iPhone/iPad first; preserve current web users. Coaches must be able to compose and queue messages offline. Maintain guardian visibility and communication safeguards.
 
@@ -8,10 +8,10 @@ Damon needs Wrestling Manager to remain usable underground, at school, and at to
 
 - Core loads and writes call Supabase tables/RPCs directly; the main app is not backed by a durable replicated local database.
 - Online reconnect currently triggers `refreshTeamData`, which refreshes data but does not constitute an offline write queue.
-- `sendCommunicationMessage` calls `send_communication_message` directly; a failed send stays in the visible text box but has no general persistent outbox or stable retry identity. It must not be advertised as safe offline sending.
+- `sendCommunicationMessage` calls `send_communication_message` directly; normal-chat text now persists as an encrypted device draft, but the normal send method has no general persistent outbox or stable retry identity. It must not be advertised as safe offline sending.
 - Official weigh-in sheets have a dedicated IndexedDB store. Video pilot has device-local storage and a bounded offline authorization lease. Keep both systems intact; coordinate their inventories rather than migrating/deleting existing recordings.
 - Auth/session state, roles and data-loading error handling need an explicit offline startup path. A valid local session, app PIN/Face ID and previously downloaded data must work without a network login attempt deleting the cached workspace.
-- Current repository contains the web application; native package/background-task changes require locating the actual iOS source and validating a new native build.
+- Current repository contains the web application; native revision 11 has now been located and inspected. Its WKWebView starts from the live HTTPS website with a reload-ignoring-cache request; load-failure callbacks have no bundled team-workspace fallback. Native package/background-task changes still require implementation and a new native build.
 
 ## Implemented in v0.20.88
 
@@ -24,8 +24,12 @@ Damon needs Wrestling Manager to remain usable underground, at school, and at to
 - Conflict review offers the server version or an explicitly resubmitted local version. Rejected work stays available for review. No automatic destructive last-writer-wins policy.
 - Foreground reconnect/resume/manual sync with retry backoff. Auto-send requires the same signed-in account, an unlocked workspace in this browser session, and the app remaining unlocked. Closing the workspace with Back permits syncing; Lock pauses it. Force quit requires reopening/unlocking. No background-worker or iOS force-quit delivery claim.
 - A conservative **pilot** seven-day download expiry, displayed in the UI. School-configurable lease policy is pending; the pilot duration is not presented as a school rule. Revoked access learned during download/replay locks the pack; pending work remains retained. Logout is blocked while pending work/drafts remain.
-- Team refresh uses Download / update; automatic incoming delta refresh remains pending. Local acknowledgements immediately update the local records. Two-coach conflicts never overwrite silently.
+- v0.20.90 automatically refreshes complete saved packs after reconnect and periodically while unlocked/foreground; manual sync also refreshes. Push precedes pull; partial downloads, concurrent saves and late-account responses are guarded. Incremental cursors/tombstones remain pending. Local acknowledgements immediately update the local records. Two-coach conflicts never overwrite silently.
 - Verified in headless Chromium, including a separate browser-process restart with networking disabled, plus synthetic SQL transactions rolled back in Supabase. Physical iPhone/iPad and native wrapper verification remain required before claiming native offline support.
+
+## Native next increment
+
+Use the located revision 11 source as the preservation baseline. Implement a local startup surface, a protected account-scoped store and an authenticated sync bridge; do not simply remove the native capability warning or assume browser service-worker caching works in this container. Choose the native asset origin and bridge boundary deliberately because existing bridges allow only trusted website origins. Preserve signing/Keychain identities and all existing recordings. Bundle or otherwise durably install the required startup resources, maintain a known-good version, and expose readiness only after both shell and data persist. Test cold airplane-mode launch, app termination, PIN/Face ID, account changes, low storage and reconnect on physical iPhone/iPad. No Xcode or Apple SDK is available in the current Linux workspace; no native compile/device claim has been made.
 
 ## Required architecture
 

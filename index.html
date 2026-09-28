@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.89: Offline workspace availability and consistent settings-button layout. -->
+<!-- Wrestling Manager v0.20.90: Automatic saved-team refresh and durable conversation drafts. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -2338,7 +2338,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.89</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.90</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -3762,6 +3762,7 @@ async function selectTeamProfile(kind){
   }finally{teamProfileSelecting=false;}
 }
 async function signOutCurrentPhone(){
+  if(window.WMChatDrafts&&!await window.WMChatDrafts.beforeSignOut())return;
   if(window.WMOffline&&!await window.WMOffline.beforeSignOut())return;
   if(teamLoginSigningOut)return;teamLoginSigningOut=true;
   window.WMQuickSignIn?.signOut();
@@ -5056,6 +5057,7 @@ async function saveEditTeam(){
 }
 
 async function activateTeam(teamId,{persist=true}={}){
+  if(window.WMChatDrafts&&!await window.WMChatDrafts.leave())return;
   window.WMEligibility?.reset();window.WMAttendance?.reset();
   window.WMVideoPilot?.reset();window.WMMatchVideo?.reset();
   window.WMTournaments?.reset();show('tournamentSheet',false);
@@ -6515,7 +6517,10 @@ async function performOpenCommunicationThread(threadId,{keepOpen=false,preserveS
     message('That conversation is no longer available in this team.',true);
     return;
   }
+  if(window.WMChatDrafts&&!await window.WMChatDrafts.open(requestedThread))return;
+  if(openId!==communicationThreadOpenSequence)return;
   activeCommunicationThread=requestedThread;
+  void window.WMChatDrafts?.ready();
   if(!keepOpen)clearPendingCommunicationMedia();
   const messageList=$('communicationMessageList');
   const distanceFromBottom=messageList?messageList.scrollHeight-messageList.scrollTop-messageList.clientHeight:0;
@@ -6699,13 +6704,15 @@ function renderCommunicationMessages(rows,{preserveScroll=false,distanceFromBott
 
 async function sendPendingCommunicationMedia(caption){
   const file=pendingCommunicationMediaFile;if(!file||!activeCommunicationThread||!activeTeam||!session?.user)return {error:new Error('No media selected.')};
+  const mediaThread=activeCommunicationThread.thread_id,mediaTeam=activeTeam.id,mediaUser=session.user.id;
   const extension=communicationMediaExtension(file),mimeType=communicationMediaMimeType(file);
   const id=globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  const path=`${activeTeam.id}/${activeCommunicationThread.thread_id}/${session.user.id}/${id}.${extension}`;
+  const path=`${mediaTeam}/${mediaThread}/${mediaUser}/${id}.${extension}`;
   const uploadOutcome=await settleWithin(client.storage.from('communication-media').upload(path,file,{upsert:false,contentType:mimeType,cacheControl:'3600'}),45000,'Photo or video upload');
   const upload=uploadOutcome.ok?uploadOutcome.value:{data:null,error:uploadOutcome.error};
   if(upload.error)return upload;
-  const sendOutcome=await settleWithin(client.rpc('send_communication_attachment',{p_thread_id:activeCommunicationThread.thread_id,p_storage_path:path,p_mime_type:mimeType,p_file_name:file.name||null,p_size_bytes:file.size,p_caption:caption||null}),15000,'Photo or video message');
+  if(session?.user?.id!==mediaUser)return {error:new Error('Your profile changed. Reopen the conversation before sending.')};
+  const sendOutcome=await settleWithin(client.rpc('send_communication_attachment',{p_thread_id:mediaThread,p_storage_path:path,p_mime_type:mimeType,p_file_name:file.name||null,p_size_bytes:file.size,p_caption:caption||null}),15000,'Photo or video message');
   const result=sendOutcome.ok?sendOutcome.value:{data:null,error:sendOutcome.error};
   if(sendOutcome.timedOut){
     for(const delay of [700,1800]){
@@ -6720,30 +6727,40 @@ async function sendPendingCommunicationMedia(caption){
   return result;
 }
 
+const communicationSendFlights=new Set();
 async function sendCommunicationMessage(){
   if(!activeCommunicationThread)return;
-  const body=$('communicationMessageBody').value.trim();if(!body&&!pendingCommunicationMediaFile){message('Write a message or choose a photo or video first.',true);return;}
-  const sendingMedia=!!pendingCommunicationMediaFile;
-  const btn=$('sendCommunicationMessageBtn');btn.disabled=true;btn.textContent='…';btn.setAttribute('aria-label',sendingMedia?'Sending photo or video':'Sending message');
-  if(sendingMedia)message('Sending photo or video…');
-  const safetyTest=String(activeCommunicationThread.title||'').startsWith('🧪 TEST:');
-  const request=pendingCommunicationMediaFile&&!safetyTest
-    ?sendPendingCommunicationMedia(body)
-    :safetyTest
-    ?client.rpc('send_guardian_safety_test_message',{p_thread_id:activeCommunicationThread.thread_id,p_as_role:$('communicationSafetyTestRole').value,p_body:body})
-    :client.rpc('send_communication_message',{p_thread_id:activeCommunicationThread.thread_id,p_body:body});
-  const outcome=await settleWithin(request,sendingMedia?65000:15000,sendingMedia?'Photo or video send':'Message send');
-  const result=outcome.ok?outcome.value:{data:null,error:outcome.error};
-  const {data,error}=result||{data:null,error:new Error('The message could not be sent.')};
-  btn.disabled=false;btn.textContent='↑';btn.setAttribute('aria-label','Send message');
-  if(error){message(`${error.message||'The message could not be sent.'} Tap send to try again.`,true);return;}
-  const sentThreadId=activeCommunicationThread.thread_id;
-  $('communicationMessageBody').value='';$('communicationMessageBody').style.height='38px';clearPendingCommunicationMedia();if(!safetyTest)dispatchCommunicationNotifications();await refreshActiveCommunicationMessages(sentThreadId,{stickToBottom:true,markRead:false});
-  if(sendingMedia&&!safetyTest)message('Photo or video sent.');
-  if(safetyTest){
-    const sent=activeCommunicationMessages.find(m=>String(m.message_id)===String(data));
-    if(sent&&String(sent.safety_level||'none')!=='none')message(`Safety test worked: ${sent.safety_level}-priority phrase flagged for human review.`);
-  }
+  const sendThread=activeCommunicationThread,sendUser=session?.user?.id,sendTeam=activeTeam?.id;
+  const sentThreadId=sendThread.thread_id,sendKey=sendUser+'/'+sentThreadId;
+  if(communicationSendFlights.has(sendKey))return;
+  const editor=$('communicationMessageBody'),raw=editor.value,body=raw.trim(),media=pendingCommunicationMediaFile;
+  if(!body&&!media){message('Write a message or choose a photo or video first.',true);return;}
+  const draft=window.WMChatDrafts?.capture();
+  if(!navigator.onLine){message('You are offline. Keep this draft and send when connected, or queue a text in Offline workspace.',true);return;}
+  const same=()=>session?.user?.id===sendUser&&activeTeam?.id===sendTeam&&activeCommunicationThread?.thread_id===sentThreadId;
+  const sendingMedia=!!media,safetyTest=String(sendThread.title||'').startsWith('🧪 TEST:');
+  const btn=$('sendCommunicationMessageBtn');communicationSendFlights.add(sendKey);btn.disabled=true;btn.textContent='…';btn.setAttribute('aria-label',sendingMedia?'Sending photo or video':'Sending message');
+  try{
+    if(sendingMedia)message('Sending photo or video…');
+    const request=media&&!safetyTest?sendPendingCommunicationMedia(body):safetyTest
+      ?client.rpc('send_guardian_safety_test_message',{p_thread_id:sentThreadId,p_as_role:$('communicationSafetyTestRole').value,p_body:body})
+      :client.rpc('send_communication_message',{p_thread_id:sentThreadId,p_body:body});
+    const outcome=await settleWithin(request,sendingMedia?65000:15000,sendingMedia?'Photo or video send':'Message send');
+    const {data,error}=(outcome.ok?outcome.value:{error:outcome.error})||{error:new Error('The message could not be sent.')};
+    if(error){if(same())message(`${error.message||'The message could not be sent.'} Your text is retained. Check the conversation before retrying.`,true);return;}
+    if(draft)await window.WMChatDrafts.sent(draft);
+    else if(same()&&editor.value===raw){editor.value='';editor.style.height='38px';}
+    if(same()&&pendingCommunicationMediaFile===media)clearPendingCommunicationMedia();
+    if(session?.user?.id===sendUser&&!safetyTest)dispatchCommunicationNotifications();
+    if(!same())return;
+    await refreshActiveCommunicationMessages(sentThreadId,{stickToBottom:true,markRead:false});
+    if(sendingMedia&&!safetyTest&&same())message('Photo or video sent.');
+    if(safetyTest&&same()){
+      const sent=activeCommunicationMessages.find(m=>String(m.message_id)===String(data));
+      if(sent&&String(sent.safety_level||'none')!=='none')message(`Safety test worked: ${sent.safety_level}-priority phrase flagged for human review.`);
+    }
+  }catch(e){if(same())message((e.message||'Message send interrupted.')+' Your text is retained.',true);}
+  finally{communicationSendFlights.delete(sendKey);if(same()){btn.disabled=false;btn.textContent='↑';btn.setAttribute('aria-label','Send message');}}
 }
 
 async function openGuardianSafetyTest(){
@@ -6882,12 +6899,20 @@ function openScheduleMessage(){
 
 async function confirmScheduleMessage(){
   if(!activeCommunicationThread)return;
-  const body=$('communicationMessageBody').value.trim(),value=$('scheduledMessageAt').value;if(!body||!value){message('Choose a delivery date and time.',true);return;}
+  const editor=$('communicationMessageBody'),raw=editor.value,body=raw.trim(),value=$('scheduledMessageAt').value;
+  if(!body||!value){message('Choose a delivery date and time.',true);return;}
   const when=new Date(value);if(!Number.isFinite(when.getTime())||when<=new Date()){message('Choose a future delivery time.',true);return;}
-  const btn=$('confirmScheduleMessageBtn');btn.disabled=true;btn.textContent='Scheduling…';
-  const {error}=await client.rpc('schedule_communication_message',{p_thread_id:activeCommunicationThread.thread_id,p_body:body,p_scheduled_for:when.toISOString()});
-  btn.disabled=false;btn.textContent='Schedule Message';if(error){message(error.message,true);return;}
-  $('communicationMessageBody').value='';closeSheets();message(`Message scheduled for ${fmtDateTime(when.toISOString())}. It will send automatically even if you are offline.`);
+  const thread=activeCommunicationThread.thread_id,user=session?.user?.id,team=activeTeam?.id,key=user+'/'+thread;
+  if(communicationSendFlights.has(key))return;
+  const draft=window.WMChatDrafts?.capture(),same=()=>session?.user?.id===user&&activeTeam?.id===team&&activeCommunicationThread?.thread_id===thread;
+  const btn=$('confirmScheduleMessageBtn');communicationSendFlights.add(key);btn.disabled=true;btn.textContent='Scheduling…';
+  try{
+    const result=await settleWithin(client.rpc('schedule_communication_message',{p_thread_id:thread,p_body:body,p_scheduled_for:when.toISOString()}),15000,'Schedule message');
+    const error=result.ok?result.value?.error:result.error;if(error)throw error;
+    const cleared=draft?await window.WMChatDrafts.sent(draft):same()&&editor.value===raw;
+    if(same()){if(cleared){editor.value='';editor.style.height='38px';if(!$('scheduleMessageSheet').classList.contains('hidden'))closeSheets();}message(`Message scheduled for ${fmtDateTime(when.toISOString())}. It will send automatically even if you are offline.`);}
+  }catch(e){if(same())message((e.message||'Scheduling interrupted.')+' Your text is retained. Check scheduled messages before retrying.',true);}
+  finally{communicationSendFlights.delete(key);btn.disabled=false;btn.textContent='Schedule Message';}
 }
 
 function cancelCommunicationLongPress(){
@@ -10862,7 +10887,7 @@ client.auth.onAuthStateChange((event,nextSession)=>{
  setTimeout(()=>handleAuthViewChange(event,nextSession).catch(e=>message(e.message,true)),0);
 });
 async function handleAuthViewChange(event,nextSession){
-  if(session?.user?.id!==nextSession?.user?.id){window.WMMatch?.close();window.WMMatchVideo?.reset();show('teamRecorderView',false);window.WMVideoPilot?.reset();window.WMTournaments?.reset();show('tournamentSheet',false);window.WMNotificationSync?.reset();window.WMReactions?.reset();finishTileEditing(false);tileEditUser=null;pendingUiLayout=null;window.WMKioskScan?.reset();window.WMGoals?.reset();window.WMProfiles?.reset();window.WMFamily?.reset();resetAthleteCard();nativeCameraScanContext=null;weightCardPhotoCache.clear();}
+  if(session?.user?.id!==nextSession?.user?.id){++communicationThreadOpenSequence;window.WMChatDrafts?.reset();window.WMMatch?.close();window.WMMatchVideo?.reset();show('teamRecorderView',false);window.WMVideoPilot?.reset();window.WMTournaments?.reset();show('tournamentSheet',false);window.WMNotificationSync?.reset();window.WMReactions?.reset();finishTileEditing(false);tileEditUser=null;pendingUiLayout=null;window.WMKioskScan?.reset();window.WMGoals?.reset();window.WMProfiles?.reset();window.WMFamily?.reset();resetAthleteCard();nativeCameraScanContext=null;weightCardPhotoCache.clear();}
   if(session?.user?.id!==nextSession?.user?.id&&(myWeightCheckMode==='teammate'||myWeightCheckMode==='test'||myWeightCheckMode==='staff'||!$('weightTestAthleteSheet').classList.contains('hidden')||!$('teammateWeightCheckSheet').classList.contains('hidden')||!$('weightPinSheet').classList.contains('hidden')))closeSheets();
   session=nextSession||null;
   window.WMProfilePIN?.select().catch(()=>{});window.WMProfilePINUI?.refresh();
@@ -15659,12 +15684,114 @@ window.WMOfflineStore=(()=>{
  function accept(body,id,result){const q=body.queue.find(x=>x.id===id);if(!q)return;
   if(result.status!=='applied'){q.state=result.status;q.result=result;return;}
   const p=body.packs[packKey(q.request.team_id,q.request.season_id)],v=result.value;
+  if(p)p.local_revision=(p.local_revision||0)+1;
   if(p&&q.request.kind==='attendance'){p.attendance=p.attendance.filter(x=>!(x.event_id===q.request.event_id&&x.athlete_id===q.request.athlete_id));p.attendance.push(v);}
   if(p&&q.request.kind==='event')p.events=p.events.map(x=>x.id===q.request.event_id?v:x);
   if(p&&q.request.kind==='message'){const list=p.messages[q.request.thread_id]||[];if(!list.some(x=>x.message_id===v))list.push({message_id:v,body:q.request.body,sender_name:'You',is_mine:true,created_at:new Date().toISOString()});p.messages[q.request.thread_id]=list.slice(-80);}
   body.history.unshift({...q,state:'applied',result,confirmed_at:new Date().toISOString()});body.history=body.history.slice(0,50);body.queue=body.queue.filter(x=>x.id!==id);
  }
  return {get,update,packKey,enqueue,accept};
+})();
+
+</script>
+<style id="chatDrafts090Style">
+#communicationDraftStatus:empty{display:none}
+#communicationDraftStatus{margin:6px 4px 10px;overflow-wrap:anywhere}
+#communicationDraftCopies{margin:8px 0 14px}
+#communicationDraftCopies>div{display:grid;gap:8px;margin:12px 0}
+#communicationDraftCopies textarea{width:100%;box-sizing:border-box;min-height:76px}
+
+</style>
+<script id="chatDrafts090Script">
+/* Text drafts for personal profiles. Sending remains an explicit server action. */
+window.WMChatDrafts=(()=>{
+ 'use strict';
+ const S=window.WMOfflineStore,input=document.getElementById('communicationMessageBody');
+ const status=document.createElement('p');status.id='communicationDraftStatus';status.className='fine';status.setAttribute('role','status');status.setAttribute('aria-live','polite');input.closest('.message-composer').after(status);
+ const copies=document.createElement('details');copies.id='communicationDraftCopies';copies.hidden=true;status.after(copies);
+ let context=null,flight=Promise.resolve(),opening=0;
+ const uid=()=>session?.user?.id||'';
+ const eligible=t=>!!uid()&&!managedLogin&&!!activeTeam?.id&&!!t?.can_post&&!String(t.title||'').startsWith('🧪 TEST:');
+ const belongs=c=>context===c&&uid()===c.uid&&!managedLogin&&activeTeam?.id===c.team&&String(activeCommunicationThread?.thread_id)===c.thread;
+ function tell(c,text){if(context===c&&uid()===c.uid)status.textContent=text;}
+ function size(){input.style.height='auto';input.style.height=Math.min(Math.max(input.scrollHeight,38),108)+'px';}
+ function clearEditor(){input.value='';input.style.height='38px';status.textContent='';copies.replaceChildren();copies.hidden=true;}
+ function save(text=input.value){
+  const c=context;if(!c||uid()!==c.uid||managedLogin)return flight;
+  const revision=crypto.randomUUID();c.latestRevision=revision;c.latestBody=text;tell(c,'Saving draft…');
+  flight=flight.catch(()=>{}).then(async()=>{
+   await S.update(c.uid,b=>{
+    b.chatDrafts||={};b.chatDraftCopies||={};const old=b.chatDrafts[c.key];
+    // Keep both versions if another window edited the same conversation.
+    if(old&&old.revision!==c.savedRevision&&old.body!==text){(b.chatDraftCopies[c.key]||={})[old.revision]=old;}
+    if(text)b.chatDrafts[c.key]={body:text,revision,updated_at:new Date().toISOString()};else delete b.chatDrafts[c.key];
+   });
+   c.savedRevision=revision;
+   if(context===c&&c.latestRevision===revision){tell(c,text?'Draft saved on this device · not sent':'');await showCopies(c).catch(()=>{});}
+  }).catch(e=>{tell(c,'Draft could not save. Keep this screen open and try typing again.');throw e;});
+  flight.catch(()=>{});return flight;
+ }
+ async function showCopies(c){
+  const b=await S.get(c.uid);if(!belongs(c))return;
+  const rows=Object.values(b.chatDraftCopies?.[c.key]||{});copies.replaceChildren();copies.hidden=!rows.length;if(!rows.length)return;
+  const summary=document.createElement('summary');summary.textContent=`Other saved drafts (${rows.length})`;copies.append(summary);
+  for(const row of rows){
+   const card=document.createElement('div'),text=document.createElement('textarea'),use=document.createElement('button'),discard=document.createElement('button');
+   text.readOnly=true;text.value=row.body;text.setAttribute('aria-label','Other saved draft');use.type=discard.type='button';use.className=discard.className='secondary';use.textContent='Use this draft';discard.textContent='Discard this copy';
+   use.onclick=()=>{
+    if(!belongs(c))return;input.readOnly=true;
+    flight=flight.then(async()=>{
+     const revision=crypto.randomUUID();
+     await S.update(c.uid,b=>{
+      const chosen=b.chatDraftCopies?.[c.key]?.[row.revision];if(!chosen)throw Error('This draft copy changed. Reopen the saved drafts.');
+      const old=b.chatDrafts?.[c.key];if(old&&old.body!==chosen.body)b.chatDraftCopies[c.key][old.revision]=old;
+      b.chatDrafts||={};b.chatDrafts[c.key]={...chosen,revision,updated_at:new Date().toISOString()};delete b.chatDraftCopies[c.key][row.revision];
+     });
+     c.savedRevision=c.latestRevision=revision;c.latestBody=row.body;
+     if(belongs(c)){input.value=row.body;size();tell(c,'Draft restored from this device · not sent');await showCopies(c).catch(()=>{});}
+    }).catch(e=>{tell(c,'Could not switch drafts. Your saved copies are retained.');throw e;}).finally(()=>{if(context===c)input.readOnly=false;});
+    flight.catch(()=>{});
+   };
+   discard.onclick=async()=>{if(!belongs(c))return;try{await S.update(c.uid,b=>{delete b.chatDraftCopies?.[c.key]?.[row.revision];});await showCopies(c).catch(()=>{});}catch{tell(c,'Could not remove this copy. Try again.');}};
+   card.append(text,use,discard);copies.append(card);
+  }
+ }
+ async function open(thread){
+  const team=activeTeam?.id,id=String(thread.thread_id),user=uid(),nextKey=team+'/'+id;
+  if(context?.uid===user&&context.key===nextKey&&eligible(thread))return true;
+  const seq=++opening;input.readOnly=true;
+  try{await flight;}catch{input.readOnly=false;message('Your message draft has not saved. Keep this conversation open and try typing again.',true);return false;}
+  if(seq!==opening||uid()!==user||activeTeam?.id!==team)return false;
+  context=null;clearEditor();
+  if(!eligible(thread)){input.readOnly=false;return true;}
+  const c={uid:user,team,thread:id,key:nextKey,savedRevision:null,latestRevision:null,latestBody:''};context=c;
+  try{
+   const b=await S.get(user);if(seq!==opening||context!==c||uid()!==user||managedLogin)return false;
+   const row=b.chatDrafts?.[nextKey];if(row){input.value=row.body;c.savedRevision=c.latestRevision=row.revision;c.latestBody=row.body;size();tell(c,'Draft restored from this device · not sent');}
+  }catch{tell(c,'Saved drafts could not load. Keep any new text here until it saves.');}
+  finally{if(context===c)input.readOnly=false;}
+  return context===c;
+ }
+ async function leave(){try{await flight;reset();return true;}catch{message('Your message draft has not saved. Return to Messages and try typing again.',true);return false;}}
+ function reset(){++opening;context=null;clearEditor();input.readOnly=false;flight=flight.catch(()=>{});}
+ function capture(){
+  const c=context;if(!c||!belongs(c))return null;
+  if(input.value!==c.latestBody)void save();
+  return {context:c,uid:c.uid,key:c.key,revision:c.latestRevision,raw:input.value};
+ }
+ async function sent(token){
+  if(!token)return false;await flight.catch(()=>{});
+  try{await S.update(token.uid,b=>{if(b.chatDrafts?.[token.key]?.revision===token.revision)delete b.chatDrafts[token.key];delete b.chatDraftCopies?.[token.key]?.[token.revision];});}
+  catch{if(belongs(token.context))tell(token.context,'Message sent, but the saved draft could not be cleared.');return false;}
+  const c=token.context;
+  if(belongs(c)&&c.latestRevision===token.revision&&input.value===token.raw){clearEditor();c.savedRevision=c.latestRevision=null;c.latestBody='';return true;}
+  return false;
+ }
+ async function beforeSignOut(){try{await flight;return true;}catch{message('Your message draft has not saved. Return to Messages before signing out.',true);return false;}}
+ input.addEventListener('input',()=>{void save();});
+ // Input writes begin immediately; no debounce that could be lost on app suspension.
+ document.addEventListener('visibilitychange',()=>{if(document.hidden&&context&&input.value!==context.latestBody)void save();});
+ return {open,leave,reset,capture,sent,beforeSignOut,ready:()=>context&&showCopies(context).catch(()=>{}),flush:()=>flight};
 })();
 
 </script>
@@ -15676,6 +15803,7 @@ window.WMOffline=(()=>{
  const inNativeApp=()=>!!window.wrestlingManagerNativeShellVersion||window.wrestlingManagerNativeLifecycle===true||!!window.webkit?.messageHandlers?.security;
  function unavailable(){if(inNativeApp())return 'native';if(!window.isSecureContext)return 'secure';if(!navigator.serviceWorker||!window.indexedDB||!window.crypto?.subtle||!window.caches)return 'browser';return '';}
  const ACTIVE='wm.offline.active.v1';let owner='',unlocked=false,packId='',view='home',detail='',generation=0,busy=false,syncing=false,registration,state=null,draftFlight=Promise.resolve();
+ const refreshAttempts=new Map(),REFRESH_INTERVAL=5*60*1000;
  const user=()=>session?.user?.id||localStorage.getItem(ACTIVE)||'';
  const current=()=>unlocked&&owner===user()&&!managedLogin&&!document.body.classList.contains('kiosk-locked')&&$('appLockOverlay')?.classList.contains('hidden');
  const guard=u=>()=>current()&&owner===u;
@@ -15711,26 +15839,48 @@ window.WMOffline=(()=>{
   unlocked=false;$('ofBody').innerHTML='<p>Unlock saved team data with your existing profile PIN.</p><form id="ofUnlockForm"><label for="ofPIN">Profile PIN</label><input id="ofPIN" type="password" inputmode="numeric" pattern="[0-9]{4,8}" maxlength="8" autocomplete="off" required><button class="wide" type="submit">Unlock workspace</button></form><p class="fine">Set your PIN in Profile → Security while online. Download only on a device you control. Device storage can be removed by browser settings or the operating system.</p>';
   $('ofUnlockForm').onsubmit=async e=>{e.preventDefault();const u=owner,g=generation,b=e.submitter;b.disabled=true;try{await WMProfilePIN.verify(u,$('ofPIN').value);if(g!==generation||u!==user())return;unlocked=true;await render();void sync();}catch(err){notice(err.message,true);}finally{b.disabled=false;}};
  }
- async function pages(action,c){let cursor=null,all=[];do{const page=await rpc(action,{...c,cursor});if(!Array.isArray(page))throw Error('The team download returned incomplete data.');all.push(...page);cursor=page.length===250?(page.at(-1).athlete_id&&action==='roster'?page.at(-1).athlete_id:page.at(-1).thread_id&&action==='threads'?page.at(-1).thread_id:page.at(-1).id):null;if(cursor&&all.length>250000)throw Error('This team needs a larger offline download. No partial copy was saved.');}while(cursor);return all;}
+ async function pages(action,c,valid){let cursor=null,all=[];do{if(!valid())throw Error('Your workspace changed.');const page=await rpc(action,{...c,cursor});if(!Array.isArray(page))throw Error('The team download returned incomplete data.');all.push(...page);cursor=page.length===250?(page.at(-1).athlete_id&&action==='roster'?page.at(-1).athlete_id:page.at(-1).thread_id&&action==='threads'?page.at(-1).thread_id:page.at(-1).id):null;if(cursor&&all.length>250000)throw Error('This team needs a larger offline download. No partial copy was saved.');}while(cursor);return all;}
+ async function fetchPack(c,u,valid){
+  const check=m=>{if(!valid())throw Error('Your workspace changed.');if(m?.user_id!==u||m.team?.id!==c.team_id||m.season?.id!==c.season_id)throw Error('The downloaded team does not match this profile.');};
+  check(await rpc('manifest',c));
+  const [roster,events,attendance,threads]=await Promise.all(['roster','events','attendance','threads'].map(a=>pages(a,c,valid)));
+  const messages={};for(const t of threads){if(!valid())throw Error('Your workspace changed.');const rows=await rpc('messages',{...c,thread_id:t.thread_id});if(!Array.isArray(rows))throw Error('A conversation download was incomplete.');messages[t.thread_id]=rows;}
+  const verified=await rpc('manifest',c);check(verified);
+  return {...verified,roster,events,attendance,threads,messages,downloaded_at:new Date().toISOString(),blocked:false};
+ }
+ async function savePack(u,p,revision,valid){
+  // A different window may confirm a queued edit during the download. Keep that
+  // confirmed copy and retry the download later instead of replacing it with stale data.
+  return S.update(u,b=>{const old=b.packs[key(p)];if((old?.local_revision||0)!==revision)return false;b.packs[key(p)]={...p,local_revision:revision};return true;},valid);
+ }
  async function download(){
   const reason=unavailable();if(reason){showAvailability(reason);return;}
-  if(busy||!current())return;const u=owner,g=generation,t=activeTeam?.id,s=activeSeason?.id;
+  if(busy||!current())return;if(syncing){notice('Sync is finishing. Try the download again in a moment.');return;}const u=owner,g=generation,t=activeTeam?.id,s=activeSeason?.id;
   if(!navigator.onLine||session?.user?.id!==u||!t||!s||!isStaff||managedLogin){notice('Connect and select a team with your personal coach account to download.',true);return;}
+  const valid=()=>g===generation&&guard(u)()&&session?.user?.id===u&&activeTeam?.id===t&&activeSeason?.id===s;
   busy=true;notice('Downloading app and verifying team access…');try{
-   await shell();const c={team_id:t,season_id:s};const manifest=await rpc('manifest',c);
-   if(manifest.user_id!==u)throw Error('The signed-in profile changed.');
-   notice('Downloading roster, schedule, attendance and conversations…');
-   const [roster,events,attendance,threads]=await Promise.all(['roster','events','attendance','threads'].map(a=>pages(a,c)));
-   const messages={};for(let i=0;i<threads.length;i++){if(g!==generation||!guard(u)())throw Error('Workspace closed. The previous saved copy is unchanged.');notice(`Downloading conversation ${i+1} of ${threads.length}…`);messages[threads[i].thread_id]=await rpc('messages',{...c,thread_id:threads[i].thread_id});}
-   const verified=await rpc('manifest',c),p={...verified,roster,events,attendance,threads,messages,downloaded_at:new Date().toISOString(),blocked:false};
-   if(g!==generation||activeTeam?.id!==t||activeSeason?.id!==s)throw Error('Your team changed. Reopen and download that team.');
-   await S.update(u,b=>{b.packs[key(p)]=p;},guard(u));localStorage.setItem(ACTIVE,u);packId=key(p);
+   await shell();
+   const run=async()=>{const old=(await S.get(u)).packs[S.packKey(t,s)];const p=await fetchPack({team_id:t,season_id:s},u,valid);if(!await savePack(u,p,old?.local_revision||0,valid))throw Error('A saved change just synced. Update again to include the latest data.');return p;};
+   const p=navigator.locks?await navigator.locks.request('wm-offline-sync:'+u,run):await run();
+   if(!valid())return;localStorage.setItem(ACTIVE,u);packId=key(p);refreshAttempts.set(u+'/'+packId,Date.now());
    let persistent=false;try{persistent=await navigator.storage?.persist?.();}catch{}
-   notice('Team saved on this device. '+(persistent?'':'Keep this browser’s app data to retain unsynced work.'));await render();
-  }catch(e){notice(e.message,true);if(e.code==='42501')await blockPack(u,S.packKey(t,s),e.message);}
+   if(!valid())return;notice('Team saved on this device. '+(persistent?'':'Keep this browser’s app data to retain unsynced work.'));await render();
+  }catch(e){if(valid()){notice(e.message,true);if(e.code==='42501')await blockPack(u,S.packKey(t,s),e.message);}}
   finally{busy=false;}
  }
- async function blockPack(u,id,reason){await S.update(u,b=>{if(b.packs[id]){b.packs[id].blocked=true;b.packs[id].blocked_reason=reason;}},()=>owner===u&&user()===u);if(current()){view='home';detail='';await render();}}
+ async function refreshSaved(u,valid,force){
+  const b=await S.get(u);let refreshed=0;
+  for(const [id,old] of Object.entries(b.packs)){
+   if(!valid()||!navigator.onLine)break;
+   const last=Math.max(refreshAttempts.get(u+'/'+id)||0,Date.parse(old.downloaded_at)||0);
+   if(!force&&Date.now()-last<REFRESH_INTERVAL)continue;
+   refreshAttempts.set(u+'/'+id,Date.now());
+   try{const p=await fetchPack({team_id:old.team.id,season_id:old.season.id},u,valid);if(await savePack(u,p,old.local_revision||0,valid))refreshed++;}
+   catch(e){if(!valid())break;if(e.code==='42501'){await blockPack(u,id,e.message);continue;}throw e;}
+  }
+  return refreshed;
+ }
+ async function blockPack(u,id,reason){await S.update(u,b=>{if(b.packs[id]){b.packs[id].blocked=true;b.packs[id].blocked_reason=reason;}},()=>owner===u&&user()===u);if(current()&&packId===id){view='home';detail='';await render();}}
  function usable(p){return p&&!p.blocked&&new Date(p.expires_at)>new Date();}
  async function render(){
   if(!current())return;const u=owner,g=generation,b=await S.get(u);if(g!==generation||!guard(u)())return;state=b;
@@ -15738,7 +15888,7 @@ window.WMOffline=(()=>{
   const pending=b.queue.length;entry.textContent=pending?`${pending} saved change${pending===1?'':'s'}`:'Open saved team';
   let html=`<p class="of-connection">${pending} change${pending===1?'':'s'} awaiting sync${navigator.onLine?'':' · Offline'}</p>`;
   if(view==='home'){
-   html+='<p>Download core team data before leaving service. This first release includes roster, this season’s team events and attendance, plus the latest 80 messages per conversation. Attachments and other app sections need internet.</p>';
+   html+='<p>Download core team data before leaving service. This first release includes roster, this season’s team events and attendance, plus the latest 80 messages per conversation. Attachments and other app sections need internet. While this workspace is unlocked and the app is open, saved work syncs and downloads refresh automatically after reconnection.</p>';
    html+='<div class="of-actions"><button id="ofDownload" type="button">Download / update selected team</button><button id="ofSync" class="secondary" type="button">Sync saved work</button></div>';
    html+=Object.entries(b.packs).map(([id,x])=>`<article class="of-card"><h3>${E(x.team.name)}</h3><p>${E(x.season.name)} · Saved ${E(day(x.downloaded_at))}</p><p class="fine">Offline access until ${E(day(x.expires_at))}. Download again online to renew.</p>${usable(x)?`<button data-pack="${E(id)}" type="button">Open saved team</button>`:`<p class="of-error">${E(x.blocked?'Access must be verified again online. Unsynced work is retained.':'Offline access expired. Connect and update this team.')}</p>`}</article>`).join('');
    html+=`<button id="ofQueue" type="button" class="wide secondary">Review saved work (${pending})</button>`;
@@ -15748,7 +15898,7 @@ window.WMOffline=(()=>{
    html+=`<button id="ofSync" class="wide" type="button">Sync now</button><h3>Recent results</h3>`+b.history.slice(0,15).map(q=>`<details class="of-card"><summary>${E(q.label)} · ${E(q.state==='applied'?'Synced':q.state==='dismissed'?'Not applied — acknowledged':'Server version kept')}</summary><p>${E(q.request.body||q.request.status||JSON.stringify(q.request.values||{}))}</p>${q.result?.message?`<p>${E(q.result.message)}</p>`:''}</details>`).join('');
   }else if(!usable(p)){view='home';return render();}
   else{
-   html+=`<h3>${E(p.team.name)}</h3><p class="fine">Saved ${E(day(p.downloaded_at))}. Other coaches’ latest changes appear after you update this download. Confirm current eligibility online before competition.</p><nav class="of-tabs">${['roster','schedule','messages','queue'].map(v=>`<button data-view="${v}" class="${v===view?'':'secondary'}" type="button">${v==='queue'?'Saved work':v[0].toUpperCase()+v.slice(1)}</button>`).join('')}</nav>`;
+   html+=`<h3>${E(p.team.name)}</h3><p class="fine">Saved ${E(day(p.downloaded_at))}. Downloaded data refreshes automatically while connected and unlocked. Confirm current eligibility online before competition.</p><nav class="of-tabs">${['roster','schedule','messages','queue'].map(v=>`<button data-view="${v}" class="${v===view?'':'secondary'}" type="button">${v==='queue'?'Saved work':v[0].toUpperCase()+v.slice(1)}</button>`).join('')}</nav>`;
    if(view==='roster'){
     html+='<label>Sort roster<select id="ofSort"><option value="last">Last name</option><option value="weight">Weight</option></select></label><div id="ofRoster"></div>';
    }else if(view==='schedule'){
@@ -15794,23 +15944,28 @@ window.WMOffline=(()=>{
  async function resolve(id,mine){const u=owner;try{await S.update(u,b=>{const q=b.queue.find(x=>x.id===id);if(!q||!['conflict','blocked'].includes(q.state))return;const p=b.packs[S.packKey(q.request.team_id,q.request.season_id)];if(!usable(p))throw Error('Update team access before resolving this work.');if(q.state==='conflict'){if(q.request.kind==='event'&&q.result.value)p.events=p.events.map(x=>x.id===q.request.event_id?q.result.value:x);else{p.attendance=p.attendance.filter(x=>!(x.event_id===q.request.event_id&&x.athlete_id===q.request.athlete_id));if(q.result.value)p.attendance.push(q.result.value);}}
    b.queue=b.queue.filter(x=>x.id!==id);b.history.unshift({...q,state:q.state==='blocked'?'dismissed':'server-kept'});b.history=b.history.slice(0,50);
    if(mine){const req={...q.request,expected:q.result.value?.updated_at||null};delete req.operation_id;S.enqueue(b,req,q.label);}},guard(u));await render();void sync();}catch(e){notice(e.message,true);}}
- async function sync(manual=false){
+ async function sync(manual=false,refreshNow=false){
   if(syncing||busy||unavailable()||!current())return;if(!navigator.onLine||session?.user?.id!==owner){if(manual)notice('Connect and sign in to this profile to sync. Saved work is retained.');return;}
-  syncing=true;const u=owner;
-  const run=async()=>{const b=await S.get(u);for(const item of b.queue){
-   if(!guard(u)()||!navigator.onLine||session?.user?.id!==u)break;if(item.state!=='pending'||(!manual&&item.next_at>Date.now()))continue;
+  syncing=true;const u=owner,g=generation,valid=()=>g===generation&&guard(u)()&&session?.user?.id===u;let didRun=false;
+  const run=async()=>{didRun=true;let canRefresh=true;const b=await S.get(u);for(const item of b.queue){
+   if(!valid()||!navigator.onLine){canRefresh=false;break;}if(item.state!=='pending'||(!manual&&item.next_at>Date.now()))continue;
    const p=b.packs[S.packKey(item.request.team_id,item.request.season_id)];if(p?.blocked)continue;
    try{const r=await rpc('apply',item.request);if(!r||!['applied','conflict','blocked','retry'].includes(r.status))throw Error('No valid server confirmation was received.');
-    await S.update(u,b=>{if(r.status==='retry'){const q=b.queue.find(x=>x.id===item.id);if(q){q.next_at=Date.now()+65000;q.attempts++;}}else S.accept(b,item.id,r);},guard(u));if(r.status==='retry')break;
-   }catch(e){if(!guard(u)())break;if(e.code==='42501'){await blockPack(u,S.packKey(item.request.team_id,item.request.season_id),e.message);notice(e.message,true);break;}
-    await S.update(u,b=>{const q=b.queue.find(x=>x.id===item.id);if(q){q.attempts++;q.next_at=Date.now()+Math.min(300000,2000*2**Math.min(q.attempts,7));}},guard(u));if(manual)notice(e.message,true);break;}
-  }};
-  try{if(navigator.locks)await navigator.locks.request('wm-offline-sync:'+u,{ifAvailable:true},lock=>lock?run():undefined);else await run();if(manual)notice('Sync checked. Review Saved work for any remaining changes.');if(current()){if(!['thread','edit'].includes(view))await render();else{const latest=await S.get(u);panel.querySelectorAll('[data-queued]').forEach(el=>{const id=el.dataset.queued,q=latest.queue.find(x=>x.id===id);el.querySelector('small').textContent=q?(q.state==='pending'?'Saved on device · not sent':'Needs attention in Saved work'):'Synced to server';});const badge=panel.querySelector('.of-connection');if(badge)badge.textContent=latest.queue.length+' changes awaiting sync'+(navigator.onLine?'':' · Offline');}}}
-  catch(e){if(current())notice(e.message,true);}finally{syncing=false;}
+    await S.update(u,b=>{if(r.status==='retry'){const q=b.queue.find(x=>x.id===item.id);if(q){q.next_at=Date.now()+65000;q.attempts++;}}else S.accept(b,item.id,r);},valid);if(r.status==='retry'){canRefresh=false;break;}
+   }catch(e){if(!valid())break;canRefresh=false;if(e.code==='42501'){await blockPack(u,S.packKey(item.request.team_id,item.request.season_id),e.message);notice(e.message,true);break;}
+    await S.update(u,b=>{const q=b.queue.find(x=>x.id===item.id);if(q){q.attempts++;q.next_at=Date.now()+Math.min(300000,2000*2**Math.min(q.attempts,7));}},valid);throw e;}
+  }
+  if(valid()&&canRefresh){const count=await refreshSaved(u,valid,manual||refreshNow);if(valid()&&manual)notice(count?'Saved work checked and team downloads updated. Review Saved work for any remaining changes.':'Sync checked. Review Saved work for any remaining changes.');}
+  };
+  try{if(navigator.locks)await navigator.locks.request('wm-offline-sync:'+u,{ifAvailable:true},lock=>lock?run():undefined);else await run();if(manual&&!didRun&&valid())notice('Another app window is syncing your saved work.');}
+  catch(e){if(valid())notice(e.message,true);}finally{
+   syncing=false;
+   if(valid()){if(!['thread','edit'].includes(view))await render();else{const latest=await S.get(u);if(!valid())return;const pack=latest.packs[packId];if(view==='thread'&&(!pack?.threads.some(t=>t.thread_id===detail)||($('ofMessage')&&!pack.threads.find(t=>t.thread_id===detail)?.can_post))){await draftFlight.catch(()=>{});if(valid()){view='messages';detail='';await render();}return;}panel.querySelectorAll('[data-queued]').forEach(el=>{const id=el.dataset.queued,q=latest.queue.find(x=>x.id===id);el.querySelector('small').textContent=q?(q.state==='pending'?'Saved on device · not sent':'Needs attention in Saved work'):'Synced to server';});const badge=panel.querySelector('.of-connection');if(badge)badge.textContent=latest.queue.length+' changes awaiting sync'+(navigator.onLine?'':' · Offline');}}
+  }
  }
  async function beforeSignOut(){const u=session?.user?.id;if(u){try{await draftFlight;}catch{message('Your draft has not saved. Return to Offline workspace before signing out.',true);return false;}let b;try{b=await S.get(u);}catch{message('Could not check saved offline work. Reopen the app before signing out.',true);return false;}if(b&&(b.queue.length||Object.keys(b.drafts).length)){message('You have saved offline work or drafts. Open Offline workspace and sync or review them before signing out.',true);return false;}}localStorage.removeItem(ACTIVE);lock();return true;}
  $('ofBack').onclick=async()=>{if(view==='home'){await draftFlight.catch(()=>{});panel.hidden=true;entry.hidden=navigator.onLine||!localStorage.getItem(ACTIVE);}else if(['attendance','edit'].includes(view))navigate('schedule');else if(view==='thread')navigate('messages');else navigate('home');};$('ofLock').onclick=async()=>{try{await draftFlight;lock();}catch{notice('Your draft has not saved. Keep this screen open and try editing it again.',true);}};pill.onclick=entry.onclick=open;
- addEventListener('online',()=>{entry.hidden=true;void sync();});addEventListener('offline',()=>{entry.hidden=!panel.hidden||!localStorage.getItem(ACTIVE);if(!panel.hidden&&current())notice('Offline. Changes save here and sync after reconnection.');});
+ addEventListener('online',()=>{entry.hidden=true;void sync(false,true);});addEventListener('offline',()=>{entry.hidden=!panel.hidden||!localStorage.getItem(ACTIVE);if(!panel.hidden&&current())notice('Offline. Changes save here and sync after reconnection.');});
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)void sync();});
  client.auth.onAuthStateChange((event,next)=>{if(event==='SIGNED_OUT'){localStorage.removeItem(ACTIVE);lock();}else if(owner&&next?.user?.id&&next.user.id!==owner)lock();});
  setInterval(()=>{if(unlocked&&!current())lock();else void sync();},15000);

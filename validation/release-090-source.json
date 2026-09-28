@@ -1,0 +1,8 @@
+{
+  "version": "0.20.90",
+  "inline_scripts_parsed": 60,
+  "embedded_sources_match": true,
+  "index_sha256": "b98663cc8ddf392fe96f3e98b7a06eb208a9fce813c1c64deed58d4f58d7841f",
+  "native_source_inspected": "revision 11",
+  "native_build_run": false
+}

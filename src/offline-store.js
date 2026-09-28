@@ -28,6 +28,7 @@ window.WMOfflineStore=(()=>{
  function accept(body,id,result){const q=body.queue.find(x=>x.id===id);if(!q)return;
   if(result.status!=='applied'){q.state=result.status;q.result=result;return;}
   const p=body.packs[packKey(q.request.team_id,q.request.season_id)],v=result.value;
+  if(p)p.local_revision=(p.local_revision||0)+1;
   if(p&&q.request.kind==='attendance'){p.attendance=p.attendance.filter(x=>!(x.event_id===q.request.event_id&&x.athlete_id===q.request.athlete_id));p.attendance.push(v);}
   if(p&&q.request.kind==='event')p.events=p.events.map(x=>x.id===q.request.event_id?v:x);
   if(p&&q.request.kind==='message'){const list=p.messages[q.request.thread_id]||[];if(!list.some(x=>x.message_id===v))list.push({message_id:v,body:q.request.body,sender_name:'You',is_mine:true,created_at:new Date().toISOString()});p.messages[q.request.thread_id]=list.slice(-80);}

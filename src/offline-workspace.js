@@ -5,6 +5,7 @@ window.WMOffline=(()=>{
  const inNativeApp=()=>!!window.wrestlingManagerNativeShellVersion||window.wrestlingManagerNativeLifecycle===true||!!window.webkit?.messageHandlers?.security;
  function unavailable(){if(inNativeApp())return 'native';if(!window.isSecureContext)return 'secure';if(!navigator.serviceWorker||!window.indexedDB||!window.crypto?.subtle||!window.caches)return 'browser';return '';}
  const ACTIVE='wm.offline.active.v1';let owner='',unlocked=false,packId='',view='home',detail='',generation=0,busy=false,syncing=false,registration,state=null,draftFlight=Promise.resolve();
+ const refreshAttempts=new Map(),REFRESH_INTERVAL=5*60*1000;
  const user=()=>session?.user?.id||localStorage.getItem(ACTIVE)||'';
  const current=()=>unlocked&&owner===user()&&!managedLogin&&!document.body.classList.contains('kiosk-locked')&&$('appLockOverlay')?.classList.contains('hidden');
  const guard=u=>()=>current()&&owner===u;
@@ -40,26 +41,48 @@ window.WMOffline=(()=>{
   unlocked=false;$('ofBody').innerHTML='<p>Unlock saved team data with your existing profile PIN.</p><form id="ofUnlockForm"><label for="ofPIN">Profile PIN</label><input id="ofPIN" type="password" inputmode="numeric" pattern="[0-9]{4,8}" maxlength="8" autocomplete="off" required><button class="wide" type="submit">Unlock workspace</button></form><p class="fine">Set your PIN in Profile → Security while online. Download only on a device you control. Device storage can be removed by browser settings or the operating system.</p>';
   $('ofUnlockForm').onsubmit=async e=>{e.preventDefault();const u=owner,g=generation,b=e.submitter;b.disabled=true;try{await WMProfilePIN.verify(u,$('ofPIN').value);if(g!==generation||u!==user())return;unlocked=true;await render();void sync();}catch(err){notice(err.message,true);}finally{b.disabled=false;}};
  }
- async function pages(action,c){let cursor=null,all=[];do{const page=await rpc(action,{...c,cursor});if(!Array.isArray(page))throw Error('The team download returned incomplete data.');all.push(...page);cursor=page.length===250?(page.at(-1).athlete_id&&action==='roster'?page.at(-1).athlete_id:page.at(-1).thread_id&&action==='threads'?page.at(-1).thread_id:page.at(-1).id):null;if(cursor&&all.length>250000)throw Error('This team needs a larger offline download. No partial copy was saved.');}while(cursor);return all;}
+ async function pages(action,c,valid){let cursor=null,all=[];do{if(!valid())throw Error('Your workspace changed.');const page=await rpc(action,{...c,cursor});if(!Array.isArray(page))throw Error('The team download returned incomplete data.');all.push(...page);cursor=page.length===250?(page.at(-1).athlete_id&&action==='roster'?page.at(-1).athlete_id:page.at(-1).thread_id&&action==='threads'?page.at(-1).thread_id:page.at(-1).id):null;if(cursor&&all.length>250000)throw Error('This team needs a larger offline download. No partial copy was saved.');}while(cursor);return all;}
+ async function fetchPack(c,u,valid){
+  const check=m=>{if(!valid())throw Error('Your workspace changed.');if(m?.user_id!==u||m.team?.id!==c.team_id||m.season?.id!==c.season_id)throw Error('The downloaded team does not match this profile.');};
+  check(await rpc('manifest',c));
+  const [roster,events,attendance,threads]=await Promise.all(['roster','events','attendance','threads'].map(a=>pages(a,c,valid)));
+  const messages={};for(const t of threads){if(!valid())throw Error('Your workspace changed.');const rows=await rpc('messages',{...c,thread_id:t.thread_id});if(!Array.isArray(rows))throw Error('A conversation download was incomplete.');messages[t.thread_id]=rows;}
+  const verified=await rpc('manifest',c);check(verified);
+  return {...verified,roster,events,attendance,threads,messages,downloaded_at:new Date().toISOString(),blocked:false};
+ }
+ async function savePack(u,p,revision,valid){
+  // A different window may confirm a queued edit during the download. Keep that
+  // confirmed copy and retry the download later instead of replacing it with stale data.
+  return S.update(u,b=>{const old=b.packs[key(p)];if((old?.local_revision||0)!==revision)return false;b.packs[key(p)]={...p,local_revision:revision};return true;},valid);
+ }
  async function download(){
   const reason=unavailable();if(reason){showAvailability(reason);return;}
-  if(busy||!current())return;const u=owner,g=generation,t=activeTeam?.id,s=activeSeason?.id;
+  if(busy||!current())return;if(syncing){notice('Sync is finishing. Try the download again in a moment.');return;}const u=owner,g=generation,t=activeTeam?.id,s=activeSeason?.id;
   if(!navigator.onLine||session?.user?.id!==u||!t||!s||!isStaff||managedLogin){notice('Connect and select a team with your personal coach account to download.',true);return;}
+  const valid=()=>g===generation&&guard(u)()&&session?.user?.id===u&&activeTeam?.id===t&&activeSeason?.id===s;
   busy=true;notice('Downloading app and verifying team access…');try{
-   await shell();const c={team_id:t,season_id:s};const manifest=await rpc('manifest',c);
-   if(manifest.user_id!==u)throw Error('The signed-in profile changed.');
-   notice('Downloading roster, schedule, attendance and conversations…');
-   const [roster,events,attendance,threads]=await Promise.all(['roster','events','attendance','threads'].map(a=>pages(a,c)));
-   const messages={};for(let i=0;i<threads.length;i++){if(g!==generation||!guard(u)())throw Error('Workspace closed. The previous saved copy is unchanged.');notice(`Downloading conversation ${i+1} of ${threads.length}…`);messages[threads[i].thread_id]=await rpc('messages',{...c,thread_id:threads[i].thread_id});}
-   const verified=await rpc('manifest',c),p={...verified,roster,events,attendance,threads,messages,downloaded_at:new Date().toISOString(),blocked:false};
-   if(g!==generation||activeTeam?.id!==t||activeSeason?.id!==s)throw Error('Your team changed. Reopen and download that team.');
-   await S.update(u,b=>{b.packs[key(p)]=p;},guard(u));localStorage.setItem(ACTIVE,u);packId=key(p);
+   await shell();
+   const run=async()=>{const old=(await S.get(u)).packs[S.packKey(t,s)];const p=await fetchPack({team_id:t,season_id:s},u,valid);if(!await savePack(u,p,old?.local_revision||0,valid))throw Error('A saved change just synced. Update again to include the latest data.');return p;};
+   const p=navigator.locks?await navigator.locks.request('wm-offline-sync:'+u,run):await run();
+   if(!valid())return;localStorage.setItem(ACTIVE,u);packId=key(p);refreshAttempts.set(u+'/'+packId,Date.now());
    let persistent=false;try{persistent=await navigator.storage?.persist?.();}catch{}
-   notice('Team saved on this device. '+(persistent?'':'Keep this browser’s app data to retain unsynced work.'));await render();
-  }catch(e){notice(e.message,true);if(e.code==='42501')await blockPack(u,S.packKey(t,s),e.message);}
+   if(!valid())return;notice('Team saved on this device. '+(persistent?'':'Keep this browser’s app data to retain unsynced work.'));await render();
+  }catch(e){if(valid()){notice(e.message,true);if(e.code==='42501')await blockPack(u,S.packKey(t,s),e.message);}}
   finally{busy=false;}
  }
- async function blockPack(u,id,reason){await S.update(u,b=>{if(b.packs[id]){b.packs[id].blocked=true;b.packs[id].blocked_reason=reason;}},()=>owner===u&&user()===u);if(current()){view='home';detail='';await render();}}
+ async function refreshSaved(u,valid,force){
+  const b=await S.get(u);let refreshed=0;
+  for(const [id,old] of Object.entries(b.packs)){
+   if(!valid()||!navigator.onLine)break;
+   const last=Math.max(refreshAttempts.get(u+'/'+id)||0,Date.parse(old.downloaded_at)||0);
+   if(!force&&Date.now()-last<REFRESH_INTERVAL)continue;
+   refreshAttempts.set(u+'/'+id,Date.now());
+   try{const p=await fetchPack({team_id:old.team.id,season_id:old.season.id},u,valid);if(await savePack(u,p,old.local_revision||0,valid))refreshed++;}
+   catch(e){if(!valid())break;if(e.code==='42501'){await blockPack(u,id,e.message);continue;}throw e;}
+  }
+  return refreshed;
+ }
+ async function blockPack(u,id,reason){await S.update(u,b=>{if(b.packs[id]){b.packs[id].blocked=true;b.packs[id].blocked_reason=reason;}},()=>owner===u&&user()===u);if(current()&&packId===id){view='home';detail='';await render();}}
  function usable(p){return p&&!p.blocked&&new Date(p.expires_at)>new Date();}
  async function render(){
   if(!current())return;const u=owner,g=generation,b=await S.get(u);if(g!==generation||!guard(u)())return;state=b;
@@ -67,7 +90,7 @@ window.WMOffline=(()=>{
   const pending=b.queue.length;entry.textContent=pending?`${pending} saved change${pending===1?'':'s'}`:'Open saved team';
   let html=`<p class="of-connection">${pending} change${pending===1?'':'s'} awaiting sync${navigator.onLine?'':' · Offline'}</p>`;
   if(view==='home'){
-   html+='<p>Download core team data before leaving service. This first release includes roster, this season’s team events and attendance, plus the latest 80 messages per conversation. Attachments and other app sections need internet.</p>';
+   html+='<p>Download core team data before leaving service. This first release includes roster, this season’s team events and attendance, plus the latest 80 messages per conversation. Attachments and other app sections need internet. While this workspace is unlocked and the app is open, saved work syncs and downloads refresh automatically after reconnection.</p>';
    html+='<div class="of-actions"><button id="ofDownload" type="button">Download / update selected team</button><button id="ofSync" class="secondary" type="button">Sync saved work</button></div>';
    html+=Object.entries(b.packs).map(([id,x])=>`<article class="of-card"><h3>${E(x.team.name)}</h3><p>${E(x.season.name)} · Saved ${E(day(x.downloaded_at))}</p><p class="fine">Offline access until ${E(day(x.expires_at))}. Download again online to renew.</p>${usable(x)?`<button data-pack="${E(id)}" type="button">Open saved team</button>`:`<p class="of-error">${E(x.blocked?'Access must be verified again online. Unsynced work is retained.':'Offline access expired. Connect and update this team.')}</p>`}</article>`).join('');
    html+=`<button id="ofQueue" type="button" class="wide secondary">Review saved work (${pending})</button>`;
@@ -77,7 +100,7 @@ window.WMOffline=(()=>{
    html+=`<button id="ofSync" class="wide" type="button">Sync now</button><h3>Recent results</h3>`+b.history.slice(0,15).map(q=>`<details class="of-card"><summary>${E(q.label)} · ${E(q.state==='applied'?'Synced':q.state==='dismissed'?'Not applied — acknowledged':'Server version kept')}</summary><p>${E(q.request.body||q.request.status||JSON.stringify(q.request.values||{}))}</p>${q.result?.message?`<p>${E(q.result.message)}</p>`:''}</details>`).join('');
   }else if(!usable(p)){view='home';return render();}
   else{
-   html+=`<h3>${E(p.team.name)}</h3><p class="fine">Saved ${E(day(p.downloaded_at))}. Other coaches’ latest changes appear after you update this download. Confirm current eligibility online before competition.</p><nav class="of-tabs">${['roster','schedule','messages','queue'].map(v=>`<button data-view="${v}" class="${v===view?'':'secondary'}" type="button">${v==='queue'?'Saved work':v[0].toUpperCase()+v.slice(1)}</button>`).join('')}</nav>`;
+   html+=`<h3>${E(p.team.name)}</h3><p class="fine">Saved ${E(day(p.downloaded_at))}. Downloaded data refreshes automatically while connected and unlocked. Confirm current eligibility online before competition.</p><nav class="of-tabs">${['roster','schedule','messages','queue'].map(v=>`<button data-view="${v}" class="${v===view?'':'secondary'}" type="button">${v==='queue'?'Saved work':v[0].toUpperCase()+v.slice(1)}</button>`).join('')}</nav>`;
    if(view==='roster'){
     html+='<label>Sort roster<select id="ofSort"><option value="last">Last name</option><option value="weight">Weight</option></select></label><div id="ofRoster"></div>';
    }else if(view==='schedule'){
@@ -123,23 +146,28 @@ window.WMOffline=(()=>{
  async function resolve(id,mine){const u=owner;try{await S.update(u,b=>{const q=b.queue.find(x=>x.id===id);if(!q||!['conflict','blocked'].includes(q.state))return;const p=b.packs[S.packKey(q.request.team_id,q.request.season_id)];if(!usable(p))throw Error('Update team access before resolving this work.');if(q.state==='conflict'){if(q.request.kind==='event'&&q.result.value)p.events=p.events.map(x=>x.id===q.request.event_id?q.result.value:x);else{p.attendance=p.attendance.filter(x=>!(x.event_id===q.request.event_id&&x.athlete_id===q.request.athlete_id));if(q.result.value)p.attendance.push(q.result.value);}}
    b.queue=b.queue.filter(x=>x.id!==id);b.history.unshift({...q,state:q.state==='blocked'?'dismissed':'server-kept'});b.history=b.history.slice(0,50);
    if(mine){const req={...q.request,expected:q.result.value?.updated_at||null};delete req.operation_id;S.enqueue(b,req,q.label);}},guard(u));await render();void sync();}catch(e){notice(e.message,true);}}
- async function sync(manual=false){
+ async function sync(manual=false,refreshNow=false){
   if(syncing||busy||unavailable()||!current())return;if(!navigator.onLine||session?.user?.id!==owner){if(manual)notice('Connect and sign in to this profile to sync. Saved work is retained.');return;}
-  syncing=true;const u=owner;
-  const run=async()=>{const b=await S.get(u);for(const item of b.queue){
-   if(!guard(u)()||!navigator.onLine||session?.user?.id!==u)break;if(item.state!=='pending'||(!manual&&item.next_at>Date.now()))continue;
+  syncing=true;const u=owner,g=generation,valid=()=>g===generation&&guard(u)()&&session?.user?.id===u;let didRun=false;
+  const run=async()=>{didRun=true;let canRefresh=true;const b=await S.get(u);for(const item of b.queue){
+   if(!valid()||!navigator.onLine){canRefresh=false;break;}if(item.state!=='pending'||(!manual&&item.next_at>Date.now()))continue;
    const p=b.packs[S.packKey(item.request.team_id,item.request.season_id)];if(p?.blocked)continue;
    try{const r=await rpc('apply',item.request);if(!r||!['applied','conflict','blocked','retry'].includes(r.status))throw Error('No valid server confirmation was received.');
-    await S.update(u,b=>{if(r.status==='retry'){const q=b.queue.find(x=>x.id===item.id);if(q){q.next_at=Date.now()+65000;q.attempts++;}}else S.accept(b,item.id,r);},guard(u));if(r.status==='retry')break;
-   }catch(e){if(!guard(u)())break;if(e.code==='42501'){await blockPack(u,S.packKey(item.request.team_id,item.request.season_id),e.message);notice(e.message,true);break;}
-    await S.update(u,b=>{const q=b.queue.find(x=>x.id===item.id);if(q){q.attempts++;q.next_at=Date.now()+Math.min(300000,2000*2**Math.min(q.attempts,7));}},guard(u));if(manual)notice(e.message,true);break;}
-  }};
-  try{if(navigator.locks)await navigator.locks.request('wm-offline-sync:'+u,{ifAvailable:true},lock=>lock?run():undefined);else await run();if(manual)notice('Sync checked. Review Saved work for any remaining changes.');if(current()){if(!['thread','edit'].includes(view))await render();else{const latest=await S.get(u);panel.querySelectorAll('[data-queued]').forEach(el=>{const id=el.dataset.queued,q=latest.queue.find(x=>x.id===id);el.querySelector('small').textContent=q?(q.state==='pending'?'Saved on device · not sent':'Needs attention in Saved work'):'Synced to server';});const badge=panel.querySelector('.of-connection');if(badge)badge.textContent=latest.queue.length+' changes awaiting sync'+(navigator.onLine?'':' · Offline');}}}
-  catch(e){if(current())notice(e.message,true);}finally{syncing=false;}
+    await S.update(u,b=>{if(r.status==='retry'){const q=b.queue.find(x=>x.id===item.id);if(q){q.next_at=Date.now()+65000;q.attempts++;}}else S.accept(b,item.id,r);},valid);if(r.status==='retry'){canRefresh=false;break;}
+   }catch(e){if(!valid())break;canRefresh=false;if(e.code==='42501'){await blockPack(u,S.packKey(item.request.team_id,item.request.season_id),e.message);notice(e.message,true);break;}
+    await S.update(u,b=>{const q=b.queue.find(x=>x.id===item.id);if(q){q.attempts++;q.next_at=Date.now()+Math.min(300000,2000*2**Math.min(q.attempts,7));}},valid);throw e;}
+  }
+  if(valid()&&canRefresh){const count=await refreshSaved(u,valid,manual||refreshNow);if(valid()&&manual)notice(count?'Saved work checked and team downloads updated. Review Saved work for any remaining changes.':'Sync checked. Review Saved work for any remaining changes.');}
+  };
+  try{if(navigator.locks)await navigator.locks.request('wm-offline-sync:'+u,{ifAvailable:true},lock=>lock?run():undefined);else await run();if(manual&&!didRun&&valid())notice('Another app window is syncing your saved work.');}
+  catch(e){if(valid())notice(e.message,true);}finally{
+   syncing=false;
+   if(valid()){if(!['thread','edit'].includes(view))await render();else{const latest=await S.get(u);if(!valid())return;const pack=latest.packs[packId];if(view==='thread'&&(!pack?.threads.some(t=>t.thread_id===detail)||($('ofMessage')&&!pack.threads.find(t=>t.thread_id===detail)?.can_post))){await draftFlight.catch(()=>{});if(valid()){view='messages';detail='';await render();}return;}panel.querySelectorAll('[data-queued]').forEach(el=>{const id=el.dataset.queued,q=latest.queue.find(x=>x.id===id);el.querySelector('small').textContent=q?(q.state==='pending'?'Saved on device · not sent':'Needs attention in Saved work'):'Synced to server';});const badge=panel.querySelector('.of-connection');if(badge)badge.textContent=latest.queue.length+' changes awaiting sync'+(navigator.onLine?'':' · Offline');}}
+  }
  }
  async function beforeSignOut(){const u=session?.user?.id;if(u){try{await draftFlight;}catch{message('Your draft has not saved. Return to Offline workspace before signing out.',true);return false;}let b;try{b=await S.get(u);}catch{message('Could not check saved offline work. Reopen the app before signing out.',true);return false;}if(b&&(b.queue.length||Object.keys(b.drafts).length)){message('You have saved offline work or drafts. Open Offline workspace and sync or review them before signing out.',true);return false;}}localStorage.removeItem(ACTIVE);lock();return true;}
  $('ofBack').onclick=async()=>{if(view==='home'){await draftFlight.catch(()=>{});panel.hidden=true;entry.hidden=navigator.onLine||!localStorage.getItem(ACTIVE);}else if(['attendance','edit'].includes(view))navigate('schedule');else if(view==='thread')navigate('messages');else navigate('home');};$('ofLock').onclick=async()=>{try{await draftFlight;lock();}catch{notice('Your draft has not saved. Keep this screen open and try editing it again.',true);}};pill.onclick=entry.onclick=open;
- addEventListener('online',()=>{entry.hidden=true;void sync();});addEventListener('offline',()=>{entry.hidden=!panel.hidden||!localStorage.getItem(ACTIVE);if(!panel.hidden&&current())notice('Offline. Changes save here and sync after reconnection.');});
+ addEventListener('online',()=>{entry.hidden=true;void sync(false,true);});addEventListener('offline',()=>{entry.hidden=!panel.hidden||!localStorage.getItem(ACTIVE);if(!panel.hidden&&current())notice('Offline. Changes save here and sync after reconnection.');});
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)void sync();});
  client.auth.onAuthStateChange((event,next)=>{if(event==='SIGNED_OUT'){localStorage.removeItem(ACTIVE);lock();}else if(owner&&next?.user?.id&&next.user.id!==owner)lock();});
  setInterval(()=>{if(unlocked&&!current())lock();else void sync();},15000);

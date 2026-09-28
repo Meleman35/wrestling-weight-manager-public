@@ -1,0 +1,16 @@
+{
+  "checks": [
+    "Reconnect sends queued work first, then downloads other coaches’ updates",
+    "Automatic refresh is throttled between reconnects",
+    "Incoming refresh preserves an open message composer",
+    "Updated posting permissions close the editable composer and retain the unsent draft",
+    "Incoming refresh does not replace unsaved event fields",
+    "A failed incoming download preserves the last complete team snapshot",
+    "A local save made during an incoming download remains queued",
+    "An in-flight snapshot cannot overwrite an edit confirmed by another window",
+    "Refresh includes saved teams beyond the currently selected team",
+    "Revoked access blocks the saved team while retaining unsynced work",
+    "An account switch discards late download results"
+  ],
+  "errors": []
+}
