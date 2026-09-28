@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.88: Coach offline workspace with encrypted downloads and resumable, conflict-aware sync. -->
+<!-- Wrestling Manager v0.20.89: Offline workspace availability and consistent settings-button layout. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -2338,7 +2338,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.88</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.89</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -15621,6 +15621,12 @@ window.WMScheduleTools=(()=>{
 #offlineQuickEntry{position:fixed;z-index:180;right:12px;bottom:calc(86px + env(safe-area-inset-bottom));box-shadow:0 4px 16px #0003}
 #ofBody button:disabled{opacity:.65}#ofBody label{font-weight:700}#ofBody select{margin-top:6px}
 
+#offlineEntry{display:block;width:100%;margin-top:16px;text-align:center}
+.of-actions{display:grid;gap:12px;margin:18px 0}.of-actions>button{width:100%;margin:0}
+.of-availability h3{margin:0 0 12px}.of-availability ol{padding-left:22px}.of-availability li+li{margin-top:10px}
+.of-header h2{min-width:0;line-height:1.25}.of-header button{flex-shrink:0}#ofLock[hidden]{display:none!important}
+#ofStatus:empty{display:none}
+
 </style>
 <script id="offlineStore088Script">
 /* Durable, encrypted, account-scoped IndexedDB state. No authenticated responses in Cache Storage. */
@@ -15666,6 +15672,9 @@ window.WMOfflineStore=(()=>{
 /* First offline slice: personal coach accounts, current-season core data, recent text history. */
 window.WMOffline=(()=>{
  'use strict';const S=window.WMOfflineStore,$=id=>document.getElementById(id),E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const WEBSITE='https://theteammanager.app';
+ const inNativeApp=()=>!!window.wrestlingManagerNativeShellVersion||window.wrestlingManagerNativeLifecycle===true||!!window.webkit?.messageHandlers?.security;
+ function unavailable(){if(inNativeApp())return 'native';if(!window.isSecureContext)return 'secure';if(!navigator.serviceWorker||!window.indexedDB||!window.crypto?.subtle||!window.caches)return 'browser';return '';}
  const ACTIVE='wm.offline.active.v1';let owner='',unlocked=false,packId='',view='home',detail='',generation=0,busy=false,syncing=false,registration,state=null,draftFlight=Promise.resolve();
  const user=()=>session?.user?.id||localStorage.getItem(ACTIVE)||'';
  const current=()=>unlocked&&owner===user()&&!managedLogin&&!document.body.classList.contains('kiosk-locked')&&$('appLockOverlay')?.classList.contains('hidden');
@@ -15674,21 +15683,28 @@ window.WMOffline=(()=>{
  const active=p=>!['standby','removed','inactive'].includes(p.roster_status);
  const day=v=>v?new Date(v).toLocaleString():'';
  const localTime=v=>{if(!v)return '';const d=new Date(v);return new Date(d-d.getTimezoneOffset()*60000).toISOString().slice(0,16);};
- const pill=document.createElement('button');pill.id='offlineEntry';pill.type='button';pill.className='secondary';pill.textContent='Offline workspace';$('securityBtn').after(pill);
+ const pill=document.createElement('button');pill.id='offlineEntry';pill.type='button';pill.className='wide secondary';pill.textContent=inNativeApp()?'Offline workspace · Safari':'Offline workspace';$('securityBtn').after(pill);
  const entry=document.createElement('button');entry.id='offlineQuickEntry';entry.type='button';entry.textContent='Open saved team';entry.hidden=true;document.body.append(entry);
  const panel=document.createElement('section');panel.id='offlineWorkspace';panel.hidden=true;panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');panel.setAttribute('aria-label','Offline team workspace');panel.innerHTML='<div class="of-header"><button id="ofBack" class="secondary" type="button">Back</button><h2>Offline workspace</h2><button id="ofLock" class="secondary" type="button">Lock</button></div><p id="ofStatus" role="status" aria-live="polite"></p><div id="ofBody"></div>';document.body.append(panel);
  const notice=(text,error=false)=>{$('ofStatus').textContent=text;$('ofStatus').classList.toggle('of-error',error);};
  function lock(){generation++;unlocked=false;state=null;view='home';detail='';$('ofBody').replaceChildren();panel.hidden=true;entry.hidden=navigator.onLine||!localStorage.getItem(ACTIVE);}
+ function showAvailability(reason){
+  unlocked=false;state=null;$('ofLock').hidden=true;
+  const title=reason==='native'?'Offline downloads are available in Safari':reason==='secure'?'Open the secure website':'Use a browser with offline storage';
+  const explanation=reason==='native'?'This installed app does not support the new offline team workspace yet. Native offline support needs an app update.':reason==='secure'?'Open the secure website to save your team on this device.':'This browser cannot save the offline workspace. On iPhone or iPad, open the website directly in Safari.';
+  $('ofBody').innerHTML=`<article class="of-card of-availability"><h3>${E(title)}</h3><p>${E(explanation)}</p><ol><li>Connect to the internet and open Safari.</li><li>Visit the website below and sign in with your coach account.</li><li>Choose your team, then Profile → Offline workspace.</li><li>Download your team and wait for confirmation before turning on airplane mode.</li></ol><label for="ofWebsite">Website</label><input id="ofWebsite" value="${WEBSITE}" readonly autocomplete="off"><button id="ofCopyWebsite" type="button" class="wide secondary">Copy website address</button><p id="ofCopyStatus" class="fine" role="status"></p><p class="fine">Safari keeps its own sign-in and device PIN. If needed, set your profile PIN in Safari under Profile → Security.</p></article>`;
+  $('ofCopyWebsite').onclick=async()=>{const g=generation,ok=await copyText(WEBSITE,{field:$('ofWebsite'),status:$('ofCopyStatus'),isCurrent:()=>g===generation&&!panel.hidden});if(ok&&g===generation&&!panel.hidden)$('ofCopyStatus').textContent='Copied. Paste this address into Safari.';};
+ }
  async function shell(){
-  if(location.protocol!=='https:'&&location.hostname!=='localhost'&&location.hostname!=='127.0.0.1')throw Error('Offline startup needs the installed app or its secure website.');
-  if(!('serviceWorker' in navigator))throw Error('Offline startup is not supported in this app container yet. Use Safari on the secure website.');
+  if(unavailable())throw Error('Open Offline workspace in Safari on the secure website to download your team.');
   registration=await navigator.serviceWorker.register('./sw.js');
   await Promise.race([navigator.serviceWorker.ready,new Promise((_,reject)=>setTimeout(()=>reject(Error('The offline app download did not finish. Keep internet connected and try again.')),25000))]);
   if(!await caches.match(new URL('./index.html',location.href)))throw Error('The app download is incomplete. Reopen while connected and try again.');
  }
  async function rpc(action,data){const q=client.rpc('offline_coach_request',{p_action:action,p_data:data});const r=await Promise.race([q,new Promise((_,reject)=>setTimeout(()=>reject(Error('Connection interrupted. Your saved work stays on this device.')),18000))]);if(r.error){const e=Error(r.error.message);e.code=r.error.code;throw e;}return r.data;}
  async function open(){
-  const selected=user();if(owner!==selected)lock();owner=selected;generation++;view='home';detail='';panel.hidden=false;entry.hidden=true;notice('');
+  const selected=user();if(owner!==selected)lock();owner=selected;generation++;view='home';detail='';panel.hidden=false;entry.hidden=true;notice('');$('ofLock').hidden=false;
+  const reason=unavailable();if(reason){showAvailability(reason);return;}
   if(!owner){$('ofBody').innerHTML='<p>Sign in online with your personal coach account, then download your team here before going offline.</p>';return;}
   if(managedLogin){$('ofBody').innerHTML='<p>Use your personal coach account for this offline workspace.</p>';return;}
   if(unlocked&&current()){await render();return;}
@@ -15697,6 +15713,7 @@ window.WMOffline=(()=>{
  }
  async function pages(action,c){let cursor=null,all=[];do{const page=await rpc(action,{...c,cursor});if(!Array.isArray(page))throw Error('The team download returned incomplete data.');all.push(...page);cursor=page.length===250?(page.at(-1).athlete_id&&action==='roster'?page.at(-1).athlete_id:page.at(-1).thread_id&&action==='threads'?page.at(-1).thread_id:page.at(-1).id):null;if(cursor&&all.length>250000)throw Error('This team needs a larger offline download. No partial copy was saved.');}while(cursor);return all;}
  async function download(){
+  const reason=unavailable();if(reason){showAvailability(reason);return;}
   if(busy||!current())return;const u=owner,g=generation,t=activeTeam?.id,s=activeSeason?.id;
   if(!navigator.onLine||session?.user?.id!==u||!t||!s||!isStaff||managedLogin){notice('Connect and select a team with your personal coach account to download.',true);return;}
   busy=true;notice('Downloading app and verifying team access…');try{
@@ -15719,10 +15736,10 @@ window.WMOffline=(()=>{
   if(!current())return;const u=owner,g=generation,b=await S.get(u);if(g!==generation||!guard(u)())return;state=b;
   if(!b.packs[packId])packId=Object.keys(b.packs)[0]||'';const p=b.packs[packId],body=$('ofBody');
   const pending=b.queue.length;entry.textContent=pending?`${pending} saved change${pending===1?'':'s'}`:'Open saved team';
-  let html=`<p class="of-connection">${navigator.onLine?'Connected':'Offline'} · ${pending} change${pending===1?'':'s'} awaiting sync</p>`;
+  let html=`<p class="of-connection">${pending} change${pending===1?'':'s'} awaiting sync${navigator.onLine?'':' · Offline'}</p>`;
   if(view==='home'){
    html+='<p>Download core team data before leaving service. This first release includes roster, this season’s team events and attendance, plus the latest 80 messages per conversation. Attachments and other app sections need internet.</p>';
-   html+='<button id="ofDownload" type="button">Download / update selected team</button> <button id="ofSync" class="secondary" type="button">Sync saved work</button>';
+   html+='<div class="of-actions"><button id="ofDownload" type="button">Download / update selected team</button><button id="ofSync" class="secondary" type="button">Sync saved work</button></div>';
    html+=Object.entries(b.packs).map(([id,x])=>`<article class="of-card"><h3>${E(x.team.name)}</h3><p>${E(x.season.name)} · Saved ${E(day(x.downloaded_at))}</p><p class="fine">Offline access until ${E(day(x.expires_at))}. Download again online to renew.</p>${usable(x)?`<button data-pack="${E(id)}" type="button">Open saved team</button>`:`<p class="of-error">${E(x.blocked?'Access must be verified again online. Unsynced work is retained.':'Offline access expired. Connect and update this team.')}</p>`}</article>`).join('');
    html+=`<button id="ofQueue" type="button" class="wide secondary">Review saved work (${pending})</button>`;
   }else if(view==='queue'){
@@ -15778,7 +15795,7 @@ window.WMOffline=(()=>{
    b.queue=b.queue.filter(x=>x.id!==id);b.history.unshift({...q,state:q.state==='blocked'?'dismissed':'server-kept'});b.history=b.history.slice(0,50);
    if(mine){const req={...q.request,expected:q.result.value?.updated_at||null};delete req.operation_id;S.enqueue(b,req,q.label);}},guard(u));await render();void sync();}catch(e){notice(e.message,true);}}
  async function sync(manual=false){
-  if(syncing||busy||!current())return;if(!navigator.onLine||session?.user?.id!==owner){if(manual)notice('Connect and sign in to this profile to sync. Saved work is retained.');return;}
+  if(syncing||busy||unavailable()||!current())return;if(!navigator.onLine||session?.user?.id!==owner){if(manual)notice('Connect and sign in to this profile to sync. Saved work is retained.');return;}
   syncing=true;const u=owner;
   const run=async()=>{const b=await S.get(u);for(const item of b.queue){
    if(!guard(u)()||!navigator.onLine||session?.user?.id!==u)break;if(item.state!=='pending'||(!manual&&item.next_at>Date.now()))continue;
@@ -15788,7 +15805,7 @@ window.WMOffline=(()=>{
    }catch(e){if(!guard(u)())break;if(e.code==='42501'){await blockPack(u,S.packKey(item.request.team_id,item.request.season_id),e.message);notice(e.message,true);break;}
     await S.update(u,b=>{const q=b.queue.find(x=>x.id===item.id);if(q){q.attempts++;q.next_at=Date.now()+Math.min(300000,2000*2**Math.min(q.attempts,7));}},guard(u));if(manual)notice(e.message,true);break;}
   }};
-  try{if(navigator.locks)await navigator.locks.request('wm-offline-sync:'+u,{ifAvailable:true},lock=>lock?run():undefined);else await run();if(manual)notice('Sync checked. Review Saved work for any remaining changes.');if(current()){if(!['thread','edit'].includes(view))await render();else{const latest=await S.get(u);panel.querySelectorAll('[data-queued]').forEach(el=>{const id=el.dataset.queued,q=latest.queue.find(x=>x.id===id);el.querySelector('small').textContent=q?(q.state==='pending'?'Saved on device · not sent':'Needs attention in Saved work'):'Synced to server';});const badge=panel.querySelector('.of-connection');if(badge)badge.textContent=(navigator.onLine?'Connected':'Offline')+' · '+latest.queue.length+' changes awaiting sync';}}}
+  try{if(navigator.locks)await navigator.locks.request('wm-offline-sync:'+u,{ifAvailable:true},lock=>lock?run():undefined);else await run();if(manual)notice('Sync checked. Review Saved work for any remaining changes.');if(current()){if(!['thread','edit'].includes(view))await render();else{const latest=await S.get(u);panel.querySelectorAll('[data-queued]').forEach(el=>{const id=el.dataset.queued,q=latest.queue.find(x=>x.id===id);el.querySelector('small').textContent=q?(q.state==='pending'?'Saved on device · not sent':'Needs attention in Saved work'):'Synced to server';});const badge=panel.querySelector('.of-connection');if(badge)badge.textContent=latest.queue.length+' changes awaiting sync'+(navigator.onLine?'':' · Offline');}}}
   catch(e){if(current())notice(e.message,true);}finally{syncing=false;}
  }
  async function beforeSignOut(){const u=session?.user?.id;if(u){try{await draftFlight;}catch{message('Your draft has not saved. Return to Offline workspace before signing out.',true);return false;}let b;try{b=await S.get(u);}catch{message('Could not check saved offline work. Reopen the app before signing out.',true);return false;}if(b&&(b.queue.length||Object.keys(b.drafts).length)){message('You have saved offline work or drafts. Open Offline workspace and sync or review them before signing out.',true);return false;}}localStorage.removeItem(ACTIVE);lock();return true;}
@@ -15797,7 +15814,7 @@ window.WMOffline=(()=>{
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)void sync();});
  client.auth.onAuthStateChange((event,next)=>{if(event==='SIGNED_OUT'){localStorage.removeItem(ACTIVE);lock();}else if(owner&&next?.user?.id&&next.user.id!==owner)lock();});
  setInterval(()=>{if(unlocked&&!current())lock();else void sync();},15000);
- if(navigator.onLine&&'serviceWorker' in navigator&&(location.protocol==='https:'||['localhost','127.0.0.1'].includes(location.hostname)))navigator.serviceWorker.register('./sw.js').catch(()=>{});
+ if(navigator.onLine&&!unavailable())navigator.serviceWorker.register('./sw.js').catch(()=>{});
  if(!navigator.onLine&&localStorage.getItem(ACTIVE)){entry.hidden=false;setTimeout(open,0);}
  return {open,lock,download,sync,beforeSignOut};
 })();

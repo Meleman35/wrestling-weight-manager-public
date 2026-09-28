@@ -1,0 +1,11 @@
+{
+  "checks": [
+    "Offline entry matches other settings button width, alignment and spacing at phone/tablet widths",
+    "Native app explains Safari availability before PIN or unsupported download; no false Connected claim",
+    "Native guidance copies the correct website address",
+    "Native guidance fits phone widths and Back restores settings",
+    "Browser without offline APIs is detected before download",
+    "Supported-browser PIN/download path stays available; action buttons are separated and aligned"
+  ],
+  "errors": []
+}
