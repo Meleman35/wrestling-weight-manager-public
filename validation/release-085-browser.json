@@ -1,0 +1,10 @@
+{
+  "checks": [
+    "Roster identity fixed at 320/390/768 px, numeric sort and collapsed recoverable inactive rows",
+    "Ineligible athlete moves to a separate section without removing the underlying roster",
+    "Attendance percentages separate unmarked, excused and modified, with weighted overall totals",
+    "Athlete attendance panel renders category cards and opens existing Schedule",
+    "Saved favorite fills name/address; one-occurrence default and preview-confirm-repeat save work"
+  ],
+  "errors": []
+}
