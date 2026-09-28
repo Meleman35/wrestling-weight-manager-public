@@ -1,0 +1,23 @@
+{
+  "checks": [
+    "Online download saves core team data and app shell after existing profile PIN unlock",
+    "Interrupted download retains the previous complete snapshot",
+    "Persisted record contains encrypted bytes, not roster/message plaintext",
+    "Saved roster supports last-name and numeric-weight sorting",
+    "Offline event editor preserves settings and queues a revision-checked single-event edit",
+    "Offline attendance saves atomically and excludes standby wrestlers",
+    "Offline message saved in durable outbox and never represented as sent",
+    "Cold offline reload works; saved data stays behind existing PIN; outbox survives",
+    "Unsent text draft survives offline reload",
+    "Lost response retried with same operation ID; no duplicate send; changed attendance stops for review",
+    "Conflict resolution can retain server version without overwriting it",
+    "Sign-out is guarded while an unsent draft remains",
+    "Offline workspace fits phone and tablet widths",
+    "Concurrent local saves retain all six operations",
+    "Storage failure rejects the write and preserves the previous outbox",
+    "Service-worker cache contains only static app resources",
+    "Switching accounts requires a fresh unlock and exposes no previous-account pack",
+    "Full browser shutdown and restart retains encrypted outbox and cached startup"
+  ],
+  "errors": []
+}

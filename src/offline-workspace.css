@@ -1,0 +1,9 @@
+#offlineWorkspace{position:fixed;inset:0;z-index:190;background:var(--bg);overflow:auto;padding:calc(14px + env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom));overscroll-behavior:contain}
+#offlineWorkspace[hidden],#offlineQuickEntry[hidden]{display:none!important}
+#offlineWorkspace>div,#offlineWorkspace>p{max-width:760px;margin-left:auto;margin-right:auto}
+.of-header{display:flex;align-items:center;gap:10px;justify-content:space-between}.of-header h2{font-size:18px;margin:0}.of-header button{padding:11px}
+#ofStatus{min-height:22px;line-height:1.4;color:var(--accent)}#ofStatus.of-error,.of-error{color:#a32222!important}
+#ofBody{line-height:1.5;overflow-wrap:anywhere}#ofBody h4{margin:0;font-size:17px}.of-card{display:block;background:var(--card);padding:14px;border:1px solid var(--line);border-radius:16px;margin:12px 0}.of-card p{margin:6px 0;white-space:pre-wrap}.of-card small{display:block;color:var(--muted);font-weight:500}
+.of-tabs{display:flex;gap:7px;flex-wrap:wrap}.of-tabs button{padding:10px 12px}.of-connection{font-weight:750}.of-mine{margin-left:26px;background:#edf4fd}.of-messages{max-height:44vh;overflow:auto}
+#offlineQuickEntry{position:fixed;z-index:180;right:12px;bottom:calc(86px + env(safe-area-inset-bottom));box-shadow:0 4px 16px #0003}
+#ofBody button:disabled{opacity:.65}#ofBody label{font-weight:700}#ofBody select{margin-top:6px}

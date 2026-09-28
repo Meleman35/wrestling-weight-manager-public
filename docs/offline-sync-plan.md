@@ -1,6 +1,6 @@
 # Full offline operation — requested September 28, 2026
 
-Status: design and implementation scope recorded. Full offline mode and queued message sending are NOT enabled in v0.20.87. This document is a continuation contract, not a shipped-feature claim.
+Status: v0.20.88 adds a browser-first **Offline workspace** for personal coach accounts. It downloads a bounded, clearly labeled core team pack and enables durable attendance marks, individual event edits and queued text messages there. Full-app offline operation is still incomplete. The normal app screens remain online paths; this document preserves the remaining work.
 
 Damon needs Wrestling Manager to remain usable underground, at school, and at tournaments without service. Download all records the signed-in person is authorized to access onto their device, allow offline work, preserve it across force quit/restart, then reconcile with the server on reconnect. Apple/iPhone/iPad first; preserve current web users. Coaches must be able to compose and queue messages offline. Maintain guardian visibility and communication safeguards.
 
@@ -12,6 +12,20 @@ Damon needs Wrestling Manager to remain usable underground, at school, and at to
 - Official weigh-in sheets have a dedicated IndexedDB store. Video pilot has device-local storage and a bounded offline authorization lease. Keep both systems intact; coordinate their inventories rather than migrating/deleting existing recordings.
 - Auth/session state, roles and data-loading error handling need an explicit offline startup path. A valid local session, app PIN/Face ID and previously downloaded data must work without a network login attempt deleting the cached workspace.
 - Current repository contains the web application; native package/background-task changes require locating the actual iOS source and validating a new native build.
+
+## Implemented in v0.20.88
+
+- Profile → Offline workspace; existing profile PIN gate and account isolation. Download requires current online coach access and an active team/season.
+- Complete keyset pagination for the roster, season team events, attendance and permitted thread directory. Latest 80 messages per thread only; no attachment bytes, organization events, removed roster members, full profile/medical records or full message archive. A failed download retains the previous pack. Packs are snapshots, not a single database-wide point-in-time snapshot.
+- A static-only service worker and vendored Supabase JS 2.117.2 enable browser startup without the CDN. Updates wait for prior controlled app windows to close; they never force reload a recorder. Service-worker cache contains no authenticated API responses.
+- Account-scoped AES-GCM encrypted IndexedDB documents and nonextractable origin-stored CryptoKeys. This is browser-origin encryption plus the existing PIN UI gate, **not** a PIN-derived encrypted vault or native Keychain database. Same-origin injected JavaScript/device compromise is outside that protection.
+- Atomic encrypted outbox/draft/record persistence with revision compare-and-swap. Web Locks coordinate sending across windows. Failure to persist never claims success. Encrypted message drafts survive browser restart.
+- Private transaction ledger with unique account + operation ID. Lost acknowledgements can replay without repeating message receipts/notifications. Existing message safety and guardian delivery logic runs once. Attendance checks active membership at replay; event and attendance edits require the recorded server revision.
+- Conflict review offers the server version or an explicitly resubmitted local version. Rejected work stays available for review. No automatic destructive last-writer-wins policy.
+- Foreground reconnect/resume/manual sync with retry backoff. Auto-send requires the same signed-in account, an unlocked workspace in this browser session, and the app remaining unlocked. Closing the workspace with Back permits syncing; Lock pauses it. Force quit requires reopening/unlocking. No background-worker or iOS force-quit delivery claim.
+- A conservative **pilot** seven-day download expiry, displayed in the UI. School-configurable lease policy is pending; the pilot duration is not presented as a school rule. Revoked access learned during download/replay locks the pack; pending work remains retained. Logout is blocked while pending work/drafts remain.
+- Team refresh uses Download / update; automatic incoming delta refresh remains pending. Local acknowledgements immediately update the local records. Two-coach conflicts never overwrite silently.
+- Verified in headless Chromium, including a separate browser-process restart with networking disabled, plus synthetic SQL transactions rolled back in Supabase. Physical iPhone/iPad and native wrapper verification remain required before claiming native offline support.
 
 ## Required architecture
 
