@@ -1,0 +1,10 @@
+{
+  "checks": [
+    "Duration presets move end time and retain 90-minute duration when start changes",
+    "Custom end time remains editable",
+    "Search fills saved/recent venue and address; other teams excluded",
+    "Schedule shortcuts fit phone and tablet widths",
+    "Existing-event editor has duration shortcuts and preserves arrival/repeat controls"
+  ],
+  "errors": []
+}
