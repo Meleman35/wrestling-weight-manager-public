@@ -1,0 +1,11 @@
+{
+  "checks": [
+    "Approval reloads the saved state, shows confirmation, removes the repeated approve button, and stays approved when reopened",
+    "Failed decisions show a local error and allow retry; in-flight decisions disable competing row actions",
+    "A successful response without a matching saved decision never displays false approval",
+    "A saved decision followed by refresh failure is reported accurately and recovered by reopening",
+    "Late responses do not show another account’s follower list"
+  ],
+  "engine": "Chromium; actual app with synthetic follower requests",
+  "nativeDeviceVerified": false
+}
