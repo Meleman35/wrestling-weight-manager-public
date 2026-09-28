@@ -263,5 +263,25 @@
     "check": "syntax",
     "script": "eventEdit080Script",
     "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "roster082Script",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "eligibility083Script",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "attendance084Script",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "schedule085Script",
+    "passed": true
   }
 ]

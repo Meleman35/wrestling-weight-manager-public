@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.80: Individual team follows, simple tile gestures, profile handoff and flexible schedule events. -->
+<!-- Wrestling Manager v0.20.85: Roster, competition eligibility, attendance, saved locations and guarded repeat editing. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -843,6 +843,21 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
 [data-layout-key]:focus-visible{outline:3px solid #2681c2;outline-offset:2px}
 </style>
 <style id="eventRepeat080Style">#eventRepeatBox .weekday-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}#eventRepeatBox .weekday-btn{padding:11px 0;font-size:13px;background:#e7eef7;color:#183b60;box-shadow:none!important;border:2px solid transparent;border-radius:10px}#eventRepeatBox .weekday-btn.active{background:#173e6c;color:#fff;border-color:#4c9ae9}#eventRepeatBox select{width:100%;margin:8px 0 14px}#eventEditForm>label{display:block;margin:12px 0}#eventEditForm input,#eventEditForm textarea{box-sizing:border-box;max-width:100%}#eventEditForm textarea{width:100%}</style>
+<style id="roster081Style">
+/* Only the management roster scrolls; the athlete identity stays anchored. */
+#rosterSheet .roster-card{display:grid;grid-template-columns:minmax(110px,38%) minmax(0,1fr);gap:0;padding:0;overflow:hidden;align-items:stretch}
+#rosterSheet .roster-identity{position:relative;z-index:2;background:#fff;padding:12px 10px;border-right:1px solid var(--line);min-width:0;box-shadow:5px 0 9px -8px #1a283c}
+#rosterSheet .roster-identity button{overflow-wrap:anywhere;white-space:normal;line-height:1.25}
+#rosterSheet .roster-actions{min-width:0;max-width:100%;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;padding:12px 10px;gap:8px}
+#rosterSheet .roster-actions>*{flex:0 0 auto}
+#rosterSheet .roster-actions button{width:auto;max-width:145px;min-height:44px;white-space:normal;overflow-wrap:anywhere}
+#rosterSheet .roster-manage-buttons{display:flex;flex-wrap:nowrap;margin:0}
+#rosterSheet .weight-value{min-width:50px}
+#rosterSheet .roster-muted-card>.roster-identity{background:#fafbfd}
+.roster-avatar{display:flex;width:34px;height:34px;border-radius:50%;background:#eaf0f8;align-items:center;justify-content:center;font-size:12px;font-weight:800;margin-bottom:7px;overflow:hidden}.roster-avatar img{width:100%;height:100%;object-fit:cover}#ee_weekdays[hidden],#ee_repeatOptions[hidden],#ee_repeatOptions label[hidden]{display:none!important}.saved-locations{margin-bottom:14px}.saved-locations button{white-space:normal;overflow-wrap:anywhere}
+#rosterSheet.family-profile-picker #addAthleteBtn,#rosterSheet.family-profile-picker #teamAttendanceStatsBtn,#rosterSheet.family-profile-picker #rosterSortLabel,#rosterSheet.family-profile-picker .roster-section-head,#rosterSheet.family-profile-picker details{display:none!important}
+
+</style>
 </head>
 <body>
   <div id="message"></div>
@@ -1077,6 +1092,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
           <button id="lockerFindProfileTab" data-layout-key="find_profile" type="button" class="locker-room-tab" aria-haspopup="dialog">🔎 Find Profile</button>
           <button type="button" class="locker-room-tab" data-locker-section="trophy" data-layout-key="trophy" role="tab" aria-selected="false">🏆 Trophy Case</button>
           <button type="button" class="locker-room-tab" data-locker-section="team" data-layout-key="team" role="tab" aria-selected="false">👥 Team</button>
+          <button id="lockerAttendanceTab" data-layout-key="attendance" type="button" class="locker-room-tab" aria-haspopup="dialog">✓ Attendance</button>
           <button id="lockerGoalsTab" data-layout-key="goals" type="button" class="locker-room-tab" data-locker-section="goals" role="tab" aria-selected="false">🎯 Goals</button>
           <button id="lockerBulletinTab" data-layout-key="bulletin" type="button" class="locker-room-tab" aria-haspopup="dialog">📋 Bulletin Board</button>
         </div>
@@ -1685,12 +1701,12 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <div class="sheet-handle"></div>
     <div class="sheet-head"><div><div class="eyebrow">TEAM</div><h2>Roster</h2></div><button class="icon-close" data-close-sheet>×</button></div>
     <button id="addAthleteBtn" class="wide">+ Add Athlete</button>
-    <div class="roster-section-head"><div><h3>Active Roster</h3><small>Counts toward attendance and daily weigh-in expectations.</small></div></div>
+    <button id="teamAttendanceStatsBtn" type="button" class="wide secondary">Team Attendance</button><label id="rosterSortLabel">Sort roster<select id="rosterSort"><option value="name">Name</option><option value="weight">Weight Class</option></select></label><div class="roster-section-head"><div><h3>Active Competition Roster</h3><small id="rosterActiveCount"></small></div></div>
     <div id="rosterList" class="card-list"><div class="empty-card">No athletes yet.</div></div>
-    <div id="inactiveRosterSection" class="hidden">
-      <div class="roster-section-head"><div><h3>Standby / Removed</h3><small>History is preserved. Reactivating restores team access and notifications.</small></div></div>
+    <details id="ineligibleRosterSection" class="hidden"><summary id="ineligibleRosterSummary">Ineligible for competition (0)</summary><p class="fine">These athletes keep their profiles, history, practice attendance and family connections.</p><div id="ineligibleRosterList" class="card-list"></div></details>
+    <details id="inactiveRosterSection" class="hidden"><summary id="inactiveRosterSummary">Standby / Removed (0)</summary><p class="fine">History is preserved. Reactivating restores team access and notifications.</p>
       <div id="inactiveRosterList" class="card-list"><div class="empty-card">No athletes on standby or removed.</div></div>
-    </div>
+    </details>
   </section>
 
   <section id="athleteTeamsSheet" class="sheet hidden" aria-modal="true">
@@ -1843,7 +1859,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     </div>
     <button id="viewAthleteCardBtn" class="wide secondary" type="button">Athlete Card · QR / Barcode / NFC</button>
     <div id="viewAthleteTeamSnapshot" class="profile-view-card"></div>
-    <button id="viewAthleteGoalsBtn" class="wide secondary" type="button">🎯 Team Goals</button>
+    <button id="viewAthleteAttendanceBtn" type="button" class="wide secondary">Attendance</button><button id="viewAthleteGoalsBtn" class="wide secondary" type="button">🎯 Team Goals</button>
     <div id="viewAthleteAgeDivisions" class="join-summary"></div>
     <div class="profile-view-card">
       <h3>Contact</h3>
@@ -1884,7 +1900,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <div class="profile-photo-row"><div id="profilePhotoBox" class="profile-photo-placeholder">👤</div><div><label style="margin-top:0">Profile photo</label><input id="profilePhotoInput" type="file" accept="image/*"><div class="tiny">The profile owner or linked parent/guardian can change this photo across the athlete’s profiles and teams.</div></div></div>
     <div id="profileAgeDivisions" class="join-summary"></div>
     <button id="profileAthleteGoalsBtn" class="wide secondary" type="button">🎯 My Team Goals</button>
-    <div id="profileWeightSnapshot" class="join-summary"><b>Latest team weight</b><small>Loading weight history…</small></div>
+    <button id="profileAttendanceBtn" type="button" class="wide secondary">Attendance</button><div id="profileWeightSnapshot" class="join-summary"><b>Latest team weight</b><small>Loading weight history…</small></div>
     <button id="profileAthleteCardBtn" class="wide secondary" type="button">Athlete Card · QR / Barcode / NFC</button>
     <button id="profileWeightTrendBtn" class="wide secondary" type="button">📈 Weight Trend</button>
     <div class="profile-grid"><div><label>First name</label><input id="profileFirstName"></div><div><label>Last name</label><input id="profileLastName"></div></div>
@@ -2320,7 +2336,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.80</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.85</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -5023,6 +5039,7 @@ async function saveEditTeam(){
 }
 
 async function activateTeam(teamId,{persist=true}={}){
+  window.WMEligibility?.reset();window.WMAttendance?.reset();
   window.WMVideoPilot?.reset();window.WMMatchVideo?.reset();
   window.WMTournaments?.reset();show('tournamentSheet',false);
   window.WMReactions?.reset();
@@ -5183,7 +5200,7 @@ function applyRoleUI(){
   window.WMTournaments?.sync();
   window.WMKioskScan?.tick();
   window.WMGoals?.sync();
-  show('teamGoalsBtn',!managedLogin&&!!activeTeam);show('lockerGoalsTab',!managedLogin&&!!activeTeam);
+  show('teamGoalsBtn',!managedLogin&&!!activeTeam);show('lockerGoalsTab',!managedLogin&&!!activeTeam);show('lockerAttendanceTab',!managedLogin&&!!activeTeam);
   show('switchTeamProfileBtn',!!managedLogin?.shared_login_id);
   show('teamLoginsBtn',!managedLogin&&actualIsTeamAdmin&&viewMode!=='parent');
   show('newEventBtn', isStaff);
@@ -7272,7 +7289,7 @@ function renderCoachWeightClassBoard(){
   if($('coachWeightBoardHelp')) $('coachWeightBoardHelp').textContent=usesPlans
     ? 'Coach lineup stays separate from certification eligibility. Plan chips show when a wrestler can descend to a lower class.'
     : 'Coach-controlled lineup by weight class. Certification / weight-loss plans are only shown for high-school and college school teams.';
-  const rows=(rosterRows||[]).filter(r=>r.roster_status!=='standby'&&r.roster_status!=='removed'&&r.roster_status!=='inactive');
+  const rows=(window.WMEligibility?.forEvent(rosterRows||[],{event_type:'dual'})||rosterRows||[]).filter(r=>r.roster_status!=='standby'&&r.roster_status!=='removed'&&r.roster_status!=='inactive');
   if(!rows.length){container.innerHTML='<div class="board-empty">No active athletes on this roster yet.</div>';return;}
 
   const groups=new Map();
@@ -7443,46 +7460,8 @@ async function loadRoster(){
   rosterRows=(data||[]).map(r=>{const latest=latestMap.get(r.athlete_id);return {...r,latest_weigh_in_id:latest?.weigh_in_id||null,latest_weight_linked_official:!!latest?.linked_official,latest_weigh_in_at:latest?.captured_at||r.latest_weigh_in_at};});
   rosterManagementRows=manageData||[];
 
-  const manageMap=new Map(rosterManagementRows.map(x=>[x.athlete_id,x]));
-  $('rosterList').innerHTML=rosterRows.length?rosterRows.map(r=>{
-    const m=manageMap.get(r.athlete_id);
-    return `<div class="roster-card">
-      <div><button class="roster-name-link" type="button" data-view-athlete="${r.athlete_id}">${esc(r.first_name)} ${esc(r.last_name)}</button><small>${esc(rosterStatusLabel(r.roster_status))} · lineup ${esc(r.current_lineup_class!==null&&r.current_lineup_class!==undefined?displayTeamWeightClass(r.current_lineup_class):'—')} · eligible ${esc(r.eligible_weight_class ?? '—')}</small>${m?.status_reason?`<small>${esc(m.status_reason)}</small>`:''}${rosterManageButtons(r.athlete_id)}</div>
-      <div class="roster-actions">
-        <div class="weight-value">${esc(r.latest_weight ?? '—')}<small> lb</small></div>
-        <button class="roster-access-btn" data-profile-athlete="${r.athlete_id}">Edit Profile</button>
-        <button class="roster-access-btn" data-set-lineup-class="${r.athlete_id}">${r.current_lineup_class?'Change Class':'Set Class'}</button>
-        ${isTeamAdmin?`<button class="roster-access-btn" data-athlete-teams="${r.athlete_id}">Teams / Transfer</button>`:''}
-        <button class="roster-access-btn" data-access-athlete="${r.athlete_id}">Invite</button>
-      </div>
-    </div>`;
-  }).join(''):'<div class="empty-card">No active athletes. Team Join will feed approved athletes into this roster.</div>';
-
-  $('rosterList').querySelectorAll('[data-access-athlete]').forEach(btn=>btn.onclick=()=>openAthleteAccess(btn.dataset.accessAthlete));
-  $('rosterList').querySelectorAll('[data-view-athlete]').forEach(btn=>btn.onclick=()=>openAthleteOverview(btn.dataset.viewAthlete));
-  $('rosterList').querySelectorAll('[data-profile-athlete]').forEach(btn=>btn.onclick=()=>openAthleteProfile(btn.dataset.profileAthlete));
-  $('rosterList').querySelectorAll('[data-athlete-teams]').forEach(btn=>btn.onclick=()=>openAthleteTeams(btn.dataset.athleteTeams));
-  $('rosterList').querySelectorAll('[data-set-lineup-class]').forEach(btn=>btn.onclick=()=>openLineupClassSheet(btn.dataset.setLineupClass));
-  bindRosterManagementActions($('rosterList'));
-
-  const inactiveRows=rosterManagementRows.filter(x=>!x.active || ['standby','removed','inactive'].includes(x.roster_status));
-  show('inactiveRosterSection',isTeamAdmin);
-  if(isTeamAdmin){
-    $('inactiveRosterList').innerHTML=inactiveRows.length?inactiveRows.map(r=>`
-      <div class="roster-card roster-muted-card">
-        <div>
-          <button class="roster-name-link" type="button" data-view-athlete="${r.athlete_id}">${esc(r.first_name)} ${esc(r.last_name)}</button>
-          <span class="status-badge ${esc(r.roster_status)}">${esc(rosterStatusLabel(r.roster_status))}</span>
-          ${r.status_reason?`<small>${esc(r.status_reason)}</small>`:''}
-          <div class="roster-manage-buttons"><button class="reactivate-btn" data-team-status="active" data-status-athlete="${r.athlete_id}">Reactivate</button></div>
-        </div>
-        <div class="roster-actions"><button class="roster-access-btn" data-profile-athlete="${r.athlete_id}">Edit Profile</button>${isTeamAdmin?`<button class="roster-access-btn" data-athlete-teams="${r.athlete_id}">Teams / Transfer</button>`:''}</div>
-      </div>`).join(''):'<div class="empty-card">No athletes on standby or removed.</div>';
-    $('inactiveRosterList').querySelectorAll('[data-view-athlete]').forEach(btn=>btn.onclick=()=>openAthleteOverview(btn.dataset.viewAthlete));
-    $('inactiveRosterList').querySelectorAll('[data-profile-athlete]').forEach(btn=>btn.onclick=()=>openAthleteProfile(btn.dataset.profileAthlete));
-    $('inactiveRosterList').querySelectorAll('[data-athlete-teams]').forEach(btn=>btn.onclick=()=>openAthleteTeams(btn.dataset.athleteTeams));
-    bindRosterManagementActions($('inactiveRosterList'));
-  }
+  window.WMRoster?.render();
+  await window.WMEligibility?.load();
   await Promise.all([loadCoachWeightClassBoard(),loadCoachWeightSnapshot()]);
   renderLockerTeamPreview();
 }
@@ -8768,6 +8747,7 @@ async function openMemberProfiles(){
   if(!memberAthletes.length){message('No athlete profile is connected to this account yet.',true);return;}
   if(memberAthletes.length===1){openAthleteProfile(memberAthletes[0].id);return;}
   // Reuse roster sheet as a simple picker for family accounts.
+  $('rosterSheet').classList.add('family-profile-picker');
   $('rosterList').innerHTML=memberAthletes.map(a=>`<button class="event-card" data-member-profile="${a.id}"><div class="event-info"><b>${esc(a.first_name)} ${esc(a.last_name)}</b><small>Open profile</small></div><div>›</div></button>`).join('');
   $('rosterList').querySelectorAll('[data-member-profile]').forEach(b=>b.onclick=()=>openAthleteProfile(b.dataset.memberProfile)); openSheet('rosterSheet');
 }
@@ -9341,7 +9321,7 @@ function eventCard(e){
   const optional=!e.counts_toward_season_attendance;
   return `<button class="event-card" data-event-id="${e.id}">
     <div class="event-date"><small>${mon}</small><b>${day}</b></div>
-    <div class="event-info"><b>${esc(e.title)}${e.practice_series_id?'<span class="recurring-pill">↻ REPEATS</span>':''}</b><small>${eventLabel(e.event_type)} · ${fmtTime(e.starts_at)}${e.location_name?' · '+esc(e.location_name):''}</small>${WMPracticeGroups.summary(e.practice_groups)?`<small class="practice-group-label">${esc(WMPracticeGroups.summary(e.practice_groups))}</small>`:''}</div>
+    <div class="event-info"><b>${esc(e.title)}${e.practice_series_id||e.repeat_batch_id?'<span class="recurring-pill">↻ REPEATS</span>':''}</b><small>${eventLabel(e.event_type)} · ${fmtTime(e.starts_at)}${e.location_name?' · '+esc(e.location_name):''}</small>${WMPracticeGroups.summary(e.practice_groups)?`<small class="practice-group-label">${esc(WMPracticeGroups.summary(e.practice_groups))}</small>`:''}</div>
     <div class="event-side"><span>${optional?'OPTIONAL':'SEASON'}</span><small>›</small></div>
   </button>`;
 }
@@ -9444,7 +9424,7 @@ function prepareEventForm(){
   [1,2,3,4].forEach(n=>document.querySelector(`[data-repeat-day="${n}"]`)?.classList.add('active'));
   updatePracticeOptionVisibility();
   WMPracticeGroups.load();
-  window.WMEventRepeat?.reset();
+  window.WMEventRepeat?.reset();window.WMScheduleTools?.mountCreate();
   openSheet('eventSheet');
 }
 
@@ -9537,7 +9517,7 @@ async function loadEventParticipants(eventId){
   const map=new Map((rsvps||[]).map(r=>[r.athlete_id,r]));
   const counts={going:0,maybe:0,not_going:0}; (rsvps||[]).forEach(r=>counts[r.response]++);
   $('rsvpSummary').textContent=`${counts.going} going · ${counts.maybe} maybe · ${counts.not_going} not going`;
-  $('rsvpList').innerHTML=rosterRows.map(a=>{const r=map.get(a.athlete_id);return `<div class="roster-card"><div><b>${esc(a.first_name)} ${esc(a.last_name)}</b><small>${r?esc(r.response.replace('_',' ')):'No response'}</small></div><div>${r?.response==='going'?'✓':r?.response==='not_going'?'×':'—'}</div></div>`}).join('');
+  $('rsvpList').innerHTML=(window.WMEligibility?.forEvent(rosterRows,activeEvent)||rosterRows).map(a=>{const r=map.get(a.athlete_id);return `<div class="roster-card"><div><b>${esc(a.first_name)} ${esc(a.last_name)}</b><small>${r?esc(r.response.replace('_',' ')):'No response'}</small></div><div>${r?.response==='going'?'✓':r?.response==='not_going'?'×':'—'}</div></div>`}).join('');
 }
 
 async function renderMemberRsvpControls(){
@@ -15316,10 +15296,217 @@ window.WMEventEdit=(()=>{
  const valid=g=>g===generation&&owner===session?.user?.id&&team===activeTeam?.id&&isStaff&&!managedLogin&&!document.body.classList.contains('kiosk-locked')&&$('appLockOverlay').classList.contains('hidden');
  function reset(){generation++;record=null;busy=false;owner=team='';$('eventEditBody').replaceChildren();sheet.classList.add('hidden');}
  function open(){reset();if(!isStaff||managedLogin||!activeEvent||activeEvent.team_id!==activeTeam?.id)return;record={...activeEvent};owner=session.user.id;team=activeTeam.id;const e=record;const input=(k,label,type='text')=>`<label>${E(label)}<input id="ee_${k}" type="${type}" value="${E(type==='datetime-local'?(e[k]?localDateTimeValue(new Date(e[k])):''):e[k]||'')}"></label>`;
- $('eventEditStatus').textContent='Change this event only. Attendance, RSVPs and checkout records stay attached.';$('eventEditBody').innerHTML=`<form id="eventEditForm">${input('title','Title')}${input('location_name','Location')}${input('location_address','Address')}<div class="two-col">${input('starts_at','Start','datetime-local')}${input('ends_at','End','datetime-local')}</div><div class="two-col">${input('arrival_at','Arrival','datetime-local')}${input('weigh_in_at','Weigh-in','datetime-local')}</div><label>Additional information<textarea id="ee_description" maxlength="10000">${E(e.description||'')}</textarea></label>${[['rsvp_enabled','RSVP enabled'],['attendance_required','Track attendance'],['counts_toward_season_attendance','Count toward season attendance'],['checkout_enabled','Ride-home checkout']].map(([k,label])=>`<label class="toggle-row"><span>${label}</span><input id="ee_${k}" type="checkbox" ${e[k]?'checked':''}></label>`).join('')}<button class="wide" type="submit">Save event changes</button></form>`;$('ee_title').required=$('ee_starts_at').required=true;$('ee_title').maxLength=200;$('eventEditForm').onsubmit=save;openSheet(sheet.id);}
+ $('eventEditStatus').textContent='Change this event only. Attendance, RSVPs and checkout records stay attached.';$('eventEditBody').innerHTML=`<form id="eventEditForm">${input('title','Title')}${input('location_name','Location')}${input('location_address','Address')}<div class="two-col">${input('starts_at','Start','datetime-local')}${input('ends_at','End','datetime-local')}</div><div class="two-col">${input('arrival_at','Arrival','datetime-local')}${input('weigh_in_at','Weigh-in','datetime-local')}</div><label>Additional information<textarea id="ee_description" maxlength="10000">${E(e.description||'')}</textarea></label>${[['rsvp_enabled','RSVP enabled'],['attendance_required','Track attendance'],['counts_toward_season_attendance','Count toward season attendance'],['checkout_enabled','Ride-home checkout']].map(([k,label])=>`<label class="toggle-row"><span>${label}</span><input id="ee_${k}" type="checkbox" ${e[k]?'checked':''}></label>`).join('')}<button class="wide" type="submit">Save event changes</button></form>`;$('ee_title').required=$('ee_starts_at').required=true;$('ee_title').maxLength=200;$('eventEditForm').onsubmit=save;openSheet(sheet.id);window.WMScheduleTools?.mountEditor(e);}
  async function save(ev){ev.preventDefault();if(busy)return;const g=generation;if(!valid(g))return;const values={};for(const k of ['title','description','location_name','location_address'])values[k]=$('ee_'+k).value.trim();for(const k of ['starts_at','ends_at','arrival_at','weigh_in_at'])values[k]=toIsoOrNull($('ee_'+k).value);for(const k of ['rsvp_enabled','attendance_required','counts_toward_season_attendance','checkout_enabled'])values[k]=$('ee_'+k).checked;
- if(values.ends_at&&values.ends_at<=values.starts_at){$('eventEditStatus').textContent='End must be after the start.';return;}busy=true;const b=ev.currentTarget.querySelector('button');b.disabled=true;try{const r=await client.rpc('edit_team_event',{p_id:record.id,p_expected:record.updated_at,p_values:values});if(!valid(g))return;if(r.error)throw Error(r.error.message);const id=record.id;activeEvent=r.data;closeSheets();await loadSchedule();if(!valid(g))return;await openEventDetail(id);message('Event updated. Saved attendance and RSVPs are still attached.');}catch(e){if(valid(g))$('eventEditStatus').textContent=e.message;}finally{if(valid(g)){busy=false;b.disabled=false;}}}
+ if(values.ends_at&&values.ends_at<=values.starts_at){$('eventEditStatus').textContent='End must be after the start.';return;}busy=true;const b=ev.currentTarget.querySelector('button[type=submit]');b.disabled=true;try{const repeating=window.WMScheduleTools?.handles();const r=repeating?{data:await WMScheduleTools.save(record,values)}:await client.rpc('edit_team_event',{p_id:record.id,p_expected:record.updated_at,p_values:values});if(repeating&&!r.data)return;if(!valid(g))return;if(r.error)throw Error(r.error.message);const id=record.id;activeEvent=r.data;closeSheets();await loadSchedule();if(!valid(g))return;await openEventDetail(id);message('Event updated. Saved attendance and RSVPs are still attached.');}catch(e){if(valid(g))$('eventEditStatus').textContent=e.message;}finally{if(valid(g)){busy=false;b.disabled=false;}}}
  return {open,reset};
+})();
+
+</script>
+<script id="roster082Script">
+/* Roster presentation only: membership and history remain server-owned. */
+window.WMRoster = (() => {
+ 'use strict';
+ const $=id=>document.getElementById(id), E=esc;
+ let sort='name', context='', extras=new Map(),photos=new Map();
+ const inactive=r=>r.active===false||['standby','removed','inactive'].includes(r.roster_status);
+ const key=()=>`${session?.user?.id||''}:${activeTeam?.id||''}:${activeSeason?.id||''}`;
+ function compare(a,b){
+  if(sort==='weight'){
+   const weight=r=>r.current_lineup_class==null||r.current_lineup_class===''?Infinity:Number(r.current_lineup_class);
+   const aw=weight(a),bw=weight(b);
+   if(aw!==bw)return aw-bw;
+  }
+  return `${a.last_name||''} ${a.first_name||''}`.localeCompare(`${b.last_name||''} ${b.first_name||''}`,undefined,{numeric:true,sensitivity:'base'})||String(a.athlete_id).localeCompare(String(b.athlete_id));
+ }
+ const button=(label,attrs)=>`<button type="button" class="roster-access-btn" ${attrs}>${E(label)}</button>`;
+ function row(r,off=false){
+  const id=E(r.athlete_id), extra=extras.get(r.athlete_id)||{};
+  return `<div class="roster-card${off?' roster-muted-card':''}" data-roster-athlete="${id}">
+   <div class="roster-identity"><span class="roster-avatar" data-roster-photo="${id}" aria-hidden="true">${E((r.first_name||'')[0]||'')}${E((r.last_name||'')[0]||'')}</span><button class="roster-name-link" type="button" data-view-athlete="${id}">${E(r.first_name)} ${E(r.last_name)}</button><small>${E(rosterStatusLabel(r.roster_status))}</small><small>Class ${E(r.current_lineup_class==null?'—':displayTeamWeightClass(r.current_lineup_class))}</small>${extra.eligible===false?'<small class="roster-ineligible">Ineligible for competition</small>':''}</div>
+   <div class="roster-actions" tabindex="0" role="region" aria-label="Controls for ${E(r.first_name)} ${E(r.last_name)}">
+    ${button('View profile',`data-view-athlete="${id}"`)}${button('Edit Profile',`data-profile-athlete="${id}"`)}
+    ${!off?button(r.current_lineup_class==null?'Set Class':'Change Class',`data-set-lineup-class="${id}"`):''}
+    ${r.latest_weight!=null?`<div class="weight-value">${E(r.latest_weight)}<small>Latest lb</small></div>`:''}${r.eligible_weight_class!=null?`<small class="roster-status-note">Weight certification: ${E(displayTeamWeightClass(r.eligible_weight_class))}</small>`:''}
+    ${window.WMAttendance?button('Attendance',`data-roster-attendance="${id}"`):''}
+    ${window.WMEligibility?button(extra.eligible===false?'Restore Eligible':'Mark Ineligible',`data-eligibility-athlete="${id}" ${extra.revision==null?'disabled':''}`):''}
+    ${isTeamAdmin?button('Teams / Transfer',`data-athlete-teams="${id}"`):''}
+    ${!off?button('Invite',`data-access-athlete="${id}"`):''}
+    ${off?button('Reactivate',`data-team-status="active" data-status-athlete="${id}"`):rosterManageButtons(r.athlete_id)}
+    ${r.status_reason?`<small class="roster-status-note">${E(r.status_reason)}</small>`:''}
+   </div></div>`;
+ }
+ function bind(box){
+  for(const [attr,fn] of [['view-athlete',openAthleteOverview],['profile-athlete',openAthleteProfile],['set-lineup-class',openLineupClassSheet],['athlete-teams',openAthleteTeams],['access-athlete',openAthleteAccess]])box.querySelectorAll(`[data-${attr}]`).forEach(b=>b.onclick=()=>fn(b.getAttribute('data-'+attr)));
+  box.querySelectorAll('[data-roster-attendance]').forEach(b=>b.onclick=()=>WMAttendance.open(b.dataset.rosterAttendance));
+  box.querySelectorAll('[data-eligibility-athlete]').forEach(b=>b.onclick=()=>WMEligibility.change(b.dataset.eligibilityAthlete,extras.get(b.dataset.eligibilityAthlete)));
+  bindRosterManagementActions(box);
+ }
+ function render(){
+  if(!isStaff)return;
+  $('rosterSheet').classList.remove('family-profile-picker');
+  if(context!==key()){context=key();extras.clear();photos.clear();try{sort=localStorage.getItem('wm-roster-sort:'+context)||'name';}catch{sort='name';}$('inactiveRosterSection').open=false;}
+  $('rosterSort').value=sort;
+  const manage=new Map(rosterManagementRows.map(r=>[r.athlete_id,r]));
+  const active=rosterRows.filter(r=>!inactive({...r,...manage.get(r.athlete_id)})).map(r=>({...r,...manage.get(r.athlete_id)})).sort(compare);
+  const competition=active.filter(r=>extras.get(r.athlete_id)?.eligible!==false),ineligible=active.filter(r=>extras.get(r.athlete_id)?.eligible===false);
+  $('rosterList').innerHTML=competition.map(r=>row(r)).join('')||'<div class="empty-card">No active competition athletes.</div>';
+  $('rosterActiveCount').textContent=`${competition.length} athlete${competition.length===1?'':'s'}`;
+  const off=rosterManagementRows.filter(inactive).sort(compare);
+  $('inactiveRosterSection').classList.toggle('hidden',!isTeamAdmin);
+  $('inactiveRosterSummary').textContent=`Standby / Removed (${off.length})`;
+  $('inactiveRosterList').innerHTML=off.map(r=>row(r,true)).join('')||'<div class="empty-card">No athletes on standby or removed.</div>';
+  if($('ineligibleRosterList')){
+   $('ineligibleRosterSection').classList.toggle('hidden',!ineligible.length);
+   $('ineligibleRosterSummary').textContent=`Ineligible for competition (${ineligible.length})`;
+   $('ineligibleRosterList').innerHTML=ineligible.map(r=>row(r)).join('');bind($('ineligibleRosterList'));
+  }
+  bind($('rosterList'));bind($('inactiveRosterList'));
+  const expected=key();document.querySelectorAll('[data-roster-photo]').forEach(async el=>{const path=extras.get(el.dataset.rosterPhoto)?.photo_path;if(!path)return;try{if(!photos.has(path))photos.set(path,athletePhotoUrl(path));const url=await photos.get(path);if(url&&expected===key()&&el.isConnected){const img=document.createElement('img');img.src=url;img.alt='';el.replaceChildren(img);}}catch{}});
+ }
+ function setExtras(rows,expected){if(expected!==key())return;extras=new Map(rows.map(r=>[r.athlete_id,r]));render();}
+ $('rosterBtn').addEventListener('click',()=>render());
+ $('rosterSort').onchange=()=>{sort=$('rosterSort').value;try{localStorage.setItem('wm-roster-sort:'+key(),sort);}catch{}render();};
+ return {render,key,setExtras,compare};
+})();
+
+</script>
+<script id="eligibility083Script">
+window.WMEligibility=(()=>{
+ 'use strict';let generation=0,rows=new Map(),scope='',busy=false;
+ const key=()=>WMRoster.key();
+ function reset(){generation++;rows.clear();scope='';busy=false;}
+ async function load(){
+  const g=++generation,k=key();rows.clear();scope='';WMRoster.setExtras([],k);
+  const r=await client.rpc('roster_eligibility_request',{p_action:'list',p_data:{season_id:activeSeason?.id}});
+  if(g!==generation||k!==key())return;
+  if(r.error){message('Competition eligibility could not load. Reopen Roster before changing eligibility.',true);return;}
+  rows=new Map((r.data||[]).map(x=>[x.athlete_id,x]));scope=k;WMRoster.setExtras(r.data||[],k);renderCoachWeightClassBoard();
+ }
+ async function change(id,record){
+  if(busy||!isStaff||managedLogin||scope!==key()||!record)return;
+  const eligible=record.eligible===false,name=[...rosterRows,...rosterManagementRows].find(r=>r.athlete_id===id);
+  if(!confirm(`${eligible?'Restore competition eligibility for':'Mark ineligible for competition:'} ${name?.first_name||''} ${name?.last_name||''}?\n\nThe profile, history, practice attendance and family access stay intact.`))return;
+  busy=true;const k=key();
+  try{const r=await client.rpc('roster_eligibility_request',{p_action:'save',p_data:{season_id:activeSeason.id,athlete_id:id,eligible,revision:record.revision}});if(k!==key())return;if(r.error)throw r.error;await load();message(eligible?'Competition eligibility restored.':'Athlete moved out of the active competition roster.');}
+  catch(e){if(k===key())message(e.message,true);}finally{busy=false;}
+ }
+ // These are presentation lists only; practice/weight/family rosters stay complete.
+ function forEvent(list,event){return ['dual','tournament','wrestle_off'].includes(event?.event_type)&&scope===key()?list.filter(r=>rows.get(r.athlete_id)?.eligible!==false):list;}
+ return {load,change,reset,forEvent};
+})();
+
+</script>
+<style>.attendance-stat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:16px 0}.attendance-stat{border:1px solid var(--line);border-radius:15px;padding:14px;min-width:0}.attendance-stat strong{display:block;font-size:30px;margin:5px 0}.attendance-stat small{display:block;color:var(--muted)}.attendance-event-row{padding:12px 0;border-bottom:1px solid var(--line);display:grid;gap:5px}.roster-status-note{min-width:120px;max-width:170px;white-space:normal}.roster-ineligible{color:#953515!important}#rosterSheet details{margin-top:16px}#rosterSheet summary{padding:12px 0;font-weight:800;cursor:pointer}</style>
+<script id="attendance084Script">
+/* Season attendance reads Schedule records and keeps unknown marks out of percentages. */
+window.WMAttendance=(()=>{
+ 'use strict';const $=id=>document.getElementById(id),E=esc;
+ const types={practice:'Practice',dual:'Duals',tournament:'Tournaments',open_mat:'Open Mats',camp:'Camps',travel:'Travel',meeting:'Meetings',weigh_in:'Weigh-ins',wrestle_off:'Wrestle-offs',other:'Other'};
+ let generation=0,ctx=null,athlete=null,scope='',busy=false;
+ const key=()=>`${session?.user?.id}:${activeTeam?.id}:${activeSeason?.id}:${viewMode}`;
+ const sheet=document.createElement('section');sheet.id='attendanceStatsSheet';sheet.className='sheet hidden';sheet.setAttribute('role','dialog');sheet.setAttribute('aria-label','Attendance');sheet.innerHTML='<div class="sheet-head"><h2>Attendance</h2><button type="button" class="icon-close" id="attendanceStatsClose" aria-label="Close attendance">×</button></div><p id="attendanceStatsStatus" role="status"></p><div id="attendanceStatsBody"></div>';document.body.append(sheet);$('attendanceStatsClose').onclick=()=>closeSheets();
+ function reset(){generation++;ctx=null;athlete=null;scope='';busy=false;$('attendanceStatsBody').replaceChildren();sheet.classList.add('hidden');}
+ const valid=g=>g===generation&&scope===key()&&!managedLogin&&!sheet.classList.contains('hidden');
+ function totals(events,settings){
+  let attended=0,counted=0,unmarked=0,excused=0,modified=0;
+  for(const e of events){
+   if(e.status==='present'||e.status==='late'){attended++;counted++;continue;}
+   if(e.status==='modified'){modified++;if(settings.modified_counts){attended++;counted++;}continue;}
+   if(e.excused){excused++;if(settings.excused_counts)counted++;continue;}
+   if(e.status==='absent'){counted++;continue;}
+   unmarked++;
+  }
+  return {attended,counted,unmarked,excused,modified,percent:counted?Math.round(100*attended/counted):null};
+ }
+ function card(label,events){const t=totals(events,ctx.settings);return `<div class="attendance-stat"><b>${E(label)}</b><strong>${t.percent==null?'—':t.percent+'%'}</strong><small>${t.attended} / ${t.counted} counted · ${t.unmarked} unmarked</small></div>`;}
+ function render(){
+  const own=ctx.athletes.find(a=>a.athlete_id===athlete),s=ctx.settings;
+  $('attendanceStatsBody').innerHTML=`<p class="fine">${E(activeTeam.name)} · ${E(activeSeason.name||'Current season')}</p>${ctx.can_manage?`<label>Athlete<select id="attendanceStatsAthlete"><option value="">Choose an athlete</option>${ctx.athletes.map(a=>`<option value="${E(a.athlete_id)}" ${a.athlete_id===athlete?'selected':''}>${E(a.name)}${a.active?'':' · Standby / Removed'}</option>`).join('')}</select></label><button type="button" class="wide secondary" id="attendanceStatsSchedule">Manage attendance in Schedule</button>`:`<h3>${E(own?.name||'My attendance')}</h3>`}
+${athlete?`<div class="attendance-stat-grid">${s.event_types.map(t=>card(types[t]||t,ctx.events.filter(e=>e.event_type===t))).join('')}${card('Overall events',ctx.events)}</div><p class="fine">Completed events marked to count toward season attendance. Present and Late count as attended. Modified ${s.modified_counts?'counts as attended':'is excluded'}. Excused absences ${s.excused_counts?'count as missed':'are excluded'}. Unmarked events are excluded. Group events count only when attendance is recorded.</p><details><summary>Event attendance (${ctx.events.length})</summary>${ctx.events.map(e=>`<div class="attendance-event-row"><b>${E(e.title)}</b><small>${E(fmtDate(e.starts_at))} · ${E(types[e.event_type])}</small><span>${E(e.excused&&!['present','late','modified'].includes(e.status)?'Excused':e.status==='expected'?'Unmarked':e.status[0].toUpperCase()+e.status.slice(1))}</span>${ctx.can_manage?`<button type="button" class="secondary" data-attendance-event="${E(e.id)}">Open event</button>`:''}</div>`).join('')||'<p>No completed events to show yet.</p>'}</details>`:'<p>Select an athlete to see percentages and individual events.</p>'}
+${ctx.can_manage?`<details><summary>Team attendance settings</summary><form id="attendanceSettingsForm"><p class="fine">Choose the event types that count for this team.</p>${Object.entries(types).map(([t,label])=>`<label class="toggle-row"><span>${E(label)}</span><input type="checkbox" name="event_type" value="${t}" ${s.event_types.includes(t)?'checked':''}></label>`).join('')}<label class="toggle-row"><span>Count excused absences as missed</span><input id="attendanceExcusedCounts" type="checkbox" ${s.excused_counts?'checked':''}></label><label class="toggle-row"><span>Count Modified as attended</span><input id="attendanceModifiedCounts" type="checkbox" ${s.modified_counts?'checked':''}></label><button type="submit">Save attendance settings</button></form></details>`:''}`.replace(/^\+/gm,'');
+  $('attendanceStatsAthlete')?.addEventListener('change',e=>open(e.target.value||null));
+  $('attendanceStatsSchedule')?.addEventListener('click',()=>{closeSheets();setTab('schedule');});
+  $('attendanceStatsBody').querySelectorAll('[data-attendance-event]').forEach(b=>b.onclick=async()=>{const g=generation;await loadSchedule();if(valid(g))await openEventDetail(b.dataset.attendanceEvent);});
+  $('attendanceSettingsForm')?.addEventListener('submit',save);
+ }
+ async function open(id=null){
+  reset();if(!activeSeason||managedLogin)return;athlete=id;scope=key();const g=generation;openSheet(sheet.id);$('attendanceStatsStatus').textContent='Loading attendance…';
+  try{const r=await client.rpc('attendance_summary_request',{p_action:'read',p_data:{season_id:activeSeason.id,athlete_id:id,view_as_parent:viewMode==='parent'}});if(!valid(g))return;if(r.error)throw r.error;ctx=r.data;render();$('attendanceStatsStatus').textContent='';}
+  catch(e){if(valid(g))$('attendanceStatsStatus').textContent=e.message;}
+ }
+ async function save(ev){ev.preventDefault();if(busy||!ctx?.can_manage)return;const g=generation;if(!valid(g))return;busy=true;const b=ev.submitter;b.disabled=true;
+  try{const types=[...$('attendanceSettingsForm').querySelectorAll('[name=event_type]:checked')].map(x=>x.value);if(!types.length)throw Error('Choose at least one event type.');const r=await client.rpc('attendance_summary_request',{p_action:'settings',p_data:{season_id:activeSeason.id,athlete_id:athlete,view_as_parent:viewMode==='parent',revision:ctx.settings.revision,event_types:types,excused_counts:$('attendanceExcusedCounts').checked,modified_counts:$('attendanceModifiedCounts').checked}});if(!valid(g))return;if(r.error)throw r.error;ctx=r.data;render();$('attendanceStatsStatus').textContent='Team attendance settings saved.';}catch(e){if(valid(g))$('attendanceStatsStatus').textContent=e.message;}finally{if(valid(g)){busy=false;b.disabled=false;}}
+ }
+ function openHome(){
+  if(isStaff&&viewMode!=='parent')return open();
+  const athletes=[...new Map([...memberAthletes.map(a=>({id:a.id,name:`${a.first_name} ${a.last_name}`})),...familyAthletes.map(a=>({id:a.athlete_id,name:`${a.first_name} ${a.last_name}`}))].filter(a=>a.id).map(a=>[a.id,a])).values()];
+  if(athletes.length===1)return open(athletes[0].id);
+  reset();scope=key();openSheet(sheet.id);$('attendanceStatsStatus').textContent=athletes.length?'Choose an athlete.':'No athlete profile is connected to this team yet.';
+  $('attendanceStatsBody').innerHTML=athletes.map(a=>`<button type="button" class="wide secondary" data-attendance-child="${E(a.id)}">${E(a.name)}</button>`).join('');
+  $('attendanceStatsBody').querySelectorAll('[data-attendance-child]').forEach(b=>b.onclick=()=>open(b.dataset.attendanceChild));
+ }
+ $('lockerAttendanceTab').onclick=openHome;
+ $('teamAttendanceStatsBtn').onclick=()=>open();$('viewAthleteAttendanceBtn').onclick=()=>open(viewAthleteId);$('profileAttendanceBtn').onclick=()=>open(profileAthleteId);
+ return {open,reset,totals};
+})();
+
+</script>
+<script id="schedule085Script">
+window.WMScheduleTools=(()=>{
+ 'use strict';const $=id=>document.getElementById(id),E=esc;let generation=0,pending=null;
+ const key=()=>`${session?.user?.id}:${activeTeam?.id}:${activeSeason?.id}`;
+ function reset(){generation++;pending=null;}
+ async function locations(nameId,addressId){
+  const name=$(nameId),address=$(addressId);if(!name||!address)return;
+  const old=$('favorites_'+nameId);old?.remove();const box=document.createElement('div');box.id='favorites_'+nameId;box.className='saved-locations';address.after(box);
+  const k=key(),g=generation;let rows=[],busy=false;
+  const valid=()=>g===generation&&k===key()&&box.isConnected&&isStaff&&!managedLogin;
+  function draw(status=''){
+   if(!valid())return;
+   box.innerHTML=`<label>Saved locations<select aria-label="Saved locations"><option value="">Choose a favorite…</option>${rows.map(r=>`<option value="${E(r.id)}">${E(r.name)}${r.address?' · '+E(r.address):''}</option>`).join('')}</select></label><div class="wp-actions"><button type="button" data-save-location>Save current location</button><button type="button" class="secondary" data-remove-location disabled>Remove favorite</button></div><p class="fine" role="status">${E(status)}</p>`;
+   const select=box.querySelector('select'),remove=box.querySelector('[data-remove-location]');select.onchange=()=>{const row=rows.find(r=>r.id===select.value);if(row){name.value=row.name;address.value=row.address;name.dispatchEvent(new Event('change',{bubbles:true}));}remove.disabled=!row;};
+   box.querySelector('[data-save-location]').onclick=()=>write('save',{name:name.value.trim(),address:address.value.trim()});
+   remove.onclick=()=>{if(select.value&&confirm('Remove this saved location? Existing events keep their location.'))write('remove',{id:select.value});};
+  }
+  async function write(action,data){if(busy||!valid())return;busy=true;box.querySelectorAll('button,select').forEach(b=>b.disabled=true);try{const r=await client.rpc('saved_locations_request',{p_action:action,p_data:{team_id:activeTeam.id,...data}});if(!valid())return;if(r.error)throw r.error;rows=r.data||[];draw(action==='save'?'Location saved for this team.':'Favorite removed.');}catch(e){if(valid())draw(e.message);}finally{busy=false;}}
+  try{const r=await client.rpc('saved_locations_request',{p_action:'list',p_data:{team_id:activeTeam.id}});if(!valid())return;if(r.error)throw r.error;rows=r.data||[];draw();}catch(e){if(valid())draw('Saved locations unavailable. You can still type a location.');}
+ }
+ function mountCreate(){reset();locations('eventLocation','eventAddress');}
+ function mountEditor(record){
+  reset();locations('ee_location_name','ee_location_address');const form=$('eventEditForm');
+  const box=document.createElement('section');box.className='practice-repeat-box';box.innerHTML=`<label>Apply changes<select id="ee_scope"><option value="one">This occurrence only</option><option value="following">${record.practice_series_id||record.repeat_batch_id?'This and future events':'Make this event repeat'}</option></select></label><div id="ee_repeatOptions" hidden><label>Repeat<select id="ee_frequency"><option value="weekly">Weekly · selected days</option><option value="daily">Daily</option><option value="monthly">Monthly · same date</option><option value="none">Stop after this occurrence</option></select></label><div id="ee_weekdays" class="wp-actions">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((d,i)=>`<label><input type="checkbox" value="${i+1}"> ${d}</label>`).join('')}</div><label>Repeat through<input id="ee_until" type="date"></label><p class="fine" id="ee_repeatSummary" aria-live="polite"></p><p class="fine">Past events and individually edited occurrences stay intact. Changing repeat rules creates a fixed set of dates; review competition-day conflicts before saving. Future occurrences with saved attendance, RSVPs, videos or other records cannot be replaced in bulk.</p></div>`;form.querySelector('[type=submit]').before(box);
+  const local=$('ee_starts_at').value,date=new Date(local),day=date.getDay()||7;box.querySelector(`#ee_weekdays input[value="${day}"]`).checked=true;
+  const until=new Date(date);until.setDate(until.getDate()+28);$('ee_until').value=dateKeyLocal(until);
+  function refresh(){const on=$('ee_scope').value==='following',mode=$('ee_frequency').value;$('ee_repeatOptions').hidden=!on;$('ee_weekdays').hidden=mode!=='weekly';$('ee_until').parentElement.hidden=mode==='none';$('ee_until').min=$('ee_starts_at').value.slice(0,10);const dates=WMEventRepeat.dates($('ee_starts_at').value.slice(0,10),$('ee_until').value,mode,[...box.querySelectorAll('#ee_weekdays input:checked')].map(x=>Number(x.value)));$('ee_repeatSummary').textContent=mode==='none'?'Keep this occurrence and stop untouched future repeats.':`${dates.length} occurrence${dates.length===1?'':'s'} in this schedule. Times stay in ${Intl.DateTimeFormat().resolvedOptions().timeZone}.`;}
+  box.addEventListener('change',refresh);$('ee_starts_at').addEventListener('change',refresh);refresh();
+ }
+ function handles(){return pending||$('ee_scope')?.value==='following';}
+ async function save(record,values){
+  const g=generation,k=key();const valid=()=>g===generation&&key()===k&&isStaff&&!managedLogin;
+  const form=$('eventEditForm');
+  if(!pending){
+   const frequency=$('ee_frequency').value,start=$('ee_starts_at').value;
+   const shift=original=>{if(!original)return null;const offset=new Date(original)-new Date(record.starts_at);return localDateTimeValue(new Date(new Date(start).getTime()+offset));};
+   const repeat={frequency,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone,start_local:start,end_local:$('ee_ends_at').value||null,arrival_local:$('ee_arrival_at').value||null,weigh_in_local:$('ee_weigh_in_at').value||null,pre_local:shift(record.pre_weigh_cutoff_at),post_local:shift(record.post_weigh_start_at),until:$('ee_until').value,weekdays:[...form.querySelectorAll('#ee_weekdays input:checked')].map(x=>Number(x.value))};
+   const dates=frequency==='none'?[]:WMEventRepeat.dates(start.slice(0,10),repeat.until,frequency,repeat.weekdays);
+   if(frequency!=='none'&&(!dates.length||dates[0]!==start.slice(0,10)))throw Error('Choose valid repeat dates within one year, including the start day.');
+   const q={client_id:crypto.randomUUID(),event_id:record.id,expected:record.updated_at,values,repeat};
+   const preview=await client.rpc('edit_event_recurrence',{p_action:'preview',p_data:q});if(!valid())return null;if(preview.error)throw preview.error;
+   if(preview.data.blocked_count)throw Error('Future occurrences already have saved records. Use “This occurrence only”; no events were changed.');
+   if(!confirm(`Keep this event and its records, replace ${preview.data.replace_count} untouched future occurrence(s), and ${frequency==='none'?'stop repeating':'save '+dates.length+' occurrences'}?`))return null;
+   pending={...q,fingerprint:preview.data.fingerprint};
+  }
+  form.querySelectorAll('input,select,textarea,button').forEach(b=>b.disabled=true);
+  const r=await client.rpc('edit_event_recurrence',{p_action:'save',p_data:pending});if(!valid())return null;
+  if(r.error){
+   if(r.error.code==='P0001'||r.error.code?.startsWith('22')){pending=null;form.querySelectorAll('input,select,textarea,button').forEach(b=>b.disabled=false);}
+   else form.querySelector('[type=submit]').textContent='Retry same repeat change';
+   throw Error(r.error.message+(pending?' Retry to finish the same change without duplicates.':''));
+  }
+  pending=null;return r.data;
+ }
+ return {mountCreate,mountEditor,handles,save,reset};
 })();
 
 </script>
