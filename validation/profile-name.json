@@ -1,0 +1,13 @@
+{
+  "passed": [
+    "Adults edit from the profile or account settings, and reopening either screen shows the saved name",
+    "Minor athletes can edit their own name without gaining the profile visibility editor; whitespace is rejected",
+    "Failed name saves retain the draft and let the user retry",
+    "Linked-parent name editing keeps the parent identity separate",
+    "Phone editor fits at 320 and 390 pixels, cancel discards changes, and unrelated viewers have no edit-name button",
+    "Account save recovers from thrown network errors and managed team logins cannot use personal name saving",
+    "A delayed response cannot reopen or populate a different account’s profile"
+  ],
+  "engine": "Chromium; actual app with synthetic API fixtures",
+  "nativeDeviceVerified": false
+}

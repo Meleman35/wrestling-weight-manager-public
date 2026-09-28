@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.70: Add high-school division and weight presets to both team-creation paths. -->
+<!-- Wrestling Manager v0.20.71: Make profile names editable after signup and sync personal display names. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -2237,16 +2237,17 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
         <div id="accountProfilePhotoBox" class="staff-profile-photo-placeholder">👤</div>
         <div class="staff-profile-copy">
           <b>My Account Profile</b>
-          <p class="muted">Your personal photo follows your account across teams and appears in parent view.</p>
+          <p class="muted">You can change your name at any time. Your name and photo follow your account across teams and wrestling profiles.</p>
           <label style="margin-top:8px">Profile photo</label>
           <input id="accountPhotoInput" type="file" accept="image/*">
         </div>
       </div>
       <div class="profile-grid">
-        <div><label>Display name</label><input id="accountDisplayName" autocomplete="name"></div>
+        <div><label for="accountDisplayName">Your name</label><input id="accountDisplayName" autocomplete="name" maxlength="120" required aria-describedby="accountProfileStatus"></div>
         <div><label>Phone</label><input id="accountPhone" type="tel" autocomplete="tel"></div>
       </div>
       <button id="saveAccountProfileBtn" class="wide" type="button">Save Account Profile</button>
+      <p id="accountProfileStatus" class="fine" role="status"></p>
     </div>
 
     <div id="viewModeCard" class="view-mode-card hidden">
@@ -2270,7 +2271,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.70</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.71</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -8551,6 +8552,7 @@ async function saveStaffProfile(){
   btn.disabled=false;btn.textContent='Save Staff Profile';
   if(error){message(error.message,true);return;}
   staffProfileData=data||staffProfileData;
+  await refreshProfileNames();
   await refreshHeaderAvatar();
   message('Coach / staff profile saved.');
   await openStaffProfile();
@@ -8582,6 +8584,7 @@ async function openStaffDirectory(){
 async function openAccountSheet(){
   const profile=await loadAccountProfile();
   $('accountDisplayName').value=profile?.display_name||'';
+  $('accountProfileStatus').textContent='';
   setPhoneValue('accountPhone',profile?.phone||'');
   if(managedLogin)await refreshHeaderAvatar();
   const url=await accountPhotoUrl(profile?.photo_path);
@@ -8590,18 +8593,33 @@ async function openAccountSheet(){
   closeSheets();openSheet('accountSheet');
 }
 
+async function refreshProfileNames(){
+  await loadAccountProfile();
+  if(window.WMFamily)await WMFamily.home();
+}
+
 async function saveAccountProfile(){
-  if(!session?.user)return;
-  const displayName=$('accountDisplayName').value.trim();
+  if(!session?.user||managedLogin)return;
+  const uid=session.user.id,displayName=$('accountDisplayName').value.trim();
   const phone=normalizePhoneDigits($('accountPhone').value);
-  if(!displayName){message('Add your display name.',true);return;}
-  const btn=$('saveAccountProfileBtn');btn.disabled=true;btn.textContent='Saving…';
-  const {data,error}=await client.from('profiles').update({display_name:displayName,phone:phone||null,updated_at:new Date().toISOString()}).eq('id',session.user.id).select('id,display_name,phone,photo_path,ui_preferences').single();
-  btn.disabled=false;btn.textContent='Save Account Profile';
-  if(error){message(error.message,true);return;}
-  accountProfileData=data;
-  await refreshHeaderAvatar();
-  message('Account profile saved.');
+  const btn=$('saveAccountProfileBtn'),status=$('accountProfileStatus');
+  if(btn.disabled)return;
+  if(!displayName||displayName.length>120){status.textContent='Enter your name (up to 120 characters).';$('accountDisplayName').focus();return;}
+  btn.disabled=true;btn.textContent='Saving…';status.textContent='Saving your profile…';
+  let saved=false;
+  try{
+    const {data,error}=await client.from('profiles').update({display_name:displayName,phone:phone||null,updated_at:new Date().toISOString()}).eq('id',uid).select('id,display_name,phone,photo_path,ui_preferences').single();
+    if(error)throw Error(error.message);
+    saved=true;if(session?.user?.id!==uid)return;
+    accountProfileData=data;
+    await refreshHeaderAvatar();
+    if(window.WMFamily)await WMFamily.home();
+    if(session?.user?.id!==uid)return;
+    status.textContent='Saved. Your account and wrestling profile use your updated name.';
+    message('Account profile saved.');
+  }catch(error){
+    if(session?.user?.id===uid)status.textContent=saved?'Saved. Reopen your profile to refresh the name.':error.message||'Could not save. Please try again.';
+  }finally{btn.disabled=false;btn.textContent='Save Account Profile';}
 }
 
 async function openCommunicationSettings(){
@@ -12068,7 +12086,7 @@ window.WMProfiles=(()=>{
  async function browse(offset){const t=++generation;status('Loading shared profiles…');try{const out=await rpc('browse',{offset});if(t!==generation)return;status('');$p('wpSearchResults').innerHTML=(out.rows||[]).map(profileTile).join('')||'<p>No shared profiles available.</p>';$p('wpSearchResults').insertAdjacentHTML('beforeend','<div class="wp-actions">'+(offset?button('Previous','id="wpBrowsePrev"'):'')+(out.more?button('Next','id="wpBrowseNext"'):'')+'</div>');hydratePhotos($p('wpSearchResults'));$p('wpBrowsePrev')?.addEventListener('click',()=>browse(Math.max(0,offset-30)));$p('wpBrowseNext')?.addEventListener('click',()=>browse(offset+30));}catch(e){if(t===generation)status(e.message);}}
  function profileViewTabs(id,p,preview){const own=p.manager||p.self||mine.some(x=>x.id===id);return button('All profiles','data-wp-home')+(own?`<div class="wp-preview-tabs" role="tablist" aria-label="Profile view"><button class="secondary" role="tab" aria-selected="${!preview}" data-wp-own="${E(id)}">My profile</button><button class="secondary" role="tab" aria-selected="${preview}" data-wp-preview-id="${E(id)}">What others see</button></div>`:'');}
  async function view(id,preview=false){const t=++generation;status('Loading profile…');const uid=session?.user?.id,p=await rpc('view',{id,preview});if(t!==generation||session?.user?.id!==uid)return;current={...p,id,preview};status(preview?'What others see · Preview for other signed-in members. Restricted team and family access is separate.':'');const d=p.details||{};if(preview&&(!p.discoverable||p.unavailable)){$p('wrestlingProfilesSheet').scrollTop=0;$p('wpBody').innerHTML=profileViewTabs(id,p,preview)+'<section class="wp-panel"><h3>This profile is private</h3><p>Other members cannot discover or open this shared profile. Your authorized team and family access is separate.</p></section>';return;}
- $p('wrestlingProfilesSheet').scrollTop=0;$p('wpBody').innerHTML=`${profileViewTabs(id,p,preview)}<div class="wp-hero"><div class="wp-photo-block"><div id="wpPhoto" class="wp-photo">👤</div>${p.manager&&!preview?button('Edit photo','data-wp-edit'):''}</div><div><h2>${E(p.name)}</h2><p>${E(d.roles|| (p.athlete?'Athlete':'Wrestling community'))}</p>${d.roles?'<small>Role description · self-reported</small><br>':''}<small>${p.discoverable?'Shared with signed-in members':'Private profile'}</small>${p.spouse?`<p class="wp-spouse-line">Married to ${p.spouse.id?button(p.spouse.name,`data-wp-open="${E(p.spouse.id)}"`):E(p.spouse.name)}${!preview&&!p.spouse.shared?'<small>Only you · relationship not shared</small>':''}</p>`:''}</div></div><div class="wp-actions">${button('Trophy Case',`data-wp-trophy data-preview="${preview}"`)}${p.athlete&&!preview?button('Team Goals',`data-wp-goals="${E(id)}"`):''}${p.manager&&!preview?button('Edit profile & visibility','data-wp-edit')+button('Follower approvals','data-wp-requests')+button('Family sharing','data-wp-family')+(p.self&&!p.athlete?button('Spouse','data-wp-spouse'):''):''}${mine.some(x=>x.id===id)&&!preview?button('Following & My Corner','data-wp-links'):''}${p.discoverable&&!preview?button('Share profile','data-wp-share'):''}</div>${!preview&&!mine.some(x=>x.id===id)&&mine.length?`<label for="wpActor">Request to follow as</label><select id="wpActor">${mine.map(x=>`<option value="${x.id}">${E(x.name)}</option>`).join('')}</select><button class="wide" data-wp-follow>Request to follow</button><p class="fine">Following does not enable messaging or reveal private team information.</p>`:''}
+ $p('wrestlingProfilesSheet').scrollTop=0;$p('wpBody').innerHTML=`${profileViewTabs(id,p,preview)}<div class="wp-hero"><div class="wp-photo-block"><div id="wpPhoto" class="wp-photo">👤</div>${p.manager&&!preview?button('Edit photo','data-wp-edit'):''}</div><div><h2>${E(p.name)}</h2><p>${E(d.roles|| (p.athlete?'Athlete':'Wrestling community'))}</p>${d.roles?'<small>Role description · self-reported</small><br>':''}<small>${p.discoverable?'Shared with signed-in members':'Private profile'}</small>${p.spouse?`<p class="wp-spouse-line">Married to ${p.spouse.id?button(p.spouse.name,`data-wp-open="${E(p.spouse.id)}"`):E(p.spouse.name)}${!preview&&!p.spouse.shared?'<small>Only you · relationship not shared</small>':''}</p>`:''}</div></div><div class="wp-actions">${button('Trophy Case',`data-wp-trophy data-preview="${preview}"`)}${p.athlete&&!preview?button('Team Goals',`data-wp-goals="${E(id)}"`):''}${(p.manager||p.self)&&!preview?button('Edit name','data-wp-name'):''}${p.manager&&!preview?button('Edit profile & visibility','data-wp-edit')+button('Follower approvals','data-wp-requests')+button('Family sharing','data-wp-family')+(p.self&&!p.athlete?button('Spouse','data-wp-spouse'):''):''}${mine.some(x=>x.id===id)&&!preview?button('Following & My Corner','data-wp-links'):''}${p.discoverable&&!preview?button('Share profile','data-wp-share'):''}</div>${!preview&&!mine.some(x=>x.id===id)&&mine.length?`<label for="wpActor">Request to follow as</label><select id="wpActor">${mine.map(x=>`<option value="${x.id}">${E(x.name)}</option>`).join('')}</select><button class="wide" data-wp-follow>Request to follow</button><p class="fine">Following does not enable messaging or reveal private team information.</p>`:''}
  ${!preview&&p.parent_connection?`<section class="wp-panel"><h3>Your child · Following automatically</h3><p class="fine">Choose whether to show ${E(p.name)} in your My Corner. This family tile is visible only to you.</p>${button(p.parent_connection.in_corner?'Remove from My Corner':'Add to My Corner','data-wp-family-corner')}</section>`:''}
  <section class="wp-panel"><h3>Roles & approvals</h3><div class="wp-grid">${(p.assigned_roles||[]).map(r=>`<article><b>${E(r.label)}</b>${r.scope?`<p>${E(r.scope)}</p>`:''}<small>${E(r.approval_label||'Pending approval')}</small></article>`).join('')||`<p class="fine">${p.athlete?'Athlete profile':'No assigned adult roles shared. You can hold several roles with one account.'}</p>`}</div><p class="fine">Role approval confirms a team or organization assignment. It does not verify age, identity, credentials, or SafeSport completion, and does not grant messaging access.</p></section>
  ${[['affiliation','Affiliation'],['bio','About / goals'],['age_division','Age division'],['mat_rank','Mat-official classification'],['pairing_rank','Pairing-official classification']].filter(([k])=>d[k]).map(([k,label])=>`<section class="wp-panel"><h3>${label}</h3>${k==='affiliation'?`<div class="wp-actions">${String(d[k]).split(/[,;]/).map(n=>n.trim()).filter(Boolean).map(n=>button(n,`data-wp-affiliation="${E(n)}"`)).join('')}</div>`:`<p>${E(d[k])}</p>`}${k.includes('rank')?'<small>Self-reported · not verified</small>':''}</section>`).join('')}
@@ -12133,6 +12151,26 @@ window.WMProfiles=(()=>{
  $p('wpAffiliationChoices').innerHTML=[...new Set(names)].map(n=>`<option value="${E(n)}">${E(n)}</option>`).join('');
  }
 
+ async function editName(){
+ const p=current;if(!p||p.preview||!(p.manager||p.self))return;
+ const ticket=++generation;status('');$p('wrestlingProfilesSheet').scrollTop=0;
+ $p('wpBody').innerHTML=`${button('Back to profile',`data-wp-open="${E(p.id)}"`)}<section class="wp-panel"><h3>Edit name</h3><p>This name appears on the account and wrestling profile.</p><form id="wpNameForm"><label for="wpNameOnly">Name</label><input id="wpNameOnly" autocomplete="name" maxlength="120" required value="${E(p.name)}"><div class="wp-actions"><button type="submit" id="wpNameSave">Save name</button>${button('Cancel',`data-wp-open="${E(p.id)}"`)}</div><p id="wpNameStatus" class="fine" role="status"></p></form></section>`;
+ $p('wpNameForm').onsubmit=async e=>{
+ e.preventDefault();const btn=$p('wpNameSave'),note=$p('wpNameStatus'),name=$p('wpNameOnly').value.trim();
+ if(btn.disabled)return;if(!name){note.textContent='Enter your name.';return;}
+ const uid=session?.user?.id;if(!allowed())return;btn.disabled=true;btn.textContent='Saving…';note.textContent='';let saved=false;
+ try{
+ const {data,error}=await client.rpc('update_profile_name',{p_profile_id:p.id,p_name:name});if(error)throw Error(error.message);saved=true;
+ if(ticket!==generation||session?.user?.id!==uid||!allowed())return;
+ mine=mine.map(x=>x.id===p.id?{...x,name:data.name}:x);
+ await refreshProfileNames();if(ticket!==generation||session?.user?.id!==uid||!allowed())return;
+ await view(p.id);status('Name saved.');
+ }catch(error){if(ticket!==generation||session?.user?.id!==uid||!allowed())return;note.textContent=saved?'Name saved. Reopen your profile to see the update.':error.message||'Could not save. Please try again.';}
+ finally{btn.disabled=false;btn.textContent='Save name';}
+ };
+ $p('wpNameOnly').focus();
+ }
+
  function edit(){const p=current,d=p.details||{},sh=p.sharing||{};const ticket=++generation;status('Edit your personal wrestling profile here. Your admin, coach and parent permissions are assigned separately in each organization or team.');
  $p('wrestlingProfilesSheet').scrollTop=0;$p('wpBody').innerHTML=`${button('Back to profile',`data-wp-open="${p.id}"`)}<form id="wpEditForm"><label for="wpName">Display name</label><input id="wpName" maxlength="120" required value="${E(p.name)}">${fields.filter(([k])=>!['photo','corner','results','music_url','music_title'].includes(k)).map(([k,l])=>`<label for="wp_${k}">${l}</label>${choices[k]?choiceControl(k,d[k]||'',`id="wp_${k}"`):k==='bio'?`<textarea id="wp_${k}" maxlength="1200">${E(d[k]||'')}</textarea>`:`<input id="wp_${k}" ${k==='affiliation'?'list="wpAffiliationChoices"':''} maxlength="160" ${p.athlete&&k==='roles'?'readonly':''} value="${E(d[k]||'')}">`}`).join('')}<datalist id="wpAffiliationChoices"></datalist><p class="fine">Separate organizations with commas. You can list multiple roles, for example: WAWA director · Lyman coach · Wrestling parent. These describe you; each organization or team separately controls your actual access. Official classifications are self-reported.</p><h3>Profile picture</h3><p class="fine">One photo across your profile and teams. Changing it here updates it everywhere it is shared.</p><input id="wpPicture" type="file" accept="image/jpeg,image/png,image/webp" hidden>${button('Change photo','id="wpChangePhoto"')}<div id="wpCropArea" class="hidden"><p class="fine">Drag your picture to position it, or use the position sliders. Zoom in to make more room to move.</p><canvas id="wpCropCanvas" width="400" height="400" aria-label="Adjust profile photo"></canvas><label>Zoom<input id="wpCropZoom" type="range" min="1" max="3" step="0.01" value="1"></label><label>Move left / right<input id="wpCropX" type="range" min="-100" max="100" value="0"></label><label>Move up / down<input id="wpCropY" type="range" min="-100" max="100" value="0"></label>${button('Center photo','id="wpCropCenter"')}</div><h3>Tournament results</h3><label>Choose a tournament<select id="wpSchedulePick"></select></label><p class="fine">Or add a tournament link below. You can also import results from a CSV and review them before saving.</p><details><summary>Import results from a file</summary><label>Results CSV<input id="wpImportResults" type="file" accept=".csv,text/csv"></label>${button('Download CSV template','id="wpCSVTemplate"')}</details><div id="wpResults"></div>${button('Add tournament','id="wpAddResult"')}<h3>Entrance Song</h3><div class="wp-actions">${button('Find on Apple Music','id="wpFindMusic"')}${button('Paste song link','id="wpPasteMusic"')}</div><p class="fine">In Apple Music, choose Share Song → Copy Link, then paste it here.</p><label for="wp_music_title">Song title (optional)</label><input id="wp_music_title" maxlength="160" value="${E(d.music_title||'')}"><label for="wp_music_url">Apple Music or Spotify link</label><input id="wp_music_url" type="url" maxlength="1000" value="${E(d.music_url||'')}"><p id="wpMusicHelp" class="fine" role="status"></p><div id="wpMusicPreview"></div><label class="toggle-row"><span>I approve this song and have checked that it is clean.</span><input id="wpMusicApproved" type="checkbox" ${safeMusic(d.music_url)?'checked':''}></label><h3>Visibility</h3><label class="toggle-row"><span><b>Allow profile discovery</b><small>Other signed-in members can see this name and the fields selected below.</small></span><input id="wpDiscover" type="checkbox" ${p.discoverable?'checked':''}></label>${fields.map(([k,l])=>`<label class="toggle-row"><span>Share ${E(l.toLowerCase())}</span><input data-wp-sharefield="${k}" type="checkbox" ${sh[k]?'checked':''}></label>`).join('')}<label class="toggle-row"><span>Accept follow requests for review</span><input data-wp-sharefield="follow" type="checkbox" ${sh.follow?'checked':''}></label>${p.athlete?`<label class="toggle-row"><span><b>Allow this athlete to request follows and arrange My Corner</b><small>Incoming requests still need parent approval for minors.</small></span><input data-wp-sharefield="outgoing_follow" type="checkbox" ${sh.outgoing_follow?'checked':''}></label>`:'<p class="fine">Manage who you follow and arrange My Corner from your profile. Other people approve incoming follow requests.</p>'}<p id="wpEditStatus" role="status" aria-live="polite"></p><button type="submit" class="wide" id="wpSave">Save profile</button></form>`;
  for(const r of d.results||[])addResult(r);
@@ -12149,7 +12187,7 @@ window.WMProfiles=(()=>{
  if(!p.athlete)sharing.outgoing_follow=!!sh.outgoing_follow;
  await rpc('save',{id:p.id,name:$p('wpName').value.trim(),details,sharing,discoverable:$p('wpDiscover').checked,music_approved:$p('wpMusicApproved').checked});
  detailsSaved=true;if(ticket!==generation||!allowed())return;if(file)await uploadPhoto(p.id,file);photoSaved=true;if(ticket!==generation||!allowed())return;
- await view(p.id);status('Profile saved.');
+ await refreshProfileNames();if(ticket!==generation||!allowed())return;await view(p.id);status('Profile saved.');
  }catch(err){if(ticket!==generation||!allowed())return;status((detailsSaved?(photoSaved||err.photoCommitted?'Your changes were saved, but the profile could not reload. ':err.photoSaveUncertain?'Your details were saved. Reopen the profile to check whether the photo finished saving. ':'Your profile details were saved, but the photo was not saved. '):'Profile not saved. ')+(err.message||'Please try again.'));btn.disabled=false;btn.textContent='Save profile';}};
  }
  function addResult(r){if($p('wpResults').children.length>=30){status('Up to 30 results per profile.');return;}const row=document.createElement('div');row.className='wp-panel';row.innerHTML=`<label>Tournament link (optional)<input data-field="url" type="url" maxlength="1000" placeholder="Paste a USA Bracketing, Trackwrestling or USA Wrestling link" value="${E(r.url||'')}"></label>`+[['event','Tournament'],['date','Date'],['style','Style'],['division','Division'],['placement','Placement']].map(([k,l])=>`<label>${l}${choices[k]?choiceControl(k,r[k]||'',`data-field="${k}"`):`<input data-field="${k}" ${k==='event'?'required':''} type="${k==='date'?'date':'text'}" maxlength="120" value="${E(r[k]||'')}">`}</label>`).join('')+button('Remove','data-wp-remove');$p('wpResults').appendChild(row);wireChoices(row);
@@ -12185,7 +12223,7 @@ window.WMProfiles=(()=>{
  function reviewRole(index){const r=roleRows[index];if(!r)return;const revoke=r.status==='approved';
  $p('wpRoleConfirm').innerHTML=`<section class="wp-panel"><h3>${revoke?'Remove approval':'Approve assigned role'}</h3><p>${E(r.name)} · ${E(r.label)} · ${E(r.scope)}</p><p class="fine">${revoke?'This removes the role badge approval. Membership and existing permissions stay unchanged.':'Confirm you recognize this member and their assigned role. This approval does not grant additional access or verify credentials.'}</p><label><input id="wpRoleAcknowledged" type="checkbox"> ${revoke?'I want to remove this approval.':'I confirm this assigned role.'}</label><div class="wp-actions">${button(revoke?'Remove approval':'Approve role',`data-wp-role-save="${index}"`)}${button('Cancel','data-wp-role-cancel')}</div></section>`;$p('wpRoleConfirm').scrollIntoView({block:'center'});$p('wpRoleAcknowledged').focus();
  }
- async function handle(b){if(!allowed())return;if(b.dataset.wpOwn)return view(b.dataset.wpOwn,false);if(b.dataset.wpPreviewId)return view(b.dataset.wpPreviewId,true);if(current?.preview&&(b.dataset.wpOpen||b.dataset.wpAffiliation))return;if(b.hasAttribute('data-wp-goals'))return WMGoals.profile(b.dataset.wpGoals);if(b.hasAttribute('data-wp-spouse'))return spouse();if(b.hasAttribute('data-wp-family-corner'))return saveFamilyCorner(b);if(b.hasAttribute('data-wp-trophy'))return WMExtras.media(current.id,b.dataset.preview==='true');if(b.hasAttribute('data-wp-role-queue')){roleQuery='';return roleQueue();}if(b.hasAttribute('data-wp-role-page'))return roleQueue(Number(b.dataset.wpRolePage)||0);if(b.hasAttribute('data-wp-role-review'))return reviewRole(Number(b.dataset.wpRoleReview));if(b.hasAttribute('data-wp-role-cancel'))return $p('wpRoleConfirm').replaceChildren();if(b.hasAttribute('data-wp-role-save')){if(!$p('wpRoleAcknowledged')?.checked)throw Error('Confirm the assigned role first.');const r=roleRows[Number(b.dataset.wpRoleSave)];if(!r)return;b.disabled=true;try{await rpc(r.status==='approved'?'revoke':'approve',{source:r.source,id:r.id,revision:r.revision},'wrestling_roles_request');await roleQueue();status('Role approval updated.');}finally{b.disabled=false;}return;}if(b.dataset.wpAffiliation)return affiliation(b.dataset.wpAffiliation,Number(b.dataset.offset)||0);if(b.hasAttribute('data-wp-family'))return WMFamily.open(current.id);if(b.hasAttribute('data-wp-home'))return home();if(b.dataset.wpOpen)return view(b.dataset.wpOpen);if(b.hasAttribute('data-wp-edit'))return edit();if(b.hasAttribute('data-wp-preview'))return view(current.id,true);if(b.hasAttribute('data-wp-requests'))return requests();if(b.hasAttribute('data-wp-links'))return links();if(b.hasAttribute('data-wp-remove'))return b.closest('.wp-panel').remove();if(b.hasAttribute('data-wp-share'))return share();if(b.hasAttribute('data-wp-follow')){await rpc('follow',{id:$p('wpActor').value,target:current.id});status('Follow request sent for approval.');}if(b.dataset.wpReview){await rpc('review',{id:current.id,source:b.dataset.source,status:b.dataset.wpReview});return requests();}if(b.dataset.wpUnfollow){await rpc('unfollow',{id:current.id,target:b.dataset.wpUnfollow});return links();}if(b.hasAttribute('data-wp-corner')){const members=[...$p('wpLinks').querySelectorAll('[data-corner]:checked')].map(i=>i.dataset.corner);if(members.length>8)throw Error('Choose up to eight people for My Corner.');const id=current.id,ticket=generation;b.disabled=true;try{await rpc('corner',{id,members});if(ticket!==generation)return;await view(id);status('My Corner saved.');window.WMFamily?.home().catch(()=>{});}finally{if(b.isConnected)b.disabled=false;}}}
+ async function handle(b){if(!allowed())return;if(b.dataset.wpOwn)return view(b.dataset.wpOwn,false);if(b.dataset.wpPreviewId)return view(b.dataset.wpPreviewId,true);if(current?.preview&&(b.dataset.wpOpen||b.dataset.wpAffiliation))return;if(b.hasAttribute('data-wp-goals'))return WMGoals.profile(b.dataset.wpGoals);if(b.hasAttribute('data-wp-spouse'))return spouse();if(b.hasAttribute('data-wp-family-corner'))return saveFamilyCorner(b);if(b.hasAttribute('data-wp-trophy'))return WMExtras.media(current.id,b.dataset.preview==='true');if(b.hasAttribute('data-wp-role-queue')){roleQuery='';return roleQueue();}if(b.hasAttribute('data-wp-role-page'))return roleQueue(Number(b.dataset.wpRolePage)||0);if(b.hasAttribute('data-wp-role-review'))return reviewRole(Number(b.dataset.wpRoleReview));if(b.hasAttribute('data-wp-role-cancel'))return $p('wpRoleConfirm').replaceChildren();if(b.hasAttribute('data-wp-role-save')){if(!$p('wpRoleAcknowledged')?.checked)throw Error('Confirm the assigned role first.');const r=roleRows[Number(b.dataset.wpRoleSave)];if(!r)return;b.disabled=true;try{await rpc(r.status==='approved'?'revoke':'approve',{source:r.source,id:r.id,revision:r.revision},'wrestling_roles_request');await roleQueue();status('Role approval updated.');}finally{b.disabled=false;}return;}if(b.dataset.wpAffiliation)return affiliation(b.dataset.wpAffiliation,Number(b.dataset.offset)||0);if(b.hasAttribute('data-wp-family'))return WMFamily.open(current.id);if(b.hasAttribute('data-wp-home'))return home();if(b.dataset.wpOpen)return view(b.dataset.wpOpen);if(b.hasAttribute('data-wp-name'))return editName();if(b.hasAttribute('data-wp-edit'))return edit();if(b.hasAttribute('data-wp-preview'))return view(current.id,true);if(b.hasAttribute('data-wp-requests'))return requests();if(b.hasAttribute('data-wp-links'))return links();if(b.hasAttribute('data-wp-remove'))return b.closest('.wp-panel').remove();if(b.hasAttribute('data-wp-share'))return share();if(b.hasAttribute('data-wp-follow')){await rpc('follow',{id:$p('wpActor').value,target:current.id});status('Follow request sent for approval.');}if(b.dataset.wpReview){await rpc('review',{id:current.id,source:b.dataset.source,status:b.dataset.wpReview});return requests();}if(b.dataset.wpUnfollow){await rpc('unfollow',{id:current.id,target:b.dataset.wpUnfollow});return links();}if(b.hasAttribute('data-wp-corner')){const members=[...$p('wpLinks').querySelectorAll('[data-corner]:checked')].map(i=>i.dataset.corner);if(members.length>8)throw Error('Choose up to eight people for My Corner.');const id=current.id,ticket=generation;b.disabled=true;try{await rpc('corner',{id,members});if(ticket!==generation)return;await view(id);status('My Corner saved.');window.WMFamily?.home().catch(()=>{});}finally{if(b.isConnected)b.disabled=false;}}}
 
  async function sharedLink(){const match=location.hash.match(/^#(wrestling-profile|spouse-invite)=([a-f0-9-]{36})$/i);if(!match||!allowed())return;if(await open()){if(match[1]==='wrestling-profile')await view(match[2]);else{const own=mine.find(x=>x.self&&!x.athlete);if(!own){status('A personal adult profile is needed to link a spouse.');return;}await view(own.id);if(current?.id===own.id&&allowed())await spouse();}}}
  mount();window.addEventListener('hashchange',()=>sharedLink().catch(e=>status(e.message)));
