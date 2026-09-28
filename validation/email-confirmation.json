@@ -1,0 +1,11 @@
+{
+  "checks": [
+    "Verified email confirmation offers browser continuation first, hides installed-app action, and strips credentials from URL and onward links",
+    "Continue in Browser reaches personal sign-in with no native app launch",
+    "Unconfirmed, rejected, and expired links offer browser sign-in/resend without claiming confirmation succeeded",
+    "Team and invitation links stay in the browser, preserve onboarding context, fit phone widths, and expose native links only as an explicit choice",
+    "Installed native builds do not show the browser/app choice"
+  ],
+  "engine": "Chromium; actual app pages with synthetic authentication responses",
+  "nativeDeviceVerified": false
+}
