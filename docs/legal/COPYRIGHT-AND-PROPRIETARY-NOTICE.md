@@ -1,8 +1,8 @@
 # Copyright and Proprietary Notice
 
-Copyright © 2026 [LLC LEGAL NAME]. All rights reserved.
+Copyright © 2026 Mele Sports Technologies LLC. All rights reserved.
 
-"The Team Manager" and related product names, logos, user-interface designs, documentation, source code, database schemas, workflows, audiovisual materials, and other original project materials are proprietary to [LLC LEGAL NAME] except where third-party rights or open-source licenses are expressly identified.
+"The Team Manager" and related product names, logos, user-interface designs, documentation, source code, database schemas, workflows, audiovisual materials, and other original project materials are proprietary to Mele Sports Technologies LLC except where third-party rights or open-source licenses are expressly identified.
 
 No permission is granted to copy, reproduce, distribute, modify, publish, sublicense, sell, reverse engineer, or create derivative commercial products from proprietary source materials merely because any repository, deployed web asset, preview, or documentation is publicly accessible.
 
@@ -15,5 +15,3 @@ Portions of the project were developed with generative-AI assistance. AI tools w
 ## Repository status
 
 This notice is proprietary and is not an open-source license. Absence of a separate open-source license should not be interpreted as permission to reuse proprietary code.
-
-**Action before release:** replace `[LLC LEGAL NAME]` with the exact legal entity name after verifying the LLC formation record.
