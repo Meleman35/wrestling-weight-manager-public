@@ -1,0 +1,52 @@
+name: Parent browser permission regressions
+on:
+  push:
+    branches: [codex/parent-browser-approval]
+  pull_request:
+    paths:
+      - parent-browser.html
+      - index.html
+      - src/profile-approvals.js
+      - supabase/functions/parent-browser/**
+      - supabase/functions/send-member-invitation/**
+      - supabase/functions/_shared/parent-tokens.ts
+      - supabase/migrations/*parent_browser*
+      - tests/parent-browser-*.cjs
+      - .ci/**
+      - .github/workflows/parent-browser.yml
+permissions:
+  contents: read
+concurrency:
+  group: parent-browser-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  permissions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NODE_PATH: ${{ github.workspace }}/.ci/node_modules
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - run: npm ci --prefix .ci --ignore-scripts --no-audit --no-fund
+      - run: node tests/parent-browser-db.cjs
+      - run: node tests/parent-browser-handler.cjs
+      - run: node tests/member-invitation-email.cjs
+      - run: .ci/node_modules/.bin/playwright install --with-deps chromium
+      - run: node tests/parent-browser-browser.cjs
+      - run: node tests/combined-invitation-browser.cjs
+      - run: node tests/login-onboarding-browser.cjs
+      - run: node tests/email-confirmation-browser.cjs
+      - run: node tests/profile-approval-browser.cjs
+      - run: node tests/parent-controls-browser.cjs
+      - run: node tests/profile-controls-browser.cjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: parent-browser-results
+          path: |
+            validation/parent-browser-*.json
+            validation/parent-browser-*.png
+          if-no-files-found: warn
