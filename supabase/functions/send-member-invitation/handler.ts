@@ -1,3 +1,4 @@
+import {newToken,tokenHash} from '../_shared/parent-tokens.ts';
 // Authentication link and team invitation are delivered together, once.
 // The inviter never receives the recipient's sign-in token or code.
 const cors={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS"};
@@ -16,6 +17,18 @@ export function createHandler(deps:Dependencies){return async(req:Request)=>{
   const checked=await deps.fetch(url+'/rest/v1/rpc/invitation_email_context',{method:'POST',headers:{apikey:key,Authorization:auth,'Content-Type':'application/json'},body:JSON.stringify({p_token:b.token,p_request_id:b.request_id}),signal:AbortSignal.timeout(15000)});
   if(!checked.ok)return json(checked.status===401?401:403,{error:'Invitation email was not authorized or was just submitted. Check the invitation and wait a minute before retrying.'});
   const context=await checked.json();if(!context?.id||context.request_id!==b.request_id||!/^\S+@\S+\.\S+$/.test(context.email)||!['athlete','parent_guardian'].includes(context.role))return json(502,{error:'Could not verify the invitation recipient.'});
+  if(context.role==='parent_guardian'){
+   const token=newToken();
+   const issued=await deps.fetch(url+'/rest/v1/rpc/parent_browser_service',{method:'POST',headers:{apikey:service,Authorization:'Bearer '+service,'Content-Type':'application/json'},body:JSON.stringify({p_action:'issue',p_data:{invitation_id:context.id,request_id:b.request_id,token_hash:await tokenHash(token)}}),signal:AbortSignal.timeout(15000)});
+   if(!issued.ok)return json(503,{error:'Parent choices are temporarily unavailable. Wait a minute and retry.'});
+   const bound=await issued.json();if(!bound.ok||bound.email!==context.email.trim().toLowerCase())return json(502,{error:'Could not verify the parent email.'});
+   const href='https://theteammanager.app/parent-browser.html#token='+token;
+   const team=String(context.team_name||'Your team').replace(/[\r\n]/g,' ').slice(0,120);
+   const text=`${team} has invited you to connect with your athlete.\n\nOpen your private choices link: ${href}\n\nYou can join as a parent, or, for an eligible coach-verified athlete aged 13–17, approve routine profile edits without installing the app or creating an account. Photos are a separate choice. Name, contact, visibility and safety controls remain protected. Doing nothing does not approve anything.\n\nThe link expires within seven days. You can later withdraw browser permission at https://theteammanager.app/parent-browser.html using a fresh email link. Keep this email private. Opening it does not approve anything or sign you in.`;
+   const sent=await deps.fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+mail,'Content-Type':'application/json','Idempotency-Key':'member-invitation/'+context.id+'/'+b.request_id},body:JSON.stringify({from:'Wrestling Manager <messages@wrestlingmanager.app>',to:[bound.email],subject:team+' — parent choices for your athlete',text,html:'<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;line-height:1.5"><h2>'+escape(team)+'</h2><p>Choose how you would like to be involved.</p><p><a href="'+escape(href)+'" style="display:inline-block;background:#143f85;color:white;padding:14px;border-radius:10px;text-decoration:none">Review parent choices</a></p><p>Join as a parent, or approve routine profile edits for an eligible, coach-verified teen without creating an account. Photos are optional. Protected controls stay in place.</p><p>Nothing is approved until you choose. This private link expires within seven days. You can withdraw browser permission later at <a href="https://theteammanager.app/parent-browser.html">Manage parent permissions</a>.</p></div>'}),signal:AbortSignal.timeout(20000)});
+   const result=await sent.json().catch(()=>null);if(!sent.ok||typeof result?.id!=='string')return json(502,{error:'Email delivery was not confirmed. Wait a minute before retrying.'});
+   return json(200,{ok:true,sent:1,id:result.id,parent_choices:true});
+  }
   const generate=async(type:string)=>deps.fetch(url+'/auth/v1/admin/generate_link',{method:'POST',headers:{apikey:service,Authorization:'Bearer '+service,'Content-Type':'application/json'},body:JSON.stringify({type,email:context.email,...(type==='invite'?{data:{full_name:String(context.name||'').slice(0,120),wm_onboarding_role:context.role}}:{})}),signal:AbortSignal.timeout(15000)});
   let response=await generate('invite'),link=await response.json();
   if(!response.ok&&['email_exists','user_already_exists'].includes(link?.error_code||link?.code)){response=await generate('magiclink');link=await response.json();}

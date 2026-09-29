@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.91: Preserve offline event edits after a failed device save. -->
+<!-- Wrestling Manager v0.20.92: Parent browser choices for coach-verified teen profiles. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -1963,8 +1963,8 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
 
   <section id="familySheet" class="sheet hidden" aria-modal="true">
     <div class="sheet-handle"></div>
-    <div class="sheet-head"><div><div class="eyebrow">FAMILY</div><h2>Family Connections</h2><p class="muted">Every parent or guardian uses a separate account connected to the athlete.</p></div><button class="icon-close" data-close-sheet>×</button></div>
-    <div id="athleteInviteParentBox" class="feature-card hidden"><h3>Invite a Parent / Guardian</h3><label>Name</label><input id="familyGuardianName"><label>Relationship</label><select id="familyGuardianRelationship"><option value="">Choose relationship…</option><option>Mother</option><option>Father</option><option>Stepparent</option><option>Grandparent</option><option>Legal Guardian</option><option>Foster Parent</option><option>Other</option></select><label>Email</label><input id="familyGuardianEmail" type="email"><label>Phone <span class="optional-label">optional if email is entered</span></label><input id="familyGuardianPhone" type="tel"><button id="familyCreateGuardianInviteBtn" class="wide">Create Parent Invite</button><div id="familyInviteShareBox"></div></div>
+    <div class="sheet-head"><div><div class="eyebrow">FAMILY</div><h2>Family Connections</h2><p class="muted">Parents can join with their own account or approve routine profile edits for an eligible teen through a private email link.</p></div><button class="icon-close" data-close-sheet>×</button></div>
+    <div id="athleteInviteParentBox" class="feature-card hidden"><h3>Invite a Parent / Guardian</h3><p class="fine">Create the invite, then choose Email to send private parent choices. Browser approval requires your coach to verify your parent’s contact and your recorded age of 13–17. No response does not count as approval.</p><label>Name</label><input id="familyGuardianName"><label>Relationship</label><select id="familyGuardianRelationship"><option value="">Choose relationship…</option><option>Mother</option><option>Father</option><option>Stepparent</option><option>Grandparent</option><option>Legal Guardian</option><option>Foster Parent</option><option>Other</option></select><label>Email</label><input id="familyGuardianEmail" type="email"><label>Phone <span class="optional-label">optional if email is entered</span></label><input id="familyGuardianPhone" type="tel"><button id="familyCreateGuardianInviteBtn" class="wide">Create Parent Invite</button><div id="familyInviteShareBox"></div></div>
     <div id="parentConnectGuardianBox" class="feature-card hidden">
       <h3>Connect Another Parent / Guardian</h3>
       <p class="muted">Request access for a co-parent, spouse, stepparent, grandparent, foster parent or legal guardian. A coach reviews the relationship before an account invite is created.</p>
@@ -2102,6 +2102,15 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
       <input id="guardianInvitePhone" type="tel" placeholder="Phone number">
       <button id="saveGuardianBtn" class="wide">Save Parent/Guardian</button>
       <div id="guardianSavedBox"></div>
+      <div id="parentBrowserVerification" class="hidden">
+        <h4>Optional: parent approval without an account</h4>
+        <p class="fine">For athletes aged 13–17. Confirm the saved contact directly with the parent or legal guardian, using your established team records or a conversation. A teen’s supplied email alone is not verification.</p>
+        <p id="parentBrowserBirthDate" class="fine"></p>
+        <label class="toggle-row"><span>I verified this person’s parent/legal guardian authority, their saved email and the athlete’s birth date.</span><input id="parentBrowserConfirmed" type="checkbox"></label>
+        <button id="verifyParentBrowserBtn" type="button" class="wide secondary">Verify for parent browser choices</button>
+        <p id="parentBrowserVerifyStatus" class="fine" role="status"></p>
+        <p class="fine">Then create an invite and choose Email. The private approval link goes only to the saved email. Copy, Text and Share remain account invitations. Reverification requires fresh parent approval.</p>
+      </div>
       <button id="createGuardianInviteBtn" class="wide secondary hidden" style="margin-top:10px">Create Account Invite</button>
       <div id="guardianInviteTokenBox"></div>
     </div>
@@ -2338,7 +2347,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.91</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.92</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -7600,10 +7609,11 @@ async function openAthleteAccess(athleteId){
   const roster=rosterRows.find(x=>x.athlete_id===athleteId); if(!roster) return;
   const {data:prof,error}=await client.rpc('get_athlete_profile_for_team',{p_athlete_id:athleteId,p_team_id:activeTeam.id});
   if(error){message(error.message,true);return;}
-  const a={id:athleteId,first_name:prof.first_name,last_name:prof.last_name,email:prof.email,phone:prof.phone};
+  const a={id:athleteId,first_name:prof.first_name,last_name:prof.last_name,email:prof.email,phone:prof.phone,birth_date:prof.birth_date};
   accessAthleteId=athleteId;
   accessAthleteRecord=a;
   accessGuardianRecord=null;
+  resetParentBrowserVerification();
   $('accessAthleteName').textContent=`${a.first_name} ${a.last_name}`;
   $('accessAthleteEmail').textContent=a.email ? `Athlete email on file: ${a.email}` : 'No athlete email is visible/on file. Use the team QR instead, or add an email in the athlete profile.';
   $('createAthleteInviteBtn').disabled=!a.email;
@@ -7629,6 +7639,7 @@ async function loadGuardianContacts(){
   $('guardianContactList').querySelectorAll('[data-guardian-id]').forEach(btn=>btn.addEventListener('click',()=>{
     const g=rows.find(x=>x.id===btn.dataset.guardianId); if(!g) return;
     accessGuardianRecord=g;
+    resetParentBrowserVerification();
     $('guardianInviteName').value=g.name||'';
     $('guardianRelationship').value=g.relationship||'';
     $('guardianInviteEmail').value=g.email||'';
@@ -7662,6 +7673,7 @@ async function saveGuardianContact(){
   $('saveGuardianBtn').disabled=false; $('saveGuardianBtn').textContent='Save Parent/Guardian';
   if(error){message(error.message,true);return;}
   accessGuardianRecord={id:data,name,email:email||null,phone:phone||null,relationship:relationship||null,invitation_status:'not_sent',guardian_user_id:null};
+  resetParentBrowserVerification();
   setPhoneValue('guardianInvitePhone',phone);
   $('guardianSavedBox').innerHTML=`<div class="notice">${esc(name)} is now saved as a parent/guardian for this athlete. This does not give account access until they accept an invite.</div>`;
   $('guardianInviteTokenBox').innerHTML=''; if($('credentialIssueBox')) $('credentialIssueBox').innerHTML='';
@@ -7670,6 +7682,22 @@ async function saveGuardianContact(){
   $('createGuardianInviteBtn').textContent='Create Account Invite';
   await loadGuardianContacts();
   message(`${name} saved as a parent/guardian.`);
+}
+
+function resetParentBrowserVerification(){
+ const g=accessGuardianRecord;
+ show('parentBrowserVerification',!!g&&!g.guardian_user_id);
+ $('parentBrowserConfirmed').checked=false;$('parentBrowserVerifyStatus').textContent='';
+ $('parentBrowserBirthDate').textContent='Athlete birth date on file: '+(accessAthleteRecord?.birth_date||'Not recorded — save it in the athlete profile first.');
+}
+async function verifyParentBrowserGuardian(){
+ const g=accessGuardianRecord,team=activeTeam?.id;
+ if(!g||!team||!$('parentBrowserConfirmed').checked){message('Confirm the guardian relationship, saved email and athlete birth date first.',true);return;}
+ if(($('guardianInviteEmail').value.trim().toLowerCase())!==String(g.email||'').trim().toLowerCase()||$('guardianInviteName').value.trim()!==g.name){message('Save the parent contact changes first, then verify.',true);return;}
+ $('verifyParentBrowserBtn').disabled=true;
+ try{const {data,error}=await client.rpc('parent_browser_verify',{p_guardian:g.id,p_team:team,p_confirm:true});if(error)throw error;if(!data?.verified)throw Error('Verification was not confirmed.');if(accessGuardianRecord?.id===g.id&&activeTeam?.id===team)$('parentBrowserVerifyStatus').textContent=data.message;}
+ catch(e){message(e.message||'Could not verify this guardian.',true);}
+ finally{$('verifyParentBrowserBtn').disabled=false;$('parentBrowserConfirmed').checked=false;}
 }
 
 async function createGuardianInvite(){
@@ -8778,7 +8806,7 @@ async function sendMemberInviteEmail(url){
  try{const {data,error}=await client.functions.invoke('send-member-invitation',{body:{token,request_id:crypto.randomUUID()}});
   if(error){let detail;try{detail=await error.context?.json();}catch{}throw Error(detail?.error||error.message);}
   if(!data?.ok)throw Error(data?.error||'Invitation email was not confirmed.');
-  message('One invitation email sent. They can tap Confirm & join team or use its code in the app.');
+  message(data.parent_choices?'Parent choices emailed privately. They can join, or approve an eligible teen’s routine profile edits without an account.':'One invitation email sent. They can tap Confirm & join team or use its code in the app.');
  }catch(e){message(e.message||'Could not send the invitation. Please try again.',true);}
  finally{memberInviteEmailsBusy.delete(token);}
 }
@@ -10424,7 +10452,7 @@ initializeCreationWeightSetups();
 
 $('newEventBtn').onclick=prepareEventForm; $('saveEventBtn').onclick=saveEvent; $('attendanceBtn').onclick=openAttendance; $('deleteEventBtn').onclick=deleteEvent; $('addEventCalendarBtn').onclick=addActiveEventToCalendar;
 $('subscribeAppleCalendarBtn').onclick=subscribeAppleCalendar; $('exportCalendarBtn').onclick=exportTeamCalendar; $('schedulePrevBtn').onclick=()=>moveScheduleFocus(-1); $('scheduleNextBtn').onclick=()=>moveScheduleFocus(1); $('scheduleTodayBtn').onclick=()=>{scheduleFocusDate=new Date();renderSchedule();}; document.querySelectorAll('[data-schedule-view]').forEach(b=>b.onclick=()=>setScheduleView(b.dataset.scheduleView));
-$('saveExcuseBtn').onclick=saveExcuse; $('createAthleteInviteBtn').onclick=createAthleteInvite; $('saveGuardianBtn').onclick=saveGuardianContact; $('createGuardianInviteBtn').onclick=createGuardianInvite;
+$('saveExcuseBtn').onclick=saveExcuse; $('createAthleteInviteBtn').onclick=createAthleteInvite; $('saveGuardianBtn').onclick=saveGuardianContact; $('verifyParentBrowserBtn').onclick=verifyParentBrowserGuardian; $('createGuardianInviteBtn').onclick=createGuardianInvite;
 $('joinAsAthleteBtn').onclick=()=>setJoinRole('athlete'); $('joinAsParentBtn').onclick=async()=>{setJoinRole('parent_guardian');await loadJoinGuardianDefaults();}; $('createAthleteProfileBtn').onclick=()=>setParentJoinPath('create'); $('findClaimableProfileBtn').onclick=findClaimableProfile; $('continueNewProfileBtn').onclick=continueWithNewProfile; $('joinBirthDate').onchange=()=>{resetJoinClaimMatch();updateJoinSensitiveControls();scheduleJoinProfileCheck();}; $('submitJoinRequestBtn').onclick=submitJoinRequest; $('joinRequestsBtn').onclick=openJoinRequests; $('agreementsBtn').onclick=openAgreements; $('editAgreementBtn').onclick=openAgreementEditor; $('saveAgreementDraftBtn').onclick=()=>saveAgreementDraft(false); $('previewAgreementBtn').onclick=openAgreementPreview; $('backToAgreementEditorBtn').onclick=backToAgreementEditor; $('publishAgreementBtn').onclick=publishAgreementDraft; $('agreementAthleteSelect').onchange=e=>loadFamilyAgreement(e.target.value); $('medicalClearanceBtn').onclick=openMedicalClearances; $('newMedicalCaseBtn').onclick=openNewMedicalCase; $('medicalNewType').onchange=updateMedicalNewType; $('createMedicalCaseBtn').onclick=createMedicalCase; $('saveAthleteProfileBtn').onclick=saveAthleteProfile; $('profilePhotoInput').onchange=beginProfilePhotoCrop; $('profileManageGuardiansBtn').onclick=()=>{if(profileAthleteId)openAthleteAccess(profileAthleteId);}; $('memberProfilesBtn').onclick=openMemberProfiles; $('familyBtn').onclick=openFamily; $('familyCreateGuardianInviteBtn').onclick=familyCreateGuardianInvite; $('familyRequestGuardianBtn').onclick=familyRequestGuardianConnection; $('parentAddChildBtn').onclick=()=>startJoinFlow(null,activeTeam.id,true);
 $('viewAthleteTrendBtn').onclick=()=>{if(viewAthleteId)openWeightTrend(viewAthleteId);};
 $('viewAthleteEditBtn').onclick=()=>{if(viewAthleteId)openAthleteProfile(viewAthleteId);};
@@ -12219,7 +12247,7 @@ window.WMProfileApprovals=(()=>{
   const own=document.createElement('button');own.className='wide secondary';own.textContent='My Profile';own.onclick=()=>WMProfiles.myProfile();$('profileApprovalsBody').append(own);
   for(const item of Array.isArray(settings)?settings:[]){
    const policy=item.policy||{},box=document.createElement('section');box.className='wp-panel';box.dataset.profilePolicy=item.profile_id;
-   box.innerHTML=`<h3>${E(item.name)} · parent controls</h3><p class="fine">Name, phone, contact email and contact-sharing changes always need parent approval.</p>${item.can_manage?`<label class="toggle-row"><span><b>Auto-approve profile edits</b><small>Off: approve every change.</small></span><input type="checkbox" data-auto-profile ${policy.auto_approve?'checked':''}></label><label class="toggle-row"><span><b>Review photo changes</b><small>When automatic approval is on, keep reviewing photos.</small></span><input type="checkbox" data-review-photos ${policy.review_photos!==false?'checked':''}></label><button type="button" data-save-profile-policy>Save parent settings</button><p class="profile-policy-note" role="status"></p>`:`<p>${policy.auto_approve?'Other profile edits save automatically. '+(policy.review_photos?'Photos need review.':'Photos save automatically.'):'Your parent reviews every change.'}</p>`}`;
+   box.innerHTML=`<h3>${E(item.name)} · parent controls</h3><p class="fine">Name, phone, contact email and contact-sharing changes always need parent approval.</p>${item.can_manage?`<label class="toggle-row"><span><b>Auto-approve profile edits</b><small>Off: approve every change.</small></span><input type="checkbox" data-auto-profile ${policy.auto_approve?'checked':''}></label><label class="toggle-row"><span><b>Review photo changes</b><small>When automatic approval is on, keep reviewing photos.</small></span><input type="checkbox" data-review-photos ${policy.review_photos!==false?'checked':''}></label><button type="button" data-save-profile-policy>Save parent settings</button><p class="profile-policy-note" role="status"></p>`:`<p>${policy.auto_approve?(policy.source==='parent_browser'?'Routine profile edits save with browser parent permission. Visibility changes still need parent review. ':'Other profile edits save automatically. ')+(policy.review_photos?'Photos need review.':'Photos save automatically.'):'Your parent reviews every change.'}</p>`}`;
    $('profileApprovalsBody').append(box);
    if(item.can_manage){
     const auto=box.querySelector('[data-auto-profile]'),photos=box.querySelector('[data-review-photos]'),save=box.querySelector('button'),note=box.querySelector('[role="status"]');
