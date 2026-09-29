@@ -2,5 +2,9 @@
   "name": "wrestling-manager-browser-verification",
   "private": true,
   "version": "1.0.0",
-  "devDependencies": { "playwright": "1.63.0" }
+  "devDependencies": {
+    "playwright": "1.63.0",
+    "jsdom": "26.0.0",
+    "@electric-sql/pglite": "0.5.8"
+  }
 }
