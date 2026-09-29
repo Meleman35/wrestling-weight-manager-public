@@ -5,6 +5,7 @@ on:
   pull_request:
     paths:
       - src/account-deletion.js
+      - scripts/account-deletion-*
       - tests/account-deletion-*.cjs
       - supabase/migrations/*account_deletion_intake_draft.sql
       - .github/workflows/launch-readiness.yml
@@ -32,6 +33,7 @@ jobs:
         run: |
           node tests/account-deletion-intake.cjs
           node tests/account-deletion-ui.cjs
+          node tests/account-deletion-plan.cjs
           node tests/team-recorder-login-ui.cjs
       - name: Core launch browser checks with synthetic accounts
         run: |
@@ -52,5 +54,6 @@ jobs:
           path: |
             validation/account-deletion-intake.json
             validation/account-deletion-ui.json
+            validation/account-deletion-plan.json
             validation/launch-browser-status.txt
           if-no-files-found: warn

@@ -26,6 +26,8 @@ This is an intake implementation, not an erasure implementation. A button that m
 
 ## Read-only inventory findings
 
+The follow-up [dependency review](account-deletion-dependency-review.md) adds a read-only catalogue query and offline planner. It expands the direct references below into a dependent-table graph, distinguishes potential cascade paths, and keeps tables outside that graph explicitly unreviewed. It never generates or executes erasure operations.
+
 The current schema has 176 foreign keys referencing Auth users or public profiles, including 70 without a cascade/null action. Shared team, organization, match, medical, guardian, social and video records require deliberate handling. This is a first-level dependency inventory, not a completed erasure graph. A blanket cascade would risk other people's records; deleting only Auth can fail and can leave personal content behind.
 
 Supabase documents that user deletion does not invalidate an already issued JWT, and owned Storage objects can prevent Auth deletion:
