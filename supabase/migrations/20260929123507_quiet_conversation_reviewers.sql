@@ -153,6 +153,16 @@ begin
    order by coalesce(lm.created_at,t.created_at) desc,t.id limit 51 offset offset_value
   ) x;
   return result;
+ elsif p_action='media' then
+  if th is null or not private.conversation_review_can_view(th,actor) then raise exception 'Reviewer access ended.' using errcode='42501';end if;
+  select jsonb_build_object('path',a.storage_path) into result
+  from public.communication_attachments a join public.communication_messages m on m.id=a.message_id and m.thread_id=a.thread_id
+  where a.id=nullif(p_data->>'attachment_id','')::uuid and a.thread_id=th and a.removed_at is null and m.deleted_at is null
+   and split_part(a.storage_path,'/',1)=tid::text
+   and exists(select 1 from public.communication_threads source where source.id::text=split_part(a.storage_path,'/',2)
+    and source.team_id=tid and coalesce(source.merged_into_thread_id,source.id)=th);
+  if result is null then raise exception 'This media is unavailable.' using errcode='42501';end if;
+  return result;
  elsif p_action='check' then
   if th is null or not private.conversation_review_can_view(th,actor) then raise exception 'Reviewer access ended.' using errcode='42501';end if;
   return jsonb_build_object('allowed',true);
@@ -163,7 +173,7 @@ begin
   select coalesce(jsonb_agg(x.item order by x.created_at desc,x.id desc),'[]') into result from (
    select m.id,m.created_at,jsonb_build_object('id',m.id,'at',m.created_at,'sender',private.communication_person_name(tid,m.sender_user_id),
     'body',case when m.deleted_at is null then m.body else 'Message removed' end,'safety_level',m.safety_level,
-    'attachments',case when m.deleted_at is not null then '[]'::jsonb else coalesce((select jsonb_agg(jsonb_build_object('id',a.id,'path',a.storage_path,'mime',a.mime_type,'name',a.file_name)) from public.communication_attachments a where a.message_id=m.id and a.thread_id=th and a.removed_at is null),'[]'::jsonb) end) item
+    'attachments',case when m.deleted_at is not null then '[]'::jsonb else coalesce((select jsonb_agg(jsonb_build_object('id',a.id,'mime',a.mime_type,'name',a.file_name)) from public.communication_attachments a where a.message_id=m.id and a.thread_id=th and a.removed_at is null),'[]'::jsonb) end) item
    from public.communication_messages m where m.thread_id=th and (before_time is null or (m.created_at,m.id)<(before_time,before_id))
    order by m.created_at desc,m.id desc limit 81
   ) x;
@@ -179,66 +189,3 @@ create function public.conversation_review_request(p_action text,p_data jsonb de
 returns jsonb language sql security invoker set search_path='' as $$select private.conversation_review_request(p_action,p_data)$$;
 revoke all on function public.conversation_review_request(text,jsonb) from public,anon;
 grant execute on function public.conversation_review_request(text,jsonb) to authenticated;
-
-CREATE OR REPLACE FUNCTION private.can_view_communication_media_before_review(p_name text)
- RETURNS boolean
- LANGUAGE plpgsql
- STABLE SECURITY DEFINER
- SET search_path TO ''
-AS $function$
-declare
-  v_user uuid:=(select auth.uid());
-  v_parts text[]:=string_to_array(coalesce(p_name,''),'/');
-  v_team uuid;
-  v_path_thread uuid;
-  v_access_thread uuid;
-begin
-  if v_user is null or cardinality(v_parts)<4 then
-    return false;
-  end if;
-
-  begin
-    v_team:=v_parts[1]::uuid;
-    v_path_thread:=v_parts[2]::uuid;
-  exception when invalid_text_representation then
-    return false;
-  end;
-
-  select coalesce(t.merged_into_thread_id,t.id)
-  into v_access_thread
-  from public.communication_threads t
-  where t.id=v_path_thread and t.team_id=v_team;
-
-  if v_access_thread is null or not exists(
-    select 1
-    from public.communication_threads t
-    join public.communication_thread_members m
-      on m.thread_id=t.id
-     and m.user_id=v_user
-     and m.left_at is null
-    where t.id=v_access_thread
-      and t.team_id=v_team
-      and t.archived_at is null
-  ) then
-    return false;
-  end if;
-
-  return not private.communication_user_is_minor(v_team,v_user)
-    or private.communication_minor_capability(v_team,v_user,'media_view');
-end;
-$function$;
-revoke all on function private.can_view_communication_media_before_review(text) from public,anon;
-grant execute on function private.can_view_communication_media_before_review(text) to authenticated;
-create or replace function private.can_view_communication_media_object(p_name text)
-returns boolean language sql stable security definer set search_path='' as $$
- select private.can_view_communication_media_before_review(p_name) or exists(
-  select 1 from public.communication_attachments a join public.communication_messages m on m.id=a.message_id and m.thread_id=a.thread_id
-  where a.storage_path=p_name and a.removed_at is null and m.deleted_at is null
-   and private.conversation_review_can_view(a.thread_id,auth.uid()))
-$$;
--- Reviewer-only media access must never become a deletion permission, even for
--- a previous uploader who no longer has ordinary conversation membership.
-alter policy communication_media_objects_delete on storage.objects using (
- bucket_id='communication-media' and (storage.foldername(name))[3]=(select auth.uid())::text
- and private.can_view_communication_media_before_review(name)
-);

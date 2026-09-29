@@ -273,3 +273,53 @@ begin
     );
 end;
 $function$;
+
+CREATE OR REPLACE FUNCTION private.can_view_communication_media_object(p_name text)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+declare
+  v_user uuid:=(select auth.uid());
+  v_parts text[]:=string_to_array(coalesce(p_name,''),'/');
+  v_team uuid;
+  v_path_thread uuid;
+  v_access_thread uuid;
+begin
+  if v_user is null or cardinality(v_parts)<4 then
+    return false;
+  end if;
+
+  begin
+    v_team:=v_parts[1]::uuid;
+    v_path_thread:=v_parts[2]::uuid;
+  exception when invalid_text_representation then
+    return false;
+  end;
+
+  select coalesce(t.merged_into_thread_id,t.id)
+  into v_access_thread
+  from public.communication_threads t
+  where t.id=v_path_thread and t.team_id=v_team;
+
+  if v_access_thread is null or not exists(
+    select 1
+    from public.communication_threads t
+    join public.communication_thread_members m
+      on m.thread_id=t.id
+     and m.user_id=v_user
+     and m.left_at is null
+    where t.id=v_access_thread
+      and t.team_id=v_team
+      and t.archived_at is null
+  ) then
+    return false;
+  end if;
+
+  return not private.communication_user_is_minor(v_team,v_user)
+    or private.communication_minor_capability(v_team,v_user,'media_view');
+end;
+$function$;
+revoke all on function private.can_view_communication_media_object(text) from public,anon;
+grant execute on function private.can_view_communication_media_object(text) to authenticated;

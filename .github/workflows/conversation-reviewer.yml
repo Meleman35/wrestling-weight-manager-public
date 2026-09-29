@@ -6,6 +6,7 @@ on:
     paths:
       - index.html
       - src/conversation-reviewers.js
+      - supabase/functions/conversation-review-media/**
       - supabase/migrations/*quiet_conversation_reviewers*
       - tests/conversation-reviewer-*
       - .github/workflows/conversation-reviewer.yml
@@ -27,6 +28,7 @@ jobs:
           node-version: '24'
       - run: npm ci --prefix .ci --ignore-scripts --no-audit --no-fund
       - run: node tests/conversation-reviewer-db.cjs
+      - run: node tests/conversation-reviewer-media.cjs
       - run: .ci/node_modules/.bin/playwright install --with-deps chromium
       - run: node tests/conversation-reviewer-browser.cjs
       - run: node tests/communications-041-browser.cjs
