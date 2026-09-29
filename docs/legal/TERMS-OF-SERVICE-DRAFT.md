@@ -1,9 +1,9 @@
 # Terms of Service — Draft
 
-**Working draft for attorney review. Do not publish as final until Company identity, subscriptions, dispute terms, governing law, and feature behavior are confirmed.**
+**Working draft for attorney review. Do not publish as final until subscriptions, dispute terms, governing law, and feature behavior are confirmed.**
 
 Effective date: __________  
-Provider: [LLC LEGAL NAME] ("Company")  
+Provider: **Mele Sports Technologies LLC** ("Company")  
 Service: The Team Manager, Wrestling Manager, related apps/websites/services
 
 ## 1. Eligibility and accounts
