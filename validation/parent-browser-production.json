@@ -1,0 +1,26 @@
+{
+  "release": "0.20.92",
+  "pr": 26,
+  "merge": "480043933101d2775a1ead0540a5056aabd60cd2",
+  "ci": [
+    36567008440,
+    36567008556,
+    36567002553
+  ],
+  "deployed": true,
+  "enabled": true,
+  "edgeVersions": {
+    "parent_browser": 1,
+    "send_member_invitation": 2
+  },
+  "publicChecks": {
+    "page": 200,
+    "index": "0.20.92",
+    "sw": "0.20.92",
+    "invalidCapability": 409,
+    "serviceRpcAnonymous": 401,
+    "invitationUnauthenticated": 401
+  },
+  "realEmailsSent": 0,
+  "nativeRebuildRequired": false
+}

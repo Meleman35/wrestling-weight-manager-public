@@ -1,0 +1,12 @@
+{
+  "passed": [
+    "Actual migration applies; disabled default preserves existing policy; only personal team staff can verify ages 13–17 and a distinct parent email",
+    "Preview creates no account or permission; explicit legal-guardian acknowledgment and notice version required; approval receipt is retry-safe",
+    "Name/contact/visibility/photo changes stay protected; any linked parent or changed verification evidence disables external delegation",
+    "Actual prepare/submit/publish functions complete text and opted-in photo edits without any parent Auth account",
+    "Photo opt-in is explicit; reverification requires new approval; expired/random links fail; recovery is rate limited; old receipts cannot undo withdrawal",
+    "A second guardian cannot override withdrawal; joining is recipient-bound and throttled",
+    "Private tables enforce RLS and deny raw client access; emergency switch restores legacy policy"
+  ],
+  "engine": "PGlite; actual migration; synthetic accounts only"
+}

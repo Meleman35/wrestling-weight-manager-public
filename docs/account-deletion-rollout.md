@@ -1,6 +1,6 @@
 # Account deletion — disabled draft, not launch complete
 
-Prepared September 28–29, 2026. This branch does not change `index.html`, sign-in, membership access, the native app, or production Supabase. No real account is deleted or disabled.
+Prepared September 28–29, 2026. The deletion-specific changes do not change `index.html`, sign-in, membership access, the native app, or production Supabase. This branch now includes the separately released parent-browser and reviewer work from main. No real account is deleted or disabled.
 
 ## Implemented and tested locally
 
@@ -50,3 +50,7 @@ https://supabase.com/docs/guides/auth/managing-user-data
 Only after fulfillment passes: mount the component in Profile → Account → Delete Account for all personal accounts, including users without a team and users with an active subscription. The adapter must call `invalidate()` on sign-out, account switch, app lock and kiosk/managed-login changes; supply authenticated RPC and the current account; prevent entry from locked/shared device contexts. Update the standalone and in-app privacy text together. Then enable the server switch deliberately. Never hide an incomplete deletion path behind a claim of compliance.
 
 No billing, child-consent, or access restrictions are activated by this branch.
+
+## September 29 integration update
+
+The dependency-file merge conflict is resolved without losing jsdom or either newer feature. See [reviewer and parent-browser deletion requirements](account-deletion-reviewer-parent-map.md). Deletion remains disabled and unmounted; no fulfillment worker is deployed.

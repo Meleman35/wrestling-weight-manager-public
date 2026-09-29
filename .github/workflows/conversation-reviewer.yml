@@ -1,0 +1,45 @@
+name: Quiet adult reviewer regressions
+on:
+  push:
+    branches: [codex/quiet-conversation-reviewer]
+  pull_request:
+    paths:
+      - index.html
+      - src/conversation-reviewers.js
+      - supabase/functions/conversation-review-media/**
+      - supabase/migrations/*quiet_conversation_reviewers*
+      - tests/conversation-reviewer-*
+      - .github/workflows/conversation-reviewer.yml
+permissions:
+  contents: read
+concurrency:
+  group: conversation-reviewer-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  permissions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NODE_PATH: ${{ github.workspace }}/.ci/node_modules
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - run: npm ci --prefix .ci --ignore-scripts --no-audit --no-fund
+      - run: node tests/conversation-reviewer-db.cjs
+      - run: node tests/conversation-reviewer-media.cjs
+      - run: .ci/node_modules/.bin/playwright install --with-deps chromium
+      - run: node tests/conversation-reviewer-browser.cjs
+      - run: node tests/communications-041-browser.cjs
+      - run: node tests/chat-drafts-090-browser.cjs
+      - run: node tests/login-onboarding-browser.cjs
+      - run: node tests/parent-controls-browser.cjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: conversation-reviewer-results
+          path: |
+            validation/conversation-reviewer-*.json
+            validation/conversation-reviewer-*.png
+          if-no-files-found: warn

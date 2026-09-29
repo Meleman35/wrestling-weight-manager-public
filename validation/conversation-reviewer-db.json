@@ -1,0 +1,10 @@
+{
+  "passed": [
+    "Feature starts off; only personal team admins assign verified adult staff; Team Mom must accept in her own account",
+    "Reviewer inbox covers only own-team coach–minor chats; authorizes media only through the server and cannot post, upload, delete, become a participant or receive routine notifications",
+    "Conversation members and guardians can see reviewer identity; removed messages/media stay hidden from reviewers; ordinary guardian media access is preserved",
+    "Removing access, changing staff role, losing approver authority, known-minor evidence or archiving a thread immediately stops new reads and signed-media access",
+    "Equal-timestamp history paginates without gaps; reviewers can stop their own access; private grants/audits and anonymous access are protected"
+  ],
+  "engine": "PGlite actual migration and existing send/upload functions; synthetic accounts only"
+}

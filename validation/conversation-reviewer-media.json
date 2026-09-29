@@ -1,0 +1,8 @@
+{
+  "passed": [
+    "Rejects unauthenticated, wrong-origin, arbitrary-path and caller-selected-expiry requests before accessing services",
+    "Verifies Auth and attachment permission as the caller before server signing a fixed 60-second URL",
+    "Revocation, removed media, invalid sessions and upstream failures cannot issue a link or leak provider details"
+  ],
+  "engine": "Node injected HTTP transport; synthetic accounts and objects only"
+}

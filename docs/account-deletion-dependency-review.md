@@ -22,7 +22,7 @@ Every table stays `UNREVIEWED`; `execution_ready` always remains false. Unknown/
 
 ## Current review findings
 
-September 29 read-only catalogue run: 217 tables and 480 foreign keys in the four selected schemas. There are 176 direct references to the account roots. The dependent-table graph spans 154 tables and 287 relationships: 109 cascade, 71 set-null, 96 no-action and 11 restrict. Fifty-four non-root tables have an all-cascade path from an account root. These are schema counts, not people/records affected by any specific deletion.
+September 29 catalogue run before reviewer installation: 217 tables and 480 foreign keys in the four selected schemas. There are 176 direct references to the account roots. The dependent-table graph spans 154 tables and 287 relationships: 109 cascade, 71 set-null, 96 no-action and 11 restrict. Fifty-four non-root tables have an all-cascade path from an account root. These are schema counts, not people/records affected by any specific deletion.
 
 The other 63 tables cannot be dismissed. In particular, athlete profiles, private medical/contact/identity records and athlete credentials sit outside this incoming-dependency traversal. Some are connected through athlete and guardian/member associations in the other direction. Deleting login/profile rows therefore does not establish that all of a person's athlete data has been removed. Conversely, a parent leaving must not automatically erase a shared child's record.
 
@@ -45,3 +45,7 @@ NODE_PATH=/path/to/dependencies/node_modules node tests/account-deletion-plan.cj
 ```
 
 Use the pinned PGlite dependency in `.ci/package.json`. Results are written to `validation/account-deletion-plan.json`. No production migration, feature switch, native source or tester permission is changed.
+
+## Integration with current main
+
+The deletion branch now incorporates released parent-browser and reviewer work. [The additional data map](account-deletion-reviewer-parent-map.md) identifies reviewer approvals, browser capabilities and non-account guardian records that fulfillment must handle. The metadata planner remains read-only and every disposition remains unreviewed.
