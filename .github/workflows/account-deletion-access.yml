@@ -1,0 +1,39 @@
+name: Account deletion access regressions
+on:
+  push:
+    branches: [codex/launch-account-deletion]
+  pull_request:
+    paths:
+      - scripts/account-deletion-access-draft.sql
+      - tests/account-deletion-access.cjs
+      - .github/workflows/account-deletion-access.yml
+permissions:
+  contents: read
+concurrency:
+  group: deletion-access-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  access:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      NODE_PATH: ${{ github.workspace }}/.ci/node_modules
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - run: npm ci --prefix .ci --ignore-scripts --no-audit --no-fund
+      - name: Isolated access guard and existing recorder regressions
+        run: |
+          node --check tests/account-deletion-access.cjs
+          node tests/account-deletion-access.cjs
+          node tests/team-recorder-login.cjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: deletion-access-results
+          path: |
+            validation/account-deletion-access.json
+            validation/team-recorder-login.json
+          if-no-files-found: error
