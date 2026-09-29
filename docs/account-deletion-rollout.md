@@ -22,7 +22,7 @@ Apple requires in-app initiation of account deletion. Ordinary apps cannot requi
 
 Source: https://developer.apple.com/support/offering-account-deletion-in-your-app/
 
-This is an intake implementation, not an erasure implementation. A button that merely stores requests cannot make the app launch-ready unless the fulfillment process works. The draft uses a 30-day maximum operational target, frozen as a deadline on each receipt; Damon must be able to meet that target before activation. It is not a claim about every jurisdiction's legal deadline.
+This is a disabled intake and fulfillment-infrastructure draft, not complete production erasure. A button that merely stores requests cannot make the app launch-ready unless the fulfillment process works. The draft uses a 30-day maximum operational target, frozen as a deadline on each receipt; Damon must be able to meet that target before activation. It is not a claim about every jurisdiction's legal deadline.
 
 ## Read-only inventory findings
 
@@ -54,3 +54,9 @@ No billing, child-consent, or access restrictions are activated by this branch.
 ## September 29 integration update
 
 The dependency-file merge conflict is resolved without losing jsdom or either newer feature. See [reviewer and parent-browser deletion requirements](account-deletion-reviewer-parent-map.md). Deletion remains disabled and unmounted; no fulfillment worker is deployed.
+
+## September 29 fulfillment infrastructure
+
+The [fulfillment implementation and release gates](account-deletion-fulfillment.md) now include a separate default-off execution switch, durable leased job/object ledgers, ordered verification checkpoints, idempotent retries/backoff, exact-object Storage/Auth SDK adapters, a deadline report, and scoped reviewer/parent capability cleanup. Eleven new isolated regression groups pass alongside the existing 24 intake/UI/planner groups. The refresh found 226 tables and 497 foreign keys; those are metadata counts, not an approved erasure plan.
+
+The worker requires explicit trusted adapters for global access revocation, complete record erasure, inventory, verification, retention/restore and confirmation. No production runner or those full adapters is wired, so this remains a draft. Physical device cleanup and production-schema acceptance are outstanding.

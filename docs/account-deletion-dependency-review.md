@@ -49,3 +49,5 @@ Use the pinned PGlite dependency in `.ci/package.json`. Results are written to `
 ## Integration with current main
 
 The deletion branch now incorporates released parent-browser and reviewer work. [The additional data map](account-deletion-reviewer-parent-map.md) identifies reviewer approvals, browser capabilities and non-account guardian records that fulfillment must handle. The metadata planner remains read-only and every disposition remains unreviewed.
+
+A subsequent catalogue refresh found 226 tables/497 foreign keys and 181 direct account-root references. [The new fulfillment draft](account-deletion-fulfillment.md) records the snapshot fingerprint and adds separately disabled worker infrastructure; it does not make this planner executable or approve any table's disposition.
