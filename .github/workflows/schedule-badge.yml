@@ -1,0 +1,43 @@
+name: Schedule badge regression
+on:
+  push:
+    branches: [codex/schedule-notification-baseline]
+  pull_request:
+    paths:
+      - src/schedule-badges.js
+      - tests/schedule-badges.cjs
+      - scripts/patch-schedule-badges.py
+      - .github/workflows/schedule-badge.yml
+permissions:
+  contents: read
+concurrency:
+  group: schedule-badge-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  badge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Read-only schedule badge trace
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          lines=Path('index.html').read_text().splitlines()
+          matches=[i for i,s in enumerate(lines) if re.search(r'(schedule.*(badge|unread|seen)|(badge|unread|seen).*schedule|function .*([Bb]adge|[Uu]nread)|mark.*[Ss]een)',s,re.I)]
+          print('MATCH LINES',[(i+1,lines[i][:180]) for i in matches[:100]])
+          selected=set()
+          for i in matches[:35]: selected.update(range(max(0,i-8),min(len(lines),i+18)))
+          for i in sorted(selected): print(str(i+1)+': '+lines[i][:1400])
+          PY
+      - name: Package checked-out public source for local regression work
+        run: git archive --format=tar.gz HEAD > "$RUNNER_TEMP/schedule-source.tar.gz"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: schedule-badge-source
+          path: ${{ runner.temp }}/schedule-source.tar.gz
+          if-no-files-found: error
+          retention-days: 3
