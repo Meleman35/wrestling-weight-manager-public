@@ -1,0 +1,51 @@
+name: Offline browser regressions
+on:
+  push:
+    branches: [codex/offline-event-save-recovery]
+  pull_request:
+    paths:
+      - index.html
+      - sw.js
+      - src/offline-*.js
+      - tests/offline-*.cjs
+      - tests/browser-fixture.js
+      - .ci/**
+      - .github/workflows/offline-regressions.yml
+permissions:
+  contents: read
+concurrency:
+  group: offline-regressions-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NODE_PATH: ${{ github.workspace }}/.ci/node_modules
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - run: npm ci --prefix .ci --ignore-scripts --no-audit --no-fund
+      - run: .ci/node_modules/.bin/playwright install --with-deps chromium
+      - name: Save-failure regression
+        run: node tests/offline-save-recovery-browser.cjs
+      - name: Offline queue, restart and storage regression
+        run: node tests/offline-088-browser.cjs
+      - name: Reconnect and incoming refresh regression
+        run: node tests/offline-refresh-090-browser.cjs
+      - name: Native availability guidance
+        run: node tests/offline-089-browser.cjs
+      - name: Vendored client startup
+        run: node tests/offline-088-bundle-smoke.cjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: offline-browser-results
+          path: |
+            validation/offline-save-recovery-browser.json
+            validation/offline-088-browser.json
+            validation/offline-refresh-090-browser.json
+            validation/offline-089-browser.json
+          if-no-files-found: warn

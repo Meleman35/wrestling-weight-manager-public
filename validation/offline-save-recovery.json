@@ -1,0 +1,10 @@
+{
+  "environment": "Node with jsdom 26.0.0, fake-indexeddb 6.0.0 and Web Crypto; no browser/device or server execution",
+  "checks": [
+    "Rejected storage commit retains unsaved event fields and permits retry without claiming success",
+    "Retry persists the edited event once with the original server revision",
+    "Duplicate-edit rejection preserves the existing operation and keeps the new input available",
+    "Lock clears unsaved fields from the screen and retains the encrypted outbox",
+    "Late failure after a profile change cannot replace the new profile screen or show the old error"
+  ]
+}
