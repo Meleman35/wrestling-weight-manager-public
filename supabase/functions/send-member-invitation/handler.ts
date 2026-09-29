@@ -17,7 +17,13 @@ export function createHandler(deps:Dependencies){return async(req:Request)=>{
   const checked=await deps.fetch(url+'/rest/v1/rpc/invitation_email_context',{method:'POST',headers:{apikey:key,Authorization:auth,'Content-Type':'application/json'},body:JSON.stringify({p_token:b.token,p_request_id:b.request_id}),signal:AbortSignal.timeout(15000)});
   if(!checked.ok)return json(checked.status===401?401:403,{error:'Invitation email was not authorized or was just submitted. Check the invitation and wait a minute before retrying.'});
   const context=await checked.json();if(!context?.id||context.request_id!==b.request_id||!/^\S+@\S+\.\S+$/.test(context.email)||!['athlete','parent_guardian'].includes(context.role))return json(502,{error:'Could not verify the invitation recipient.'});
+  let parentChoices=false;
   if(context.role==='parent_guardian'){
+   const mode=await deps.fetch(url+'/rest/v1/rpc/parent_browser_service',{method:'POST',headers:{apikey:service,Authorization:'Bearer '+service,'Content-Type':'application/json'},body:JSON.stringify({p_action:'email_mode',p_data:{}}),signal:AbortSignal.timeout(15000)});
+   if(!mode.ok)return json(503,{error:'Parent invitation settings could not be checked. Wait a minute and retry.'});
+   parentChoices=(await mode.json()).enabled===true;
+  }
+  if(parentChoices){
    const token=newToken();
    const issued=await deps.fetch(url+'/rest/v1/rpc/parent_browser_service',{method:'POST',headers:{apikey:service,Authorization:'Bearer '+service,'Content-Type':'application/json'},body:JSON.stringify({p_action:'issue',p_data:{invitation_id:context.id,request_id:b.request_id,token_hash:await tokenHash(token)}}),signal:AbortSignal.timeout(15000)});
    if(!issued.ok)return json(503,{error:'Parent choices are temporarily unavailable. Wait a minute and retry.'});

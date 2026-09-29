@@ -1,0 +1,11 @@
+{
+  "passed": [
+    "Phone/tablet/desktop fit; email scanners only preview; token is removed from URL and never stored; unchecked defaults grant nothing",
+    "Explicit approval records receipt without an account; photos remain protected unless separately selected",
+    "Management link requires explicit withdrawal and never offers fresh delegation",
+    "Ineligible athletes cannot delegate; expired links retain a generic email-recovery path",
+    "Join hands a verified matching-email session into existing invitation acceptance; mismatched credentials cannot enter an account",
+    "Coach verification requires an explicit attestation and binds to the selected saved guardian and team"
+  ],
+  "engine": "Chromium; synthetic HTTP/Auth only; no real messages"
+}

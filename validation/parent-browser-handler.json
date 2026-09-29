@@ -5,7 +5,8 @@
     "Parent invitation sends one bound email; inviter never sees the capability and no Auth account is created",
     "Explicit Join validates the emailed capability before creating/signing in the recipient; existing account metadata stays intact",
     "Recovery is generic for known/unknown/failed delivery and sends secrets only to the database-bound email",
-    "Unconfirmed invitation delivery does not report success"
+    "Unconfirmed invitation delivery does not report success",
+    "Disabling browser choices preserves the existing parent account invitation email flow"
   ],
   "engine": "Node injected HTTP transport; no real messages or Auth accounts"
 }

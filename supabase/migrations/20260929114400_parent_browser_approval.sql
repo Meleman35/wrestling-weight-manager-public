@@ -119,6 +119,7 @@ declare inv public.guardian_invitations%rowtype; g public.athlete_guardians%rowt
 begin
  if coalesce(auth.jwt()->>'role','')<>'service_role' then raise exception 'Service authentication required.' using errcode='42501';end if;
  if jsonb_typeof(p_data)<>'object' or octet_length(p_data::text)>4000 then raise exception 'Invalid request.';end if;
+ if p_action='email_mode' then return jsonb_build_object('enabled',exists(select 1 from private.parent_browser_settings where id and enabled));end if;
  if not exists(select 1 from private.parent_browser_settings where id and enabled) then raise exception 'Parent browser choices are temporarily unavailable.';end if;
  if p_action='issue' then
   select * into inv from public.guardian_invitations where id=(p_data->>'invitation_id')::uuid;

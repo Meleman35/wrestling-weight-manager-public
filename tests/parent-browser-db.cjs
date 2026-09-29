@@ -55,14 +55,16 @@ const policy=async()=> (await sql('select private.profile_approval_policy($1) r'
 const token=()=>createHash('sha256').update(randomUUID()).digest('hex');
 const issue=async(hash=token())=>{await service('issue',{invitation_id:ids.invitation,request_id:ids.request,token_hash:hash});return hash;};
 const approve=(hash,photos=true)=>service('approve',{token_hash:hash,acknowledge:true,notice_version:'teen-profile-v1',review_photos:photos});
-assert.deepEqual(await policy(),{auto_approve:false,review_photos:true});await assert.rejects(()=>issue(),/temporarily unavailable/);
+assert.deepEqual(await policy(),{auto_approve:false,review_photos:true});assert.deepEqual(await service('email_mode'),{enabled:false});await assert.rejects(()=>issue(),/temporarily unavailable/);
 await sql('update private.parent_browser_settings set enabled=true');
 await as(ids.teen);await assert.rejects(()=>verify(),/coach/);await assert.rejects(()=>db.query("select public.parent_browser_service('preview','{}')"),/permission denied/);
 await as(ids.coach);await assert.rejects(()=>verify(ids.guardian,ids.otherteam),/coach/);await assert.rejects(()=>verify(ids.guardian,ids.team,false),/Confirm/);
 for(const years of [12,18]){await sql("update public.athletes set birth_date=current_date-make_interval(years=>$1)",[years]);await as(ids.coach);await assert.rejects(()=>verify(),/13–17/);}
 await sql('update public.athletes set birth_date=null');await as(ids.coach);await assert.rejects(()=>verify(),/13–17/);
 await sql("update public.athletes set birth_date=current_date-interval '15 years'");await sql("update public.athlete_guardians set email='teen@example.invalid'");await as(ids.coach);await assert.rejects(()=>verify(),/athlete email/);
-await sql("update public.athlete_guardians set email='parent@example.invalid'");await as(ids.coach);assert((await verify()).verified);
+await sql("update public.athlete_guardians set email='parent@example.invalid'");
+await sql("insert into public.athlete_private_identity values($1,current_date-interval '12 years')",[ids.a]);await as(ids.coach);await assert.rejects(()=>verify(),/13–17/);await sql('delete from public.athlete_private_identity');
+await as(ids.coach);assert((await verify()).verified);
 await sql('insert into private.team_logins values($1)',[ids.coach]);await as(ids.coach);await assert.rejects(()=>verify(),/coach/);await sql('delete from private.team_logins');
 pass('Actual migration applies; disabled default preserves existing policy; only personal team staff can verify ages 13–17 and a distinct parent email');
 await assert.rejects(()=>service('issue',{invitation_id:ids.invitation,request_id:randomUUID(),token_hash:token()}),/unavailable/);
@@ -86,6 +88,7 @@ const proposal=(await sql('select private.profile_approval_snapshot($1) r',[ids.
 const prepared=await profileAction('prepare',{kind:'social',id:ids.profile,proposal});await profileAction('save_draft',{id:prepared.id});assert.equal((await profileAction('submit',{id:prepared.id})).auto_approved,true);
 assert.equal((await sql('select details from private.wrestling_profiles where id=$1',[ids.profile])).rows[0].details.bio,'Approved through actual pipeline');
 const photo=await profileAction('prepare',{kind:'social',id:ids.profile,new_photo:true});await sql("insert into storage.objects values('profile-photo-requests',$1,$2,'{\"mimetype\":\"image/jpeg\",\"size\":100}')",[photo.path,ids.teen]);await profileAction('save_draft',{id:photo.id});assert.equal((await profileAction('submit',{id:photo.id})).auto_photo,true);
+await sql("update private.parent_browser_permissions set mode='revoked'");await as(ids.teen);await db.exec('reset role');await assert.rejects(()=>db.query("select private.complete_profile_approval($1,$2,'{}')",[photo.id,ids.profile]),/linked parent/);await sql("update private.parent_browser_permissions set mode='teen_managed'");
 await as(ids.teen);await db.exec('reset role');await db.query("select private.complete_profile_approval($1,$2,'{\"photo\":\"published\"}')",[photo.id,ids.profile]);
 assert.equal((await sql('select status from private.profile_approval_requests where id=$1',[photo.id])).rows[0].status,'approved');
 pass('Actual prepare/submit/publish functions complete text and opted-in photo edits without any parent Auth account');
