@@ -2,7 +2,7 @@
 
 **Use before any outside developer, designer, photographer, videographer, consultant, or contractor contributes material. Attorney review recommended.**
 
-Company: [LLC LEGAL NAME]  
+Company: **Mele Sports Technologies LLC**  
 Contributor: ______________________________  
 Project: The Team Manager and related products
 
@@ -39,4 +39,4 @@ Contributor may not copy production personal data into personal devices, public 
 Contributor will reasonably assist with confirming Company ownership and executing documents needed for registration or enforcement.
 
 Contributor: ________________________ Date: __________  
-Company: ___________________________ Date: __________
+Mele Sports Technologies LLC: ___________________________ Date: __________
