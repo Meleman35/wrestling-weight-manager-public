@@ -4,8 +4,10 @@ on:
     branches: [codex/schedule-notification-baseline]
   pull_request:
     paths:
+      - index.html
+      - sw.js
       - src/schedule-badges.js
-      - tests/schedule-badges.cjs
+      - tests/schedule-badges*.cjs
       - scripts/patch-schedule-badges.py
       - .github/workflows/schedule-badge.yml
 permissions:
@@ -16,28 +18,42 @@ concurrency:
 jobs:
   badge:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      NODE_PATH: ${{ github.workspace }}/.ci/node_modules
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          persist-credentials: false
-      - name: Read-only schedule badge trace
+          node-version: '24'
+      - run: python3 scripts/patch-schedule-badges.py
+      - run: python3 scripts/patch-schedule-badges.py --check
+      - run: node tests/schedule-badges.cjs
+      - run: npm ci --prefix .ci --ignore-scripts --no-audit --no-fund
+      - run: .ci/node_modules/.bin/playwright install --with-deps chromium
+      - name: Select installed Chromium
+        run: node -e 'process.stdout.write("CHROMIUM_EXECUTABLE_PATH="+require("playwright").chromium.executablePath()+"\n")' >> "$GITHUB_ENV"
+      - run: node tests/schedule-badges-browser.cjs
+      - name: Save only the tested generated bundle to the isolated work branch
+        if: github.event_name == 'push' && github.ref == 'refs/heads/codex/schedule-notification-baseline'
         run: |
-          python3 - <<'PY'
-          import re
-          from pathlib import Path
-          lines=Path('index.html').read_text().splitlines()
-          matches=[i for i,s in enumerate(lines) if re.search(r'(schedule.*(badge|unread|seen)|(badge|unread|seen).*schedule|function .*([Bb]adge|[Uu]nread)|mark.*[Ss]een)',s,re.I)]
-          print('MATCH LINES',[(i+1,lines[i][:180]) for i in matches[:100]])
-          selected=set()
-          for i in matches[:35]: selected.update(range(max(0,i-8),min(len(lines),i+18)))
-          for i in sorted(selected): print(str(i+1)+': '+lines[i][:1400])
-          PY
-      - name: Package checked-out public source for local regression work
-        run: git archive --format=tar.gz HEAD > "$RUNNER_TEMP/schedule-source.tar.gz"
+          set -euo pipefail
+          test "$GITHUB_REF" = refs/heads/codex/schedule-notification-baseline
+          test "$(git ls-remote origin "$GITHUB_REF" | cut -f1)" = "$GITHUB_SHA"
+          git add -- index.html sw.js
+          if ! git diff --cached --quiet; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit -m 'Embed tested schedule badge baseline and scoped response guards (v0.20.94)'
+            git push origin "HEAD:$GITHUB_REF"
+          fi
+          git log -1 --format=%H
+          git hash-object index.html sw.js
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
         with:
-          name: schedule-badge-source
-          path: ${{ runner.temp }}/schedule-source.tar.gz
+          name: schedule-badge-results
+          path: validation/schedule-badges*.json
           if-no-files-found: error
-          retention-days: 3
