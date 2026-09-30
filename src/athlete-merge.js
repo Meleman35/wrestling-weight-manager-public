@@ -1,0 +1,39 @@
+/* Manual duplicate cleanup. No live merge happens until review + typed confirmation. */
+window.WMAthleteMerge=(()=>{
+ const E=esc,$m=id=>document.getElementById(id);let epoch=0,owner='',list=[],plan=null,busy=false;
+ const key=()=>[session?.user?.id,activeTeam?.id,viewMode,!!managedLogin].join(':');
+ const allowed=()=>!!session?.user?.id&&!!activeTeam&&isTeamAdmin&&viewMode!=='parent'&&!managedLogin&&!document.body.classList.contains('kiosk-locked')&&$m('appLockOverlay').classList.contains('hidden');
+ const sheet=document.createElement('section');sheet.id='athleteMergeSheet';sheet.className='sheet hidden';sheet.setAttribute('role','dialog');sheet.setAttribute('aria-modal','true');sheet.setAttribute('aria-labelledby','amTitle');sheet.innerHTML='<div class="sheet-head"><h2 id="amTitle">Merge athletes</h2><button type="button" class="icon-close" data-close-sheet aria-label="Close merge">×</button></div><p id="amStatus" role="status" aria-live="polite"></p><div id="amBody"></div>';document.body.append(sheet);
+ const style=document.createElement('style');style.textContent='#athleteMergeSheet{max-width:620px}.am-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}.am-person{border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0;overflow-wrap:anywhere}.am-person b,.am-person small{display:block}.am-person small{margin-top:6px;color:var(--muted)}.am-warning{background:#fff7df;border:1px solid #e5cf8d;border-radius:12px;padding:12px}.am-records{max-height:180px;overflow:auto}#athleteMergeSheet input{font-size:16px}.family-profile-picker #mergeAthletesBtn{display:none!important}@media(max-width:360px){.am-pair{grid-template-columns:1fr}}';document.head.append(style);
+ const valid=g=>g===epoch&&owner===key()&&allowed()&&!sheet.classList.contains('hidden');
+ function reset(){epoch++;owner='';list=[];plan=null;busy=false;$m('amBody').replaceChildren();$m('amStatus').textContent='';sheet.classList.add('hidden');}
+ function note(s){$m('amStatus').textContent=s;}
+ async function call(action,data={},g=epoch){if(!valid(g))throw Error('Reopen merge from your team administrator account.');if(!navigator.onLine)throw Error('Connect to the internet to review or merge athletes.');const r=await client.rpc('athlete_merge_request',{p_action:action,p_data:{team_id:activeTeam.id,view_as_parent:viewMode==='parent',...data}});if(!valid(g))throw Error('Account or team changed. Reopen merge.');if(r.error)throw r.error;return r.data;}
+ const label=a=>a.name+(a.has_login?' · Athlete login linked':'')+' · Added '+(a.created_at?new Date(a.created_at).toLocaleDateString():'earlier');
+ function picker(keep=''){
+  plan=null;const opt='<option value="">Choose an athlete</option>'+list.map(a=>`<option value="${E(a.id)}">${E(label(a))}</option>`).join('');
+  $m('amBody').innerHTML=`<p>Use this only when two roster entries are the same person. Keep their established profile and combine the duplicate’s records.</p><label>Profile to keep<select id="amKeep">${opt}</select></label><label>Duplicate to combine<select id="amDuplicate">${opt}</select></label><button id="amReview" type="button" class="wide">Review merge</button><p class="fine">Only profiles on this team appear. You must administer all affected teams. Separate sign-in accounts and conflicting records need review before a merge.</p>`;
+  if(keep&&list.some(x=>x.id===keep))$m('amKeep').value=keep;
+  $m('amReview').onclick=async()=>{if(busy)return;const k=$m('amKeep').value,s=$m('amDuplicate').value;if(!k||!s||k===s){note('Choose two different athletes.');return;}busy=true;$m('amReview').disabled=true;const g=++epoch;note('Reviewing records and permissions…');try{const out=await call('preview',{keep_id:k,duplicate_id:s},g);if(valid(g)){plan=out;review();note('');}}catch(e){if(valid(g)){note(e.message);$m('amReview').disabled=false;}}finally{if(valid(g))busy=false;}};
+ }
+ function review(){
+  const person=(a,title)=>`<div class="am-person"><small>${title}</small><b>${E(a.name)}</b><small>Added ${E(a.created_at?new Date(a.created_at).toLocaleDateString():'earlier')}</small></div>`;
+  $m('amBody').innerHTML=`<div class="am-pair">${person(plan.keep,'KEEP THIS PROFILE')}${person(plan.duplicate,'COMBINE THIS DUPLICATE')}</div><details><summary>Records attached to the duplicate</summary><ul class="am-records">${plan.records.map(r=>`<li>${E(r.table.replaceAll('_',' '))}: ${r.count}</li>`).join('')||'<li>No additional records</li>'}</ul></details>${plan.blockers.length?`<div class="am-warning"><b>Resolve these items first</b><ul>${plan.blockers.map(x=>`<li>${E(x)}</li>`).join('')}</ul><p>Neither profile has been changed.</p></div>`:'<p class="am-warning">The duplicate roster entry will be removed after its records move to the profile you keep. When both are in the same season, the kept profile’s lineup and roster status stay in place. Team and style history stay separate. Sign-in accounts are not deleted. This cannot be undone from the app.</p><form id="amConfirmForm"><label for="amConfirm">Type <b>merge</b> to confirm these are the same athlete</label><input id="amConfirm" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="merge" required><button id="amCommit" type="submit" class="wide danger" disabled>Merge athletes</button></form>'}<button id="amChooseAgain" type="button" class="wide secondary">Choose different profiles</button>`;
+  $m('amChooseAgain').onclick=()=>{if(!busy){picker(plan.keep.id);note('');}};
+  if(!plan.blockers.length){$m('amConfirm').oninput=()=>{$m('amCommit').disabled=busy||$m('amConfirm').value!=='merge';};$m('amConfirmForm').onsubmit=commit;}
+ }
+ async function commit(event){event.preventDefault();if(busy||!plan||$m('amConfirm').value!=='merge')return;const reviewed=plan,g=++epoch;busy=true;$m('amCommit').disabled=true;$m('amChooseAgain').disabled=true;note('Merging records…');
+  try{
+   const offline=await window.WMOfflineStore?.get(session.user.id);if(!valid(g))return;if(offline?.queue?.length)throw Error('Sync the saved offline work on this device before merging.');
+   const r=await call('merge',{keep_id:reviewed.keep.id,duplicate_id:reviewed.duplicate.id,version:reviewed.version,confirmation:'merge'},g);
+   if(r?.status!=='completed')throw Error('Completion was not confirmed. Reopen and review the profiles before trying again.');
+   if(!valid(g))return;plan=null;$m('amBody').innerHTML='<p><b>Merge complete.</b> Records are attached to the profile you kept.</p><p>Refresh other devices and update their saved offline team before adding more records. Role verification may need review after family links move.</p><button id="amDone" type="button" class="wide">Back to roster</button>';note('');$m('amDone').onclick=async()=>{reset();await refresh();if(allowed())openSheet('rosterSheet');};window.WMStatistics?.reset();
+  }catch(e){if(valid(g)){note(e.message||'Completion could not be confirmed. You can retry the same reviewed merge.');$m('amCommit').disabled=false;$m('amChooseAgain').disabled=false;}}
+  finally{if(valid(g))busy=false;}
+ }
+ async function open(keep=''){if(!allowed())return;reset();owner=key();openSheet(sheet.id);const g=epoch;note('Loading team athletes…');try{list=await call('candidates',{},g);if(!valid(g))return;picker(keep);note(list.length<2?'At least two athlete profiles are needed for a merge.':'');}catch(e){if(valid(g))note(e.message);}}
+ const anchor=$m('addAthleteBtn'),button=document.createElement('button');button.id='mergeAthletesBtn';button.type='button';button.className='wide secondary hidden';button.textContent='Merge duplicate athletes';button.onclick=()=>open();anchor?.after(button);
+ sheet.querySelector('[data-close-sheet]').onclick=()=>{reset();closeSheets();};window.addEventListener('pagehide',reset);
+ setInterval(()=>{button.classList.toggle('hidden',!allowed());if(owner&&(owner!==key()||!allowed()))reset();},500);
+ return {open,reset};
+})();
