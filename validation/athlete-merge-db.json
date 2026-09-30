@@ -4,6 +4,8 @@
     "Merge requires exact typed confirmation and the reviewed version",
     "Actual full-schema merge preserves weights, scorebooks and paths, removes the duplicate roster row and is retry-safe",
     "Compatible personal fields merge and sharing keeps the stricter consent",
+    "Explicit reviewed contact choice preserves the kept contacts and sign-in, stricter consent, private-only values and retry receipt",
+    "Root contact conflicts require the same reviewed choice and new helpers remain inaccessible to clients",
     "Conflicting identity values block without changing either athlete",
     "Membership on another team cannot be moved without authority for that team",
     "Two attendance records for one event require review instead of being overwritten",

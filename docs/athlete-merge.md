@@ -17,3 +17,10 @@ Merges require an online session. Pending offline operations on the requesting d
 ## Verification
 
 `tests/athlete-merge-db.mjs` reconstructs the full application schema, real constraints/indexes and relevant profile/permission mutation triggers in isolated PGlite. It checks record preservation, authority, typed confirmation, stale reviews, retries, conflicting identities/attendance, established social records, family account preservation, full rollback and schema drift. `tests/athlete-merge-browser.cjs` checks phone layouts, selection/review/confirmation, blocked cases and account-switch races with synthetic records. Never use a real athlete as a destructive test fixture.
+
+
+## Contact review (v0.20.104)
+
+When contact email or phone differs, the preview identifies the fields without returning private values. The administrator may explicitly keep the details from the profile marked KEEP THIS PROFILE, then review and type `merge`. They can switch the selected profiles instead. The choice is bound to the preview version and recorded in the audit receipt; it does not merge anything by itself.
+
+Conflicting contact values retain the kept profile’s details; missing, non-conflicting fields combine as before. Email/phone sharing and SMS consent retain the stricter settings. Private-only contacts are not copied into legacy public fields to resolve a conflict. Auth login email/password are never changed by this operation. Identity, account, guardian, social and saved-record blockers still apply. No real athlete merges are performed as part of deployment or regression tests.
