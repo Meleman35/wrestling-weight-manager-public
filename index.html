@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.93: Quiet, read-only conversation review for approved adult helpers. -->
+<!-- Wrestling Manager v0.20.94: Quiet first-load schedule badges and account/team-safe schedule responses. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -2347,7 +2347,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.93</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.94</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -2618,6 +2618,66 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <div class="two-col"><button id="saveLineupClassBtn" class="wide" type="button">Save Class</button><button id="clearLineupClassBtn" class="wide secondary" type="button">Clear</button></div>
   </section>
 
+<script id="scheduleBadges094Script">
+/* Schedule observation is per account/team on this device, not a server notification inbox.
+   Reuses the existing numeric localStorage key; stores no event titles or event records. */
+window.WMScheduleBadges = (() => {
+  'use strict';
+  let sequence = 0, snapshot = null;
+  const fallback = new Map();
+  const scope = () => ({userId: session?.user?.id, teamId: activeTeam?.id,
+    seasonId: activeSeason?.id || '', team: activeTeam});
+  const same = c => !!c && !!c.userId && !!c.teamId &&
+    c.userId === session?.user?.id && c.teamId === activeTeam?.id &&
+    c.seasonId === (activeSeason?.id || '') && c.team === activeTeam;
+  const key = c => `wm_nav_seen_schedule_${c.userId}_${c.teamId}`;
+  function read(c) {
+    const k = key(c); let value = fallback.get(k) ?? null;
+    try {
+      const raw = localStorage.getItem(k), n = Number(raw);
+      if (raw !== null && raw.trim() !== '' && Number.isFinite(n) && n >= 0)
+        value = Math.max(value ?? 0, n);
+    } catch { /* Storage may be disabled. Keep the current session usable. */ }
+    return value;
+  }
+  function write(c, value) {
+    const k = key(c), n = Math.max(read(c) ?? 0, value);
+    fallback.set(k, n);
+    try { localStorage.setItem(k, String(n)); } catch { /* Memory-only fallback. */ }
+  }
+  const stamp = row => {
+    const n = Date.parse(row?.updated_at || row?.created_at || '');
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  };
+  const latest = stamps => stamps.reduce((n, t) => Math.max(n, t), 0);
+  function reset() { sequence++; snapshot = null; }
+  function begin() {
+    const c = scope();
+    return c.userId && c.teamId ? {...c, sequence: ++sequence} : null;
+  }
+  const valid = c => same(c) && c.sequence === sequence;
+  function accept(c, rows) {
+    if (!valid(c) || !Array.isArray(rows)) return false;
+    const stamps = rows.map(stamp);
+    // Only a successful, current schedule response can initialize the baseline.
+    // Missing is different from a saved zero (a successfully loaded empty schedule).
+    if (read(c) === null) write(c, latest(stamps));
+    snapshot = {scope: c, stamps};
+    return true;
+  }
+  function markSeen() {
+    if (!snapshot || !same(snapshot.scope)) return;
+    // Acknowledge loaded server versions, not the device clock or an unfinished request.
+    write(snapshot.scope, latest(snapshot.stamps));
+  }
+  function count() {
+    if (!snapshot || !same(snapshot.scope)) return 0;
+    const seen = read(snapshot.scope);
+    return seen === null ? 0 : snapshot.stamps.filter(t => t > seen).length;
+  }
+  return {begin, valid, accept, markSeen, count, reset};
+})();
+</script>
   <script>
 const INVITE_EMAIL_REMINDER = "Can’t find your confirmation email, invitation, or team code? Check your Junk or Spam folder. If the email is there, mark it as Not Junk and return here to continue.";
 const SUPABASE_URL = 'https://vfocpoyexnjsjpxhhyqr.supabase.co';
@@ -3581,6 +3641,7 @@ function navSeenAt(name){
   return Number.isFinite(value)?value:0;
 }
 function markNavSeen(name){
+  if(name==='schedule'){window.WMScheduleBadges.markSeen();return;}
   if(!session?.user?.id||!activeTeam?.id)return;
   localStorage.setItem(navSeenKey(name),String(Date.now()));
 }
@@ -3596,8 +3657,7 @@ function updateBottomNavBadges(){
   const homeSeen=navSeenAt('home');
   const generalHomeUnread=(communicationNotifications||[]).filter(row=>row.category!=='weigh_in'&&!row.read_at&&!row.thread_id&&new Date(row.created_at||0).getTime()>homeSeen).length;
   const homeCount=announcementUnread+generalHomeUnread+(unreadWeightNotifications().length?1:0);
-  const scheduleSeen=navSeenAt('schedule');
-  const scheduleCount=(scheduleRows||[]).filter(row=>new Date(row.updated_at||row.created_at||0).getTime()>scheduleSeen).length;
+  const scheduleCount=window.WMScheduleBadges.count();
   setNavBadge('messages',messageCount,'unread messages');
   setNavBadge('home',homeCount,'unseen home alerts');
   setNavBadge('schedule',scheduleCount,'unseen schedule changes');
@@ -5079,6 +5139,7 @@ async function activateTeam(teamId,{persist=true}={}){
   resetTeammateWeightPicker();resetWeightPinEditor();resetAthleteCard();
   weightCardPhotoCache.clear();
   activeTeam=team;
+  window.WMScheduleBadges.reset();scheduleRows=[];setNavBadge('schedule',0,'unseen schedule changes');
   syncOrganizationForTeam(team);
   communicationNotifications=[];communicationNotificationRenderSignature='';renderCommunicationNotifications();
   coachWeightAthleteId=null;coachWeightSnapshot=null;++coachWeightSnapshotRequest;++weightTrendRequestVersion;
@@ -9256,14 +9317,19 @@ async function reviewMedicalCase(){
 
 
 async function loadSchedule(){
-  if (!activeTeam) return;
-  const { data, error } = await client.from('team_events').select('*').eq('team_id',activeTeam.id).order('starts_at',{ascending:true});
-  if (error){ message(error.message,true); return; }
-  const opsTeamId=activeTeam?.id;
-  const orgEvents=window.WMOperations?await window.WMOperations.calendar(opsTeamId):[];
-  if(activeTeam?.id!==opsTeamId)return;
-  scheduleRows=[...(data||[]),...orgEvents].sort((a,b)=>String(a.starts_at).localeCompare(String(b.starts_at)));
-  renderSchedule(); renderUpcomingHome(); renderAttention(); updateBottomNavBadges();
+  const request=window.WMScheduleBadges.begin();if(!request)return;
+  try{
+    const {data,error}=await client.from('team_events').select('*').eq('team_id',request.teamId).order('starts_at',{ascending:true});
+    if(!window.WMScheduleBadges.valid(request))return;
+    if(error)throw error;
+    const orgEvents=window.WMOperations?await window.WMOperations.calendar(request.teamId):[];
+    if(!window.WMScheduleBadges.valid(request))return;
+    scheduleRows=[...(data||[]),...orgEvents].sort((a,b)=>String(a.starts_at).localeCompare(String(b.starts_at)));
+    renderSchedule();renderUpcomingHome();renderAttention();
+    window.WMScheduleBadges.accept(request,scheduleRows);
+    if(!document.hidden&&!$('scheduleTab').classList.contains('hidden'))window.WMScheduleBadges.markSeen();
+    updateBottomNavBadges();
+  }catch(error){if(window.WMScheduleBadges.valid(request))message(error.message||'Schedule could not load. Please try again.',true);}
 }
 
 function dateKeyLocal(value){
@@ -10915,7 +10981,7 @@ client.auth.onAuthStateChange((event,nextSession)=>{
  setTimeout(()=>handleAuthViewChange(event,nextSession).catch(e=>message(e.message,true)),0);
 });
 async function handleAuthViewChange(event,nextSession){
-  if(session?.user?.id!==nextSession?.user?.id){++communicationThreadOpenSequence;window.WMChatDrafts?.reset();window.WMMatch?.close();window.WMMatchVideo?.reset();show('teamRecorderView',false);window.WMVideoPilot?.reset();window.WMTournaments?.reset();show('tournamentSheet',false);window.WMNotificationSync?.reset();window.WMReactions?.reset();finishTileEditing(false);tileEditUser=null;pendingUiLayout=null;window.WMKioskScan?.reset();window.WMGoals?.reset();window.WMProfiles?.reset();window.WMFamily?.reset();resetAthleteCard();nativeCameraScanContext=null;weightCardPhotoCache.clear();}
+  if(session?.user?.id!==nextSession?.user?.id){window.WMScheduleBadges.reset();scheduleRows=[];setNavBadge('schedule',0,'unseen schedule changes');++communicationThreadOpenSequence;window.WMChatDrafts?.reset();window.WMMatch?.close();window.WMMatchVideo?.reset();show('teamRecorderView',false);window.WMVideoPilot?.reset();window.WMTournaments?.reset();show('tournamentSheet',false);window.WMNotificationSync?.reset();window.WMReactions?.reset();finishTileEditing(false);tileEditUser=null;pendingUiLayout=null;window.WMKioskScan?.reset();window.WMGoals?.reset();window.WMProfiles?.reset();window.WMFamily?.reset();resetAthleteCard();nativeCameraScanContext=null;weightCardPhotoCache.clear();}
   if(session?.user?.id!==nextSession?.user?.id&&(myWeightCheckMode==='teammate'||myWeightCheckMode==='test'||myWeightCheckMode==='staff'||!$('weightTestAthleteSheet').classList.contains('hidden')||!$('teammateWeightCheckSheet').classList.contains('hidden')||!$('weightPinSheet').classList.contains('hidden')))closeSheets();
   session=nextSession||null;
   window.WMProfilePIN?.select().catch(()=>{});window.WMProfilePINUI?.refresh();
