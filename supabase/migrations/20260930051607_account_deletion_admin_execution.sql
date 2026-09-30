@@ -26,6 +26,11 @@ begin
      or p_target_kind is null or p_target_kind not in ('team','organization') then
     raise sqlstate '22023' using message='ADMIN_REMOVAL_INVALID_CONFIRMATION';
   end if;
+  -- Reject unenrolled/expired callers before taking any membership locks.
+  v_base:=private.account_deletion_phone_preflight();
+  if v_base->>'enabled' is distinct from 'true' then
+    raise sqlstate '42501' using message='ADMIN_REMOVAL_SIGN_IN_REQUIRED';
+  end if;
   -- Serialize membership changes, including ordinary admin edits, before rechecking
   -- authority and continuity. Row locks alone would miss newly inserted memberships.
   lock table public.team_memberships,public.organization_memberships in share row exclusive mode;
