@@ -1,0 +1,19 @@
+{
+  "checks": [
+    "Atomic migration registers every health table and FK while preserving deletion and merge drift guards",
+    "Trainer invitations and People & Roles assignment retain limited permissions",
+    "Trainer accepts responsibility, sees the roster and receives no coach or administrator access",
+    "Only the accepted trainer verifies a baseline; parents see their child only and other teams are denied",
+    "The school year advances automatically and previous-year baselines do not satisfy the new year",
+    "Minor submissions require parent approval; photo permission is separate; coaches cannot read private notes or clear an athlete",
+    "Trainer restrictions reach coaches; stale revisions cannot overwrite newer decisions",
+    "Concussion clearance needs a completed written release and attestation; private storage excludes coaches and prevents replacement/deletion",
+    "Parent withdrawal, trainer removal and session revocation stop new sensitive access",
+    "Clinical records and family permissions block ordinary athlete merging pending an identity review",
+    "Deletion planning preserves shared clinical records and requests review without mutating any record",
+    "Further schema changes still stop merging and invalidate the deletion catalog",
+    "Private tables and the health endpoint reject direct or anonymous access"
+  ],
+  "realHealthRecordsCreated": false,
+  "appleOrSwayIntegrationTested": false
+}

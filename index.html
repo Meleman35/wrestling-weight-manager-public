@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.105: Parent-approved team messaging with a named adult reviewer. -->
+<!-- Wrestling Manager v0.20.106: Team Trainer, annual baselines and private athlete health updates. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -1332,6 +1332,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
         <div id="moreMenuCard" class="toolbox-groups">
           <section class="toolbox-group"><div class="toolbox-group-head"><span>🤼</span><div><b>Competition</b><small>Match day, eligibility and required forms</small></div></div><div class="menu-card">
             <button id="matchBookBtn" class="menu-row coach-only" data-layout-key="match_book"><span>⏱️</span><div><b>Match Book</b><small>Challenges, scoring, clocks and results</small></div><i>›</i></button>
+            <button id="athleteHealthBtn" class="menu-row hidden" data-layout-key="athlete-health"><span>🩺</span><div><b>Athlete Health</b><small>Team Trainer, Sway baselines and participation updates</small></div><i>›</i></button>
             <button id="medicalClearanceBtn" class="menu-row" data-layout-key="medical"><span>🩺</span><div><b>Medical Clearance</b><small>NFHS skin forms, doctor notes and return-to-participation status</small></div><i id="medicalMenuCount">›</i></button>
             <button id="agreementsBtn" class="menu-row" data-layout-key="agreements"><span>✍️</span><div><b>Team Agreement</b><small>Expectations, signatures and social-media permissions</small></div><i id="agreementMenuCount">›</i></button>
           </div></section>
@@ -2152,7 +2153,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <div id="adultAccessList" class="adult-access-list"><div class="empty-card">Loading adults…</div></div>
     <div id="peopleEditor" class="hidden"><p id="peopleSelectedSummary" class="privacy-note"></p><div class="adult-form-head"><h3 id="adultAccessFormTitle">Invite an Adult</h3><button id="cancelAdultEditBtn" class="hidden" type="button">Cancel Edit</button></div>
     <label>Email</label><input id="managerEmail" type="email" placeholder="adult@example.com">
-    <label>Team role</label><select id="adultRole"><option value="team_leader">Team Leader</option><option value="volunteer_coach">Volunteer Coach</option><option value="team_mom">Team Mom</option><option value="assistant_coach">Assistant Coach</option><option value="head_coach">Head Coach</option><option value="club_president">Club President</option><option value="limited_staff">Other Limited Staff</option></select>
+    <label>Team role</label><select id="adultRole"><option value="team_leader">Team Leader</option><option value="volunteer_coach">Volunteer Coach</option><option value="team_mom">Team Mom</option><option value="team_trainer">Team Trainer</option><option value="assistant_coach">Assistant Coach</option><option value="head_coach">Head Coach</option><option value="club_president">Club President</option><option value="limited_staff">Other Limited Staff</option></select>
     <div id="peopleTitleField"><label>Displayed title</label><input id="adultTitle" type="text" maxlength="100" value="Team Leader" placeholder="Title shown in the staff directory"></div>
     <label id="peopleAdminRow" class="toggle-row"><span><b>Team Administrator</b><small>Can manage the roster, schedule, agreements, settings and other adult roles for this team.</small></span><input id="adultTeamAdmin" type="checkbox"></label>
     <div id="adultRoleAccessNote" class="role-access-note"></div>
@@ -2373,7 +2374,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.105</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.106</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -4465,7 +4466,7 @@ function roleLabelForTeam(team){
   const orgAdmin=organizationMemberships.some(x=>x.role==='organization_admin' && x.organization_id===team.organization_id);
   if(memberships.some(x=>x.role==='head_coach')) return 'Head Coach';
   const staffMembership=memberships.find(x=>['assistant_coach','manager'].includes(x.role));
-  const staffLabels={assistant_coach:'Assistant Coach',volunteer_coach:'Volunteer Coach',team_leader:'Team Leader',team_mom:'Team Mom',club_president:'Club President',limited_staff:'Limited Staff'};
+  const staffLabels={assistant_coach:'Assistant Coach',volunteer_coach:'Volunteer Coach',team_leader:'Team Leader',team_mom:'Team Mom',team_trainer:'Team Trainer',club_president:'Club President',limited_staff:'Limited Staff'};
   if(staffMembership?.permissions?.staff_role)return `${staffLabels[staffMembership.permissions.staff_role]||'Team Staff'}${staffMembership.permissions?.team_admin?' · Admin':''}`;
   if(orgAdmin) return 'Organization Admin';
   if(memberships.some(x=>x.role==='assistant_coach')) return 'Assistant Coach';
@@ -9837,6 +9838,7 @@ async function issueAthleteCredential(type){
 }
 
 const ADULT_ROLE_INFO={
+  team_trainer:{label:'Team Trainer',title:'Team Trainer',note:'Athlete Health access after accepting trainer responsibility. Records baseline completion, participation restrictions and authorized clearance. Other team tools are optional.',attendance:false,weigh_in:false,equipment:false,checkout:false,mass_text:false},
   team_leader:{label:'Team Leader',title:'Team Leader',note:'Choose the operational tools this team leader needs. Weigh-in access starts enabled and can be turned off.',attendance:true,weigh_in:true,equipment:true,checkout:true,mass_text:true},
   volunteer_coach:{label:'Volunteer Coach',title:'Volunteer Coach',note:'Coach-level access to team and athlete tools. Team Admin is optional.',attendance:true,weigh_in:true,equipment:false,checkout:false,mass_text:true},
   team_mom:{label:'Team Mom',title:'Team Mom',note:'Limited staff by default. Attendance, equipment and checkout can be enabled without exposing private coaching records.',attendance:true,weigh_in:false,equipment:true,checkout:true,mass_text:false},
@@ -12139,6 +12141,9 @@ document.getElementById('organizationHomeBtn').onclick=()=>WMOperations.open(sel
 <h2>Optional adult conversation reviewers</h2>
 <p>A team administrator can assign a verified adult staff member, such as Team Mom, to read-only review of that team’s coach or team-leader conversations with minors. The adult must accept the responsibility in their own account. Covered conversation members can see the active reviewers’ names and team roles. Reviewer access includes existing and future messages and shared photos or videos in those conversations; adult-only and athlete-to-athlete private conversations are excluded.</p>
 <p>Reviewer access creates no routine message notifications, does not add posting or parental authority, and does not replace required parent chat permission. Existing parent and participant notification settings remain separate. Assignments, acceptance, removal and conversation access are recorded for accountability. Team administrators can remove the assignment, and reviewers can stop their own access. Review history is not saved for offline use. Removal prevents new requests; media links issued for review can remain usable for up to 60 seconds, and information already viewed cannot be recalled.</p>
+<h2>Team Trainer and Athlete Health</h2>
+<p>Assigned adult trainers who accept the responsibility can record baseline completion, participation restrictions and authorized clearance. Testing happens in Sway or the school’s provider; this version does not retrieve Sway scores or make medical decisions. Coaches see baseline completion, participation updates and their own submissions. Private care notes and photos are limited to accepted team trainers, authorized connected family and the submitting account.</p>
+<p>Connected guardians can approve health updates for athletes aged 13–17, with a separate photo/document choice, and withdraw permission in the health record. General profile or messaging approval does not grant this permission. Younger athletes use the parent or trainer submission path. The app records permission changes, trainer verification, decisions and record/file access. Clinical records are not available offline; downloaded copies cannot be recalled. Protected medical records require review before account deletion or athlete merging. Contact support for correction, access or retention questions.</p>
 <h2>Services that handle information</h2>
 <ul><li><strong>Supabase</strong> handles accounts, the database, stored files and backend processing.</li>
 <li><strong>GitHub Pages and jsDelivr</strong> deliver the web app and its client library. Requests to hosting services include technical information such as an IP address.</li>
@@ -13887,7 +13892,7 @@ window.WMAgreementPDF = (() => {
  const note=(text,error=false)=>{el('peopleStatus').textContent=text;el('peopleStatus').classList.toggle('error',error);};
  function reset(){++generation;rows=[];selected=null;pendingInvite=null;team=null;user=null;busy=false;el('peopleSearch').value='';el('adultAccessList').replaceChildren();el('adultInviteBox').replaceChildren();el('peopleReview').replaceChildren();show('peopleEditor',false);show('peopleReview',false);}
  function options(){
-  const keys=['team_leader','volunteer_coach','assistant_coach','head_coach','team_mom','limited_staff'];
+  const keys=['team_leader','volunteer_coach','assistant_coach','head_coach','team_mom','team_trainer','limited_staff'];
   if(orgAdmin||selected?.staff_role==='club_president')keys.push('club_president');
   if(selected?.is_parent_guardian&&!selected?.is_organization_admin)keys.push('parent_only');
   el('adultRole').innerHTML=keys.map(k=>`<option value="${k}">${esc(k==='parent_only'?'Parent / Guardian only':adultRoleLabel(k))}</option>`).join('');
@@ -14022,7 +14027,7 @@ window.WMAgreementPDF = (() => {
  const groups=[
   {id:'people',icon:'👥',name:'People & Roles',detail:'Roster, leaders, parents & goals',ids:['staffAccessBtn','rosterBtn','joinRequestsBtn','joinBtn','staffDirectoryBtn','teamGoalsBtn','memberProfilesBtn','familyBtn','findProfilesBtn']},
   {id:'practice',icon:'🤼',name:'Practice & Competition',detail:'Attendance, lineup & Match Book',ids:['tournamentDayBtn','clipboardAttendanceBtn','clipboardLineupBtn','matchBookBtn']},
-  {id:'health',icon:'✍️',name:'Forms & Health',detail:'Agreements & medical clearance',ids:['agreementsBtn','medicalClearanceBtn']},
+  {id:'health',icon:'✍️',name:'Forms & Health',detail:'Agreements & medical clearance',ids:['athleteHealthBtn','agreementsBtn','medicalClearanceBtn']},
   {id:'gear',icon:'🎒',name:'Gear & Files',detail:'Equipment & team resources',ids:['clipboardEquipmentBtn','clipboardFilesBtn']},
   {id:'settings',icon:'⚙️',name:'Settings',detail:'Account, team settings & feedback',ids:['accountBtn','feedbackBtn']},
   {id:'organization',icon:'🏛️',name:'Organization',detail:'Teams, leadership & organization tools',ids:['organizationHubBtn'],direct:'organizationHubBtn'}
@@ -16699,5 +16704,158 @@ window.WMAthleteMerge=(()=>{
 })();
 </script>
 <!-- END ATHLETE MERGE -->
+<!-- BEGIN ATHLETE HEALTH -->
+<style>
+#athleteHealthSheet{max-width:780px}#healthBody{padding-bottom:24px}.health-card{border:1px solid #dbe3ec;border-radius:16px;padding:16px;margin:12px 0;background:#fff}.health-card h3{margin-top:0}.health-card summary,.health-help summary{cursor:pointer;font-weight:750;padding:4px 0}.health-card label{margin-top:14px}.health-year{display:grid;gap:5px;padding:14px;background:#eef4fc;border-radius:14px}.health-year span,.health-person small{color:#596677;font-size:13px}.health-toolbar,.health-actions,.health-person{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.health-toolbar{margin:16px 0}.health-toolbar input{flex:1;min-width:160px}.health-actions button{min-height:44px}.health-person{justify-content:space-between}.health-badge{font-size:12px;font-weight:750;border-radius:30px;background:#eaf0f8;color:#23466f;padding:6px 10px}.health-attention{background:#fff2cf;color:#775512}.health-case-row{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;margin-top:12px;padding:16px;text-align:left;background:#f5f8fc;color:#17283c;box-shadow:none}.health-case-row span:first-child{display:grid;gap:5px}.health-case-row small{font-size:13px;font-weight:400;white-space:pre-wrap}.health-case-row .health-badge{flex-shrink:0}.health-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.health-update{border-left:3px solid #b7cee9;margin:12px 0;padding:8px 12px}.health-update small{display:block;color:#66758a;font-size:12px;margin-top:4px}.health-update p{white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0}.health-file{display:block;max-width:100%;margin:8px 0}.health-preview{display:block;max-width:100%;max-height:55vh;object-fit:contain;margin:12px auto}.health-help{margin:24px 0;color:#55677e;font-size:13px}#healthStatus{white-space:pre-wrap;overflow-wrap:anywhere}#healthBody button,#healthBody input,#healthBody select,#healthBody textarea{max-width:100%}#healthBody input[type=checkbox]{width:24px;height:24px;flex-shrink:0}@media(max-width:420px){.health-case-row{align-items:flex-start;flex-direction:column}.health-grid{grid-template-columns:1fr}.health-toolbar button{padding:10px}.health-actions button{flex:1}}
+
+</style>
+<script>
+/* Private team health records. No localStorage, offline queue or public media URLs. */
+(() => {
+ const $h=id=>document.getElementById(id),escape=esc;
+ const labels={awaiting_trainer:'Awaiting trainer',not_cleared:'Not cleared',modified:'Modified activity',no_contact:'No contact',cleared:'Cleared'};
+ const kinds={injury:'Injury',skin:'Skin concern',concussion:'Concussion concern',other:'Other health concern'};
+ const sheet=document.createElement('section');sheet.id='athleteHealthSheet';sheet.className='sheet hidden';sheet.setAttribute('aria-modal','true');sheet.setAttribute('role','dialog');sheet.setAttribute('aria-labelledby','healthTitle');
+ sheet.innerHTML='<div class="sheet-handle"></div><div class="sheet-head"><div><div class="eyebrow">TEAM TRAINER</div><h2 id="healthTitle">Athlete Health</h2><p id="healthSubtitle" class="muted"></p></div><button id="healthClose" class="icon-close" aria-label="Close Athlete Health">×</button></div><div id="healthStatus" class="fine" role="status"></div><div id="healthBody"></div>';
+ document.body.append(sheet);
+ let epoch=0,owner='',state=null,selected=null,busy=false,lastCheck=0,checking=false,urls=[];
+ const actor=()=>session?.user?.id&&activeTeam?.id&&!managedLogin?session.user.id+'/'+activeTeam.id:'';
+ const active=g=>g===epoch&&owner&&owner===actor()&&!sheet.classList.contains('hidden')&&navigator.onLine;
+ const today=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10)};
+ const date=d=>d?new Date(d+'T12:00:00').toLocaleDateString():'—';
+ const note=(s,error=false)=>{$h('healthStatus').textContent=s;$h('healthStatus').classList.toggle('error',error)};
+ const release=()=>{urls.forEach(u=>URL.revokeObjectURL(u));urls=[]};
+ function reset(){epoch++;owner='';state=null;selected=null;busy=false;release();$h('healthBody').replaceChildren();note('')}
+ function close(){reset();show(sheet.id,false)}
+ $h('healthClose').onclick=close;
+ async function call(action,data={},g=epoch){
+  if(!active(g))throw Error('Reconnect and reopen Athlete Health.');
+  const team=activeTeam.id,{data:out,error}=await client.rpc('athlete_health_request',{p_action:action,p_data:{...data,team_id:team}});
+  if(!active(g))throw Error('The account or team changed.');
+  if(error)throw Error(error.message);return out;
+ }
+ async function save(button,work){
+  if(busy)return;busy=true;button.disabled=true;const g=epoch;note('Saving…');
+  try{await work(g);if(active(g))note('Saved.');}catch(e){if(active(g))note(e.message,true)}
+  finally{if(g===epoch){busy=false;if(button.isConnected)button.disabled=false}}
+ }
+ const person=id=>state?.athletes.find(a=>a.id===id);
+ function readiness(a){
+  const pending=(a.cases||[]).filter(c=>c.status!=='cleared'||!c.return_on||c.return_on>today());
+  const missing=state.baseline_required&&!a.baseline;
+  return {attention:missing||!!pending.length,text:pending.length?(pending[0].return_on>today()?'Return date pending':labels[pending[0].status])+(pending[0].return_on>today()?' · return '+date(pending[0].return_on):''):missing?'Baseline required':(a.baseline?'Baseline recorded':'Baseline optional'),missing};
+ }
+ const back=()=>'<button type="button" id="healthBack" class="secondary">‹ All athletes</button>';
+ function bindBack(){ $h('healthBack').onclick=()=>load().catch(e=>note(e.message,true)); }
+ async function load(g=epoch){
+  selected=null;release();note('Loading…');const data=await call('dashboard',{},g);if(!active(g))return;
+  state=data;lastCheck=Date.now();render();note('');
+ }
+ async function open(){
+  if(!actor()){message('Sign in to your personal account first.',true);return;}
+  if(!navigator.onLine){message('Athlete Health needs an internet connection.',true);return;}
+  reset();owner=actor();$h('healthSubtitle').textContent=activeTeam.name;openSheet(sheet.id);const g=epoch;
+  try{await load(g)}catch(e){if(active(g))note(e.message,true)}
+ }
+ function render(){
+  if(!state)return;
+  const trainers=state.trainers.map(t=>escape(t.name)+(t.accepted?'':' · acceptance pending')).join(', ');
+  $h('healthBody').innerHTML=`<p class="fine">${trainers?'Trainer: '+trainers:'Your team administrator can assign a Team Trainer in People & Roles.'}</p>
+   ${state.assigned_trainer&&!state.trainer?'<div class="health-card"><h3>Accept trainer access</h3><p>Confirm you are an adult authorized by this school or team to handle athlete health information and record decisions within your professional role.</p><label class="toggle-row"><span>I accept this responsibility.</span><input id="healthAcceptCheck" type="checkbox"></label><button id="healthAccept" type="button" disabled>Accept Team Trainer Role</button></div>':''}
+   <div class="health-year"><b>School year ${date(state.school_year_start)}–${date(nextYear(state.school_year_start))}</b><span>${state.baseline_required?'Baseline required before participation':'Baseline tracking optional for this team'}</span></div>
+   <div class="health-toolbar"><input id="healthSearch" aria-label="Find an athlete" placeholder="Find an athlete"><button type="button" id="healthReload" class="secondary">Refresh</button></div><div id="healthRoster"></div>
+   ${state.admin?`<details class="health-card"><summary>School-year settings</summary><label for="healthYearStart">School-year start</label><input id="healthYearStart" type="date" value="${escape(state.school_year_start)}"><label class="toggle-row"><span>Require a baseline before sports</span><input id="healthRequired" type="checkbox" ${state.baseline_required?'checked':''}></label><button type="button" id="healthSaveSettings">Save Settings</button></details>`:''}
+   <details class="health-help"><summary>Testing, clearance and privacy</summary><p>Testing happens in Sway or your school’s testing provider. The trainer verifies its completion here. Baseline completion does not clear an injury. Follow the trainer’s current instructions and your school’s required release process.</p><p>Coaches see participation updates and their own submissions. Private notes and photos are available to accepted trainers and the connected family with permission. Health records are available online only.</p><p>For an urgent concern, contact your trainer or emergency services directly. This inbox is not monitored continuously.</p><a href="https://www.swaymedical.com/sports" target="_blank" rel="noopener noreferrer">About Sway testing ↗</a></details>`;
+  $h('healthSearch').oninput=renderRoster;$h('healthReload').onclick=()=>load().catch(e=>note(e.message,true));renderRoster();
+  if($h('healthAccept')){$h('healthAcceptCheck').onchange=()=>$h('healthAccept').disabled=!$h('healthAcceptCheck').checked;$h('healthAccept').onclick=e=>save(e.currentTarget,async g=>{await call('accept_trainer',{acknowledgement:'trainer-v1'},g);await load(g)})}
+  if(state.admin)$h('healthSaveSettings').onclick=e=>save(e.currentTarget,async g=>{await call('settings',{school_year_start:$h('healthYearStart').value,baseline_required:$h('healthRequired').checked},g);await load(g)});
+ }
+ function nextYear(v){const d=new Date(v+'T12:00:00');d.setFullYear(d.getFullYear()+1);d.setDate(d.getDate()-1);return d.toISOString().slice(0,10)}
+ function renderRoster(){
+  const q=$h('healthSearch').value.trim().toLowerCase(),rows=state.athletes.filter(a=>a.name.toLowerCase().includes(q));
+  $h('healthRoster').innerHTML=rows.length?rows.map(a=>{const r=readiness(a);return `<article class="health-card"><div class="health-person"><b>${escape(a.name)}</b><span class="health-badge ${r.attention?'health-attention':''}">${escape(r.text)}</span></div><p class="fine">${a.baseline?'Sway / provider: '+escape(a.baseline.provider)+' · completed '+date(a.baseline.completed_on):'No verified baseline for this school year.'}</p><div class="health-actions"><button type="button" data-health-athlete="${escape(a.id)}">Open Health Record</button>${state.trainer?`<button type="button" class="secondary" data-health-baseline="${escape(a.id)}">${a.baseline?'Review':'Verify'} Baseline</button>`:''}</div></article>`}).join(''):'<p class="empty-card">No athletes available to this account.</p>';
+  sheet.querySelectorAll('[data-health-athlete]').forEach(b=>b.onclick=()=>athlete(b.dataset.healthAthlete));
+  sheet.querySelectorAll('[data-health-baseline]').forEach(b=>b.onclick=()=>baseline(b.dataset.healthBaseline));
+ }
+ function baseline(id){
+  const a=person(id);if(!a||!state.trainer)return;selected={athlete_id:id};release();
+  $h('healthBody').innerHTML=back()+`<h3>${escape(a.name)} · baseline</h3><p>Verify the completed test in Sway or your school’s provider. This records completion only.</p><label for="healthProvider">Testing provider</label><input id="healthProvider" maxlength="80" value="${escape(a.baseline?.provider||'Sway')}"><label for="healthCompleted">Completed on</label><input id="healthCompleted" type="date" min="${escape(state.school_year_start)}" max="${today()}" value="${escape(a.baseline?.completed_on||today())}"><label class="toggle-row"><span>I verified this athlete’s completed baseline with the testing provider.</span><input id="healthVerified" type="checkbox"></label><button id="healthBaselineSave" type="button" class="wide" disabled>Record Verified Baseline</button>${a.baseline?'<button id="healthBaselineRevoke" type="button" class="wide secondary">Remove Incorrect Verification</button>':''}<p class="fine">Recorded with your name and date. Within this organization, the verified baseline follows the athlete for the same school year.</p>`;
+  bindBack();$h('healthVerified').onchange=()=>$h('healthBaselineSave').disabled=!$h('healthVerified').checked;
+  $h('healthBaselineSave').onclick=e=>save(e.currentTarget,async g=>{await call('baseline',{athlete_id:id,provider:$h('healthProvider').value,completed_on:$h('healthCompleted').value,confirmed:$h('healthVerified').checked},g);await load(g)});
+  if($h('healthBaselineRevoke'))$h('healthBaselineRevoke').onclick=e=>save(e.currentTarget,async g=>{if(!confirm('Remove this baseline verification? The correction remains in the history.'))return;await call('revoke_baseline',{athlete_id:id},g);await load(g)});
+ }
+ function athlete(id){
+  const a=person(id);if(!a)return;selected={athlete_id:id};release();
+  $h('healthBody').innerHTML=back()+`<h3>${escape(a.name)}</h3><p class="fine">${a.baseline?'Baseline completed '+date(a.baseline.completed_on)+' · '+escape(a.baseline.provider):'Baseline not verified for this school year.'}</p><div class="health-actions">${a.can_submit?'<button type="button" id="healthNewCase">Report a Concern</button>':'<p>A parent or guardian can submit a concern or approve health updates for athletes age 13–17.</p>'}${state.trainer?'<button type="button" class="secondary" id="healthVerifyBaseline">Verify Baseline</button>':''}</div><div>${a.cases.length?a.cases.map(c=>`<button class="health-case-row" type="button" data-health-case="${escape(c.id)}"><span><b>${escape(kinds[c.category]||'Health record')}</b><small>${escape(c.participation_note||'Awaiting trainer instructions')}</small>${c.review_on?'<small>Review '+date(c.review_on)+'</small>':''}</span><span class="health-badge">${escape(labels[c.status])}</span></button>`).join(''):'<p class="empty-card">No injury or concern records. This is not a medical clearance.</p>'}</div>
+   ${a.guardian?`<details class="health-card"><summary>Athlete health-sharing permission</summary><p>For your athlete age 13–17: allow updates to the trainer, visible to connected parents and guardians. Photo sharing is a separate choice. You can withdraw permission here.</p><label class="toggle-row"><span>Allow my athlete to send health updates</span><input type="checkbox" id="healthAllowUpdates" ${a.family_permission?.allow_updates?'checked':''}></label><label class="toggle-row"><span>Allow private health photos/documents</span><input type="checkbox" id="healthAllowPhotos" ${a.family_permission?.allow_photos?'checked':''}></label><button type="button" id="healthPermissionSave">Save Parent Permission</button></details>`:''}`;
+  bindBack();if($h('healthNewCase'))$h('healthNewCase').onclick=()=>newCase(id);if($h('healthVerifyBaseline'))$h('healthVerifyBaseline').onclick=()=>baseline(id);
+  sheet.querySelectorAll('[data-health-case]').forEach(b=>b.onclick=()=>caseView(b.dataset.healthCase).catch(e=>note(e.message,true)));
+  if(a.guardian){$h('healthAllowUpdates').onchange=()=>{if(!$h('healthAllowUpdates').checked)$h('healthAllowPhotos').checked=false};$h('healthAllowPhotos').onchange=()=>{if($h('healthAllowPhotos').checked)$h('healthAllowUpdates').checked=true};$h('healthPermissionSave').onclick=e=>save(e.currentTarget,async g=>{await call('family_permission',{athlete_id:id,allow_updates:$h('healthAllowUpdates').checked,allow_photos:$h('healthAllowPhotos').checked},g);await load(g);athlete(id)})}
+ }
+ function newCase(id){
+  const a=person(id);if(!a?.can_submit)return;const requestId=crypto.randomUUID();selected={athlete_id:id};
+  $h('healthBody').innerHTML=back()+`<h3>Report a concern · ${escape(a.name)}</h3><label for="healthCategory">Concern</label><select id="healthCategory">${Object.entries(kinds).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select><label for="healthNoticed">Date noticed</label><input id="healthNoticed" type="date" max="${today()}" value="${today()}"><label for="healthConcern">What should the trainer know?</label><textarea id="healthConcern" maxlength="4000" rows="4" placeholder="Briefly describe the concern or question."></textarea><p class="fine">Private to the trainer, connected family with permission, and you. You can add a photo after saving. Contact the trainer directly for urgent concerns.</p><button type="button" id="healthCreate" class="wide">Send to Team Trainer</button>`;
+  bindBack();$h('healthCreate').onclick=e=>save(e.currentTarget,async g=>{const out=await call('new_case',{athlete_id:id,category:$h('healthCategory').value,noticed_on:$h('healthNoticed').value,body:$h('healthConcern').value,request_id:requestId},g);await caseView(out.case_id,g)});
+ }
+ async function caseView(id,g=epoch){
+  note('Loading record…');release();const out=await call('case',{case_id:id},g);if(!active(g))return;
+  const c=out.case;selected={case_id:id,athlete_id:c.athlete_id};
+  $h('healthBody').innerHTML=back()+`<button type="button" id="healthRecordRefresh" class="secondary">Refresh Updates</button><h3>${escape(out.athlete_name)} · ${escape(kinds[c.category])}</h3><div class="health-card"><b>${escape(labels[c.status])}</b><p>${escape(c.participation_note||'Awaiting trainer instructions.')}</p>${c.return_on?'<p>Return date: '+date(c.return_on)+'</p>':''}${c.review_on?'<p>Next review: '+date(c.review_on)+'</p>':''}</div>
+   ${out.trainer?`<details class="health-card"><summary>Record participation decision</summary><label for="healthDecision">Participation</label><select id="healthDecision">${Object.entries(labels).filter(([k])=>k!=='awaiting_trainer').map(([k,v])=>`<option value="${k}" ${k===c.status?'selected':''}>${v}</option>`).join('')}</select><label for="healthRestrictions">Instructions for coaches and family</label><textarea id="healthRestrictions" rows="3" maxlength="2000" placeholder="Permitted activity and restrictions">${escape(c.participation_note)}</textarea><div class="health-grid"><div><label for="healthReviewOn">Next review</label><input type="date" id="healthReviewOn" value="${escape(c.review_on||'')}"></div><div><label for="healthReturnOn">Cleared return date</label><input type="date" id="healthReturnOn" value="${escape(c.return_on||'')}"></div></div><label for="healthClearanceProvider">Provider authorizing clearance</label><input id="healthClearanceProvider" maxlength="120" value="${escape(c.provider_name||'')}"><label for="healthClearanceFile">Written release ${c.category==='concussion'?'(required for concussion clearance)':'(when required)'}</label><select id="healthClearanceFile"><option value="">Select uploaded release</option>${out.files.filter(f=>f.kind==='provider_release').map(f=>`<option value="${f.id}" ${f.id===c.clearance_file_id?'selected':''}>Provider release · ${new Date(f.created_at).toLocaleDateString()}</option>`).join('')}</select><label class="toggle-row"><span>For clearance, I confirm the decision is authorized and the school’s required release process is complete.</span><input type="checkbox" id="healthClearanceConfirm"></label><button id="healthDecisionSave" type="button">Save Trainer Decision</button></details>`:''}
+   <h3>Updates</h3><p class="fine">Participation updates are shared with coaches. Private care updates are limited to the trainer, connected family with permission, and the author.</p><div class="health-updates">${out.updates.map(n=>`<article class="health-update"><b>${escape(n.author)}</b><small>${escape(n.visibility==='participation'?'Participation update':'Private care update')} · ${new Date(n.created_at).toLocaleString()}</small><p>${escape(n.body)}</p></article>`).join('')||'<p>No updates visible to this account.</p>'}</div>
+   ${out.can_submit?` ${out.trainer?'<label for="healthUpdateVisibility">Who can see this update?</label><select id="healthUpdateVisibility"><option value="care_team">Private · trainer and connected family</option><option value="participation">Shared · coaches and connected family</option></select>':''}<label for="healthUpdateBody">Send a care update</label><textarea id="healthUpdateBody" rows="3" maxlength="4000" placeholder="Question or update for the trainer and family"></textarea><button id="healthSendUpdate" type="button">Send Update</button>`:''}
+   <h3>Private photos and releases</h3><div id="healthFiles">${out.files.map(f=>`<button type="button" class="secondary health-file" data-health-file="${f.id}">${f.kind==='concern_photo'?'Concern photo':'Provider release'} · ${new Date(f.created_at).toLocaleDateString()}</button>`).join('')||'<p class="fine">No files visible to this account.</p>'}</div><div id="healthFilePreview"></div>
+   ${out.can_upload?'<details class="health-card"><summary>Add a private photo or release</summary><label for="healthFileKind">File purpose</label><select id="healthFileKind"><option value="concern_photo">Skin / injury concern photo</option><option value="provider_release">Written provider release</option></select><label for="healthFileInput">Photo or PDF</label><input type="file" id="healthFileInput" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf"><p class="fine">Share only the relevant area or release. Photos are resized and location metadata is removed. Maximum upload 8 MB.</p><button type="button" id="healthUpload">Upload Privately</button></details>':''}`;
+  bindBack();note('');$h('healthRecordRefresh').onclick=()=>caseView(id).catch(e=>note(e.message,true));
+  if(out.trainer)$h('healthDecisionSave').onclick=e=>save(e.currentTarget,async k=>{await call('participation',{case_id:id,revision:c.revision,status:$h('healthDecision').value,participation_note:$h('healthRestrictions').value,review_on:$h('healthReviewOn').value||null,return_on:$h('healthReturnOn').value||null,provider_name:$h('healthClearanceProvider').value,clearance_file_id:$h('healthClearanceFile').value||null,confirmed:$h('healthClearanceConfirm').checked},k);await caseView(id,k)});
+  if(out.can_submit){let requestId=crypto.randomUUID();$h('healthSendUpdate').onclick=e=>save(e.currentTarget,async k=>{await call('update',{case_id:id,body:$h('healthUpdateBody').value,visibility:$h('healthUpdateVisibility')?.value||'care_team',request_id:requestId},k);await caseView(id,k)})}
+  if(out.can_upload)$h('healthUpload').onclick=e=>save(e.currentTarget,async k=>{await upload(id,k);await caseView(id,k)});
+  sheet.querySelectorAll('[data-health-file]').forEach(b=>b.onclick=()=>viewFile(id,b.dataset.healthFile).catch(e=>note(e.message,true)));
+ }
+ async function preparedFile(file,kind){
+  if(!file)throw Error('Choose a photo or PDF.');if(file.size>30*1024*1024)throw Error('Choose a smaller file.');
+  if(file.type==='application/pdf'){
+   if(kind!=='provider_release')throw Error('A concern photo must be an image.');
+   if(new TextDecoder().decode(await file.slice(0,5).arrayBuffer())!=='%PDF-')throw Error('Choose a valid PDF.');return file;
+  }
+  if(!file.type.startsWith('image/'))throw Error('Choose a photo or PDF.');
+  const url=URL.createObjectURL(file);try{
+   const img=new Image();img.src=url;await img.decode();
+   const ratio=Math.min(1,1600/Math.max(img.naturalWidth,img.naturalHeight)),canvas=document.createElement('canvas');
+   canvas.width=Math.max(1,Math.round(img.naturalWidth*ratio));canvas.height=Math.max(1,Math.round(img.naturalHeight*ratio));
+   const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);
+   return await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('Unable to prepare this photo. Try a JPEG.')),'image/jpeg',0.88));
+  }catch{throw Error('Unable to open this image. Choose a JPEG or PNG photo.')}finally{URL.revokeObjectURL(url)}
+ }
+ async function upload(id,g){
+  const kind=$h('healthFileKind').value,blob=await preparedFile($h('healthFileInput').files[0],kind);
+  if(blob.size>8388608)throw Error('Choose a file under 8 MB.');if(!active(g))return;
+  const slot=await call('reserve_file',{case_id:id,file_kind:kind,mime_type:blob.type,size_bytes:blob.size},g);
+  const {error}=await client.storage.from(slot.bucket).upload(slot.path,blob,{contentType:blob.type,cacheControl:'0',upsert:false});
+  if(!active(g))return;if(error)throw Error(error.message);
+  await call('complete_file',{case_id:id,file_id:slot.id},g);
+ }
+ async function viewFile(caseId,id){
+  const g=epoch,file=await call('file',{case_id:caseId,file_id:id},g),{data,error}=await client.storage.from(file.bucket).download(file.path);
+  if(!active(g))return;if(error)throw Error(error.message);release();
+  const url=URL.createObjectURL(data);urls.push(url);const box=$h('healthFilePreview');box.replaceChildren();
+  if(file.mime==='image/jpeg'){const img=document.createElement('img');img.src=url;img.alt='Private health photo';img.className='health-preview';box.append(img)}
+  const link=document.createElement('a');link.href=url;link.download=file.mime==='application/pdf'?'provider-release.pdf':'private-health-photo.jpg';link.textContent=file.mime==='application/pdf'?'Open / save private release':'Save private photo';box.append(link);
+ }
+ function sync(){
+  const button=$h('athleteHealthBtn');if(button)show(button.id,!!actor()&&(!isManager||staffMembership?.permissions?.staff_role==='team_trainer'||isStaff));
+  if(owner&&(owner!==actor()||!navigator.onLine||sheet.classList.contains('hidden'))){reset();show(sheet.id,false)}
+ }
+ setInterval(sync,500);window.addEventListener('offline',close);document.addEventListener('visibilitychange',()=>{if(document.hidden)close()});
+ setInterval(async()=>{
+  if(!owner||!state||busy||checking||Date.now()-lastCheck<15000)return;checking=true;const g=epoch;
+  try{const next=await call('dashboard',{},g);const capabilities=x=>JSON.stringify([x.trainer,x.coach,x.athletes.map(a=>[a.id,a.guardian,a.can_submit,a.can_upload,a.clinical])]);if(capabilities(next)!==capabilities(state)){close();message('Health access changed. Reopen Athlete Health to check current permissions.',true);}else lastCheck=Date.now();}
+  catch(e){if(active(g)){close();message('Health access could not be checked. Reopen when connected.',true)}}finally{checking=false}
+ },1000);
+ $h('athleteHealthBtn').onclick=open;window.WMAthleteHealth={open,close,readiness};sync();
+})();
+
+</script>
+<!-- END ATHLETE HEALTH -->
 </body>
 </html>

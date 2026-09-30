@@ -1,3 +1,5 @@
 validation/*.png
 node_modules/
 supabase/.temp/
+
+node_modules
