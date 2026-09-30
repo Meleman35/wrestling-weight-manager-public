@@ -1,0 +1,12 @@
+{
+  "passed": [
+    "Default-off enrollment is private; anonymous, self-enrollment and target-account arguments are denied",
+    "Admitted account sees only its aggregate counts, with overlapping upload owners counted once and deletion always disabled",
+    "Other users, mismatched sessions and malformed or expired claims reveal no counts",
+    "Unconfirmed, banned, deleted, expired-session, expired-enrollment and managed identities are excluded",
+    "Administrator warning includes delegated team admins and organization admins, excluding inactive/banned alternatives",
+    "Functions are argument-free, stable and fixed-search-path; no data is removed and missing backend data fails visibly"
+  ],
+  "engine": "PGlite with actual preflight migration and minimal catalog-shaped synthetic tables; not full erasure acceptance",
+  "productionDataChanged": false
+}

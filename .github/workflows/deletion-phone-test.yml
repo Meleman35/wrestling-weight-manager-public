@@ -1,0 +1,44 @@
+name: Deletion phone setup regression
+on:
+  push:
+    branches: [codex/deletion-phone-preflight]
+  pull_request:
+    paths:
+      - index.html
+      - sw.js
+      - src/account-deletion-phone-test.js
+      - scripts/patch-deletion-phone-test.py
+      - tests/account-deletion-phone-*.cjs
+      - supabase/migrations/*account_deletion_phone_preflight.sql
+      - .github/workflows/deletion-phone-test.yml
+permissions:
+  contents: read
+concurrency:
+  group: deletion-phone-setup-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NODE_PATH: ${{ github.workspace }}/.ci/node_modules
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - run: npm ci --prefix .ci --ignore-scripts --no-audit --no-fund
+      - run: python3 scripts/patch-deletion-phone-test.py --check
+      - run: node tests/account-deletion-phone-db.cjs
+      - run: .ci/node_modules/.bin/playwright install --with-deps chromium
+      - name: Select installed Chromium
+        run: node -e 'process.stdout.write("CHROMIUM_EXECUTABLE_PATH="+require("playwright").chromium.executablePath()+"\n")' >> "$GITHUB_ENV"
+      - run: node tests/account-deletion-phone-browser.cjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: deletion-phone-results
+          path: validation/account-deletion-phone-*.json
+          if-no-files-found: error
