@@ -1,0 +1,60 @@
+name: Account deletion access regressions
+on:
+  push:
+    branches: [codex/launch-account-deletion]
+  pull_request:
+    paths:
+      - scripts/account-deletion-access*
+      - scripts/account-deletion-worker.cjs
+      - tests/account-deletion-access*.cjs
+      - tests/helpers/account-deletion-access-fixture.cjs
+      - tests/team-recorder-login-existing.sql
+      - tests/*invitation-email.cjs
+      - tests/parent-browser-handler.cjs
+      - supabase/functions/_shared/account-access.ts
+      - supabase/functions/send-member-invitation/**
+      - supabase/functions/send-organization-invitation/**
+      - supabase/migrations/*account_deletion_*
+      - supabase/migrations/*team_recorder_login*
+      - supabase/migrations/*parent_browser*
+      - supabase/migrations/*conversation_reviewers*
+      - .ci/**
+      - .github/workflows/account-deletion-access.yml
+permissions:
+  contents: read
+concurrency:
+  group: deletion-access-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  access:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      NODE_PATH: ${{ github.workspace }}/.ci/node_modules
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - run: npm ci --prefix .ci --ignore-scripts --no-audit --no-fund
+      - name: Isolated access guard and existing recorder regressions
+        run: |
+          node --check tests/account-deletion-access.cjs
+          node tests/account-deletion-access.cjs
+          node tests/account-deletion-access-integration.cjs
+          node tests/team-recorder-login.cjs
+          node tests/member-invitation-email.cjs
+          node tests/organization-invitations-email.cjs
+          node tests/parent-browser-handler.cjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: deletion-access-results
+          path: |
+            validation/account-deletion-access.json
+            validation/account-deletion-access-integration.json
+            validation/team-recorder-login.json
+            validation/member-invitation-email.json
+            validation/organization-invitations-email.json
+            validation/parent-browser-handler.json
+          if-no-files-found: error

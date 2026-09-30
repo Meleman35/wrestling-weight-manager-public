@@ -1,0 +1,17 @@
+{
+  "environment": "Local PGlite with production reviewer/parent table definitions; synthetic Auth/record/provider adapters. No production mutations.",
+  "limits": "Does not prove production schema erasure, global stale-JWT denial, device cleanup, provider delivery, backup policy or legal retention.",
+  "checks": [
+    "Default-off release gate, private privileges, account binding, idempotent queue and phase checks",
+    "Expired workers are fenced; actual reviewer/parent capability cleanup preserves child, other guardian and unrelated reviewer",
+    "Storage lost acknowledgements retain durable manifests, apply backoff and block records/Auth/completion",
+    "Retry completes only after all phases; completion removes manifest paths and subject linkage while preserving unrelated synthetic records",
+    "Schema drift blocks automatic processing without discarding the request or deadline",
+    "A foreign-account media manifest is rejected atomically before any object removal",
+    "Notification failure stays pending after Auth removal; retry resumes confirmation without repeating completed phases",
+    "Missing stale-token revocation proof blocks erasure; this checks the gate, not production JWT coverage",
+    "Residual personal data prevents completion and confirmation even after Auth deletion",
+    "Bounded work yields safely; pause prevents new claims; worker functions are invokers and missing adapters cannot run",
+    "SDK contracts use exact Storage API objects and hard Auth deletion; ambiguous/forbidden responses never count as absence"
+  ]
+}

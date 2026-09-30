@@ -1,0 +1,13 @@
+{
+  "environment": "Local PGlite PostgreSQL with synthetic auth schema; no production migration or deletion",
+  "checks": [
+    "Anonymous and missing-identity calls are denied",
+    "Intake is disabled by default and direct inserts cannot bypass that switch",
+    "Confirmation/action checks and owner-only RLS reject invalid requests",
+    "A durable receipt survives a lost acknowledgement without duplicate requests or deadline reset",
+    "Clients cannot forge completion, deadlines, configuration or remove request history",
+    "A different account sees only its own separate receipt",
+    "Pausing intake or changing the policy does not lose existing receipts or alter promised deadlines",
+    "Intake does not delete or deactivate accounts and the public RPC does not bypass RLS"
+  ]
+}

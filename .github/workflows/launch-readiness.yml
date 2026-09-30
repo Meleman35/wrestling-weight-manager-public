@@ -1,0 +1,63 @@
+name: Launch readiness regressions
+on:
+  push:
+    branches: [codex/launch-account-deletion]
+  pull_request:
+    paths:
+      - src/account-deletion*.js
+      - scripts/account-deletion-*
+      - tests/account-deletion-*.cjs
+      - supabase/migrations/*account_deletion_*draft.sql
+      - .github/workflows/launch-readiness.yml
+permissions:
+  contents: read
+concurrency:
+  group: launch-readiness-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  launch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NODE_PATH: ${{ github.workspace }}/.ci/node_modules
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - run: npm ci --prefix .ci --ignore-scripts --no-audit --no-fund
+      - run: .ci/node_modules/.bin/playwright install --with-deps chromium
+      - name: Select installed Chromium
+        run: node -e 'process.stdout.write("CHROMIUM_EXECUTABLE_PATH="+require("playwright").chromium.executablePath()+"\n")' >> "$GITHUB_ENV"
+      - name: Local database and UI tests
+        run: |
+          node tests/account-deletion-intake.cjs
+          node tests/account-deletion-ui.cjs
+          node tests/account-deletion-plan.cjs
+          node tests/account-deletion-fulfillment.cjs
+          node tests/account-deletion-device.cjs
+          node tests/team-recorder-login-ui.cjs
+      - name: Core launch browser checks with synthetic accounts
+        run: |
+          failure=0
+          for test_file in tests/login-onboarding-browser.cjs tests/email-confirmation-browser.cjs tests/combined-invitation-browser.cjs tests/profile-approval-browser.cjs tests/parent-controls-browser.cjs tests/profile-controls-browser.cjs tests/video-pilot-native-browser.cjs; do
+            if timeout 150s node "$test_file"; then
+              echo "$test_file PASS" >> validation/launch-browser-status.txt
+            else
+              echo "$test_file FAIL" >> validation/launch-browser-status.txt
+              failure=1
+            fi
+          done
+          exit "$failure"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: launch-readiness-results
+          path: |
+            validation/account-deletion-intake.json
+            validation/account-deletion-ui.json
+            validation/account-deletion-plan.json
+            validation/account-deletion-fulfillment.json
+            validation/account-deletion-device.json
+            validation/launch-browser-status.txt
+          if-no-files-found: warn

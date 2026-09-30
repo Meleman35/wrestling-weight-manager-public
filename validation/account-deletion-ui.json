@@ -1,0 +1,12 @@
+{
+  "environment": "jsdom 26.0.0, synthetic RPC only",
+  "checks": [
+    "Disabled intake presents no request control and performs no request",
+    "Explicit confirmation is required and Apple subscription management is available",
+    "An interrupted response preserves confirmation, allows retry and does not claim receipt",
+    "Retry and reopening recover the durable pending receipt without claiming completed deletion",
+    "An incomplete server result never produces a success receipt",
+    "A late response cannot reveal the previous account’s receipt after invalidation",
+    "Locked or managed-account adapters can prevent entry"
+  ]
+}

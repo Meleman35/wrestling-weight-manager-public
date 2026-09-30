@@ -1,4 +1,5 @@
 // Fixed invitation email only. Caller JWT is verified by PostgREST; no service key.
+import {accountAccessAllowed} from '../_shared/account-access.ts';
 const cors={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS"};
 const json=(status:number,body:unknown)=>new Response(JSON.stringify(body),{status,headers:{...cors,"Content-Type":"application/json"}});
 const escape=(v:unknown)=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]!));
@@ -22,6 +23,7 @@ export function createHandler(deps:Dependencies){return async(req:Request)=>{
   const organization=String(data.organization_name||'Your organization'),title=String(data.access.title||'Organization leadership');
   const access=data.access.access_role==='organization_admin'?'Full organization administration, including administration of its managed teams.':data.access.access_role==='organization_member'?'Organization membership; no board position, voting right or team access.':String(data.access.access_role||'Title only').replaceAll('_',' ');
   const text=`You are invited to join ${organization} as ${title}.\n\nScope: ${data.access.scope||'Organization'}\nAccess: ${access}\n\nOpen your private invitation: ${link}\n\nSign in or create your own personal account using ${data.email}. Confirm your email, then review and accept the invitation. You do not need to join a team.\n\nExpires: ${data.expires_at}. Do not forward this private link. Check Junk or Spam if you are waiting for an account confirmation email.`;
+  if(!await accountAccessAllowed(deps,url,key,auth))return json(403,{error:'Account access could not be confirmed. Sign in again before sending an invitation.'});
   const sent=await deps.fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+emailKey,'Content-Type':'application/json','Idempotency-Key':'organization-invitation/'+b.id+'/'+b.request_id},body:JSON.stringify({from:'Wrestling Manager <messages@wrestlingmanager.app>',to:[data.email],subject:organization.replace(/[\r\n]/g,' ').slice(0,120)+' — organization invitation',text,html:'<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;line-height:1.5"><h2>Organization invitation</h2><p>'+escape(text).replace(/\n/g,'<br>')+'</p><p><a href="'+escape(link.toString())+'">Review organization invitation</a></p></div>'}),signal:AbortSignal.timeout(20000)});
   const result=await sent.json().catch(()=>null);
   if(!sent.ok||typeof result?.id!=='string')return json(502,{error:'Email submission was not confirmed. Retry this invitation or copy its link.'});

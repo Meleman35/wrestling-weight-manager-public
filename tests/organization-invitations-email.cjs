@@ -8,6 +8,7 @@ const root=path.resolve(__dirname,'..');
  const body={organization_id:id(1),id:id(2),request_id:id(3),token:'WMO-'+'a'.repeat(64)};
  const handler=createHandler({env:name=>({SUPABASE_URL:'https://database.example.test',SUPABASE_ANON_KEY:'fake-anon',RESEND_API_KEY:'fake-email-key'}[name]),fetch:async(url,options)=>{
   calls.push({url,options});
+  if(url.endsWith('/rpc/account_deletion_check_access'))return new Response('true');
   if(url.includes('/rpc/'))return new Response(JSON.stringify(deny?{message:'denied'}:{id:body.id,request_id:body.request_id,email:'leader@example.test',organization_name:'<img onerror="alert(1)"> Org',access:{title:'Secretary',scope:'Girls program',access_role:'board'},expires_at:'2026-10-09T00:00:00Z'}),{status:deny?403:200});
   if(timeout)throw Error('Simulated timeout');
   return new Response(JSON.stringify(providerFail?{message:'Failed',secret:'do not expose'}:{id:'fake-email-id'}),{status:providerFail?500:200});

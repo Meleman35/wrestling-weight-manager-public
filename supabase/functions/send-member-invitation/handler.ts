@@ -1,4 +1,5 @@
 import {newToken,tokenHash} from '../_shared/parent-tokens.ts';
+import {accountAccessAllowed} from '../_shared/account-access.ts';
 // Authentication link and team invitation are delivered together, once.
 // The inviter never receives the recipient's sign-in token or code.
 const cors={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS"};
@@ -17,6 +18,9 @@ export function createHandler(deps:Dependencies){return async(req:Request)=>{
   const checked=await deps.fetch(url+'/rest/v1/rpc/invitation_email_context',{method:'POST',headers:{apikey:key,Authorization:auth,'Content-Type':'application/json'},body:JSON.stringify({p_token:b.token,p_request_id:b.request_id}),signal:AbortSignal.timeout(15000)});
   if(!checked.ok)return json(checked.status===401?401:403,{error:'Invitation email was not authorized or was just submitted. Check the invitation and wait a minute before retrying.'});
   const context=await checked.json();if(!context?.id||context.request_id!==b.request_id||!/^\S+@\S+\.\S+$/.test(context.email)||!['athlete','parent_guardian'].includes(context.role))return json(502,{error:'Could not verify the invitation recipient.'});
+  const access=()=>accountAccessAllowed(deps,url,key,auth);
+  const unavailable=()=>json(403,{error:'Account access could not be confirmed. Sign in again before sending an invitation.'});
+  if(!await access())return unavailable();
   let parentChoices=false;
   if(context.role==='parent_guardian'){
    const mode=await deps.fetch(url+'/rest/v1/rpc/parent_browser_service',{method:'POST',headers:{apikey:service,Authorization:'Bearer '+service,'Content-Type':'application/json'},body:JSON.stringify({p_action:'email_mode',p_data:{}}),signal:AbortSignal.timeout(15000)});
@@ -24,6 +28,7 @@ export function createHandler(deps:Dependencies){return async(req:Request)=>{
    parentChoices=(await mode.json()).enabled===true;
   }
   if(parentChoices){
+   if(!await access())return unavailable();
    const token=newToken();
    const issued=await deps.fetch(url+'/rest/v1/rpc/parent_browser_service',{method:'POST',headers:{apikey:service,Authorization:'Bearer '+service,'Content-Type':'application/json'},body:JSON.stringify({p_action:'issue',p_data:{invitation_id:context.id,request_id:b.request_id,token_hash:await tokenHash(token)}}),signal:AbortSignal.timeout(15000)});
    if(!issued.ok)return json(503,{error:'Parent choices are temporarily unavailable. Wait a minute and retry.'});
@@ -31,17 +36,19 @@ export function createHandler(deps:Dependencies){return async(req:Request)=>{
    const href='https://theteammanager.app/parent-browser.html#token='+token;
    const team=String(context.team_name||'Your team').replace(/[\r\n]/g,' ').slice(0,120);
    const text=`${team} has invited you to connect with your athlete.\n\nOpen your private choices link: ${href}\n\nYou can join as a parent, or, for an eligible coach-verified athlete aged 13–17, approve routine profile edits without installing the app or creating an account. Photos are a separate choice. Name, contact, visibility and safety controls remain protected. Doing nothing does not approve anything.\n\nThe link expires within seven days. You can later withdraw browser permission at https://theteammanager.app/parent-browser.html using a fresh email link. Keep this email private. Opening it does not approve anything or sign you in.`;
+   if(!await access())return unavailable();
    const sent=await deps.fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+mail,'Content-Type':'application/json','Idempotency-Key':'member-invitation/'+context.id+'/'+b.request_id},body:JSON.stringify({from:'Wrestling Manager <messages@wrestlingmanager.app>',to:[bound.email],subject:team+' — parent choices for your athlete',text,html:'<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;line-height:1.5"><h2>'+escape(team)+'</h2><p>Choose how you would like to be involved.</p><p><a href="'+escape(href)+'" style="display:inline-block;background:#143f85;color:white;padding:14px;border-radius:10px;text-decoration:none">Review parent choices</a></p><p>Join as a parent, or approve routine profile edits for an eligible, coach-verified teen without creating an account. Photos are optional. Protected controls stay in place.</p><p>Nothing is approved until you choose. This private link expires within seven days. You can withdraw browser permission later at <a href="https://theteammanager.app/parent-browser.html">Manage parent permissions</a>.</p></div>'}),signal:AbortSignal.timeout(20000)});
    const result=await sent.json().catch(()=>null);if(!sent.ok||typeof result?.id!=='string')return json(502,{error:'Email delivery was not confirmed. Wait a minute before retrying.'});
    return json(200,{ok:true,sent:1,id:result.id,parent_choices:true});
   }
-  const generate=async(type:string)=>deps.fetch(url+'/auth/v1/admin/generate_link',{method:'POST',headers:{apikey:service,Authorization:'Bearer '+service,'Content-Type':'application/json'},body:JSON.stringify({type,email:context.email,...(type==='invite'?{data:{full_name:String(context.name||'').slice(0,120),wm_onboarding_role:context.role}}:{})}),signal:AbortSignal.timeout(15000)});
+  const generate=async(type:string)=>{if(!await access())throw Error('Account access unavailable');return deps.fetch(url+'/auth/v1/admin/generate_link',{method:'POST',headers:{apikey:service,Authorization:'Bearer '+service,'Content-Type':'application/json'},body:JSON.stringify({type,email:context.email,...(type==='invite'?{data:{full_name:String(context.name||'').slice(0,120),wm_onboarding_role:context.role}}:{})}),signal:AbortSignal.timeout(15000)});};
   let response=await generate('invite'),link=await response.json();
   if(!response.ok&&['email_exists','user_already_exists'].includes(link?.error_code||link?.code)){response=await generate('magiclink');link=await response.json();}
   if(!response.ok||!link.hashed_token||!/^\d{6,10}$/.test(link.email_otp)||!['invite','magiclink','signup'].includes(link.verification_type))return json(502,{error:'Could not prepare the secure invitation. Wait a minute and retry.'});
   const href=new URL('https://theteammanager.app/invite-signin.html');href.hash=new URLSearchParams({token_hash:link.hashed_token,type:link.verification_type,invite:b.token,email:context.email}).toString();
   const team=String(context.team_name||'Your team').replace(/[\r\n]/g,' ').slice(0,120);
   const text=`You’re invited to ${team}.\n\nOpen this link and tap Confirm & join team: ${href}\n\nThis one step confirms your email and signs you in. There is no second confirmation email and no password to create now.\n\nPrefer using the installed app? Choose Use an email code on Personal Login, enter ${context.email}, then enter this one-time code: ${link.email_otp}\n\nYour team invitation will be available after sign-in. If the code has expired, ask your coach to resend this invitation. Keep this email private; the link and code sign in to your account.`;
+  if(!await access())return unavailable();
   const sent=await deps.fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+mail,'Content-Type':'application/json','Idempotency-Key':'member-invitation/'+context.id+'/'+b.request_id},body:JSON.stringify({from:'Wrestling Manager <messages@wrestlingmanager.app>',to:[context.email],subject:team+' — confirm & join your team',text,html:'<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;line-height:1.5"><h2>'+escape(team)+'</h2><p>One email. Confirm your email address and join your team.</p><p><a href="'+escape(href.toString())+'" style="display:inline-block;background:#143f85;color:white;padding:14px;border-radius:10px;text-decoration:none">Confirm &amp; join team</a></p><p>Or choose <b>Use an email code</b> in the app and enter:</p><p style="font-size:28px;font-weight:bold;letter-spacing:4px">'+escape(link.email_otp)+'</p><p>Use '+escape(context.email)+'. No second confirmation email or new password is needed.</p><p>Keep this email private. If the link or code expires, ask your coach to resend your invitation.</p></div>'}),signal:AbortSignal.timeout(20000)});
   const result=await sent.json().catch(()=>null);if(!sent.ok||typeof result?.id!=='string')return json(502,{error:'Email delivery was not confirmed. Wait a minute before retrying.'});
   return json(200,{ok:true,sent:1,id:result.id});

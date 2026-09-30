@@ -1,0 +1,15 @@
+{
+  "status": "passed",
+  "checks": [
+    "Shared team/roster cascades are surfaced for review, never authorized for erasure; input is unchanged",
+    "A restrictive link stops cascade propagation; null/default actions and embedded data remain explicit review gaps",
+    "Tables without foreign keys are retained in the review inventory rather than treated as safe",
+    "Input ordering is irrelevant and schema/constraint drift changes the inventory fingerprint",
+    "Cyclic relationships terminate without duplicate tables or an invented erasure order",
+    "Composite keys retain paired column order and multiple references do not duplicate a table",
+    "Incomplete, ambiguous or unsupported metadata fails explicitly instead of producing an executable-looking plan",
+    "The command line has no execution mode or account target",
+    "Actual PostgreSQL catalogue query runs in a read-only transaction, preserves rows and returns metadata without account values"
+  ],
+  "scope": "Synthetic schema and actual SQL in PGlite; no production row access or writes"
+}

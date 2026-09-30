@@ -10,6 +10,7 @@ on:
       - supabase/functions/parent-browser/**
       - supabase/functions/send-member-invitation/**
       - supabase/functions/_shared/parent-tokens.ts
+      - supabase/functions/_shared/account-access.ts
       - supabase/migrations/*parent_browser*
       - tests/parent-browser-*.cjs
       - .ci/**

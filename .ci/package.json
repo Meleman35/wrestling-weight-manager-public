@@ -3,7 +3,8 @@
   "private": true,
   "version": "1.0.0",
   "devDependencies": {
-    "@electric-sql/pglite": "0.5.8",
-    "playwright": "1.63.0"
+    "playwright": "1.63.0",
+    "jsdom": "26.0.0",
+    "@electric-sql/pglite": "0.5.8"
   }
 }
