@@ -1,0 +1,11 @@
+{
+  "checks": [
+    "Paid gate defaults closed and cannot be called or changed by clients",
+    "Actual SQL scopes team/style/athlete, combines linked roster identities, deduplicates score sources and strips private fields",
+    "Parents and athletes only see their authorized wrestler; other teams and teammates stay private",
+    "Managed logins, outsiders, parent-mode escalation, invalid styles and wrong-team seasons are rejected",
+    "Revoked guardian membership, deleted accounts and banned accounts lose access immediately",
+    "Expired/removed coverage cannot be replaced by client-supplied paid flags"
+  ],
+  "productionApplied": false
+}
