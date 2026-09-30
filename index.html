@@ -16246,6 +16246,7 @@ window.WMScopedDeletion=(()=>{
   const response=await fetch(SUPABASE_URL+'/functions/v1/scoped-deletion',{method:'POST',headers:{apikey:SUPABASE_KEY,'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:JSON.stringify(body)});
   const data=await response.json();if(!response.ok)throw Object.assign(Error(errors[data.error]||'The result could not be confirmed. Reconnect and resume this same request.'),{code:data.error});return data;
  }
+ const payload=job=>({action:'begin',kind:job.kind,teamIds:job.teamIds,organizationIds:job.organizationIds,confirmation:'delete',requestId:job.requestId,receipt:job.receipt});
  function panel(job){
   const old=jobs.get(job.requestId);if(old)return old;
   const box=el('section','');box.className='feature-card';box.style.cssText='position:fixed;inset:auto 16px 16px;z-index:100000;max-width:540px;margin:auto;padding:20px;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 12px 50px #0006';
@@ -16265,14 +16266,23 @@ window.WMScopedDeletion=(()=>{
  async function resume(job){
   const view=panel(job);if(view.busy)return;view.busy=true;view.button.disabled=true;
   try{
-   const result=await call({action:'recover',requestId:job.requestId,receipt:job.receipt});
+   let result;
+   try{result=await call({action:'recover',requestId:job.requestId,receipt:job.receipt});}
+   catch(error){
+    if(error.code!=='request_not_found')throw error;
+    if(actor()!==job.actorId||!session?.access_token)throw Error('Sign in with the account that started this request to retry it.');
+    if(!['personal','team','organization','all'].includes(job.kind)||!Array.isArray(job.teamIds)||!Array.isArray(job.organizationIds))throw Error('This saved request needs review before it can be restarted.');
+    // The server confirmed that no request with this receipt exists. Resubmit
+    // the original confirmed scope and nonce, never the current UI selection.
+    result=await call(payload(job),session.access_token);
+   }
    if(result.state==='completed'){
     if(result.personal!==job.personal||result.subjectHash!==await digest(job.actorId))throw Error('The deletion receipt did not match this account.');
     if(job.personal)await clearWebAccount(job);
     else if(actor()===job.actorId)await refreshAccountView();
     localStorage.removeItem(PREFIX+job.requestId);
     view.status.textContent=job.personal?'Your server account, selected records and files have been deleted. You are signed out on this browser. Downloaded copies and files held by the native app require their own cleanup.':'The selected workspace has been deleted. Personal accounts and profiles remain.';
-    view.button.textContent='Close';view.button.onclick=()=>{view.box.remove();jobs.delete(job.requestId);};
+    view.button.textContent='Close';view.button.onclick=()=>{view.box.remove();jobs.delete(job.requestId);if(job.personal&&!actor())location.reload();};
    }else if(result.state==='blocked'){
     localStorage.removeItem(PREFIX+job.requestId);
     view.status.textContent='Nothing was deleted. This selection includes a profile, shared record or file that needs further review to preserve other people’s information.';
@@ -16290,12 +16300,12 @@ window.WMScopedDeletion=(()=>{
   if(Object.keys(localStorage).some(k=>k.startsWith(PREFIX)&&JSON.parse(localStorage.getItem(k)||'null')?.actorId===actorId))throw Error('Resume your existing deletion request first.');
   const personal=['personal','all'].includes(choice.kind);
   const targets=choice.kind==='all'?choice.targets:choice.kind==='personal'?[]:[choice];
-  const job={requestId:crypto.randomUUID(),actorId,personal,receipt:Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,'0')).join('')};
+  const job={requestId:crypto.randomUUID(),actorId,personal,kind:choice.kind,teamIds:targets.filter(x=>x.targetKind==='team').map(x=>x.id),organizationIds:targets.filter(x=>x.targetKind==='organization').map(x=>x.id),receipt:Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,'0')).join('')};
   // Persist before sending. A lost response after server acceptance must not
   // create a second request or depend on the soon-to-be-deleted Auth session.
   save(job);
   try{
-   await call({action:'begin',kind:choice.kind,teamIds:targets.filter(x=>x.targetKind==='team').map(x=>x.id),organizationIds:targets.filter(x=>x.targetKind==='organization').map(x=>x.id),confirmation:'delete',requestId:job.requestId,receipt:job.receipt},token);
+   await call(payload(job),token);
   }catch(error){if(errors[error.code]||['request_not_accepted','sign_in_required','invalid_request'].includes(error.code)){localStorage.removeItem(PREFIX+job.requestId);throw error;}panel(job).status.textContent=error.message;return;}
   void resume(job);
  }

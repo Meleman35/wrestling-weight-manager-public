@@ -17,6 +17,20 @@ Deno.serve(async req=>{
    const result=await admin.rpc('scoped_deletion_acceptance',{p_action:action,p_run:body.runId,p_hash:hash,p_data:data});
    if(result.error)throw Error('rpc_'+action+':'+result.error.message);return result.data;
   };
+  if(body.action==='cleanup'){
+   const clean=async(action:string)=>{const {data,error}=await admin.rpc('scoped_deletion_acceptance_cleanup',{p_action:action,p_run:body.runId,p_hash:hash});if(error)throw Error('cleanup_'+action+':'+error.message);return data;};
+   const fixture=await clean('context');
+   EdgeRuntime.waitUntil((async()=>{
+    try{
+     const provider=providerAdapter(admin);
+     await provider.removeObject(fixture.bucket,fixture.path);ok(!await provider.objectExists(fixture.bucket,fixture.path),'fixture_file_remains');
+     await clean('records');
+     for(const id of [fixture.retained,fixture.child]){await provider.deleteIdentity(id);ok(!await provider.identityExists(id),'fixture_auth_remains');}
+     await clean('complete');
+    }catch(error){await rpc('failed',{code:String(error?.message||'cleanup_failed').slice(0,180)}).catch(()=>{});}
+   })());
+   return Response.json({accepted:true},{status:202});
+  }
   if(body.action==='resume'){
    const {data:fixture,error}=await admin.rpc('scoped_deletion_acceptance_inspect',{p_run:body.runId,p_hash:hash});
    ok(!error&&fixture?.jobId,'resume_not_authorized');

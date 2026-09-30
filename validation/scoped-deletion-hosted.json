@@ -1,0 +1,32 @@
+{
+  "date": "2026-09-30",
+  "environment": "Real hosted Supabase Auth, Storage and application database; isolated synthetic accounts only",
+  "runs": 2,
+  "completed_runs": 2,
+  "cleaned_runs": 2,
+  "checks": {
+    "requesting_auth_identity_removed": true,
+    "requesting_personal_profile_removed": true,
+    "selected_team_and_organization_removed": true,
+    "message_and_audit_snapshot_removed": true,
+    "exact_uploaded_files_removed_through_storage_api": true,
+    "other_auth_identities_preserved_before_fixture_cleanup": true,
+    "other_personal_profiles_preserved_before_fixture_cleanup": true,
+    "athlete_identity_preserved_before_fixture_cleanup": true,
+    "other_team_and_memberships_preserved_before_fixture_cleanup": true,
+    "shared_portable_photo_preserved_before_fixture_cleanup": true,
+    "expired_account_old_jwt_rejected": true,
+    "paused_request_resumed_to_verified_completion": true,
+    "second_run_completed_on_first_worker_attempt": true,
+    "temporary_fixture_identities_and_files_cleaned": true,
+    "temporary_test_capabilities_deleted": true,
+    "temporary_acceptance_endpoint_retired": true
+  },
+  "provider_contract_fix": "Pinned Storage SDK returns false with an error for missing HEAD requests. A 400 requires the explicit Object not found metadata response; generic 400, authorization failures and timeouts do not establish absence. Database metadata is independently checked before records can be removed.",
+  "limits": [
+    "Privately enrolled Safari execution only; native cleanup remains blocked.",
+    "Unknown dependencies, personal athlete identity erasure, and closing an athlete login's last active team are blocked before erasure.",
+    "Previously downloaded copies and native files are outside this server acceptance test.",
+    "No real customer identity was erased by the acceptance runner."
+  ]
+}

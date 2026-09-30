@@ -20,7 +20,7 @@ assert.equal((await handler(request(body))).status,401);assert.equal(begun,0);as
 authenticated=true;
 assert.equal((await handler(request({...body,confirmation:'DELETE'}))).status,400);assert.equal(begun,0);
 assert.equal((await handler(request(body))).status,202);await Promise.all(background);assert.equal(begun,1);
-assert.equal((await handler(request({action:'resume',id:job,receipt:'d'.repeat(64)}))).status,503);
+assert.equal((await handler(request({action:'resume',id:job,receipt:'d'.repeat(64)}))).status,404);
 const result=await handler(request({action:'recover',requestId,receipt}));assert.equal(result.status,200);assert.equal((await result.json()).id,job);
 assert.equal((await handler(new Request('https://example.invalid',{method:'POST',headers:{Origin:'https://untrusted.invalid'},body:JSON.stringify(body)}))).status,403);
 assert.equal((await handler(request({...body,padding:'x'.repeat(9000)}))).status,413);

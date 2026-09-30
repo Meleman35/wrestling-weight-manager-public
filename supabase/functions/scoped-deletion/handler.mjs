@@ -32,6 +32,7 @@ export function createDeletionHandler({admin,caller,waitUntil=()=>{},allowedOrig
   const {data,error}=await admin.rpc('scoped_deletion_service',{p_op:op,p_job:job,p_lease:lease,p_input:input});
   if(error){
    const e=Error('service_unavailable');
+   if(error.message==='DELETION_RECEIPT_REQUIRED')e.code='request_not_found';
    const terminal=['UNREVIEWED_FILE_REFERENCE','AMBIGUOUS_FILE_REFERENCE','UNREVIEWED_UPLOADED_FILE','SHARED_FILE_REFERENCE','UNREVIEWED_IDENTITY_COPY'];
    const found=terminal.find(code=>error.message==='DELETION_'+code);if(found)e.code=found.toLowerCase();throw e;
   }return data;
@@ -88,6 +89,6 @@ export function createDeletionHandler({admin,caller,waitUntil=()=>{},allowedOrig
     return response(result.state==='completed'?200:202,result);
    }
    return response(400,{error:'invalid_request'});
-  }catch{return response(503,{error:'result_unconfirmed'});}
+  }catch(error){return response(error?.code==='request_not_found'?404:503,{error:error?.code==='request_not_found'?'request_not_found':'result_unconfirmed'});}
  };
 }

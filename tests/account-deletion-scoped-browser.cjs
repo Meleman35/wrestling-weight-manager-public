@@ -5,7 +5,7 @@ const hash=id=>createHash('sha256').update(id).digest('hex');
 (async()=>{
  const browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE_PATH,headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
  const passed=[];
- async function setup({personal=false,lost=false,wrong=false}={}){
+ async function setup({personal=false,lost=false,wrong=false,missing=false}={}){
   const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
   await context.addInitScript({content:fs.readFileSync(path.join(root,'tests/browser-fixture.js'),'utf8')});
   const page=await context.newPage(),calls=[],errors=[];page.on('pageerror',e=>errors.push(e.message));
@@ -13,7 +13,8 @@ const hash=id=>createHash('sha256').update(id).digest('hex');
    if(route.request().isNavigationRequest())return route.fulfill({contentType:'text/html',body:fs.readFileSync(path.join(root,'index.html'),'utf8')});
    if(route.request().url().endsWith('/functions/v1/scoped-deletion')){
     const input=route.request().postDataJSON();calls.push(input);
-    if(input.action==='begin'){if(lost)return route.abort();return route.fulfill({status:202,contentType:'application/json',body:JSON.stringify({id:J,state:'planning'})});}
+    if(input.action==='begin'){if(lost||(missing&&calls.filter(c=>c.action==='begin').length===1))return route.abort();return route.fulfill({status:202,contentType:'application/json',body:JSON.stringify({id:J,state:'planning'})});}
+    if(missing&&calls.filter(c=>c.action==='begin').length===1)return route.fulfill({status:404,contentType:'application/json',body:JSON.stringify({error:'request_not_found'})});
     return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({id:J,state:'completed',personal,subjectHash:hash(wrong?B:A)})});
    }
    return route.request().url().includes('supabase')?route.fulfill({contentType:'text/javascript',body:''}):route.abort();
@@ -53,6 +54,15 @@ const hash=id=>createHash('sha256').update(id).digest('hex');
   assert.equal(await x.page.evaluate(()=>Object.keys(localStorage).filter(k=>k.startsWith('wm-deletion-resume-v1:')).length),1);
   await x.page.getByRole('button',{name:'Resume deletion',exact:true}).click();await x.page.getByText('The selected workspace has been deleted. Personal accounts and profiles remain.',{exact:true}).waitFor();
   assert.equal(x.calls.filter(x=>x.action==='begin').length,1);assert.equal(x.calls[1].requestId,x.calls[0].requestId);await x.context.close();passed.push('A lost start response retains the original receipt and recovers the same job without a second deletion request');
+  x=await setup({missing:true});
+  await x.page.evaluate(T=>WMScopedDeletion.begin({kind:'team',targetKind:'team',id:T}),T);
+  await x.page.getByRole('button',{name:'Resume deletion',exact:true}).click();await x.page.getByText('The selected workspace has been deleted. Personal accounts and profiles remain.',{exact:true}).waitFor();
+  const attempts=x.calls.filter(c=>c.action==='begin');assert.equal(attempts.length,2);assert.deepEqual(attempts[1],attempts[0]);await x.context.close();passed.push('When an offline start never reached the server, retry submits the identical confirmed scope and nonce');
+  x=await setup({missing:true});
+  await x.page.evaluate(T=>WMScopedDeletion.begin({kind:'team',targetKind:'team',id:T}),T);
+  await x.page.evaluate(B=>{session=fixture.session={user:{id:B},access_token:'other-synthetic-token'};},B);
+  await x.page.getByRole('button',{name:'Resume deletion',exact:true}).click();await x.page.getByText('Sign in with the account that started this request to retry it.',{exact:true}).waitFor();
+  assert.equal(x.calls.filter(c=>c.action==='begin').length,1);assert.equal(await x.page.evaluate(()=>fixture.signouts),0);await x.context.close();passed.push('Switching accounts cannot resubmit another account’s pending intent');
   x=await setup();
   const native=await x.page.evaluate(async()=>{window.wrestlingManagerNativeShellVersion='synthetic';try{await WMScopedDeletion.begin({kind:'personal'});return '';}catch(e){return e.message;}});
   assert.match(native,/Use Safari/);assert.equal(x.calls.length,0);await x.context.close();passed.push('Native builds without verified file cleanup are blocked before a request or receipt is created');
