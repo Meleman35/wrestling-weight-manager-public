@@ -9,6 +9,9 @@ on:
       - src/account-deletion-phone-test.js
       - scripts/patch-deletion-phone-test.py
       - tests/account-deletion-phone-*.cjs
+      - tests/account-deletion-scoped-browser.cjs
+      - src/scoped-deletion-client.js
+      - src/account-deletion-device.js
       - tests/fixtures/account-admin-role-functions.sql
       - supabase/migrations/*account_deletion_phone_preflight.sql
       - supabase/migrations/*account_deletion_scope_preflight.sql
@@ -39,9 +42,10 @@ jobs:
       - name: Select installed Chromium
         run: node -e 'process.stdout.write("CHROMIUM_EXECUTABLE_PATH="+require("playwright").chromium.executablePath()+"\n")' >> "$GITHUB_ENV"
       - run: node tests/account-deletion-phone-browser.cjs
+      - run: node tests/account-deletion-scoped-browser.cjs
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
           name: deletion-phone-results
-          path: validation/account-deletion-phone-*.json
+          path: validation/account-deletion-*.json
           if-no-files-found: error

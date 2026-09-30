@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.99: Enrolled administrator-role removal with server continuity checks. -->
+<!-- Wrestling Manager v0.20.100: Enrolled scoped deletion with durable receipts and preservation checks. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -2347,7 +2347,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.99</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.100</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -16112,8 +16112,209 @@ window.WMConversationReview=(()=>{
  return {open,reset};
 })();
 </script>
+<script id="deletionDeviceScript">
+/* Local offline-workspace cleanup after a matched completed server receipt. Native files remain a separate gate. */
+window.WMAccountDeletionDevice = (() => {
+  'use strict';
+  const DB = 'wm-coach-offline-v1';
+  const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+  const KEY_MARKER = Object.freeze({version: 0, accountDeletion: true});
+  const RECORD_MARKER = Object.freeze({...KEY_MARKER, revision: 'account-deletion-v1'});
+  const failure = code => Object.assign(new Error(code), {code});
+  function aborted(signal) {
+    if (signal?.aborted) throw failure('device_cleanup_aborted');
+  }
+  function marker(value, record) {
+    const expected = record ? RECORD_MARKER : KEY_MARKER;
+    return !!value && Object.keys(value).length === Object.keys(expected).length &&
+      Object.entries(expected).every(([key, entry]) => value[key] === entry);
+  }
+  function open(signal) {
+    return new Promise((resolve, reject) => {
+      let settled = false, request;
+      const finish = (error, database) => {
+        if (settled) { database?.close(); return; }
+        settled = true; clearTimeout(timer); signal?.removeEventListener('abort', cancel);
+        if (error) { database?.close(); reject(error); } else resolve(database);
+      };
+      const cancel = () => finish(failure('device_cleanup_aborted'));
+      const timer = setTimeout(() => finish(failure('device_storage_unavailable')), 5000);
+      signal?.addEventListener('abort', cancel, {once: true});
+      try {
+        aborted(signal);
+        request = indexedDB.open(DB);
+        request.onupgradeneeded = event => {
+          if (settled || signal?.aborted || event.oldVersion !== 0) {
+            request.transaction.abort(); return;
+          }
+          request.result.createObjectStore('keys');
+          request.result.createObjectStore('records');
+        };
+        request.onblocked = () => finish(failure('device_storage_unavailable'));
+        request.onerror = () => finish(failure('device_storage_unavailable'));
+        request.onsuccess = () => {
+          const database = request.result;
+          if (settled) { database.close(); return; }
+          if (database.version !== 1 || [...database.objectStoreNames].join(',') !== 'keys,records') {
+            finish(failure('device_scope_unreviewed'), database); return;
+          }
+          database.onversionchange = () => database.close();
+          finish(null, database);
+        };
+      } catch (error) {
+        finish(failure(error?.code === 'device_cleanup_aborted' ? error.code : 'device_storage_unavailable'));
+      }
+    });
+  }
+  function transaction(database, subjectId, mode, signal) {
+    return new Promise((resolve, reject) => {
+      let tx, settled = false, verified = false;
+      const finish = error => {
+        if (settled) return;
+        settled = true; clearTimeout(timer); signal?.removeEventListener('abort', cancel);
+        if (error) reject(error); else resolve(verified);
+      };
+      const cancel = () => {
+        try { tx?.abort(); } catch (_) { /* Commit may already have completed. Verification still required. */ }
+        finish(failure('device_cleanup_aborted'));
+      };
+      const timer = setTimeout(() => {
+        try { tx?.abort(); } catch (_) { /* Never report success after a timed-out operation. */ }
+        finish(failure('device_storage_unavailable'));
+      }, 5000);
+      signal?.addEventListener('abort', cancel, {once: true});
+      try {
+        aborted(signal);
+        // Both account slots change atomically. Never clear a store or delete a database.
+        tx = database.transaction(['keys', 'records'], mode, {durability: 'strict'});
+        tx.onabort = () => finish(failure('device_storage_unavailable'));
+        tx.onerror = () => { /* The abort event is authoritative; do not suppress rollback. */ };
+        tx.oncomplete = () => finish();
+        const keys = tx.objectStore('keys'), records = tx.objectStore('records');
+        if (mode === 'readwrite') {
+          keys.put(KEY_MARKER, subjectId);
+          records.put(RECORD_MARKER, subjectId);
+        } else {
+          let keyValue, recordValue, completed = 0;
+          const complete = () => {
+            if (++completed === 2) verified = marker(keyValue, false) && marker(recordValue, true);
+          };
+          const keyRead = keys.get(subjectId), recordRead = records.get(subjectId);
+          keyRead.onsuccess = () => { keyValue = keyRead.result; complete(); };
+          recordRead.onsuccess = () => { recordValue = recordRead.result; complete(); };
+        }
+      } catch (error) {
+        try { tx?.abort(); } catch (_) { /* Preserve the original sanitized failure. */ }
+        finish(failure(error?.code === 'device_cleanup_aborted' ? error.code : 'device_storage_unavailable'));
+      }
+    });
+  }
+  async function clearOfflineAccount(scope, {signal} = {}) {
+    // The future lifecycle controller must derive this scope from verified server state,
+    // stop network/outbox work, and dispose in-memory views. UUID checks are NOT authorization.
+    if (!scope || typeof scope.subjectId !== 'string' || typeof scope.requestId !== 'string' ||
+        !UUID.test(scope.subjectId) || !UUID.test(scope.requestId)) {
+      throw failure('device_scope_invalid');
+    }
+    const subjectId = scope.subjectId, requestId = scope.requestId;
+    aborted(signal);
+    const database = await open(signal);
+    try {
+      await transaction(database, subjectId, 'readwrite', signal);
+      // A separate read transaction verifies ciphertext and CryptoKey were replaced, not merely queued.
+      if (!await transaction(database, subjectId, 'readonly', signal)) {
+        throw failure('device_cleanup_unverified');
+      }
+      aborted(signal);
+      return Object.freeze({scope: DB, requestId, offlineWorkspaceCleared: true});
+    } finally { database.close(); }
+  }
+  return Object.freeze({clearOfflineAccount});
+})();
+</script>
+<script id="scopedDeletionScript">
+/* Enrolled erasure controller. Resume credentials authorize one immutable job. */
+window.WMScopedDeletion=(()=>{
+ 'use strict';
+ const PREFIX='wm-deletion-resume-v1:',jobs=new Map();
+ const digest=async text=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text))),x=>x.toString(16).padStart(2,'0')).join('');
+ const actor=()=>session?.user?.id||null;
+ const el=(tag,text)=>{const x=document.createElement(tag);x.textContent=text;return x;};
+ function save(job){localStorage.setItem(PREFIX+job.requestId,JSON.stringify(job));}
+ const errors={team_handoff_required:'Another confirmed administrator must accept the team before you delete your personal account.',organization_handoff_required:'Another confirmed administrator must accept the organization before you delete your personal account.',linked_teams_not_selected:'Select the linked teams in Delete all, or transfer them before deleting their organization.',not_enabled:'Deletion has not been enabled for this account.',already_in_progress:'A deletion request is already in progress. Resume that request first.'};
+ async function call(body,token){
+  const response=await fetch(SUPABASE_URL+'/functions/v1/scoped-deletion',{method:'POST',headers:{apikey:SUPABASE_KEY,'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:JSON.stringify(body)});
+  const data=await response.json();if(!response.ok)throw Object.assign(Error(errors[data.error]||'The result could not be confirmed. Reconnect and resume this same request.'),{code:data.error});return data;
+ }
+ const payload=job=>({action:'begin',kind:job.kind,teamIds:job.teamIds,organizationIds:job.organizationIds,confirmation:'delete',requestId:job.requestId,receipt:job.receipt});
+ function panel(job){
+  const old=jobs.get(job.requestId);if(old)return old;
+  const box=el('section','');box.className='feature-card';box.style.cssText='position:fixed;inset:auto 16px 16px;z-index:100000;max-width:540px;margin:auto;padding:20px;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 12px 50px #0006';
+  box.setAttribute('aria-label','Deletion progress');
+  const heading=el('h2','Deletion status'),status=el('p','Checking this request…'),button=el('button','Resume deletion');button.className='wide secondary';status.setAttribute('role','status');status.setAttribute('aria-live','polite');
+  const entry={box,status,button,busy:false};button.onclick=()=>resume(job);box.append(heading,status,button);document.body.append(box);jobs.set(job.requestId,entry);return entry;
+ }
+ async function clearWebAccount(job){
+  // Stop current-account writers before replacing only this account's two slots.
+  if(actor()===job.actorId){window.WMOffline?.lock();window.WMChatDrafts?.reset();await window.WMChatDrafts?.flush();window.WMQuickSignIn?.signOut();}
+  if(!window.WMAccountDeletionDevice)throw Error('The server deletion is complete, but this browser needs to reload before local cleanup can finish.');
+  await window.WMAccountDeletionDevice.clearOfflineAccount({subjectId:job.actorId,requestId:job.requestId});
+  const prefixes=['wm-match-draft-v1:'+job.actorId+':','wm-roster-sort:'+job.actorId+':'];
+  for(const key of Object.keys(localStorage))if(prefixes.some(p=>key.startsWith(p)))localStorage.removeItem(key);
+  if(actor()===job.actorId){await client.auth.signOut({scope:'local'});closeSheets();show('appView',false);show('setupView',false);show('authView',true);}
+ }
+ async function resume(job){
+  const view=panel(job);if(view.busy)return;view.busy=true;view.button.disabled=true;
+  try{
+   let result;
+   try{result=await call({action:'recover',requestId:job.requestId,receipt:job.receipt});}
+   catch(error){
+    if(error.code!=='request_not_found')throw error;
+    if(actor()!==job.actorId||!session?.access_token)throw Error('Sign in with the account that started this request to retry it.');
+    if(!['personal','team','organization','all'].includes(job.kind)||!Array.isArray(job.teamIds)||!Array.isArray(job.organizationIds))throw Error('This saved request needs review before it can be restarted.');
+    // The server confirmed that no request with this receipt exists. Resubmit
+    // the original confirmed scope and nonce, never the current UI selection.
+    result=await call(payload(job),session.access_token);
+   }
+   if(result.state==='completed'){
+    if(result.personal!==job.personal||result.subjectHash!==await digest(job.actorId))throw Error('The deletion receipt did not match this account.');
+    if(job.personal)await clearWebAccount(job);
+    else if(actor()===job.actorId)await refreshAccountView();
+    localStorage.removeItem(PREFIX+job.requestId);
+    view.status.textContent=job.personal?'Your server account, selected records and files have been deleted. You are signed out on this browser. Downloaded copies and files held by the native app require their own cleanup.':'The selected workspace has been deleted. Personal accounts and profiles remain.';
+    view.button.textContent='Close';view.button.onclick=()=>{view.box.remove();jobs.delete(job.requestId);if(job.personal&&!actor())location.reload();};
+   }else if(result.state==='blocked'){
+    localStorage.removeItem(PREFIX+job.requestId);
+    view.status.textContent='Nothing was deleted. This selection includes a profile, shared record or file that needs further review to preserve other people’s information.';
+    view.button.textContent='Close';view.button.onclick=()=>{view.box.remove();jobs.delete(job.requestId);};
+   }else{
+    view.status.textContent='Deletion is in progress. You can resume this same request after a connection loss. Completion has not been confirmed yet.';
+    setTimeout(()=>{if(jobs.has(job.requestId))void resume(job);},5000);
+   }
+  }catch(error){view.status.textContent=error.message||'Reconnect and resume this same request.';}
+  finally{view.busy=false;view.button.disabled=false;}
+ }
+ async function begin(choice){
+  if(window.wrestlingManagerNativeShellVersion||window.wrestlingManagerNativeLifecycle===true||window.webkit?.messageHandlers?.security)throw Error('Use Safari for this deletion test. This native build does not yet support verified cleanup of files saved on the phone.');
+  const actorId=actor(),token=session?.access_token;if(!actorId||!token||managedLogin)throw Error('Sign in with your personal account.');
+  if(Object.keys(localStorage).some(k=>k.startsWith(PREFIX)&&JSON.parse(localStorage.getItem(k)||'null')?.actorId===actorId))throw Error('Resume your existing deletion request first.');
+  const personal=['personal','all'].includes(choice.kind);
+  const targets=choice.kind==='all'?choice.targets:choice.kind==='personal'?[]:[choice];
+  const job={requestId:crypto.randomUUID(),actorId,personal,kind:choice.kind,teamIds:targets.filter(x=>x.targetKind==='team').map(x=>x.id),organizationIds:targets.filter(x=>x.targetKind==='organization').map(x=>x.id),receipt:Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,'0')).join('')};
+  // Persist before sending. A lost response after server acceptance must not
+  // create a second request or depend on the soon-to-be-deleted Auth session.
+  save(job);
+  try{
+   await call(payload(job),token);
+  }catch(error){if(errors[error.code]||['request_not_accepted','sign_in_required','invalid_request'].includes(error.code)){localStorage.removeItem(PREFIX+job.requestId);throw error;}panel(job).status.textContent=error.message;return;}
+  void resume(job);
+ }
+ for(const key of Object.keys(localStorage))if(key.startsWith(PREFIX))try{const job=JSON.parse(localStorage.getItem(key));if(job?.requestId&&job.actorId&&/^[a-f0-9]{64}$/.test(job.receipt))setTimeout(()=>void resume(job),1000);}catch{}
+ return {begin};
+})();
+</script>
 <script id="deletionPhoneTestScript">
-/* Enrolled role removal; personal/workspace/combined erasure remains unavailable. */
+/* Enrolled deletion choices. Each action requires its own server capability. */
 window.WMDeletionPhoneTest=(()=>{
  'use strict';
  const fields=[['account_photos','Account profile photos'],['wrestling_profile_photos','Wrestling profile photos'],['messages','Messages sent'],['message_attachments','Message attachments uploaded'],['team_posts','Team posts written'],['post_attachments','Attachments on those posts'],['uploaded_objects','Stored files uploaded'],['teams','Team memberships'],['teams_needing_handoff','Teams needing an administrator handoff'],['guardian_links','Guardian links'],['organization_roles','Organization roles']];
@@ -16140,19 +16341,20 @@ window.WMDeletionPhoneTest=(()=>{
   card.addEventListener('toggle',()=>{if(!card?.open)closeConfirmation();});
   document.getElementById('signOutBtn').after(card);return card;
  }
- function heading(box,actions){box.append(element('summary','Account deletion'));box.append(element('p',actions?.administrator===true?'You can remove administrator access. Personal account, team, organization and Delete all deletion are not available yet.':'Deletion is not available yet. You can review your stored data and preview the confirmation below.','fine'));}
+ function heading(box,actions){box.append(element('summary','Account deletion'));box.append(element('p',actions?.personal===true?'Deletion is enabled for this test account in Safari. Review the selected scope carefully. Shared or unsupported records stop the request before erasure.':actions?.administrator===true?'You can remove administrator access. Personal account, team, organization and Delete all deletion are not available yet.':'Deletion is not available yet. You can review your stored data and preview the confirmation below.','fine'));}
  function refreshButton(box){const b=element('button','Refresh stored data','secondary wide');b.type='button';b.onclick=()=>refresh();box.append(b);}
  function confirmation(opener,choice,scopes,actions){
   if(!admitted||!actor()||!visible()||!card?.contains(opener))return;
   closeConfirmation();
   const uid=actor(),token=session.access_token,g=epoch;
-  const executable=choice.kind==='administrator'&&actions?.administrator===true;
+  const executable=actions?.[choice.kind]===true&&(choice.kind==='administrator'||!!window.WMScopedDeletion);
+  const roleOnly=choice.kind==='administrator';
   const requestId=executable?crypto.randomUUID():null;
   let busy=false,completed=false;
   const current=()=>g===epoch&&uid===actor()&&token===session?.access_token&&visible();
   dialog=element('dialog');dialog.id='deletionConfirmDialog';dialog.setAttribute('aria-labelledby','deletionConfirmTitle');dialog.setAttribute('aria-describedby','deletionConfirmWarning deletionConfirmUnavailable');
   const title=element('h2',choice.kind==='all'?'Delete all selected':choice.kind==='personal'?'Delete personal account':choice.kind==='administrator'?'Remove administrator access':choice.kind==='team'?'Delete team':'Delete organization');title.id='deletionConfirmTitle';dialog.append(title);
-  const unavailable=element('p',executable?'Confirming will remove your selected administrator role. Your personal account and profile will stay.':'Confirmation preview: account deletion is not available yet. Nothing will be deleted.','deletion-unavailable');unavailable.id='deletionConfirmUnavailable';dialog.append(unavailable);
+  const unavailable=element('p',executable?(roleOnly?'Confirming will remove your selected administrator role. Your personal account and profile will stay.':'Confirming starts permanent deletion of this exact selection. The server checks authority and shared records before erasing anything.'):'Confirmation preview: account deletion is not available yet. Nothing will be deleted.','deletion-unavailable');unavailable.id='deletionConfirmUnavailable';dialog.append(unavailable);
   if(!['personal','all'].includes(choice.kind))dialog.append(element('p','Selected '+choice.targetKind+': '+choice.name));
   if(choice.kind==='all'){
    dialog.append(element('h3','Included in this deletion'));
@@ -16173,11 +16375,11 @@ window.WMDeletionPhoneTest=(()=>{
   }
   if(choice.kind==='all'&&choice.targets.some(x=>x.targetKind==='organization'&&(x.team_count||x.athlete_count)))dialog.append(element('p','Linked athlete profiles must be preserved. Any linked team not included above must be preserved or transferred before its organization can be closed.','fine'));
   const form=element('form');form.noValidate=true;
-  const label=element('label','Type delete to confirm that you understand this warning, then press Enter or '+(executable?'Confirm removal.':'Confirm deletion.'));label.htmlFor='deletionConfirmInput';
+  const label=element('label','Type delete to confirm that you understand this warning, then press Enter or '+(executable&&roleOnly?'Confirm removal.':'Confirm deletion.'));label.htmlFor='deletionConfirmInput';
   const input=element('input');input.id='deletionConfirmInput';input.type='text';input.autocomplete='off';input.setAttribute('autocapitalize','none');input.setAttribute('autocorrect','off');input.spellcheck=false;input.setAttribute('enterkeyhint','done');input.setAttribute('aria-describedby','deletionConfirmStatus');
   const status=element('p',null,'fine');status.id='deletionConfirmStatus';status.setAttribute('role','status');status.setAttribute('aria-live','polite');
   const cancel=element('button','Cancel','wide secondary');cancel.type='button';cancel.onclick=()=>{if(busy)return;closeConfirmation();if(current()){if(completed)void refresh();else opener.focus();}};
-  const confirm=element('button',executable?'Confirm removal':'Confirm deletion','wide deletion-action');confirm.type='submit';confirm.disabled=true;
+  const confirm=element('button',executable&&roleOnly?'Confirm removal':'Confirm deletion','wide deletion-action');confirm.type='submit';confirm.disabled=true;
   input.oninput=()=>{confirm.disabled=busy||completed||input.value!=='delete';status.textContent='';};
   form.onsubmit=async event=>{
    event.preventDefault();if(!current()){reset();return;}
@@ -16187,6 +16389,12 @@ window.WMDeletionPhoneTest=(()=>{
     // These choices remain previews. Never route them to the role-removal RPC.
     status.textContent='This action is not available yet. Nothing has been changed, deleted or scheduled for deletion.';
     input.value='';confirm.disabled=true;return;
+   }
+   if(!roleOnly){
+    busy=true;input.disabled=true;confirm.disabled=true;cancel.disabled=true;status.textContent='Checking and starting deletion…';
+    try{await window.WMScopedDeletion.begin(choice);if(current())closeConfirmation();}
+    catch(error){if(current())status.textContent=error.message||'The request could not be confirmed.';}
+    finally{busy=false;if(current()){input.value='';input.disabled=false;confirm.disabled=true;cancel.disabled=false;}}return;
    }
    busy=true;input.disabled=true;confirm.disabled=true;cancel.disabled=true;status.textContent='Removing administrator access…';
    try{
@@ -16275,7 +16483,7 @@ window.WMDeletionPhoneTest=(()=>{
    if(!valid())return;
    if(error)throw Error('unavailable');
    if(data?.enabled!==true){reset();return;}
-   if(data.deletion_enabled!==false||!validScopes(data)||data.subject_id!==uid||!Number.isFinite(Date.parse(data.checked_at))||fields.some(([key])=>!Number.isSafeInteger(data.counts?.[key])||data.counts[key]<0))throw Error('invalid response');
+   if(typeof data.deletion_enabled!=='boolean'||!validScopes(data)||data.subject_id!==uid||!Number.isFinite(Date.parse(data.checked_at))||fields.some(([key])=>!Number.isSafeInteger(data.counts?.[key])||data.counts[key]<0))throw Error('invalid response');
    admitted=true;const box=mount();box.replaceChildren();heading(box,data.actions);
    box.append(element('h3','Your personal account data'));box.append(element('p','These counts belong to your personal account. Choose the action below after reviewing them.','fine'));
    const list=element('dl');list.style.cssText='display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 16px;margin:16px 0';

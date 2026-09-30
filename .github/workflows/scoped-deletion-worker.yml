@@ -1,0 +1,39 @@
+name: Scoped deletion worker
+on:
+  pull_request:
+    paths:
+      - 'scripts/scoped-deletion-*'
+      - 'scripts/assemble-scoped-deletion.mjs'
+      - 'supabase/scoped-deletion-*'
+      - 'supabase/functions/scoped-deletion/**'
+      - 'supabase/migrations/*scoped_deletion_worker.sql'
+      - 'tests/scoped-deletion-*'
+      - 'tests/helpers/scoped-deletion-*'
+      - 'tests/fixtures/scoped-deletion-*'
+      - '.github/workflows/scoped-deletion-worker.yml'
+permissions:
+  contents: read
+jobs:
+  worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      NODE_PATH: ${{ github.workspace }}/.ci/node_modules
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - run: npm ci --prefix .ci --ignore-scripts --no-audit --no-fund
+      - run: node scripts/assemble-scoped-deletion.mjs && git diff --exit-code -- supabase/migrations/20260930060258_scoped_deletion_worker.sql
+      - run: node tests/scoped-deletion-plan.mjs
+      - run: node tests/scoped-deletion-service.mjs
+      - run: node tests/scoped-deletion-handler.mjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: scoped-deletion-results
+          path: validation/scoped-deletion-*.json
+          if-no-files-found: error
