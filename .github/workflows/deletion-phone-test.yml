@@ -1,7 +1,7 @@
 name: Deletion phone setup regression
 on:
   push:
-    branches: [codex/deletion-phone-preflight, codex/deletion-phone-confirmation]
+    branches: [codex/deletion-phone-preflight, codex/deletion-phone-confirmation, codex/deletion-scope-options]
   pull_request:
     paths:
       - index.html
@@ -10,6 +10,7 @@ on:
       - scripts/patch-deletion-phone-test.py
       - tests/account-deletion-phone-*.cjs
       - supabase/migrations/*account_deletion_phone_preflight.sql
+      - supabase/migrations/*account_deletion_scope_preflight.sql
       - .github/workflows/deletion-phone-test.yml
 permissions:
   contents: read

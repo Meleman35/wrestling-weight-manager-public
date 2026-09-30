@@ -1,4 +1,4 @@
-# Private phone setup, v0.20.96
+# Private phone setup, v0.20.97
 
 This separate release provides a read-only inventory in Account & Team for a
 privately enrolled, verified personal account. It does not ship the unfinished
@@ -21,8 +21,10 @@ belongs in public source. Anonymous users and ordinary authenticated clients
 cannot read or change enrollment. The argument-free RPC derives the user from
 verified gateway claims and additionally checks a matching live Auth session,
 token expiry, confirmed email, ban/deletion state and non-managed identity.
-Only aggregate counts for that user are returned; no message contents, media
-paths, recipient identities or team names are disclosed.
+The original RPC returns aggregate counts. The new scope RPC additionally returns
+IDs/names of teams and organizations the caller administers, role-source flags,
+handoff warnings and linked-record counts. Neither returns message contents,
+media paths or other member identities.
 
 The current account can refresh profile-photo references, sent-message and
 uploaded-attachment counts, authored posts and their attachments, upload-owner
@@ -57,8 +59,18 @@ the UI; enroll only the explicitly authorized test account with a short expiry.
 PR #25 remains disabled. It still needs complete access/provider/session shutoff,
 reviewed record and media removal, team/guardian continuity, provider absence
 checks, reliable fulfillment/confirmation, and full synthetic end-to-end testing.
-Phone cleanup also needs the actual current scanner-patched native project:
+A separate private native preparation ZIP now contains unmounted cleanup adapters;
+Apple SDK/device validation and full integration are still needed. In particular,
 saved biometric credentials and account-scoped local movies are not covered by
 the browser offline-store draft. Preserve the current project and signing; an
 archived native ZIP is not a replacement. Showing this screen does not resolve
 these release gates or establish that any data has been deleted.
+
+## Scope choices and preservation
+
+The bottom dropdown now separates personal deletion, administrator-role removal,
+team deletion and organization deletion. See [account-deletion-scopes.md](account-deletion-scopes.md)
+for the accepted semantics, new read-only RPC and organization cascade guards.
+The guards preserve linked teams and athlete records by rejecting unreviewed
+organization deletion. No records were erased by installing them. Every action
+in this preview remains disabled; typed confirmation does not authorize work.
