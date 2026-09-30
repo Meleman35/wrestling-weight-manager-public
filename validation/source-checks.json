@@ -21,7 +21,12 @@
   },
   {
     "check": "syntax",
-    "script": "5",
+    "script": "scheduleBadges094Script",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "6",
     "passed": true
   },
   {
@@ -42,11 +47,6 @@
   {
     "check": "syntax",
     "script": "wmOrgInvites045",
-    "passed": true
-  },
-  {
-    "check": "syntax",
-    "script": "10",
     "passed": true
   },
   {
@@ -127,6 +127,11 @@
   {
     "check": "syntax",
     "script": "26",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "27",
     "passed": true
   },
   {
@@ -236,12 +241,12 @@
   },
   {
     "check": "syntax",
-    "script": "48",
+    "script": "49",
     "passed": true
   },
   {
     "check": "syntax",
-    "script": "49",
+    "script": "50",
     "passed": true
   },
   {
@@ -282,6 +287,56 @@
   {
     "check": "syntax",
     "script": "schedule085Script",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "offlineStore088Script",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "chatDrafts090Script",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "offlineWorkspace088Script",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "wm-conversation-reviewers",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "deletionDeviceScript",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "scopedDeletionScript",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "deletionPhoneTestScript",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "66",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "67",
+    "passed": true
+  },
+  {
+    "check": "syntax",
+    "script": "68",
     "passed": true
   }
 ]

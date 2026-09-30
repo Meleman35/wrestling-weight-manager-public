@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.104: Explicit contact review for duplicate athlete merges. -->
+<!-- Wrestling Manager v0.20.105: Parent-approved team messaging with a named adult reviewer. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -1238,7 +1238,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
         <button id="otherTeamNotificationsBtn" type="button" class="wide hidden"></button>
         <button type="button" class="tab-back-btn" data-back-home><span>←</span> Back to Locker Room</button>
         <div class="communication-head top-space"><div><div class="eyebrow">SAFEGUARDED COMMUNICATION</div><h2 style="margin:3px 0 0">Messages</h2></div><div class="communication-actions"><button id="openNotificationsBtn" type="button" class="secondary">🔔 <span id="communicationUnreadCount">0</span></button><button id="newCommunicationBtn" type="button">+ New</button></div></div>
-        <details class="safesport-banner"><summary><span class="guardian-shield-icon" aria-hidden="true"></span><b>Guardian-safe by design</b></summary><div class="safety-explanation"><p>Adults cannot privately message a minor without a connected parent or guardian receiving silent read access. Messages remain in the audit history after edits or removal. Automated checks flag secrecy, sexual-image requests, threats, off-app contact attempts and adult-to-minor phone-number sharing for human review.</p><label class="shield-choice-label" for="guardianShieldChoice">Shield appearance<select id="guardianShieldChoice"><option value="silver">Silver</option><option value="gold">Gold</option><option value="blue">Blue</option><option value="green">Green</option><option value="red">Red</option><option value="blue-white">Blue and white</option></select></label></div></details>
+        <details class="safesport-banner"><summary><span class="guardian-shield-icon" aria-hidden="true"></span><b>Guardian-safe by design</b></summary><div class="safety-explanation"><p>Adult–minor team conversations require a connected parent or guardian, or parent approval of a named adult reviewer. With email approval, the reviewer is copied on every message and a different authorized adult must be in the conversation. Messages remain in the audit history after edits or removal. Automated checks flag secrecy, sexual-image requests, threats, off-app contact attempts and adult-to-minor phone-number sharing for human review.</p><label class="shield-choice-label" for="guardianShieldChoice">Shield appearance<select id="guardianShieldChoice"><option value="silver">Silver</option><option value="gold">Gold</option><option value="blue">Blue</option><option value="green">Green</option><option value="red">Red</option><option value="blue-white">Blue and white</option></select></label></div></details>
         <button id="athleteChatPermissionsBtn" type="button" class="wide secondary hidden">👨‍👩‍👧 Parent Controls · athletes & notifications</button>
         <button id="guardianSafetyTestBtn" type="button" class="wide secondary hidden">🧪 Run Guardian Safety Test</button>
         <div id="smsActionRow" class="sms-action-row hidden"><button id="massTextBtn" type="button">📱 Send Mass Text</button><button id="textRepliesBtn" type="button" class="secondary">↩ Private Text Replies <span id="smsReplyCount">0</span></button></div>
@@ -1561,6 +1561,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <div id="communicationMessageList" class="message-list"><div class="empty-inline">Loading messages…</div></div>
     <div id="communicationSafetyTestRoleWrap" class="hidden"><label for="communicationSafetyTestRole">Send as</label><select id="communicationSafetyTestRole"><option value="coach">Test Coach</option><option value="athlete">Test Athlete</option></select></div>
     <div id="communicationMediaPreview" class="communication-media-preview hidden"></div>
+    <p id="communicationPermissionNotice" class="fine hidden" role="status"></p>
     <div id="communicationComposer" class="message-composer"><button id="addCommunicationMediaBtn" class="composer-media-btn" type="button" aria-label="Add photo or video">＋</button><input id="communicationMediaInput" class="hidden" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,video/mp4,video/quicktime"><textarea id="communicationMessageBody" rows="1" aria-label="Message" placeholder="Message"></textarea><button id="sendCommunicationMessageBtn" type="button" aria-label="Send message">↑</button></div>
     <button id="scheduleCommunicationMessageBtn" type="button" class="wide secondary">🕒 Send Later</button>
     <div class="inline-actions"><button id="endGuardianSafetyTestBtn" type="button" class="danger-outline hidden">End Test</button></div>
@@ -1610,7 +1611,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
 
   <section id="newCommunicationSheet" class="sheet hidden" aria-modal="true">
     <div class="sheet-handle"></div>
-    <div class="sheet-head"><div><div class="eyebrow">NEW CONVERSATION</div><h2>Message Teammates</h2><p class="muted">Athlete-to-athlete messages are allowed. If any adult messages a minor, guardian read access is added automatically.</p></div><button class="icon-close" data-close-sheet>×</button></div>
+    <div class="sheet-head"><div><div class="eyebrow">NEW CONVERSATION</div><h2>Message Teammates</h2><p class="muted">Chat choices follow parent permissions. Adult–minor conversations include a connected guardian or a parent-approved adult reviewer.</p></div><button class="icon-close" data-close-sheet>×</button></div>
     <label for="newCommunicationType">Conversation type</label>
     <select id="newCommunicationType"><option value="custom">Custom group / individual</option><option value="staff">Coaches / team leaders group</option><option value="captains">Captains group</option><option value="parents">Parents / guardians group</option><option value="individual">Individual chat</option></select>
     <label for="newCommunicationTitle">Conversation name <span class="optional-label">optional for direct messages</span></label>
@@ -2372,7 +2373,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.104</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.105</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -6540,6 +6541,9 @@ function subscribeCommunicationRealtime(){
 function syncCommunicationMediaButton(){
   const mediaButton=$('addCommunicationMediaBtn');if(!mediaButton)return;
   const safetyTest=String(activeCommunicationThread?.title||'').startsWith('🧪 TEST:');
+  const paused=activeCommunicationMediaAccess?.messaging_allowed===false&&!safetyTest;
+  $('communicationPermissionNotice').textContent=paused?(activeCommunicationMediaAccess.reason||'Messaging is paused until parent approval and an adult reviewer are in place.'):'';
+  show('communicationPermissionNotice',paused);
   mediaButton.disabled=!activeCommunicationMediaAccess?.can_send||safetyTest;
   mediaButton.title=safetyTest?'Media is disabled in safety simulations.':(activeCommunicationMediaAccess?.can_send?'Add photo or video':activeCommunicationMediaAccess?.reason||'Parent approval is required to send media.');
 }
@@ -6838,6 +6842,7 @@ async function sendCommunicationMessage(){
   if(!navigator.onLine){message('You are offline. Keep this draft and send when connected, or queue a text in Offline workspace.',true);return;}
   const same=()=>session?.user?.id===sendUser&&activeTeam?.id===sendTeam&&activeCommunicationThread?.thread_id===sentThreadId;
   const sendingMedia=!!media,safetyTest=String(sendThread.title||'').startsWith('🧪 TEST:');
+  if(activeCommunicationMediaAccess?.messaging_allowed===false){message(activeCommunicationMediaAccess.reason||'Messaging is paused until parent approval and an adult reviewer are in place.',true);return;}
   const btn=$('sendCommunicationMessageBtn');communicationSendFlights.add(sendKey);btn.disabled=true;btn.textContent='…';btn.setAttribute('aria-label',sendingMedia?'Sending photo or video':'Sending message');
   try{
     if(sendingMedia)message('Sending photo or video…');
@@ -8898,7 +8903,7 @@ async function sendMemberInviteEmail(url){
  try{const {data,error}=await client.functions.invoke('send-member-invitation',{body:{token,request_id:crypto.randomUUID()}});
   if(error){let detail;try{detail=await error.context?.json();}catch{}throw Error(detail?.error||error.message);}
   if(!data?.ok)throw Error(data?.error||'Invitation email was not confirmed.');
-  message(data.parent_choices?'Parent choices emailed privately. They can join, or approve an eligible teen’s routine profile edits without an account.':'One invitation email sent. They can tap Confirm & join team or use its code in the app.');
+  message(data.parent_choices?'Parent choices emailed privately. They can join, or separately approve an eligible teen’s profile edits and team messaging with an adult reviewer without an account.':'One invitation email sent. They can tap Confirm & join team or use its code in the app.');
  }catch(e){message(e.message||'Could not send the invitation. Please try again.',true);}
  finally{memberInviteEmailsBusy.delete(token);}
 }
@@ -12130,6 +12135,7 @@ document.getElementById('organizationHomeBtn').onclick=()=>WMOperations.open(sel
 <p>For a coach-verified athlete aged 13–17, a parent or legal guardian can use a private email link to approve routine shared-profile edits without creating an account. Photo changes are a separate choice. This does not delegate name, contact, visibility, medical or team-record changes, or turn off messaging safeguards. Existing parent accounts keep their controls.</p>
 <p>We record the verified guardian email, athlete and team connection, birth date used to confirm eligibility, staff verification, permission choices, notice version, timestamps and receipt. Supabase processes these records and Resend delivers private invitation and management links. Approval links expire within seven days and management links within one hour; opening a link does not approve anything. Keep the links private.</p>
 <p>You can <a href="./parent-browser.html">request a fresh management link</a> to review or withdraw browser permission. Withdrawal applies to future edits and does not undo already saved changes or erase the receipt. To change the choices, withdraw permission and ask the coach for a new invitation. These choices do not replace consent required for children under 13 or other legally required permissions. Contact support for access, correction or deletion requests about these records.</p>
+<p>Parents of verified athletes aged 13–17 can separately approve team messaging through their private email link, select an accepted adult reviewer, and optionally allow message photos/videos. Each message includes the reviewer alongside a different authorized adult. This does not grant private peer/profile chats or guardian powers. Parents can withdraw messaging permission through a fresh email management link. Reviewer or verification changes pause messaging under that permission.</p>
 <h2>Optional adult conversation reviewers</h2>
 <p>A team administrator can assign a verified adult staff member, such as Team Mom, to read-only review of that team’s coach or team-leader conversations with minors. The adult must accept the responsibility in their own account. Covered conversation members can see the active reviewers’ names and team roles. Reviewer access includes existing and future messages and shared photos or videos in those conversations; adult-only and athlete-to-athlete private conversations are excluded.</p>
 <p>Reviewer access creates no routine message notifications, does not add posting or parental authority, and does not replace required parent chat permission. Existing parent and participant notification settings remain separate. Assignments, acceptance, removal and conversation access are recorded for accountability. Team administrators can remove the assignment, and reviewers can stop their own access. Review history is not saved for offline use. Removal prevents new requests; media links issued for review can remain usable for up to 60 seconds, and information already viewed cannot be recalled.</p>
@@ -16143,7 +16149,7 @@ window.WMConversationReview=(()=>{
  // Access checks clear the view on role removal, account/team changes or loss of service.
  setInterval(async()=>{if(context&&(context!==actor()||sheet.classList.contains('hidden'))){reset();return;}if(!context||busy||checking||Date.now()-lastCheck<15000||!state?.accepted)return;checking=true;const g=epoch;try{const latest=await call('context',{},g);if(!latest.accepted)throw Error('Reviewer access ended.');if(selected)await call('check',{thread_id:selected.id},g);lastCheck=Date.now();}catch(e){if(valid(g)){rows=[];$('reviewBody').replaceChildren();note('Review paused. '+e.message+' Reopen it to check access.',true);state=null;}}finally{checking=false;}},1000);
  // Reviewer names are visible to the existing conversation members; no participant is added.
- setInterval(async()=>{const key=actor()&&activeCommunicationThread&&!$('communicationThreadSheet').classList.contains('hidden')?actor()+'/'+activeCommunicationThread.thread_id:'';if(key===observerKey&&(!key||Date.now()-observerAt<15000))return;observerKey=key;observerAt=Date.now();const g=++observerEpoch;banner.textContent='';show(banner.id,false);if(!key)return;try{const out=await client.rpc('conversation_review_request',{p_action:'observers',p_data:{thread_id:activeCommunicationThread.thread_id}});if(g!==observerEpoch||key!==observerKey||key!==actor()+'/'+activeCommunicationThread?.thread_id||$('communicationThreadSheet').classList.contains('hidden'))return;if(out.error){banner.textContent='Conversation reviewer details are temporarily unavailable.';show(banner.id,true);return;}if(out.data?.length){banner.textContent='Read-only adult reviewers: '+out.data.map(x=>x.name+' ('+String(x.role).replaceAll('_',' ')+')').join(', ')+'. They can review messages and shared media; routine reviewer notifications are off.';show(banner.id,true);}}catch{if(g===observerEpoch){banner.textContent='Conversation reviewer details are temporarily unavailable.';show(banner.id,true);}}},1000);
+ setInterval(async()=>{const key=actor()&&activeCommunicationThread&&!$('communicationThreadSheet').classList.contains('hidden')?actor()+'/'+activeCommunicationThread.thread_id:'';if(key===observerKey&&(!key||Date.now()-observerAt<15000))return;observerKey=key;observerAt=Date.now();const g=++observerEpoch;banner.textContent='';show(banner.id,false);if(!key)return;void retryActiveCommunicationMediaAccess(activeCommunicationThread.thread_id);try{const out=await client.rpc('conversation_review_request',{p_action:'observers',p_data:{thread_id:activeCommunicationThread.thread_id}});if(g!==observerEpoch||key!==observerKey||key!==actor()+'/'+activeCommunicationThread?.thread_id||$('communicationThreadSheet').classList.contains('hidden'))return;if(out.error){banner.textContent='Conversation reviewer details are temporarily unavailable.';show(banner.id,true);return;}if(out.data?.length){banner.textContent='Read-only adult reviewers: '+out.data.map(x=>x.name+' ('+String(x.role).replaceAll('_',' ')+(x.parent_approved?' · parent-approved':'')+')').join(', ')+'. They can review messages and shared media; routine reviewer notifications are off.';show(banner.id,true);}}catch{if(g===observerEpoch){banner.textContent='Conversation reviewer details are temporarily unavailable.';show(banner.id,true);}}},1000);
  return {open,reset};
 })();
 </script>

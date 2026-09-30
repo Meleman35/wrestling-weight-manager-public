@@ -11,6 +11,9 @@ on:
       - supabase/functions/send-member-invitation/**
       - supabase/functions/_shared/parent-tokens.ts
       - supabase/migrations/*parent_browser*
+      - supabase/migrations/*parent_approved_team_messaging*
+      - tests/parent-messaging-*
+      - tests/fixtures/parent-messaging-*
       - tests/parent-browser-*.cjs
       - .ci/**
       - .github/workflows/parent-browser.yml
@@ -32,6 +35,7 @@ jobs:
           node-version: '24'
       - run: npm ci --prefix .ci --ignore-scripts --no-audit --no-fund
       - run: node tests/parent-browser-db.cjs
+      - run: node tests/parent-messaging-db.mjs
       - run: node tests/parent-browser-handler.cjs
       - run: node tests/member-invitation-email.cjs
       - run: .ci/node_modules/.bin/playwright install --with-deps chromium
@@ -47,6 +51,8 @@ jobs:
         with:
           name: parent-browser-results
           path: |
+            validation/parent-messaging-*.json
+            validation/parent-messaging-*.png
             validation/parent-browser-*.json
             validation/parent-browser-*.png
             validation/login-*.png
