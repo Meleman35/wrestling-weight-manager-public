@@ -29,9 +29,13 @@ if 'Build v0.20.94' in s:
 if 'Build v0.20.95' in s:
     s=s.replace('Build v0.20.95','Build v0.20.96')
     s=s.replace('Wrestling Manager v0.20.95: Private read-only deletion test setup.', 'Wrestling Manager v0.20.96: Bottom account-deletion dropdown and typed confirmation preview.')
+if 'Build v0.20.96' in s:
+    s=s.replace('Build v0.20.96','Build v0.20.97')
+    s=s.replace('Wrestling Manager v0.20.96: Bottom account-deletion dropdown and typed confirmation preview.', 'Wrestling Manager v0.20.97: Separate personal, administrator, team and organization deletion choices.')
 sw=root / 'sw.js'
 w=sw.read_text()
 updated=w.replace("const CACHE='wm-shell-0.20.94';", "const CACHE='wm-shell-0.20.96';").replace("const CACHE='wm-shell-0.20.95';", "const CACHE='wm-shell-0.20.96';")
+updated=updated.replace("const CACHE='wm-shell-0.20.96';", "const CACHE='wm-shell-0.20.97';")
 if '--check' in sys.argv:
     assert s == original, 'Phone setup bundle differs from source'
     assert updated == w, 'Service worker version differs'

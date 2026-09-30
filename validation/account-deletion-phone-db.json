@@ -5,8 +5,15 @@
     "Other users, mismatched sessions and malformed or expired claims reveal no counts",
     "Unconfirmed, banned, deleted, expired-session, expired-enrollment and managed identities are excluded",
     "Administrator warning includes delegated team admins and organization admins, excluding inactive/banned alternatives",
-    "Functions are argument-free, stable and fixed-search-path; no data is removed and missing backend data fails visibly"
+    "Functions are argument-free, stable and fixed-search-path; no data is removed and missing backend data fails visibly",
+    "Scope preview inherits live-session enrollment, rejects supplied target IDs, and reveals only current administrator workspaces",
+    "Direct/inherited administration is distinguished; organizations show linked counts without leaking unrelated workspaces or member identities",
+    "Managed and unconfirmed alternate administrators cannot silently satisfy a handoff",
+    "Organization deletion is blocked before it can cascade into teams, shared athletes or personal profiles",
+    "Synthetic team removal preserves personal identities, athlete profiles and the same athlete’s other team link; athlete guard independently blocks organization cascade",
+    "A personal-only account retains its personal deletion preview without any administrator targets",
+    "New scope functions are stable, argument-free and fixed-search-path, with an invoker public wrapper"
   ],
-  "engine": "PGlite with actual preflight migration and minimal catalog-shaped synthetic tables; not full erasure acceptance",
+  "engine": "PGlite with actual preflight migration and minimal catalog-shaped synthetic tables including actual preservation constraints; not full erasure acceptance",
   "productionDataChanged": false
 }
