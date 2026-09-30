@@ -6,6 +6,14 @@ root = Path(__file__).resolve().parents[1]
 p = root / 'index.html'
 s = original = p.read_text()
 source = (root / 'src/account-deletion-phone-test.js').read_text()
+for module, ident in [('account-deletion-device.js', 'deletionDeviceScript'), ('scoped-deletion-client.js', 'scopedDeletionScript')]:
+    code = (root / 'src' / module).read_text()
+    embedded = '<script id="' + ident + '">\n' + code + '</script>\n'
+    if '<script id="' + ident + '">' in s:
+        s, n = re.subn(r'<script id="' + ident + r'">.*?</script>\n', lambda _: embedded, s, flags=re.S)
+        assert n == 1
+    else:
+        s = s.replace('<script id="deletionPhoneTestScript">', embedded + '<script id="deletionPhoneTestScript">')
 block = '<script id="deletionPhoneTestScript">\n' + source + '</script>\n'
 if '<script id="deletionPhoneTestScript">' in s:
     s, n = re.subn(r'<script id="deletionPhoneTestScript">.*?</script>\n', lambda _: block, s, flags=re.S)
@@ -38,6 +46,9 @@ if 'Build v0.20.97' in s:
 if 'Build v0.20.98' in s:
     s=s.replace('Build v0.20.98','Build v0.20.99')
     s=s.replace('Wrestling Manager v0.20.98: Combined Delete all preview with personal-profile preservation.', 'Wrestling Manager v0.20.99: Enrolled administrator-role removal with server continuity checks.')
+if 'Build v0.20.99' in s:
+    s=s.replace('Build v0.20.99','Build v0.20.100')
+    s=s.replace('Wrestling Manager v0.20.99: Enrolled administrator-role removal with server continuity checks.', 'Wrestling Manager v0.20.100: Enrolled scoped deletion with durable receipts and preservation checks.')
 replace('Your account is ready. Accept your invitation or connect to a team below.', 'Your personal account is ready. Join a team, accept an invitation or create your own team below.')
 replace('<h2>Create Your First Team</h2>', '<h2>Create a Team</h2>')
 sw=root / 'sw.js'
@@ -46,6 +57,7 @@ updated=w.replace("const CACHE='wm-shell-0.20.94';", "const CACHE='wm-shell-0.20
 updated=updated.replace("const CACHE='wm-shell-0.20.96';", "const CACHE='wm-shell-0.20.97';")
 updated=updated.replace("const CACHE='wm-shell-0.20.97';", "const CACHE='wm-shell-0.20.98';")
 updated=updated.replace("const CACHE='wm-shell-0.20.98';", "const CACHE='wm-shell-0.20.99';")
+updated=updated.replace("const CACHE='wm-shell-0.20.99';", "const CACHE='wm-shell-0.20.100';")
 if '--check' in sys.argv:
     assert s == original, 'Phone setup bundle differs from source'
     assert updated == w, 'Service worker version differs'

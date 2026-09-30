@@ -1,0 +1,12 @@
+{
+  "passed": [
+    "Actual intake enforces enrollment, disabled defaults, accepted administrator handoff, exact scope and retry identity",
+    "Authenticated callers cannot reach service operations or claim another receipt",
+    "A provider outage leaves records intact, revokes only the departing login and freezes late dependencies and shared-file copies",
+    "Files are verified absent before records commit, and an Auth outage preserves the retry job without erasing other users",
+    "Actual PostgreSQL erasure preserves other identities, an unclaimed athlete, another guardian, another team and a reply; completed retries do no work"
+  ],
+  "tableCount": 193,
+  "realDataChanged": false,
+  "limits": "Actual deletion SQL and worker against synthetic PostgreSQL data; injected Storage/Auth providers. Hosted provider and native-device acceptance are still separate gates."
+}

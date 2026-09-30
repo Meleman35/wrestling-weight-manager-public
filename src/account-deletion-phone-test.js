@@ -1,4 +1,4 @@
-/* Enrolled role removal; personal/workspace/combined erasure remains unavailable. */
+/* Enrolled deletion choices. Each action requires its own server capability. */
 window.WMDeletionPhoneTest=(()=>{
  'use strict';
  const fields=[['account_photos','Account profile photos'],['wrestling_profile_photos','Wrestling profile photos'],['messages','Messages sent'],['message_attachments','Message attachments uploaded'],['team_posts','Team posts written'],['post_attachments','Attachments on those posts'],['uploaded_objects','Stored files uploaded'],['teams','Team memberships'],['teams_needing_handoff','Teams needing an administrator handoff'],['guardian_links','Guardian links'],['organization_roles','Organization roles']];
@@ -25,19 +25,20 @@ window.WMDeletionPhoneTest=(()=>{
   card.addEventListener('toggle',()=>{if(!card?.open)closeConfirmation();});
   document.getElementById('signOutBtn').after(card);return card;
  }
- function heading(box,actions){box.append(element('summary','Account deletion'));box.append(element('p',actions?.administrator===true?'You can remove administrator access. Personal account, team, organization and Delete all deletion are not available yet.':'Deletion is not available yet. You can review your stored data and preview the confirmation below.','fine'));}
+ function heading(box,actions){box.append(element('summary','Account deletion'));box.append(element('p',actions?.personal===true?'Deletion is enabled for this test account in Safari. Review the selected scope carefully. Shared or unsupported records stop the request before erasure.':actions?.administrator===true?'You can remove administrator access. Personal account, team, organization and Delete all deletion are not available yet.':'Deletion is not available yet. You can review your stored data and preview the confirmation below.','fine'));}
  function refreshButton(box){const b=element('button','Refresh stored data','secondary wide');b.type='button';b.onclick=()=>refresh();box.append(b);}
  function confirmation(opener,choice,scopes,actions){
   if(!admitted||!actor()||!visible()||!card?.contains(opener))return;
   closeConfirmation();
   const uid=actor(),token=session.access_token,g=epoch;
-  const executable=choice.kind==='administrator'&&actions?.administrator===true;
+  const executable=actions?.[choice.kind]===true&&(choice.kind==='administrator'||!!window.WMScopedDeletion);
+  const roleOnly=choice.kind==='administrator';
   const requestId=executable?crypto.randomUUID():null;
   let busy=false,completed=false;
   const current=()=>g===epoch&&uid===actor()&&token===session?.access_token&&visible();
   dialog=element('dialog');dialog.id='deletionConfirmDialog';dialog.setAttribute('aria-labelledby','deletionConfirmTitle');dialog.setAttribute('aria-describedby','deletionConfirmWarning deletionConfirmUnavailable');
   const title=element('h2',choice.kind==='all'?'Delete all selected':choice.kind==='personal'?'Delete personal account':choice.kind==='administrator'?'Remove administrator access':choice.kind==='team'?'Delete team':'Delete organization');title.id='deletionConfirmTitle';dialog.append(title);
-  const unavailable=element('p',executable?'Confirming will remove your selected administrator role. Your personal account and profile will stay.':'Confirmation preview: account deletion is not available yet. Nothing will be deleted.','deletion-unavailable');unavailable.id='deletionConfirmUnavailable';dialog.append(unavailable);
+  const unavailable=element('p',executable?(roleOnly?'Confirming will remove your selected administrator role. Your personal account and profile will stay.':'Confirming starts permanent deletion of this exact selection. The server checks authority and shared records before erasing anything.'):'Confirmation preview: account deletion is not available yet. Nothing will be deleted.','deletion-unavailable');unavailable.id='deletionConfirmUnavailable';dialog.append(unavailable);
   if(!['personal','all'].includes(choice.kind))dialog.append(element('p','Selected '+choice.targetKind+': '+choice.name));
   if(choice.kind==='all'){
    dialog.append(element('h3','Included in this deletion'));
@@ -58,11 +59,11 @@ window.WMDeletionPhoneTest=(()=>{
   }
   if(choice.kind==='all'&&choice.targets.some(x=>x.targetKind==='organization'&&(x.team_count||x.athlete_count)))dialog.append(element('p','Linked athlete profiles must be preserved. Any linked team not included above must be preserved or transferred before its organization can be closed.','fine'));
   const form=element('form');form.noValidate=true;
-  const label=element('label','Type delete to confirm that you understand this warning, then press Enter or '+(executable?'Confirm removal.':'Confirm deletion.'));label.htmlFor='deletionConfirmInput';
+  const label=element('label','Type delete to confirm that you understand this warning, then press Enter or '+(executable&&roleOnly?'Confirm removal.':'Confirm deletion.'));label.htmlFor='deletionConfirmInput';
   const input=element('input');input.id='deletionConfirmInput';input.type='text';input.autocomplete='off';input.setAttribute('autocapitalize','none');input.setAttribute('autocorrect','off');input.spellcheck=false;input.setAttribute('enterkeyhint','done');input.setAttribute('aria-describedby','deletionConfirmStatus');
   const status=element('p',null,'fine');status.id='deletionConfirmStatus';status.setAttribute('role','status');status.setAttribute('aria-live','polite');
   const cancel=element('button','Cancel','wide secondary');cancel.type='button';cancel.onclick=()=>{if(busy)return;closeConfirmation();if(current()){if(completed)void refresh();else opener.focus();}};
-  const confirm=element('button',executable?'Confirm removal':'Confirm deletion','wide deletion-action');confirm.type='submit';confirm.disabled=true;
+  const confirm=element('button',executable&&roleOnly?'Confirm removal':'Confirm deletion','wide deletion-action');confirm.type='submit';confirm.disabled=true;
   input.oninput=()=>{confirm.disabled=busy||completed||input.value!=='delete';status.textContent='';};
   form.onsubmit=async event=>{
    event.preventDefault();if(!current()){reset();return;}
@@ -72,6 +73,12 @@ window.WMDeletionPhoneTest=(()=>{
     // These choices remain previews. Never route them to the role-removal RPC.
     status.textContent='This action is not available yet. Nothing has been changed, deleted or scheduled for deletion.';
     input.value='';confirm.disabled=true;return;
+   }
+   if(!roleOnly){
+    busy=true;input.disabled=true;confirm.disabled=true;cancel.disabled=true;status.textContent='Checking and starting deletion…';
+    try{await window.WMScopedDeletion.begin(choice);if(current())closeConfirmation();}
+    catch(error){if(current())status.textContent=error.message||'The request could not be confirmed.';}
+    finally{busy=false;if(current()){input.value='';input.disabled=false;confirm.disabled=true;cancel.disabled=false;}}return;
    }
    busy=true;input.disabled=true;confirm.disabled=true;cancel.disabled=true;status.textContent='Removing administrator access…';
    try{
@@ -160,7 +167,7 @@ window.WMDeletionPhoneTest=(()=>{
    if(!valid())return;
    if(error)throw Error('unavailable');
    if(data?.enabled!==true){reset();return;}
-   if(data.deletion_enabled!==false||!validScopes(data)||data.subject_id!==uid||!Number.isFinite(Date.parse(data.checked_at))||fields.some(([key])=>!Number.isSafeInteger(data.counts?.[key])||data.counts[key]<0))throw Error('invalid response');
+   if(typeof data.deletion_enabled!=='boolean'||!validScopes(data)||data.subject_id!==uid||!Number.isFinite(Date.parse(data.checked_at))||fields.some(([key])=>!Number.isSafeInteger(data.counts?.[key])||data.counts[key]<0))throw Error('invalid response');
    admitted=true;const box=mount();box.replaceChildren();heading(box,data.actions);
    box.append(element('h3','Your personal account data'));box.append(element('p','These counts belong to your personal account. Choose the action below after reviewing them.','fine'));
    const list=element('dl');list.style.cssText='display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 16px;margin:16px 0';

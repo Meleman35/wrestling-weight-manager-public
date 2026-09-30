@@ -1,0 +1,14 @@
+{
+  "passed": [
+    "Combined scope removes only its actor identity and selected workspaces, while preserving shared/unclaimed athletes, another guardian and the other person’s reply",
+    "Team-only closure plans zero personal identities or guardian removals and preserves other-team messages",
+    "Personal-only planning spans all memberships and own messages/snapshots without closing any team or organization",
+    "Unselected linked teams, empty combined requests, duplicate IDs and cross-scope payloads are rejected",
+    "Unreviewed safety records and identity references without foreign keys stop planning before any erasure",
+    "Copied identity snapshots and ambiguous athlete-bound personal profiles are blocked rather than deleting another person’s data",
+    "Planning itself performs no deletion and bounded plans fail before oversized execution"
+  ],
+  "tableCount": 193,
+  "realDataChanged": false,
+  "limits": "Structural PostgreSQL fixture with synthetic people. Planning only; not provider/Auth/device erasure acceptance."
+}
