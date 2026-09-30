@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.100: Enrolled scoped deletion with durable receipts and preservation checks. -->
+<!-- Wrestling Manager v0.20.101: Compact sign-in, separate signup and automatic biometric preference. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -667,10 +667,43 @@ body:not(.tile-editing) .tile-drag-handle{display:none!important}.tile-drag-hand
 /* Account intent guides onboarding only; team permissions still come from membership. */
 #signUpSheet .sheet-head>div{flex:1;min-width:0}
 #signUpSheet .icon-close{flex:0 0 44px;min-width:44px;min-height:44px}
-.auth-create-account{margin:16px 0 20px;padding:16px;border:1px solid #bdd1e9;border-radius:18px;background:#eef5fc}
-.auth-create-account h3{margin:0 0 8px;font-size:1.1rem;line-height:1.3}
-.auth-create-account p{margin:8px 0 14px;line-height:1.45}
-.auth-create-account .fine{margin:12px 0 0}
+/* A compact login and a separate, full-screen signup path. */
+#authView{max-width:460px;padding:calc(16px + env(safe-area-inset-top)) 18px 24px}
+#authView .brand-lockup{gap:10px;margin:12px 0 20px;justify-content:center}
+#authView .brand-mark{width:40px;height:40px;flex:0 0 40px;border-radius:12px;font-size:16px}
+#authView .brand-lockup h1{font-size:22px;line-height:1.2}
+#authView .auth-card{margin-top:0;padding:20px;border-radius:20px}
+#authView .auth-card h2{font-size:24px;margin:0 0 16px}
+#authView label{font-size:14px;font-weight:650;margin-top:12px}
+#authView input:not([type="checkbox"]){padding:12px;font-size:16px;border-radius:12px}
+#authView button{box-shadow:none;min-height:44px}
+#authView .auth-forgot{text-align:right;margin:2px 0}
+#authView #signInBtn{margin-top:4px}
+#authView .auth-create-link{display:block;width:100%;margin:4px 0 0;background:transparent;color:#1463b6;font-size:16px;text-decoration:underline;text-underline-offset:3px}
+#authView .auth-more{border-top:1px solid var(--line);margin-top:12px;padding-top:12px;font-size:14px}
+#authView summary{cursor:pointer;color:var(--accent2);min-height:32px;line-height:1.5}
+#authView .auth-more .view-mode-switch{margin:10px 0}
+#authView .auth-more .toggle-row{background:transparent;border:0;padding:4px 0;margin:8px 0}
+#authView .auth-more .toggle-row input{width:20px;height:20px;flex-basis:20px}
+#authView #invitationCodePanel{margin-top:12px}
+#authView .wm-info-links{display:flex;justify-content:center;gap:24px;flex-wrap:wrap;margin:14px 0;font-size:12px}
+#authView .wm-info-links a{padding:8px 0;font-size:12px}
+#authView .privacy-note{padding:12px;font-size:13px;margin:0 0 16px;overflow-wrap:anywhere}
+#authView .privacy-note p{margin:6px 0;line-height:1.4}
+#signUpSheet{inset:0;transform:none;width:100%;max-height:none;border-radius:0;background:var(--bg);padding:calc(12px + env(safe-area-inset-top)) 18px calc(28px + env(safe-area-inset-bottom));box-shadow:none}
+#signUpSheet>.sheet-returnbar{display:none}
+#signUpSheet .signup-shell{max-width:424px;margin:0 auto}
+#signUpSheet .signup-back{padding:10px 0!important;min-height:44px;box-shadow:none;margin-bottom:16px}
+#signUpSheet .sheet-head h2{font-size:26px}
+#signUpSheet .sheet-head p{font-size:14px;line-height:1.5;margin:10px 0}
+#signUpSheet label{font-size:14px;font-weight:650}
+#signUpSheet .account-role-grid button{font-size:13px;padding:10px 6px;min-height:48px;box-shadow:none}
+#signUpSheet input{padding:12px;font-size:16px}
+#signUpSheet .onboarding-status:empty{display:none}
+#quickSetupOffer[hidden]{display:none!important}
+#quickSetupOffer{padding:16px;margin:14px 0}
+#quickSetupOffer p{margin:6px 0;font-size:14px;color:var(--muted)}
+
 #teamSignInNotice{padding:12px;border:1px solid var(--line);border-radius:12px;background:#f5f7fa;line-height:1.5}
 .account-role-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}
 .account-role-grid button{min-width:0;min-height:66px;padding:12px 8px;background:#edf1f5;color:var(--ink);border:2px solid transparent;line-height:1.3}
@@ -877,77 +910,68 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
   </section>
 
   <section id="authView" class="center-shell">
-    <div class="brand-lockup">
-      <div class="brand-mark">WM</div>
-      <div>
-        <h1>Wrestling Manager</h1>
-        <p>Built for wrestling teams, families and coaches.</p>
-      </div>
-    </div>
-    <div id="inviteAppChoice" class="privacy-note hidden"><b>Join in your browser</b><p>You can create an account and join your team here. No app or TestFlight installation is required.</p><details><summary>Already have Wrestling Manager installed?</summary><a id="inviteOpenApp" class="button secondary">Open Installed App</a></details></div>
+    <div class="brand-lockup"><div class="brand-mark">WM</div><h1>Wrestling Manager</h1></div>
+    <div id="inviteAppChoice" class="privacy-note hidden"><b>Your team invitation is ready</b><p>Sign in or create an account to continue.</p><details><summary>Already have the app?</summary><a id="inviteOpenApp" class="button secondary">Open Installed App</a></details></div>
     <div class="card auth-card">
-      <h2>Sign In</h2>
-      <div class="auth-create-account" aria-labelledby="newAccountTitle">
-        <h3 id="newAccountTitle">New to Wrestling Manager?</h3>
-        <p>A team link or code does not create an account. Create your own account first, then continue joining your team.</p>
-        <button id="signUpBtn" class="wide" type="button">Create an Account</button>
-        <p class="fine">Already have an account? Sign in below.</p><p class="invite-email-reminder">Can’t find your confirmation email, invitation, or team code? Check your Junk or Spam folder. If the email is there, mark it as Not Junk and return here to continue.</p>
-      </div>
-      <div id="confirmationNotice" class="privacy-note hidden" role="status"><b>Check your email</b><p>Confirm the email for <span id="confirmationEmail"></span>, then return here and sign in with your password.</p><p id="confirmationStatus">Check your Junk or Spam folder for the confirmation email, invitation, or team code. A team request may still need coach approval after you sign in.</p><button id="resendConfirmationBtn" type="button" class="secondary">Resend Confirmation Email</button></div>
-      <div class="view-mode-switch" style="margin-bottom:18px"><button id="personalSignInTab" type="button" aria-pressed="true">Personal Login</button><button id="teamSignInTab" class="secondary" type="button" aria-pressed="false">Team Login</button></div>
-      <p id="teamSignInNotice" class="fine hidden">Use Team Login only if your administrator gave you a username and password. To join a team with your own account, use Personal Login or Create an Account above.</p>
+      <h2>Sign in</h2>
+      <div id="confirmationNotice" class="privacy-note hidden" role="status"><b>Confirm your email</b><p>Open the confirmation sent to <span id="confirmationEmail"></span>, then sign in.</p><details><summary>Need help with the email?</summary><p id="confirmationStatus">Check your Junk or Spam folder too.</p><button id="resendConfirmationBtn" type="button" class="secondary">Resend confirmation email</button></details></div>
+      <p id="teamSignInNotice" class="fine hidden">Use the login your team administrator gave you. Joining with a team code? Create your own account first.</p>
       <form id="personalSignInFields" method="post" autocomplete="on" onsubmit="event.preventDefault()">
-      <label for="email">Email</label>
-      <input id="email" name="username" type="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="email" enterkeyhint="next" required placeholder="you@example.com">
-      <label for="password">Password</label>
-      <input id="password" name="password" type="password" autocomplete="current-password" enterkeyhint="go" required placeholder="Password">
-      <button type="button" id="emailSignInLink" class="wide secondary">Email me a sign-in link</button>
-        <details id="invitationCodePanel"><summary>Use an email code</summary><p class="fine">Enter your email above and the one-time code from your team invitation.</p><label for="invitationEmailCode">Email code</label><input id="invitationEmailCode" autocomplete="one-time-code" inputmode="numeric" maxlength="10"><button type="button" id="useInvitationEmailCode" class="wide">Sign in with code</button><p id="invitationCodeStatus" role="status" aria-live="polite"></p></details>
+        <label for="email">Email</label>
+        <input id="email" name="username" type="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="email" enterkeyhint="next" required placeholder="you@example.com">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" enterkeyhint="go" required placeholder="Password">
+        <div class="auth-forgot"><button id="forgotPasswordBtn" class="link-button" type="button">Forgot password?</button></div>
+        <button id="signInBtn" class="wide" type="submit">Sign in</button>
       </form>
       <form id="teamSignInFields" class="hidden" method="post" autocomplete="on" onsubmit="event.preventDefault()">
         <label for="teamSignInCode">Team code</label><input id="teamSignInCode" name="team-code" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="next" maxlength="24" required disabled placeholder="Your team’s login code">
         <label for="teamSignInUsername">Username</label><input id="teamSignInUsername" name="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="next" maxlength="32" required disabled placeholder="Your team login username">
         <label for="teamSignInPassword">Password</label><input id="teamSignInPassword" name="password" type="password" autocomplete="current-password" enterkeyhint="go" required disabled placeholder="Account password">
+        <button id="teamSignInBtn" class="wide hidden" type="submit">Sign in to team</button>
       </form>
+      <button id="signUpBtn" class="auth-create-link" type="button">Create account</button>
       <div id="quickSignInArea" class="quick-signin" hidden>
-        <button id="quickSignInBtn" class="wide" type="button" disabled>Sign in with Face ID</button>
+        <button id="quickSignInBtn" class="wide secondary" type="button" disabled>Sign in with Face ID</button>
+        <label class="auth-auto-row" for="quickAutoSignIn"><span id="quickAutoLabel">Use Face ID automatically</span><input id="quickAutoSignIn" type="checkbox" role="switch" disabled></label>
         <p id="quickSignInHelp" class="fine"></p><p id="quickSignInStatus" role="status" aria-live="polite"></p>
+      </div>
+      <details id="authMoreOptions" class="auth-more"><summary>More sign-in options</summary>
+        <div class="view-mode-switch"><button id="personalSignInTab" type="button" aria-pressed="true">Email login</button><button id="teamSignInTab" class="secondary" type="button" aria-pressed="false">Team login</button></div>
+        <div id="personalSignInExtras">
+          <button type="button" id="emailSignInLink" class="wide secondary">Email me a sign-in link</button>
+          <details id="invitationCodePanel"><summary>Use an email code</summary><p class="fine">Enter your email above and the one-time code from your invitation.</p><label for="invitationEmailCode">Email code</label><input id="invitationEmailCode" autocomplete="one-time-code" inputmode="numeric" maxlength="10"><button type="button" id="useInvitationEmailCode" class="wide">Sign in with code</button><p id="invitationCodeStatus" role="status" aria-live="polite"></p></details>
+          <label id="rememberEmailRow" class="toggle-row auth-remember-email"><span>Remember my email</span><input id="rememberEmail" type="checkbox"></label>
+        </div>
+        <label class="toggle-row"><span>Stay signed in</span><input id="staySignedIn" type="checkbox" checked></label>
         <button id="quickForgetLoginBtn" class="secondary wide" type="button" hidden>Forget saved biometric sign-in</button>
-      </div>
-      <label id="rememberEmailRow" class="toggle-row auth-remember-email"><span><b>Remember my email</b><small>Fill it in next time on this device.</small></span><input id="rememberEmail" type="checkbox"></label>
-      <div class="auth-options">
-        <label class="toggle-row"><span><b>Stay signed in</b></span><input id="staySignedIn" type="checkbox" checked></label>
-        <button id="forgotPasswordBtn" class="link-button" type="button">Forgot password?</button>
-      </div>
-      <div class="stack-actions">
-        <button id="teamSignInBtn" class="hidden" type="submit" form="teamSignInFields">Sign In to Team</button>
-        <button id="signInBtn" type="submit" form="personalSignInFields">Sign In</button>
-      </div>
-      <p class="fine auth-password-help">Use your saved password from AutoFill or the keyboard’s Passwords button. Leave Stay signed in on for your personal device.</p>
-      <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
-<a class="button" href="./mat-mode.html">Mat Mode · no account needed</a>
-<p id="signInHelp" class="fine">Coaches, athletes, parents and limited staff can sign in with their personal account.</p>
+        <p id="signInHelp" class="fine">Use your own email to sign in, then join or create a team.</p>
+      </details>
     </div>
+    <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help</a><a href="./privacy.html" data-wm-info="privacy">Privacy</a><a href="./mat-mode.html">Mat Mode</a></nav>
   </section>
 
   <section id="signUpSheet" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="signUpTitle">
-    <div class="sheet-handle"></div>
-    <div class="sheet-head"><div><h2 id="signUpTitle">Create Account</h2><p class="muted">Choose how you’re getting started. One account can have more than one role.</p></div><button class="icon-close" type="button" data-close-sheet aria-label="Close signup">×</button></div>
-    <form id="signUpForm">
-      <div class="account-role-grid" role="group" aria-label="Your starting role">
-        <button type="button" data-signup-role="athlete" aria-pressed="false">Athlete</button>
-        <button type="button" data-signup-role="parent_guardian" aria-pressed="false">Parent / Guardian</button>
-        <button type="button" data-signup-role="team_leader" aria-pressed="false">Coach / Team Leader</button>
-      </div>
-      <p id="signUpRoleHelp" class="fine">Choose a role to continue.</p>
-      <label for="signUpFirstName">Your first name</label><input id="signUpFirstName" autocomplete="given-name" maxlength="60" required>
-      <label for="signUpLastName">Your last name</label><input id="signUpLastName" autocomplete="family-name" maxlength="59" required>
-      <p class="fine">Parents: enter your own name here. You’ll connect your athlete next.</p>
-      <label for="signUpEmail">Your email</label><input id="signUpEmail" name="username" type="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required>
-      <label for="signUpPassword">Create a password</label><input id="signUpPassword" name="new-password" type="password" autocomplete="new-password" minlength="8" required placeholder="At least 8 characters">
-      <p class="invite-email-reminder">Can’t find your confirmation email, invitation, or team code? Check your Junk or Spam folder. If the email is there, mark it as Not Junk and return here to continue.</p><p id="signUpStatus" class="onboarding-status" role="status" aria-live="polite"></p>
-      <button id="createPersonalAccountBtn" type="submit" class="wide" disabled>Create Account</button>
-    </form>
+    <div class="signup-shell">
+      <button class="signup-back link-button" type="button" data-close-sheet>‹ Back to sign in</button>
+      <div class="sheet-head"><div><h2 id="signUpTitle" tabindex="-1">Create account</h2><p class="muted">Start with your account. Next, join a team, accept an invitation or create your own team.</p></div></div>
+      <form id="signUpForm">
+        <label>Your starting role</label>
+        <div class="account-role-grid" role="group" aria-label="Your starting role">
+          <button type="button" data-signup-role="athlete" aria-pressed="false">Athlete</button>
+          <button type="button" data-signup-role="parent_guardian" aria-pressed="false">Parent / Guardian</button>
+          <button type="button" data-signup-role="team_leader" aria-pressed="false">Coach / Team Leader</button>
+        </div>
+        <p id="signUpRoleHelp" class="fine">Choose a role to continue.</p>
+        <div class="two-col"><div><label for="signUpFirstName">First name</label><input id="signUpFirstName" autocomplete="given-name" maxlength="60" required></div><div><label for="signUpLastName">Last name</label><input id="signUpLastName" autocomplete="family-name" maxlength="59" required></div></div>
+        <label for="signUpEmail">Email</label><input id="signUpEmail" name="username" type="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="email" required>
+        <label for="signUpPassword">Create a password</label><input id="signUpPassword" name="new-password" type="password" autocomplete="new-password" minlength="8" required placeholder="At least 8 characters">
+        <p id="signUpStatus" class="onboarding-status" role="status" aria-live="polite"></p>
+        <button id="createPersonalAccountBtn" type="submit" class="wide" disabled>Create account</button>
+        <p class="fine">Parents and guardians: use your own name. You’ll connect your athlete after signing in.</p>
+        <details class="fine"><summary>Email confirmation help</summary><p>Check your Junk or Spam folder if the confirmation email does not arrive.</p></details>
+      </form>
+    </div>
   </section>
 
   <section id="teamProfileChoiceView" class="hidden" role="dialog" aria-modal="true" aria-labelledby="teamProfileChoiceTitle">
@@ -975,6 +999,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     </div>
     <div id="setupOrganizations" class="card hidden"></div>
     <div class="card" id="setupAccountStatus"><h2>You’re signed in</h2><p id="setupSignedInEmail" style="overflow-wrap:anywhere"></p><p id="setupAccessStatus" role="status"></p><div id="setupRequestList"></div><div class="stack-actions"><button id="setupCheckAccessBtn" type="button">Check Access</button><button id="setupSignOutBtn" class="secondary" type="button">Sign Out</button></div></div>
+    <div id="quickSetupOffer" class="card" hidden><b id="quickSetupOfferTitle">Use Face ID next time?</b><p>Set it up once on this personal device. You can also do this later in Account → Sign-In &amp; App Security.</p><button id="quickSetupOfferBtn" class="secondary wide" type="button">Set up Face ID</button></div>
     <details id="setupChoices" open><summary>Team setup and invitations</summary>
     <div class="card">
       <h2>How Are You Joining?</h2>
@@ -2347,7 +2372,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.100</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.101</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -3849,7 +3874,8 @@ function chooseSignInMode(team){
   show('personalSignInFields',!team);show('teamSignInFields',team);
   $('personalSignInFields').querySelectorAll('input').forEach(el=>el.disabled=team);
   $('teamSignInFields').querySelectorAll('input').forEach(el=>el.disabled=!team);
-  show('rememberEmailRow',!team);
+  show('rememberEmailRow',!team);show('personalSignInExtras',!team);
+  $('authMoreOptions').open=team;
   show('signInBtn',!team);show('signUpBtn',true);show('teamSignInBtn',team);show('forgotPasswordBtn',!team);
   show('teamSignInNotice',team);
   $('personalSignInTab').classList.toggle('secondary',team);$('teamSignInTab').classList.toggle('secondary',!team);
@@ -4119,10 +4145,12 @@ function openSignUp(){
   if($('teamSignInTab').getAttribute('aria-pressed')==='true')chooseSignInMode(false);
   closeSheets();
   $('signUpFirstName').value='';$('signUpLastName').value='';
-  $('signUpEmail').value=$('email').value.trim();$('signUpPassword').value=$('password').value;
+  $('signUpEmail').value=$('email').value.trim();$('signUpPassword').value='';
+  window.WMQuickSignIn?.mode();
   $('signUpStatus').textContent='';$('signUpStatus').classList.remove('error');
   chooseSignUpRole(/^WM[MO]-/i.test(pendingInviteToken)?'team_leader':null);
   openSheet('signUpSheet');
+  $('signUpTitle').focus({preventScroll:true});
 }
 async function createPersonalAccount(event){
   event?.preventDefault();if(signUpBusy)return;
@@ -4214,7 +4242,7 @@ window.WMOnboarding=(()=>{
 let accountRefreshFlight=null;
 function refresh(){
  if(accountRefreshFlight)return accountRefreshFlight;
- accountRefreshFlight=refreshAccountView().finally(()=>{accountRefreshFlight=null;});
+ accountRefreshFlight=refreshAccountView().finally(()=>{accountRefreshFlight=null;window.WMQuickSignIn?.status();});
  return accountRefreshFlight;
 }
 function isTeamRecorderLogin(){return !!session?.user?.id&&managedLogin?.kind==='team_device'&&managedLogin.permissions?.record_matches===true;}
@@ -13301,13 +13329,15 @@ window.WMKioskScan=(()=>{
 
 </script>
 <style>
-.quick-signin{padding:14px;background:#edf4ff;border-radius:15px;margin:16px 0}.quick-signin[hidden],#quickSecurityCard[hidden],#quickForgetLoginBtn[hidden]{display:none!important}#quickSignInBtn{min-height:54px;font-size:19px}#quickSetupForm button,#quickForgetBtn{margin-top:12px}#quickSecurityStatus,#quickSignInStatus{font-weight:700;overflow-wrap:anywhere}
+.quick-signin{padding:0;background:transparent;margin:8px 0}#authView #quickSignInBtn{min-height:44px;font-size:15px;margin:0}#authView .quick-signin .fine{font-size:12px;margin:6px 0}#quickSignInStatus:empty{display:none}.auth-auto-row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:32px}.auth-auto-row input{appearance:none;-webkit-appearance:none;width:42px;height:26px;flex:0 0 42px;padding:2px;border:0;border-radius:20px;background:#b6bec8;cursor:pointer}.auth-auto-row input::before{content:'';display:block;width:22px;height:22px;border-radius:50%;background:white;box-shadow:0 1px 3px #0003;transition:transform .15s}.auth-auto-row input:checked{background:#1674d1}.auth-auto-row input:checked::before{transform:translateX(16px)}.auth-auto-row input:disabled{opacity:.5;cursor:default}.quick-signin[hidden],#quickSecurityCard[hidden],#quickForgetLoginBtn[hidden]{display:none!important}#quickSignInBtn{min-height:54px;font-size:19px}#quickSetupForm button,#quickForgetBtn{margin-top:12px}#quickSecurityStatus,#quickSignInStatus{font-weight:700;overflow-wrap:anywhere}
 </style>
 <script>
 /* Opt-in personal sign-in. Secrets stay out of web storage; server auth remains required. */
 window.WMQuickSignIn=(()=>{
  const el=id=>document.getElementById(id);let state={available:false,saved:false,label:'Face ID'},ready=false,autoUsed=false,busy=false,networkBusy=false,generation=0;const pending=new Map();
  try{autoUsed=sessionStorage.getItem('wm_skip_biometric_once')==='true';sessionStorage.removeItem('wm_skip_biometric_once');}catch{}
+ const AUTO_KEY='wm_biometric_auto';
+ const automatic=()=>{try{return localStorage.getItem(AUTO_KEY)!=='false';}catch{return false;}};
  const bridge=()=>window.webkit?.messageHandlers?.biometricLogin;
  const personal=()=>!managedLogin&&el('personalSignInTab')?.getAttribute('aria-pressed')==='true';
  const loginVisible=()=>!session&&personal()&&!document.hidden&&!el('authView').classList.contains('hidden')&&!document.querySelector('.sheet:not(.hidden)')&&!document.body.classList.contains('kiosk-locked');
@@ -13315,8 +13345,11 @@ window.WMQuickSignIn=(()=>{
  function paint(){
   const native=!!bridge();el('quickSignInArea').hidden=!native||!personal();el('quickSecurityCard').hidden=!native||!!managedLogin;
   el('quickSignInBtn').textContent='Sign in with '+state.label;el('quickSignInBtn').disabled=busy||!state.available||!state.saved;
-  el('quickSignInHelp').textContent=state.saved?(state.available?'Uses your saved personal login on this device. You can still use your password.':'Biometrics are unavailable right now. Use your password to sign in.'):'Sign in once, then enable Face ID / Touch ID under Account → Sign-In & App Security.';
-  el('quickSecurityTitle').textContent=state.label+' Sign-In';el('quickEnableBtn').textContent=state.saved?'Update saved '+state.label+' sign-in':'Enable '+state.label+' sign-in';el('quickEnableBtn').disabled=busy||!state.available||!session||!!managedLogin;el('quickForgetBtn').disabled=busy||!state.saved;el('quickForgetLoginBtn').hidden=!state.saved;
+  el('quickSignInHelp').textContent=state.saved?(state.available?'':'Biometrics unavailable. Use your password.'):'Sign in to set up '+state.label+' on this device.';
+  el('quickAutoLabel').textContent='Use '+state.label+' automatically';el('quickAutoSignIn').checked=state.saved&&automatic();el('quickAutoSignIn').disabled=busy||!state.saved;
+  el('quickSetupOffer').hidden=!native||!session||!!managedLogin||state.saved||!state.available;
+  el('quickSetupOfferTitle').textContent='Use '+state.label+' next time?';el('quickSetupOfferBtn').textContent='Set up '+state.label;
+  el('quickSecurityTitle').textContent=state.label+' Sign-In';el('quickEnableBtn').textContent=state.saved?'Update saved '+state.label+' sign-in':'Enable '+state.label+' sign-in';el('quickEnableBtn').disabled=busy||!state.available||!session||!!managedLogin;el('quickForgetBtn').disabled=busy||!state.saved;el('quickForgetLoginBtn').hidden=!native||!personal()||!state.saved;
  }
  function post(body){if(!bridge())throw Error('Install the updated iPhone/iPad app to use Face ID sign-in.');bridge().postMessage(body);}
  function request(command,data={}){return new Promise((resolve,reject)=>{const id=crypto.randomUUID(),timer=setTimeout(()=>{pending.delete(id);try{post({command:'cancel'});}catch{}reject(Error('Biometric request timed out. Try again or use your password.'));},90000);pending.set(id,{resolve,reject,timer});try{post({command,requestId:id,...data});}catch(e){pending.delete(id);clearTimeout(timer);reject(e);}});}
@@ -13352,9 +13385,11 @@ window.WMQuickSignIn=(()=>{
   finally{password='';busy=false;paint();}
  }
  async function forget(){if(busy)return;autoUsed=true;busy=true;paint();try{const r=await request('forget');if(!r.ok)throw Error(r.message);state.saved=false;note('Saved biometric sign-in removed from this device.');}catch(e){note(e.message);}finally{busy=false;paint();}}
- function auto(){if(ready&&!autoUsed&&state.saved&&state.available&&loginVisible()&&!location.hash&&!location.search){autoUsed=true;signIn();}}
+ function auto(){if(automatic()&&ready&&!autoUsed&&state.saved&&state.available&&loginVisible()&&!location.hash&&!location.search){autoUsed=true;signIn();}}
  function status(){if(bridge())try{post({command:'status'});}catch{}paint();}
  window.wrestlingManagerBiometricLoginResult=result=>{if(result?.event==='status'){state={...state,...result};paint();auto();return;}const p=pending.get(result?.requestId);if(!p)return;pending.delete(result.requestId);clearTimeout(p.timer);p.resolve(result);};
+ el('quickAutoSignIn').onchange=()=>{const enabled=el('quickAutoSignIn').checked;try{localStorage.setItem(AUTO_KEY,String(enabled));}catch{note('This device could not save your preference.');paint();return;}if(enabled){autoUsed=false;auto();}else{cancel();paint();}};
+ el('quickSetupOfferBtn').onclick=()=>{if(!session||managedLogin)return;openSecuritySheet();el('quickSecurityCard').scrollIntoView({block:'start'});el('quickSetupPassword').focus({preventScroll:true});};
  el('quickSignInBtn').onclick=signIn;el('quickSetupForm').onsubmit=enroll;el('quickForgetBtn').onclick=forget;el('quickForgetLoginBtn').onclick=forget;
  for(const id of ['email','password'])el(id).addEventListener('input',()=>{autoUsed=true;});
  return {status,ready(){ready=true;status();auto();},signOut(){cancel();try{sessionStorage.setItem('wm_skip_biometric_once','true');}catch{}},mode(){if(!networkBusy)cancel();paint();},background(){if(!networkBusy)cancel();autoUsed=false;},resume(){status();auto();},busy:()=>busy};

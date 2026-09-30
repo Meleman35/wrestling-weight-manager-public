@@ -49,4 +49,9 @@ jobs:
           path: |
             validation/parent-browser-*.json
             validation/parent-browser-*.png
+            validation/login-*.png
+            validation/signup-phone.png
+            validation/login-onboarding-*.json
+            validation/combined-invitation-browser.json
+            validation/email-confirmation.json
           if-no-files-found: warn

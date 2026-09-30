@@ -1,7 +1,7 @@
 {
-  "release": "0.20.37",
-  "baseline_commit": "129d8dfc8e2f3c9787c7114af6f3519d760c4882",
-  "syntax_checks": 33,
-  "preservation": "All script code outside chooseSignInMode and openSignUp is byte-identical, including account creation, invitation handling, permissions and native bridges.",
-  "index_sha256": "80f8d87a542f2b3cd6eb7208adb6c980355595e991bfd556468981e2c02f5e37"
+  "release": "0.20.101",
+  "baseline_commit": "1e5340dd4a8eb54af640e5287339c38de37ee8d8",
+  "syntax_checks": 65,
+  "preservation": "Account creation, invitations, authorization and biometric credential/enrollment flows are byte-identical. Changes are limited to login navigation, refresh notification and the biometric preference/prompt UI.",
+  "index_sha256": "c02c824bcc6bfda9618425a3f2a0cc702b60473b488d288911c77a575ddd9b12"
 }
