@@ -2,6 +2,12 @@
 
 September 29, 2026. **Unwired, isolated-test prototype in draft PR #25. Not a production access shutoff or a release migration.** No live hook, RLS policy, Auth account/session, team login, billing flag, video grant or native file is changed. The deletion worker remains disabled and unmounted.
 
+September 29 evening continuation: the core predicate below is now exercised by an
+isolated installer across a reviewed catalog scope and by the actual member/organization
+invitation handlers. See [access integration](account-deletion-access-integration.md).
+Those handler edits require a new backend RPC and MUST NOT be deployed independently.
+This advances draft integration, not hosted-provider or complete deletion acceptance.
+
 ## Implemented code
 
 `scripts/account-deletion-access-draft.sql` defines three functions only. It requires an explicit isolated-test fixture marker and the existing deletion draft schema; it is deliberately outside `supabase/migrations`. The marker prevents accidental application, not a security boundary. Do not configure it in production. A reviewed release migration must later be created through the Supabase CLI, after integration/acceptance gates are met.

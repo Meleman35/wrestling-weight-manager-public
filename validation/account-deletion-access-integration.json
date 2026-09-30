@@ -1,0 +1,21 @@
+{
+  "passed": [
+    "Missing isolation, new column-granted tables, owner views, missing RLS and unexpected hooks stop installation before changes",
+    "Atomic install adds 82 restrictive guards, retains every existing policy, composes the hook, and leaves fulfillment disabled",
+    "Two active sessions retain authorized reads; invoker views retain row filtering and the new policy grants no new Realtime access",
+    "Deletion cutoff blocks both old sessions, queued CRUD, invoker-view reads and Storage/multipart rows while preserving the other account and shared history",
+    "Actual invitation handlers use the installed SQL check and stop before later Auth/capability/email actions on revocation or backend failure",
+    "Removed identity stays denied after job unlinking and shared records remain accessible to the other authorized account"
+  ],
+  "policyCount": 82,
+  "engine": "PGlite plus real invitation handlers with injected HTTP transport",
+  "source": "Reviewed catalog names with minimal synthetic table/view fixtures and actual draft/recorder SQL",
+  "productionChanged": false,
+  "globalRevocationProven": false,
+  "realMessagesSent": 0,
+  "limitations": [
+    "No hosted JWT/Auth/Storage/Realtime/Edge acceptance",
+    "No full production-schema copy",
+    "No provider erasure, request draining, anonymous-token shutdown or native-device proof"
+  ]
+}
