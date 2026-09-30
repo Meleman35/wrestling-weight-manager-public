@@ -1,7 +1,7 @@
 name: Deletion phone setup regression
 on:
   push:
-    branches: [codex/deletion-phone-preflight]
+    branches: [codex/deletion-phone-preflight, codex/deletion-phone-confirmation]
   pull_request:
     paths:
       - index.html

@@ -1,9 +1,20 @@
-# Private phone setup, v0.20.95
+# Private phone setup, v0.20.96
 
 This separate release provides a read-only inventory in Account & Team for a
 privately enrolled, verified personal account. It does not ship the unfinished
 PR #25 deletion worker, access policies, invitation changes or intake UI.
-`deletion_enabled` is a constant false. There is no delete button or mutation RPC.
+`deletion_enabled` is a constant false. There is no mutation RPC.
+
+The inventory now sits at the bottom of Account & Team, below Sign Out and above
+the build footer, in a collapsed Account deletion dropdown. Its last button,
+Delete Account, opens a labeled confirmation preview with a warning, Cancel,
+and an exact lowercase `delete` field. Confirm deletion enables only for that
+exact phrase; both the button and Enter run the same guarded submit handler.
+This release always reports that deletion is unavailable and nothing has been
+deleted or scheduled. The dialog prominently states this before typing. It does
+not store consent, send a request, sign out, remove data, or enable erasure.
+Cancel/Escape, account changes, backgrounding, lock, and refresh clear the dialog
+and typed input. Returning to the sheet starts with the dropdown collapsed.
 
 Enrollment is an expiring private row keyed by Auth user ID. No tester identity
 belongs in public source. Anonymous users and ordinary authenticated clients
