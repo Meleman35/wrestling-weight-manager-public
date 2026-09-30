@@ -1,0 +1,14 @@
+{
+  "checks": [
+    "Win/loss, rates and both sides of the score use the selected wrestler",
+    "The other corner reports its own points and result correctly",
+    "Teams, styles and seasons stay separate; career combines only authorized supplied seasons",
+    "Revisions deduplicate; incomplete, practice, challenge and camera-test records are excluded",
+    "Undone actions, score corrections and near-fall adjustments do not inflate counts",
+    "Empty and no-contest records do not invent win percentages",
+    "Malformed scores and ambiguous/unrelated athlete identities are excluded",
+    "Linked roster identities combine; older unlabeled scoring stays explicitly unclassified",
+    "CSV quotes text and prevents spreadsheet formula execution",
+    "Unexpected stored keys cannot affect prototypes or invent scoring actions"
+  ]
+}

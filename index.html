@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.101: Compact sign-in, separate signup and automatic biometric preference. -->
+<!-- Wrestling Manager v0.20.102: Wrestler statistics by team, season and style; paid-access preview. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -2372,7 +2372,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.101</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.102</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -3912,7 +3912,7 @@ async function endManagedLoginSession(){
   if(teamLoginEnding)return;teamLoginEnding=true;
   try{
     document.body.classList.remove('kiosk-locked');notifyNativeKioskState(false);clearWeighConsole(false);closeSheets();
-    window.WMMatch?.close();window.WMVideoPilot?.reset();window.WMMatchVideo?.reset();show('teamRecorderView',false);
+    window.WMMatch?.close();window.WMVideoPilot?.reset();window.WMMatchVideo?.reset();window.WMStatistics?.reset();show('teamRecorderView',false);
     clearTeamProfileChoice();activeWeighInSession=null;managedLogin=null;show('appView',false);show('setupView',false);show('appLockOverlay',false);
     await client.auth.signOut({scope:'local'});session=null;show('authView',true);chooseSignInMode(true);
     message('This team login changed or was disabled. Sign in again or ask your team admin.',true);
@@ -5157,7 +5157,7 @@ async function saveEditTeam(){
 async function activateTeam(teamId,{persist=true}={}){
   if(window.WMChatDrafts&&!await window.WMChatDrafts.leave())return;
   window.WMEligibility?.reset();window.WMAttendance?.reset();
-  window.WMVideoPilot?.reset();window.WMMatchVideo?.reset();
+  window.WMVideoPilot?.reset();window.WMMatchVideo?.reset();window.WMStatistics?.reset();
   window.WMTournaments?.reset();show('tournamentSheet',false);
   window.WMReactions?.reset();
   const team=availableTeams.find(t=>t.id===teamId);
@@ -5313,7 +5313,7 @@ function applyMoreTabMode(){
 }
 
 function applyRoleUI(){
-  window.WMVideoPilot?.reset();window.WMMatchVideo?.reset();
+  window.WMVideoPilot?.reset();window.WMMatchVideo?.reset();window.WMStatistics?.reset();
   setTimeout(()=>window.WMMatchVideo?.sync(),0);
   window.WMTournaments?.sync();
   window.WMKioskScan?.tick();
@@ -11012,7 +11012,7 @@ client.auth.onAuthStateChange((event,nextSession)=>{
  setTimeout(()=>handleAuthViewChange(event,nextSession).catch(e=>message(e.message,true)),0);
 });
 async function handleAuthViewChange(event,nextSession){
-  if(session?.user?.id!==nextSession?.user?.id){window.WMScheduleBadges.reset();scheduleRows=[];setNavBadge('schedule',0,'unseen schedule changes');++communicationThreadOpenSequence;window.WMChatDrafts?.reset();window.WMMatch?.close();window.WMMatchVideo?.reset();show('teamRecorderView',false);window.WMVideoPilot?.reset();window.WMTournaments?.reset();show('tournamentSheet',false);window.WMNotificationSync?.reset();window.WMReactions?.reset();finishTileEditing(false);tileEditUser=null;pendingUiLayout=null;window.WMKioskScan?.reset();window.WMGoals?.reset();window.WMProfiles?.reset();window.WMFamily?.reset();resetAthleteCard();nativeCameraScanContext=null;weightCardPhotoCache.clear();}
+  if(session?.user?.id!==nextSession?.user?.id){window.WMScheduleBadges.reset();scheduleRows=[];setNavBadge('schedule',0,'unseen schedule changes');++communicationThreadOpenSequence;window.WMChatDrafts?.reset();window.WMMatch?.close();window.WMMatchVideo?.reset();window.WMStatistics?.reset();show('teamRecorderView',false);window.WMVideoPilot?.reset();window.WMTournaments?.reset();show('tournamentSheet',false);window.WMNotificationSync?.reset();window.WMReactions?.reset();finishTileEditing(false);tileEditUser=null;pendingUiLayout=null;window.WMKioskScan?.reset();window.WMGoals?.reset();window.WMProfiles?.reset();window.WMFamily?.reset();resetAthleteCard();nativeCameraScanContext=null;weightCardPhotoCache.clear();}
   if(session?.user?.id!==nextSession?.user?.id&&(myWeightCheckMode==='teammate'||myWeightCheckMode==='test'||myWeightCheckMode==='staff'||!$('weightTestAthleteSheet').classList.contains('hidden')||!$('teammateWeightCheckSheet').classList.contains('hidden')||!$('weightPinSheet').classList.contains('hidden')))closeSheets();
   session=nextSession||null;
   window.WMProfilePIN?.select().catch(()=>{});window.WMProfilePINUI?.refresh();
@@ -16540,5 +16540,106 @@ window.WMDeletionPhoneTest=(()=>{
  return {refresh,reset};
 })();
 </script>
+<!-- BEGIN WRESTLER STATISTICS -->
+<script>
+/* Deterministic reports from saved scorebooks. No network, credentials or writes. */
+(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.WMStatisticsEngine=api;})(typeof globalThis!=='undefined'?globalThis:this,()=>{
+ const styles={folkstyle:'Folkstyle',freestyle:'Freestyle',greco:'Greco-Roman',beach:'Beach'};
+ const labels={td:'Takedowns',escape:'Escapes',reversal:'Reversals',nearfall:'Near falls',hold2:'Two-point holds',action4:'Four-point actions',action5:'Five-point actions',exposure:'Exposures',stepout:'Step outs',penalty:'Penalty points',locked:'Locked-hands awards',activity:'Activity points',utb_rideout:'Tiebreaker ride-outs',beach1:'Ground contacts',beach3:'Back-exposure throws',beachout:'Out of bounds',beachcaution:'Caution points',beachchallenge:'Challenge points',correction:'Score adjustments',unclassified:'Other recorded points'};
+ const pair=()=>({for:0,against:0,pointsFor:0,pointsAgainst:0});
+ const int=n=>Number.isInteger(n)&&Math.abs(n)<=99;
+ function report(rows,{teamId,athleteIds,style,seasonId=null}={}){
+  if(!teamId||!Array.isArray(athleteIds)||!athleteIds.length||!Object.hasOwn(styles,style))throw Error('Choose a team, wrestler and wrestling style.');
+  const ids=new Set(athleteIds),unique=new Map();
+  for(const r of rows||[]){if(!r||!r.id||r.team_id!==teamId)continue;const prior=unique.get(r.id);if(!prior||Number(r.revision||0)>Number(prior.revision||0))unique.set(r.id,r);}
+  const out={matches:0,wins:0,losses:0,noContest:0,pointsFor:0,pointsAgainst:0,winPercent:null,averageFor:null,averageAgainst:null,actions:Object.create(null),periods:Object.create(null),positions:{neutral:pair(),top:pair(),bottom:pair(),grounded:pair(),unknown:pair()},results:Object.create(null),history:[],excluded:0,unclassifiedPoints:0};
+  for(const r of unique.values()){
+   const d=r.data||{};if(d.style!==style||seasonId&&r.season_id!==seasonId)continue;
+   if(d.status!=='complete'||d.video_test||d.test_only||d.demo||r.challenge_id||(d.book_type&&d.book_type!=='competition')){out.excluded++;continue;}
+   const red=ids.has(d.red_id),other=ids.has(d.other_id);if(red===other||!Array.isArray(d.ledger)||!['red','other','none'].includes(d.winner)){out.excluded++;continue;}
+   const own=red?'red':'other',opp=red?'other':'red',ledger=d.ledger.filter(a=>a&&a.voided!==true);
+   if(ledger.some(a=>['red','other'].includes(a.corner)&&!int(a.points??0))){out.excluded++;continue;}
+   const score={red:0,other:0};for(const a of ledger)if(['red','other'].includes(a.corner))score[a.corner]+=a.points||0;
+   if(score.red<0||score.other<0){out.excluded++;continue;}
+   const noContest=d.winner==='none'||d.result==='No contest',win=!noContest&&d.winner===own;
+   out.matches++;out[noContest?'noContest':win?'wins':'losses']++;out.pointsFor+=score[own];out.pointsAgainst+=score[opp];
+   const result=String(d.result||'Unspecified');out.results[result]??=pair();out.results[result][win?'for':'against']+=noContest?0:1;
+   let position=d.flowVersion?'neutral':'unknown';const seen=new Set();
+   for(const a of ledger){
+    const points=a.points||0;
+    if(['red','other'].includes(a.corner)&&points!==0){
+     const side=a.corner===own?'for':'against',ps=side==='for'?'pointsFor':'pointsAgainst';
+     let action=/^nf[2345]$/.test(a.action_id||'')||a.action_id==='stoppage'?'nearfall':Object.hasOwn(labels,a.action_id)?a.action_id:'unclassified';
+     out.actions[action]??=pair();out.actions[action][ps]+=points;
+     // A stoppage adjustment augments the original near-fall award, not a second near fall.
+     if(points>0&&action!=='correction'&&!(a.adjusts&&seen.has(a.adjusts)))out.actions[action][side]++;
+     if(action==='unclassified')out.unclassifiedPoints+=Math.abs(points);
+     const period=Number.isInteger(a.period)&&a.period>0&&a.period<=30?String(a.period):'Unknown';
+     out.periods[period]??=pair();out.periods[period][ps]+=points;
+     const pos=position==='neutral'?'neutral':position===own?'top':position===opp?'bottom':position==='grounded'?'grounded':'unknown';out.positions[pos][ps]+=points;
+    }
+    if(a.id)seen.add(a.id);
+    if(['neutral','red','other','grounded','unknown'].includes(a.position_after))position=a.position_after;
+   }
+   out.history.push({id:r.id,source:r.source,seasonId:r.season_id,date:r.created_at,opponent:red?d.other_name:d.red_name,label:d.label||'',bout:d.bout_number||'',result,win:noContest?null:win,pointsFor:score[own],pointsAgainst:score[opp]});
+  }
+  const decisions=out.wins+out.losses;out.winPercent=decisions?100*out.wins/decisions:null;
+  if(out.matches){out.averageFor=out.pointsFor/out.matches;out.averageAgainst=out.pointsAgainst/out.matches;}
+  out.history.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||a.id.localeCompare(b.id));return out;
+ }
+ function csv(report){const quote=x=>'"'+String(x??'').replace(/^[=+@\-\t\r]/,"'$&").replace(/"/g,'""')+'"';return [['Date','Opponent','Event','Bout','Result','Outcome','Points for','Points against'],...report.history.map(r=>[r.date,r.opponent,r.label,r.bout,r.result,r.win===null?'No contest':r.win?'Win':'Loss',r.pointsFor,r.pointsAgainst])].map(r=>r.map(quote).join(',')).join('\r\n');}
+ return {styles,labels,report,csv};
+});
+
+</script>
+<script>
+/* Paid wrestler reports. Server authorization and coverage are required for real data. */
+window.WMStatistics=(()=>{
+ const engine=window.WMStatisticsEngine,E=esc,$s=id=>document.getElementById(id);let epoch=0,owner='',selectedTeam='',selectedAthlete='',context=null,preview=false,current=null;
+ const key=()=>[session?.user?.id,activeTeam?.id,viewMode,!!managedLogin].join(':');
+ const allowed=()=>!!session?.user?.id&&!!activeTeam&&!managedLogin&&!document.body.classList.contains('kiosk-locked')&&$s('appLockOverlay').classList.contains('hidden');
+ const sheet=document.createElement('section');sheet.id='wrestlerStatisticsSheet';sheet.className='sheet hidden';sheet.setAttribute('role','dialog');sheet.setAttribute('aria-modal','true');sheet.setAttribute('aria-labelledby','wsTitle');
+ sheet.innerHTML='<div class="sheet-head"><div><div class="eyebrow">TEAM PRO</div><h2 id="wsTitle">Wrestler statistics</h2></div><button class="icon-close" type="button" data-close-sheet aria-label="Close statistics">×</button></div><p id="wsStatus" role="status" aria-live="polite"></p><div id="wsBody"></div>';document.body.append(sheet);
+ const style=document.createElement('style');style.textContent='#wrestlerStatisticsSheet{max-width:780px}.ws-filters{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.ws-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:16px 0}.ws-metrics>div{background:#eef4fa;padding:14px 8px;border-radius:14px;text-align:center}.ws-metrics strong{display:block;font-size:24px}.ws-metrics small{font-size:12px;color:var(--muted)}.ws-table{width:100%;border-collapse:collapse;font-size:14px}.ws-table th,.ws-table td{padding:10px 6px;border-bottom:1px solid var(--line);text-align:right}.ws-table th:first-child,.ws-table td:first-child{text-align:left}.ws-table caption{text-align:left;font-size:18px;font-weight:800;margin:18px 0 8px}.ws-table td:first-child{overflow-wrap:anywhere}.ws-preview{background:#fff7df;color:#705110;border:1px solid #e5cf8d;border-radius:12px;padding:12px}.ws-match{border-bottom:1px solid var(--line);padding:12px 0}.ws-match b,.ws-match small{display:block}.ws-match small{color:var(--muted);margin-top:4px}.ws-period{display:grid;grid-template-columns:54px 1fr;gap:8px;align-items:center;margin:10px 0}.ws-bar{height:9px;border-radius:8px;background:#2868a8;margin:4px 0;min-width:2px}.ws-bar.against{background:#ba4e58}.ws-count{font-size:12px;color:var(--muted)}@media(max-width:360px){.ws-filters{grid-template-columns:1fr}.ws-metrics strong{font-size:21px}}';document.head.append(style);
+ function reset(){epoch++;owner='';context=null;current=null;preview=false;$s('wsBody').replaceChildren();$s('wsStatus').textContent='';sheet.classList.add('hidden');}
+ function valid(ticket){return ticket===epoch&&owner===key()&&allowed()&&!sheet.classList.contains('hidden');}
+ async function rpc(action,data){const {data:out,error}=await client.rpc('wrestler_statistics_request',{p_action:action,p_data:{team_id:selectedTeam,view_as_parent:viewMode==='parent',...data}});if(error)throw error;return out;}
+ const options=(rows,value)=>rows.map(r=>`<option value="${E(r.id)}" ${r.id===value?'selected':''}>${E(r.name)}</option>`).join('');
+ const teams=()=>preview?[{id:'sample-team',name:'Sample School Team'},{id:'sample-club',name:'Sample Club Team'}]:[...new Map([activeTeam,...availableTeams].filter(Boolean).map(t=>[t.id,{id:t.id,name:t.name||'Team'}])).values()];
+ function fields(){
+  const athletes=context.athletes||[],seasons=context.seasons||[];if(!athletes.some(a=>a.id===selectedAthlete))selectedAthlete=athletes[0]?.id||'';
+  $s('wsBody').innerHTML=`${preview?'<p class="ws-preview"><b>Sample preview</b> · Fictional wrestlers and matches. These are not your team’s records.</p>':''}<div class="ws-filters"><label>Team<select id="wsTeam">${options(teams(),selectedTeam)}</select></label><label>Wrestler<select id="wsAthlete">${options(athletes,selectedAthlete)}</select></label><label>Wrestling style<select id="wsStyle">${options(Object.entries(engine.styles).map(([id,name])=>({id,name})),'folkstyle')}</select></label><label>Season<select id="wsSeason"><option value="">Career · all recorded seasons</option>${options(seasons,'')}</select></label></div><p class="fine">Statistics stay with the team represented in each match. Styles are reported separately.</p><div id="wsReport"></div>`;
+  $s('wsTeam').onchange=async e=>{selectedTeam=e.target.value;current=null;if(preview){fields();await load();}else await loadContext();};
+  for(const id of ['wsAthlete','wsStyle','wsSeason'])$s(id).onchange=load;
+ }
+ function sample(){preview=true;selectedTeam='sample-team';selectedAthlete='sample-wrestler';context={covered:true,athletes:[{id:'sample-wrestler',name:'Sample Wrestler'}],seasons:[{id:'sample-current',name:'2026–2027'},{id:'sample-prior',name:'2025–2026'}]};fields();load();}
+ function sampleRows(style){return [0,1,2,3].map((i)=>({source:'sample',id:selectedTeam+'-'+style+'-'+i,team_id:selectedTeam,season_id:i<3?'sample-current':'sample-prior',created_at:`2026-09-${20+i}T16:00:00Z`,revision:1,data:{status:'complete',book_type:'competition',style,flowVersion:1,red_id:'sample-wrestler',red_name:'Sample Wrestler',other_id:null,other_name:'Sample Opponent '+(i+1),label:i<3?'Sample Invitational':'Sample Dual',winner:i===2?'other':'red',result:i===1?'Fall':'Decision',ledger:[{id:'a',action_id:style==='beach'?'beach1':'td',corner:'red',points:style==='folkstyle'?3:style==='beach'?1:2,period:1,position_after:style==='beach'?'neutral':'red'},{id:'b',action_id:style==='folkstyle'?'escape':style==='beach'?'beach1':'reversal',corner:'other',points:1,period:2,position_after:style==='folkstyle'?'neutral':'other'},...(i===2?[{id:'c',action_id:style==='beach'?'beach3':'td',corner:'other',points:style==='folkstyle'?3:style==='beach'?3:2,period:2}]:[])]}}));}
+ async function loadContext(){const ticket=++epoch;current=null;$s('wsBody').replaceChildren();$s('wsStatus').textContent='Checking statistics access…';
+  try{const out=await rpc('context',{});if(!valid(ticket))return;context=out;if(!out.covered){$s('wsStatus').textContent='';$s('wsBody').innerHTML='<div class="feature-card"><h3>Statistics are part of Team Pro</h3><p>Follow each wrestler’s season and career, separated by team and wrestling style.</p><p class="fine">Paid access is not active for this team yet. Preview the reports with sample data.</p><button id="wsPreview" class="wide" type="button">Preview statistics</button></div>';$s('wsPreview').onclick=sample;return;}fields();$s('wsStatus').textContent='';await load();}
+  catch(e){if(valid(ticket)){$s('wsStatus').textContent=e.message||'Statistics could not load. Try again.';$s('wsBody').innerHTML='<button id="wsRetry" class="secondary" type="button">Retry</button>';$s('wsRetry').onclick=loadContext;}}
+ }
+ async function load(){const ticket=++epoch;current=null;selectedAthlete=$s('wsAthlete').value;const style=$s('wsStyle').value,seasonId=$s('wsSeason').value||null;$s('wsReport').replaceChildren();$s('wsStatus').textContent='Loading saved matches…';
+  if(!selectedAthlete){$s('wsStatus').textContent='No authorized wrestler profiles are available for this team.';return;}
+  try{const out=preview?{matches:sampleRows(style),athlete_ids:['sample-wrestler']}:await rpc('read',{athlete_id:selectedAthlete,style,season_id:seasonId});if(!valid(ticket))return;current=engine.report(out.matches,{teamId:selectedTeam,athleteIds:out.athlete_ids,style,seasonId});render(current);$s('wsStatus').textContent='';}
+  catch(e){if(valid(ticket))$s('wsStatus').textContent=e.message||'Statistics could not load. Try again.';}
+ }
+ function render(r){
+  const fmt=n=>n===null?'—':Number(n).toFixed(1),tr=(name,a)=>`<tr><th scope="row">${E(name)}</th><td>${a.for}</td><td>${a.against}</td><td>${a.pointsFor}</td><td>${a.pointsAgainst}</td></tr>`;
+  $s('wsReport').innerHTML=`<div class="ws-metrics"><div><strong>${r.wins}–${r.losses}</strong><small>Win–loss record</small></div><div><strong>${fmt(r.winPercent)}${r.winPercent===null?'':'%'}</strong><small>Win rate</small></div><div><strong>${r.matches}</strong><small>Saved matches</small></div><div><strong>${r.pointsFor}</strong><small>Points for</small></div><div><strong>${r.pointsAgainst}</strong><small>Points against</small></div><div><strong>${r.pointsFor-r.pointsAgainst}</strong><small>Point difference</small></div></div>${!r.matches?'<p>No completed competition matches match these filters.</p>':`<p class="fine">Average points: ${fmt(r.averageFor)} for / ${fmt(r.averageAgainst)} against. ${r.noContest?r.noContest+' no-contest results excluded from win rate.':''}</p><details open><summary>Scoring breakdown</summary><div style="overflow-x:auto"><table class="ws-table"><caption>Scoring actions and points</caption><thead><tr><th>Action</th><th>For</th><th>Against</th><th>Pts for</th><th>Pts against</th></tr></thead><tbody>${Object.entries(r.actions).map(([id,a])=>tr(engine.labels[id],a)).join('')}</tbody></table></div></details><details><summary>Results by finish</summary><table class="ws-table"><thead><tr><th>Result</th><th>Wins</th><th>Losses</th></tr></thead><tbody>${Object.entries(r.results).map(([k,a])=>`<tr><th scope="row">${E(k)}</th><td>${a.for}</td><td>${a.against}</td></tr>`).join('')}</tbody></table></details><details><summary>Period scoring</summary><p class="fine">Blue: points for · Red: points against</p>${Object.entries(r.periods).map(([p,a])=>{const max=Math.max(1,...Object.values(r.periods).flatMap(x=>[x.pointsFor,x.pointsAgainst]));return `<div class="ws-period"><b>${p==='Unknown'?'Unknown':'P'+E(p)}</b><div><div class="ws-bar" style="width:${100*Math.max(0,a.pointsFor)/max}%"></div><div class="ws-bar against" style="width:${100*Math.max(0,a.pointsAgainst)/max}%"></div><span class="ws-count">${a.pointsFor} for / ${a.pointsAgainst} against</span></div></div>`;}).join('')}</details><details><summary>Points by starting position</summary><p class="fine">Position immediately before each scoring action. Unrecorded positions stay unknown.</p><table class="ws-table"><thead><tr><th>Position</th><th>For</th><th>Against</th></tr></thead><tbody>${Object.entries(r.positions).filter(([,x])=>x.pointsFor||x.pointsAgainst).map(([p,a])=>`<tr><th>${E(p[0].toUpperCase()+p.slice(1))}</th><td>${a.pointsFor}</td><td>${a.pointsAgainst}</td></tr>`).join('')}</tbody></table></details><details><summary>Match history (${r.matches})</summary>${r.history.map(m=>`<article class="ws-match"><b>${m.win===null?'No contest':m.win?'Win':'Loss'} · ${m.pointsFor}–${m.pointsAgainst} · ${E(m.opponent||'Opponent')}</b><small>${E(m.result)} · ${E(m.label||'Saved match')}${m.bout?' · Bout '+E(m.bout):''}</small><small>${E(m.date?new Date(m.date).toLocaleDateString():'Date unavailable')}</small></article>`).join('')}</details><button id="wsExport" class="wide secondary" type="button">Export match statistics (CSV)</button>`}<p class="fine">Based on completed, saved competition scorebooks. Unfinished matches, practice, challenges and camera tests are excluded. Attempts, riding time and tournament team points are not tracked.${r.unclassifiedPoints?' Some older scores lack action labels; they appear as other recorded points.':''}${r.excluded?' '+r.excluded+' incomplete or unsupported records were excluded.':''}</p>`;
+  $s('wsExport')?.addEventListener('click',()=>{if(!allowed()||owner!==key()||!current)return;WMOperations.download((preview?'Sample_':'')+'Wrestler_Statistics.csv',engine.csv(current));});
+ }
+ async function open(id=null){if(!allowed()){message('Choose a team with your personal account to view statistics.',true);return;}reset();owner=key();selectedTeam=activeTeam.id;selectedAthlete=id||'';openSheet(sheet.id);await loadContext();}
+ function add(after,id,text,onClick,cls='wide secondary'){const anchor=$s(after);if(!anchor)return;const b=document.createElement('button');b.id=id;b.type='button';b.className=cls;b.textContent=text;b.onclick=onClick;anchor.after(b);}
+ add('lockerAttendanceTab','lockerStatisticsTab','▥ Statistics',()=>open(), 'locker-room-tab');
+ add('viewAthleteAttendanceBtn','viewAthleteStatisticsBtn','Match statistics',()=>open(viewAthleteId));
+ add('profileAttendanceBtn','profileStatisticsBtn','Match statistics',()=>open(profileAthleteId));
+ sheet.querySelector('[data-close-sheet]').onclick=()=>{reset();closeSheets();};
+ window.addEventListener('pagehide',reset);
+ setInterval(()=>{if(owner&&(owner!==key()||!allowed()))reset();const b=$s('lockerStatisticsTab');if(b)b.classList.toggle('hidden',!!managedLogin||!activeTeam);},500);
+ return {open,reset};
+})();
+
+</script>
+<!-- END WRESTLER STATISTICS -->
 </body>
 </html>
