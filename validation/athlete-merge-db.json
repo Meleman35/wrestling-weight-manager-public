@@ -10,6 +10,7 @@
     "Established family/social identities are protected from silent cascading deletion",
     "Saved opposing wrestlers cannot be merged without identity review",
     "Family and athlete memberships move without deleting sign-in accounts or changing their roles",
+    "Overlapping guardian identities keep separate invitation/approval states until reviewed",
     "Late record conflicts roll back roster and profile changes atomically",
     "Internal helpers stay private; schema drift stops merge until reviewed"
   ],
