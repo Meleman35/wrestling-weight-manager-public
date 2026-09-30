@@ -1,0 +1,27 @@
+{
+  "checks": [
+    "Verified parent email capability and accepted adult reviewer are required; athletes cannot grant consent",
+    "Consented team chat copies the named reviewer on every message, exposes their identity, stays quiet and does not grant profile or guardian powers",
+    "The approved reviewer cannot count as both adults in a conversation",
+    "Messaging-only parents can recover and withdraw; replay cannot revive consent and history is retained",
+    "Profile approval and withdrawal are independent from messaging, even on the same email link",
+    "Old profile-used invitation cannot undo a newer messaging withdrawal",
+    "Reviewer revoke stops delivery and media uploads; reassignment requires fresh parent approval",
+    "Reviewer leave stops delivery and media uploads; reassignment requires fresh parent approval",
+    "Delivery pauses when reviewer membership ends",
+    "Delivery pauses when assigning coach authority ends",
+    "Delivery pauses when reviewer staff role changes",
+    "Delivery pauses when parent contact changes",
+    "Delivery pauses when coach verification changes",
+    "Delivery pauses when consent expires",
+    "Delivery pauses when athlete is under 13",
+    "Delivery pauses when reviewer feature disabled",
+    "Delivery pauses when browser choices disabled",
+    "Expired/replaced links, unaccepted reviewers and missing acknowledgments cannot approve messaging",
+    "Media requires its own opt-in and coach-led group/team messages include reviewer receipts",
+    "Joining as a parent restores account controls and requires the parent to be included before sending resumes",
+    "A second verified parent withdrawal overrides another parent’s browser approval",
+    "Direct table writes cannot bypass the communication RPC and private consent helpers remain inaccessible"
+  ],
+  "realMessagesSent": false
+}

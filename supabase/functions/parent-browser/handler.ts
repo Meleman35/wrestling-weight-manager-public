@@ -16,7 +16,7 @@ export function createHandler(deps:Dependencies){return async(req:Request)=>{
  try{
   const raw=await req.text();if(raw.length>2000)return json(400,{error:'Invalid request.'});
   let b;try{b=JSON.parse(raw);}catch{return json(400,{error:'Invalid request.'});}
-  if(!b||!['preview','approve','revoke','join','recover'].includes(b.action))return json(400,{error:'Invalid request.'});
+  if(!b||!['preview','approve','revoke','join','recover','messaging_preview','messaging_approve','messaging_revoke'].includes(b.action))return json(400,{error:'Invalid request.'});
   if(b.action==='recover'){
    // All outcomes have the same public response, including unknown addresses.
    const answer={ok:true,message:'If this email has browser permissions, a management link will arrive shortly. Check spam, or wait an hour before requesting another.'};
@@ -30,15 +30,23 @@ export function createHandler(deps:Dependencies){return async(req:Request)=>{
      links.push(origin+'/parent-browser.html#token='+token);
     }
     const text='You requested access to your Wrestling Manager parent permissions. Open a private link below to review or withdraw your approval. Links expire in one hour. Opening a link does not change permissions.\n\n'+links.join('\n\n')+'\n\nIf you did not request this, ignore this email. Keep these links private.';
-    await deps.fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+mail,'Content-Type':'application/json'},body:JSON.stringify({from:'Wrestling Manager <messages@wrestlingmanager.app>',to:[contacts[0].email],subject:'Manage your athlete’s profile permission',text,html:'<p>'+escape(text).replace(/\n/g,'<br>')+'</p>'}),signal:AbortSignal.timeout(20000)});
+    await deps.fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+mail,'Content-Type':'application/json'},body:JSON.stringify({from:'Wrestling Manager <messages@wrestlingmanager.app>',to:[contacts[0].email],subject:'Manage your athlete’s permissions',text,html:'<p>'+escape(text).replace(/\n/g,'<br>')+'</p>'}),signal:AbortSignal.timeout(20000)});
    }catch{/* Never reveal whether an email, athlete or permission exists. */}
    return json(200,answer);
   }
   if(typeof b.token!=='string'||!/^[a-f0-9]{64}$/.test(b.token))return json(400,{error:'Open the newest private link from your email.'});
-  const data:{token_hash:string;acknowledge?:boolean;notice_version?:string;review_photos?:boolean}={token_hash:await tokenHash(b.token)};
+  const data:{token_hash:string;acknowledge?:boolean;notice_version?:string;review_photos?:boolean;reviewer_id?:string;reviewer_version?:string;allow_media?:boolean}={token_hash:await tokenHash(b.token)};
   if(b.action==='approve'||b.action==='revoke'){
    if(b.acknowledge!==true||b.notice_version!=='teen-profile-v1'||(b.action==='approve'&&typeof b.review_photos!=='boolean'))return json(400,{error:'Review the choices and confirm you are the parent or legal guardian.'});
    data.acknowledge=true;data.notice_version='teen-profile-v1';if(b.action==='approve')data.review_photos=b.review_photos;
+  }
+  if(b.action==='messaging_approve'||b.action==='messaging_revoke'){
+   if(b.acknowledge!==true||b.notice_version!=='teen-messaging-v1')return json(400,{error:'Review and confirm the messaging permission.'});
+   data.acknowledge=true;data.notice_version='teen-messaging-v1';
+   if(b.action==='messaging_approve'){
+    if(typeof b.reviewer_id!=='string'||!/^[-a-f0-9]{36}$/.test(b.reviewer_id)||typeof b.reviewer_version!=='string'||!/^[a-f0-9]{64}$/.test(b.reviewer_version)||typeof b.allow_media!=='boolean')return json(400,{error:'Choose an approved reviewer and your message media preference.'});
+    data.reviewer_id=b.reviewer_id;data.reviewer_version=b.reviewer_version;data.allow_media=b.allow_media;
+   }
   }
   const result=await rpc(b.action,data);
   if(b.action!=='join')return json(200,result);

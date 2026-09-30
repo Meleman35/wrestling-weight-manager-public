@@ -1,0 +1,10 @@
+# Parent-approved team messaging — v0.20.105
+
+A verified parent of an athlete aged 13–17 may independently authorize team/coach conversations from the existing private email link, select an accepted team reviewer, and optionally allow message photos/videos. Profile-edit permission is independent. The parent can recover a management link and withdraw messaging permission without an account.
+
+Each communication must include the named current reviewer as a disclosed read-only recipient with a per-message receipt, and a distinct authorized adult participant. The server stops new messages/media if consent, verification, team membership or the approved reviewer assignment becomes invalid. Reviewer access remains quiet, with messages in the existing review inbox. Separate peer/profile chats do not gain permission.
+
+Decisions use the existing private parent-browser event ledger under a distinct `team_messaging` scope. Existing profile decisions and auth accounts remain independent. Only service-validated email capabilities can write these decisions. Each link has independent one-time profile and messaging choices. Management links work for messaging-only parents; retries return receipts without restoring withdrawn consent. If a parent joins later, account permissions and actual guardian inclusion are required before sending resumes. No schema or deletion coverage bypass is introduced; actor identifiers in retained consent receipts are audit references, and live permission always requires the current reviewer account and assignment.
+
+Policy source reviewed September 30, 2026: USA Wrestling 2025 MAAPP, electronic communications, pages 45–46 of the Safe Sport Handbook. Requires another eligible adult to be copied/included on every communication, professional content and honoring parental requests to discontinue. This feature supports those controls; it is not a certification of organizational compliance or a substitute for required training, screening and reporting.
+https://maapp.uscenterforsafesport.org/wp-content/uploads/2022/02/Wrestling_2025MAAPP_09.01.24_Final.pdf
