@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.103: Wrestler statistics by team, season and style; paid-access preview. -->
+<!-- Wrestling Manager v0.20.104: Explicit contact review for duplicate athlete merges. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -2372,7 +2372,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.103</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.104</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -16662,15 +16662,24 @@ window.WMAthleteMerge=(()=>{
   $m('amReview').onclick=async()=>{if(busy)return;const k=$m('amKeep').value,s=$m('amDuplicate').value;if(!k||!s||k===s){note('Choose two different athletes.');return;}busy=true;$m('amReview').disabled=true;const g=++epoch;note('Reviewing records and permissions…');try{const out=await call('preview',{keep_id:k,duplicate_id:s},g);if(valid(g)){plan=out;review();note('');}}catch(e){if(valid(g)){note(e.message);$m('amReview').disabled=false;}}finally{if(valid(g))busy=false;}};
  }
  function review(){
-  const person=(a,title)=>`<div class="am-person"><small>${title}</small><b>${E(a.name)}</b><small>Added ${E(a.created_at?new Date(a.created_at).toLocaleDateString():'earlier')}</small></div>`;
-  $m('amBody').innerHTML=`<div class="am-pair">${person(plan.keep,'KEEP THIS PROFILE')}${person(plan.duplicate,'COMBINE THIS DUPLICATE')}</div><details><summary>Records attached to the duplicate</summary><ul class="am-records">${plan.records.map(r=>`<li>${E(r.table.replaceAll('_',' '))}: ${r.count}</li>`).join('')||'<li>No additional records</li>'}</ul></details>${plan.blockers.length?`<div class="am-warning"><b>Resolve these items first</b><ul>${plan.blockers.map(x=>`<li>${E(x)}</li>`).join('')}</ul><p>Neither profile has been changed.</p></div>`:'<p class="am-warning">The duplicate roster entry will be removed after its records move to the profile you keep. When both are in the same season, the kept profile’s lineup and roster status stay in place. Team and style history stay separate. Sign-in accounts are not deleted. This cannot be undone from the app.</p><form id="amConfirmForm"><label for="amConfirm">Type <b>merge</b> to confirm these are the same athlete</label><input id="amConfirm" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="merge" required><button id="amCommit" type="submit" class="wide danger" disabled>Merge athletes</button></form>'}<button id="amChooseAgain" type="button" class="wide secondary">Choose different profiles</button>`;
+  const person=(a,title)=>`<div class="am-person"><small>${title}</small><b>${E(a.name)}</b>${list.find(x=>x.id===a.id)?.has_login?'<small>Athlete sign-in linked</small>':''}<small>Added ${E(a.created_at?new Date(a.created_at).toLocaleDateString():'earlier')}</small></div>`;
+  const fields=(plan.contact_conflicts||[]).filter(x=>x==='email'||x==='phone');
+  const contactReview=fields.length?`<div class="am-warning am-contact"><b>${plan.contact_resolution==='keep'?'Contact choice reviewed':'Choose contact details'}</b><p>The profiles have different ${E(fields.join(' and '))} details.</p><p>${plan.contact_resolution==='keep'?'Where they differ, use the details from the profile marked KEEP THIS PROFILE.':'You can keep the details from the profile marked KEEP THIS PROFILE. To keep the other profile’s details, choose different profiles and switch which one you keep.'}</p><p class="fine">Sign-in email and password stay unchanged. Contact sharing stays at the more private setting.</p>${plan.contact_resolution==='keep'?'':'<button id="amKeepContact" type="button" class="wide secondary">Keep this profile’s contact details</button>'}</div>`:'';
+  $m('amBody').innerHTML=`<div class="am-pair">${person(plan.keep,'KEEP THIS PROFILE')}${person(plan.duplicate,'COMBINE THIS DUPLICATE')}</div><details><summary>Records attached to the duplicate</summary><ul class="am-records">${plan.records.map(r=>`<li>${E(r.table.replaceAll('_',' '))}: ${r.count}</li>`).join('')||'<li>No additional records</li>'}</ul></details>${contactReview}${plan.blockers.length?`<div class="am-warning"><b>Resolve these items first</b><ul>${plan.blockers.map(x=>`<li>${E(x)}</li>`).join('')}</ul><p>Neither profile has been changed.</p></div>`:'<p class="am-warning">The duplicate roster entry will be removed after its records move to the profile you keep. When both are in the same season, the kept profile’s lineup and roster status stay in place. Team and style history stay separate. Sign-in accounts are not deleted. This cannot be undone from the app.</p><form id="amConfirmForm"><label for="amConfirm">Type <b>merge</b> to confirm these are the same athlete</label><input id="amConfirm" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="merge" required><button id="amCommit" type="submit" class="wide danger" disabled>Merge athletes</button></form>'}<button id="amChooseAgain" type="button" class="wide secondary">Choose different profiles</button>`;
   $m('amChooseAgain').onclick=()=>{if(!busy){picker(plan.keep.id);note('');}};
+  if($m('amKeepContact'))$m('amKeepContact').onclick=resolveContacts;
   if(!plan.blockers.length){$m('amConfirm').oninput=()=>{$m('amCommit').disabled=busy||$m('amConfirm').value!=='merge';};$m('amConfirmForm').onsubmit=commit;}
+ }
+ async function resolveContacts(){
+  if(busy||!plan)return;const reviewed=plan,g=++epoch;busy=true;$m('amKeepContact').disabled=true;$m('amChooseAgain').disabled=true;note('Reviewing the contact choice…');
+  try{const out=await call('preview',{keep_id:reviewed.keep.id,duplicate_id:reviewed.duplicate.id,contact_resolution:'keep'},g);if(valid(g)){plan=out;review();note('Contact choice reviewed. Neither profile has been changed.');}}
+  catch(e){if(valid(g)){note(e.message||'Could not review contact details. Try again.');$m('amKeepContact').disabled=false;$m('amChooseAgain').disabled=false;}}
+  finally{if(valid(g))busy=false;}
  }
  async function commit(event){event.preventDefault();if(busy||!plan||$m('amConfirm').value!=='merge')return;const reviewed=plan,g=++epoch;busy=true;$m('amCommit').disabled=true;$m('amChooseAgain').disabled=true;note('Merging records…');
   try{
    const offline=await window.WMOfflineStore?.get(session.user.id);if(!valid(g))return;if(offline?.queue?.length)throw Error('Sync the saved offline work on this device before merging.');
-   const r=await call('merge',{keep_id:reviewed.keep.id,duplicate_id:reviewed.duplicate.id,version:reviewed.version,confirmation:'merge'},g);
+   const r=await call('merge',{keep_id:reviewed.keep.id,duplicate_id:reviewed.duplicate.id,version:reviewed.version,contact_resolution:reviewed.contact_resolution||null,confirmation:'merge'},g);
    if(r?.status!=='completed')throw Error('Completion was not confirmed. Reopen and review the profiles before trying again.');
    if(!valid(g))return;plan=null;$m('amBody').innerHTML='<p><b>Merge complete.</b> Records are attached to the profile you kept.</p><p>Refresh other devices and update their saved offline team before adding more records. Role verification may need review after family links move.</p><button id="amDone" type="button" class="wide">Back to roster</button>';note('');$m('amDone').onclick=async()=>{reset();await refresh();if(allowed())openSheet('rosterSheet');};window.WMStatistics?.reset();
   }catch(e){if(valid(g)){note(e.message||'Completion could not be confirmed. You can retry the same reviewed merge.');$m('amCommit').disabled=false;$m('amChooseAgain').disabled=false;}}
