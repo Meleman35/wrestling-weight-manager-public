@@ -1,4 +1,4 @@
-# Private phone setup, v0.20.97
+# Private phone setup, v0.20.98
 
 This separate release provides a read-only inventory in Account & Team for a
 privately enrolled, verified personal account. It does not ship the unfinished
@@ -74,3 +74,18 @@ for the accepted semantics, new read-only RPC and organization cascade guards.
 The guards preserve linked teams and athlete records by rejecting unreviewed
 organization deletion. No records were erased by installing them. Every action
 in this preview remains disabled; typed confirmation does not authorize work.
+
+## Combined Delete all preview
+
+Delete all includes the requesting person's personal account and a visible list of
+currently eligible teams/organizations. All listed workspaces start checked;
+people can uncheck those they are keeping. The final warning repeats only the
+checked targets and explicitly preserves everyone else's personal/athlete
+profiles. Retained last-admin workspaces still need a handoff. No new RPC, request,
+consent or deletion is performed. The existing database preservation guards remain.
+
+The browser suite also runs the existing account refresh path for a retained
+personal profile with no memberships and a stale active team. It verifies that the
+person stays signed in, keeps the same profile, clears the stale team and sees
+Join a Team / Create a Team without signing up again. This is a synthetic UI test,
+not a real organization/account erasure or physical-phone acceptance test.

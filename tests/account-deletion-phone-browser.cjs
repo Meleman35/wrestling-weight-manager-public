@@ -74,8 +74,42 @@ const root=path.resolve(__dirname,'..'),passed=[],pass=s=>{passed.push(s);consol
  assert.equal(await page.evaluate(()=>fixture.calls.length),rpcCount+1); // reopening the account sheet refreshed once
  assert.equal(await page.evaluate(()=>fixture.writes.length),0);
  pass('Four separate scopes require a specific workspace, preserve other people’s profiles, explain inherited access and clear confirmation on scope changes');
+ const allRPCCount=await page.evaluate(()=>fixture.calls.length);
+ await scopeType.selectOption('all');
+ const allButton=page.getByRole('button',{name:'Delete All',exact:true});
+ assert.equal(await target.isVisible(),false);assert.equal(await page.locator('#deletionAllTargets input:checked').count(),2);
+ assert.match(await page.locator('#deletionAllTargets').innerText(),/Your personal account is included/);
+ await allButton.click();assert.equal(await page.getByRole('dialog',{name:'Delete all selected',exact:true}).isVisible(),true);
+ assert.deepEqual(await page.locator('#deletionConfirmTargets li').allTextContents(),['Your personal account and your memberships across all teams and organizations','Team: Fixture team','Organization: Fixture organization']);
+ assert.match(await page.locator('#deletionConfirmWarning').innerText(),/Everyone else keeps their personal account/);
+ assert.match(await page.locator('#deletionConfirmWarning').innerText(),/People left without a team can sign in and join a team or create their own/);
+ assert.equal(await confirm.isDisabled(),true);
+ for(const text of ['DELETE',' delete','delete ']){await input.fill(text);assert.equal(await confirm.isDisabled(),true);}
+ await input.fill('delete');await input.press('Enter');assert.match(await page.locator('#deletionConfirmStatus').innerText(),/Nothing has been changed/);
+ assert.equal(await input.inputValue(),'');await input.press('Escape');
+ assert.equal(await page.evaluate(()=>fixture.calls.length),allRPCCount);assert.equal(await page.evaluate(()=>fixture.writes.length),0);
+ pass('Delete all lists the personal account and every eligible workspace, preserves other people’s profiles, and exact confirmation still performs no action');
+ const teamCheck=page.locator('[data-deletion-include="team:11111111-1111-4111-8111-111111111111"]'),orgCheck=page.locator('[data-deletion-include="organization:22222222-2222-4222-8222-222222222222"]');
+ await teamCheck.uncheck();await allButton.click();
+ assert.deepEqual(await page.locator('#deletionConfirmTargets li').allTextContents(),['Your personal account and your memberships across all teams and organizations','Organization: Fixture organization']);
+ assert.match(await page.locator('#deletionConfirmDialog').innerText(),/workspaces you are keeping, transfer administration/);
+ await input.press('Escape');await orgCheck.uncheck();assert.equal(await allButton.isDisabled(),true);
+ await teamCheck.check();await allButton.click();await input.fill('delete');
+ await page.evaluate(()=>{const input=document.querySelector('#deletionAllTargets input');input.checked=false;input.dispatchEvent(new Event('change'));});
+ assert.equal(await page.locator('#deletionConfirmDialog').count(),0);assert.equal(await allButton.isDisabled(),true);
+ await scopeType.selectOption('personal');await scopeType.selectOption('all');
+ assert.equal(await page.locator('#deletionAllTargets input:checked').count(),2);await allButton.click();assert.equal(await input.inputValue(),'');await input.press('Escape');
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+ pass('Unchecked workspaces are excluded, retained sole-admin workspaces require handoff, empty combined selections are blocked and changing the list clears confirmation');
+ await page.evaluate(()=>{fixture.allScopes=structuredClone(fixture.preflight.scopes);fixture.preflight.scopes={teams:[fixture.preflight.scopes.teams[0]],organizations:[]};return WMDeletionPhoneTest.refresh();});
+ assert.equal(await scopeType.inputValue(),'personal');assert.equal(await page.locator('#deletionAllTargets input').count(),0);
+ await scopeType.selectOption('all');await allButton.click();
+ assert.equal(await page.locator('#deletionConfirmTargets li').count(),2);assert.ok(!(await page.locator('#deletionConfirmTargets').innerText()).includes('Fixture organization'));await input.press('Escape');
+ await page.evaluate(()=>{fixture.preflight.scopes=fixture.allScopes;return WMDeletionPhoneTest.refresh();});
+ pass('Refreshing roles discards the previous combined selection and only offers newly verified targets');
+
  await page.evaluate(()=>{fixture.savedScopes=structuredClone(fixture.preflight.scopes);fixture.preflight.scopes={teams:[],organizations:[]};return WMDeletionPhoneTest.refresh();});
- assert.equal(await scopeType.inputValue(),'personal');assert.equal(await page.locator('#deletionScopeType option:disabled').count(),3);
+ assert.equal(await scopeType.inputValue(),'personal');assert.equal(await page.locator('#deletionScopeType option:disabled').count(),4);
  assert.equal(await page.getByRole('button',{name:'Delete Account',exact:true}).isEnabled(),true);
  await page.evaluate(()=>{fixture.preflight.scopes=fixture.savedScopes;return WMDeletionPhoneTest.refresh();});
  pass('Personal-only accounts keep the personal deletion option without administrator or workspace targets');
@@ -104,5 +138,19 @@ const root=path.resolve(__dirname,'..'),passed=[],pass=s=>{passed.push(s);consol
  assert.equal(await page.locator('#deletionConfirmDialog').count(),0);
  assert.deepEqual(errors,[]);assert.equal(await page.evaluate(()=>fixture.writes.length),0);
  pass('Managed login and page exit clear the view; no live calls, data writes or page errors occur');
+ await page.evaluate(async()=>{
+  closeSheets();WMDeletionPhoneTest.reset();
+  session=fixture.session={user:{id:'retained-person',email:'retained@example.test',user_metadata:{}},access_token:'synthetic-retained-token'};
+  activeTeam={id:'removed-team',name:'Removed team'};availableTeams=[activeTeam];teamMemberships=[{team_id:'removed-team',user_id:session.user.id,active:true}];organizationMemberships=[];
+  const rpc=client.rpc.bind(client);client.rpc=(name,args)=>name==='get_operations'?Promise.resolve({data:[],error:null}):rpc(name,args);
+  await refreshAccountView();
+ });
+ assert.equal(await page.locator('#setupView').isVisible(),true);assert.equal(await page.locator('#authView').isVisible(),false);assert.equal(await page.locator('#appView').isVisible(),false);
+ assert.equal(await page.locator('#setupJoinBtn').isVisible(),true);assert.equal(await page.locator('#bootstrapTeamBtn').isVisible(),true);
+ assert.match(await page.locator('#setupAccessStatus').innerText(),/Your personal account is ready.*Join a team.*create your own team/);
+ assert.deepEqual(await page.evaluate(()=>({user:session.user.id,profile:accountProfileData.id,name:accountProfileData.display_name,activeTeam,teams:availableTeams,signups:fixture.signupCalls.length})),{user:'retained-person',profile:'retained-person',name:'Test Adult',activeTeam:null,teams:[],signups:0});
+ assert.equal(await page.evaluate(()=>fixture.writes.length),0);assert.deepEqual(errors,[]);
+ pass('A retained personal profile with no memberships stays signed in and reaches Join a Team / Create a Team, clearing the old active team without creating a new account');
+
  fs.writeFileSync(path.join(root,'validation/account-deletion-phone-browser.json'),JSON.stringify({passed,errors,engine:'Chromium actual bundled UI, synthetic responses, phone viewport',physicalPhoneTest:false,productionDataChanged:false},null,2));await browser.close();
 })().catch(e=>{console.error(e);process.exit(1);});

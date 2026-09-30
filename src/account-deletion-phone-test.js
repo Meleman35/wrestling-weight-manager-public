@@ -16,6 +16,7 @@ window.WMDeletionPhoneTest=(()=>{
   #deletionConfirmDialog::backdrop{background:rgba(0,0,0,.55)}
   #deletionConfirmDialog h2{margin:0 0 12px}#deletionConfirmDialog p{line-height:1.5}
   #deletionPhoneTestCard select{font-size:16px;width:100%;min-height:44px;margin:8px 0 12px}#deletionPhoneTestCard select[hidden]{display:none}#deletionConfirmDialog input{font-size:16px}#deletionConfirmDialog button{min-height:44px}
+  #deletionAllTargets{margin:12px 0;padding:12px;border:1px solid var(--line);border-radius:10px;min-width:0}#deletionAllTargets[hidden]{display:none}#deletionAllTargets label{display:flex;align-items:center;gap:10px;min-height:44px;overflow-wrap:anywhere}#deletionAllTargets input{width:20px;height:20px;flex:0 0 20px;margin:0}#deletionConfirmTargets{padding-left:22px;overflow-wrap:anywhere}
   #deletionConfirmDialog .deletion-unavailable{padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--soft)}
  `;document.head.append(style);
  function mount(){
@@ -32,19 +33,27 @@ window.WMDeletionPhoneTest=(()=>{
   const uid=actor(),token=session.access_token,g=epoch;
   const current=()=>g===epoch&&uid===actor()&&token===session?.access_token&&visible();
   dialog=element('dialog');dialog.id='deletionConfirmDialog';dialog.setAttribute('aria-labelledby','deletionConfirmTitle');dialog.setAttribute('aria-describedby','deletionConfirmWarning deletionConfirmUnavailable');
-  const title=element('h2',choice.kind==='personal'?'Delete personal account':choice.kind==='administrator'?'Remove administrator access':choice.kind==='team'?'Delete team':'Delete organization');title.id='deletionConfirmTitle';dialog.append(title);
+  const title=element('h2',choice.kind==='all'?'Delete all selected':choice.kind==='personal'?'Delete personal account':choice.kind==='administrator'?'Remove administrator access':choice.kind==='team'?'Delete team':'Delete organization');title.id='deletionConfirmTitle';dialog.append(title);
   const unavailable=element('p','Confirmation preview: account deletion is not available yet. Nothing will be deleted.','deletion-unavailable');unavailable.id='deletionConfirmUnavailable';dialog.append(unavailable);
-  if(choice.kind!=='personal')dialog.append(element('p','Selected '+choice.targetKind+': '+choice.name));
+  if(!['personal','all'].includes(choice.kind))dialog.append(element('p','Selected '+choice.targetKind+': '+choice.name));
+  if(choice.kind==='all'){
+   dialog.append(element('h3','Included in this deletion'));
+   const list=element('ul');list.id='deletionConfirmTargets';list.append(element('li','Your personal account and your memberships across all teams and organizations'));
+   for(const item of choice.targets)list.append(element('li',(item.targetKind==='team'?'Team: ':'Organization: ')+item.name));
+   dialog.append(list);
+  }
   const warning=element('p',scopeWarning(choice));warning.id='deletionConfirmWarning';dialog.append(warning);
-  if(choice.kind==='personal'){
-   const handoffs=[...scopes.teams.filter(x=>x.needs_handoff).map(x=>'Team: '+x.name),...scopes.organizations.filter(x=>x.needs_handoff).map(x=>'Organization: '+x.name)];
-   if(handoffs.length)dialog.append(element('p','You are the last administrator for '+handoffs.join('; ')+'. Transfer administration to another person, or separately choose to delete each affected team or organization, before deleting your personal account.','fine'));
+  if(['personal','all'].includes(choice.kind)){
+   const included=new Set((choice.targets||[]).map(x=>x.targetKind+':'+x.id));
+   const handoffs=[...scopes.teams.filter(x=>x.needs_handoff&&!included.has('team:'+x.id)).map(x=>'Team: '+x.name),...scopes.organizations.filter(x=>x.needs_handoff&&!included.has('organization:'+x.id)).map(x=>'Organization: '+x.name)];
+   if(handoffs.length)dialog.append(element('p','You are the last administrator for '+handoffs.join('; ')+'. For workspaces you are keeping, transfer administration to another person before deleting your personal account. Alternatively, explicitly include them in Delete all or close them separately.','fine'));
   }else if(choice.kind==='administrator'){
    if(choice.inherited_admin)dialog.append(element('p','You also have administrator access through the organization. Removing this direct team role alone will not remove that organization access.','fine'));
    else if(choice.needs_handoff)dialog.append(element('p','You are the last administrator. Transfer administration to another person or separately choose to delete this '+choice.targetKind+' first.','fine'));
   }else if(choice.kind==='organization'&&(choice.team_count||choice.athlete_count)){
    dialog.append(element('p','This organization has '+choice.team_count+' linked team(s) and '+choice.athlete_count+' linked athlete record(s). Preserve or transfer these records before closing it. Teams require their own separate deletion choice.','fine'));
   }
+  if(choice.kind==='all'&&choice.targets.some(x=>x.targetKind==='organization'&&(x.team_count||x.athlete_count)))dialog.append(element('p','Linked athlete profiles must be preserved. Any linked team not included above must be preserved or transferred before its organization can be closed.','fine'));
   const form=element('form');form.noValidate=true;
   const label=element('label','Type delete to confirm that you understand this warning, then press Enter or Confirm deletion.');label.htmlFor='deletionConfirmInput';
   const input=element('input');input.id='deletionConfirmInput';input.type='text';input.autocomplete='off';input.setAttribute('autocapitalize','none');input.setAttribute('autocorrect','off');input.spellcheck=false;input.setAttribute('enterkeyhint','done');input.setAttribute('aria-describedby','deletionConfirmStatus');
@@ -63,8 +72,9 @@ window.WMDeletionPhoneTest=(()=>{
   dialog.addEventListener('cancel',event=>{event.preventDefault();closeConfirmation();if(current())opener.focus();});
   document.body.append(dialog);dialog.showModal();input.focus();
  }
- const kinds=[['personal','Delete my personal account'],['administrator','Remove my administrator access'],['team','Delete a team'],['organization','Delete an organization']];
+ const kinds=[['personal','Delete my personal account'],['administrator','Remove my administrator access'],['team','Delete a team'],['organization','Delete an organization'],['all','Delete all']];
  function scopeWarning(choice){
+  if(choice.kind==='all')return 'Delete all is permanent. It deletes YOUR personal account, sign-in and personal data across all memberships, together with ONLY the teams and organizations in this selection. Everyone else keeps their personal account, athlete profile and memberships elsewhere, even if this was their only team. Your linked children’s profiles also stay. People left without a team can sign in and join a team or create their own. Unchecked workspaces and workspaces you only belong to are not closed. Shared records need review; downloaded copies cannot be removed.';
   if(choice.kind==='personal')return 'Personal account deletion is permanent. It removes your sign-in, personal profile and personal data across ALL teams and organizations you belong to, including inactive memberships. Other people’s accounts and personal profiles stay. Your linked children’s profiles are not deleted. Team and organization closure requires a separate choice. Shared records may need anonymization, and copies already downloaded by other people cannot be removed.';
   if(choice.kind==='administrator')return 'This removes your administrator role for the selected '+choice.targetKind+'. Your personal account, sign-in and personal profile stay. Other people’s profiles, the team or organization, and your memberships elsewhere stay. This is a role change, not personal account deletion.';
   if(choice.kind==='team')return 'Team deletion is permanent. It removes this team and its team-only memberships and data. Everyone’s personal account and profile stay, including people who belong only to this team. Their other team and organization memberships stay. Shared athlete profiles and their records elsewhere must be preserved.';
@@ -76,20 +86,36 @@ window.WMDeletionPhoneTest=(()=>{
   const roleTargets=[...scopes.teams.filter(x=>x.direct_admin).map(x=>({...x,targetKind:'team'})),...scopes.organizations.map(x=>({...x,targetKind:'organization'}))];
   const targetLabel=element('label','Choose the specific team or organization');targetLabel.htmlFor='deletionScopeTarget';
   const target=element('select');target.id='deletionScopeTarget';
+  const allTargets=[...scopes.teams.map(x=>({...x,targetKind:'team'})),...scopes.organizations.map(x=>({...x,targetKind:'organization'}))];
+  const allBox=element('fieldset');allBox.id='deletionAllTargets';
+  const included=new Map();
+  function renderAll(){
+   allBox.replaceChildren();included.clear();
+   allBox.append(element('legend','Included in Delete all'),element('p','Your personal account is included. Review every team and organization below; uncheck any you want to keep.','fine'));
+   for(const item of allTargets){
+    const row=element('label'),input=element('input');input.type='checkbox';input.checked=true;input.dataset.deletionInclude=item.targetKind+':'+item.id;
+    included.set(item.targetKind+':'+item.id,input);input.onchange=update;
+    row.append(input,element('span',(item.targetKind==='team'?'Team: ':'Organization: ')+item.name));allBox.append(row);
+   }
+  }
   const description=element('p',null,'fine');description.id='deletionScopeDescription';description.setAttribute('aria-live','polite');
   const button=element('button','Delete Account','wide deletion-action');button.type='button';
-  const available=kind=>kind==='administrator'?roleTargets:kind==='team'?scopes.teams.map(x=>({...x,targetKind:'team'})):kind==='organization'?scopes.organizations.map(x=>({...x,targetKind:'organization'})):[];
+  const available=kind=>kind==='all'?allTargets:kind==='administrator'?roleTargets:kind==='team'?scopes.teams.map(x=>({...x,targetKind:'team'})):kind==='organization'?scopes.organizations.map(x=>({...x,targetKind:'organization'})):[];
   for(const [kind,text] of kinds){const option=element('option',text);option.value=kind;option.disabled=kind!=='personal'&&!available(kind).length;type.append(option);}
-  const choice=()=>type.value==='personal'?{kind:'personal'}:available(type.value).map(x=>({...x,kind:type.value})).find(x=>x.targetKind+':'+x.id===target.value);
-  const update=()=>{closeConfirmation();const selected=choice();button.disabled=!selected;button.textContent=type.value==='personal'?'Delete Account':type.value==='administrator'?'Remove administrator access':type.value==='team'?'Delete Team':'Delete Organization';description.textContent=scopeWarning(selected||{kind:type.value,targetKind:'team or organization'});};
+  const choice=()=>{
+   if(type.value==='personal')return {kind:'personal'};
+   if(type.value==='all'){const targets=allTargets.filter(x=>included.get(x.targetKind+':'+x.id)?.checked);return targets.length?{kind:'all',targets}:null;}
+   return available(type.value).map(x=>({...x,kind:type.value})).find(x=>x.targetKind+':'+x.id===target.value);
+  };
+  const update=()=>{closeConfirmation();const selected=choice();button.disabled=!selected;button.textContent=type.value==='all'?'Delete All':type.value==='personal'?'Delete Account':type.value==='administrator'?'Remove administrator access':type.value==='team'?'Delete Team':'Delete Organization';description.textContent=scopeWarning(selected||{kind:type.value,targetKind:'team or organization'});};
   type.onchange=()=>{
    target.replaceChildren();const option=element('option','Choose…');option.value='';target.append(option);
    for(const item of available(type.value)){const option=element('option',(item.targetKind==='team'?'Team: ':'Organization: ')+item.name);option.value=item.targetKind+':'+item.id;target.append(option);}
-   target.hidden=targetLabel.hidden=type.value==='personal';update();
+   target.hidden=targetLabel.hidden=['personal','all'].includes(type.value);allBox.hidden=type.value!=='all';if(type.value==='all')renderAll();else{included.clear();allBox.replaceChildren();}update();
   };
   target.onchange=update;
   button.onclick=()=>{const selected=choice();if(selected)confirmation(button,selected,scopes);};
-  box.append(label,type,targetLabel,target,description,element('p','Only choices for your current administrator roles are offered. Personal account deletion is available independently of administrator status.','fine'));
+  box.append(label,type,targetLabel,target,description,allBox,element('p','Only choices for your current administrator roles are offered. Personal account deletion is available independently of administrator status. Delete all combines your personal account with the checked teams and organizations.','fine'));
   refreshButton(box);box.append(button);type.onchange();
  }
  function validScopes(data){
