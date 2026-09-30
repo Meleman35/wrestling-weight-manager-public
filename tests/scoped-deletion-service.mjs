@@ -40,6 +40,7 @@ try{
  await db.exec(phone.slice(phone.indexOf('create function private.account_deletion_phone_preflight()'),phone.indexOf('create function public.account_deletion_phone_preflight()')));
  await db.exec(await readFile(new URL('./fixtures/scoped-deletion-mutation-triggers.sql',import.meta.url),'utf8'));
  await db.exec(await readFile(new URL('../supabase/migrations/20260930060258_scoped_deletion_worker.sql',import.meta.url),'utf8'));
+ await db.exec(await readFile(new URL('../supabase/migrations/20260930065511_scoped_deletion_hosted_acceptance.sql',import.meta.url),'utf8'));
  await db.query('update private.scoped_deletion_config set catalog=$1::jsonb,catalog_hash=private.scoped_deletion_schema_hash()',[JSON.stringify(catalog)]);
  const sid=id(),request=id(),receipt='a'.repeat(64);
  await db.query('insert into auth.sessions(id,user_id) values($1,$2)',[sid,a]);
@@ -74,6 +75,7 @@ try{
  await db.query("update public.profiles set photo_path='synthetic/account.jpg' where id=$1",[a]);
  await db.query("insert into storage.objects(id,bucket_id,name,version,owner) values($1,'profile-photos','synthetic/account.jpg','v1',$4),($2,'communication-media','synthetic/message.jpg','v1',$4),($3,'profile-photos','synthetic/retained.jpg','v1',$5)",[image,attachment,retainedImage,a,b]);
  await db.query("update public.profiles set photo_path='synthetic/retained.jpg' where id=$1",[b]);
+ await db.query("insert into public.team_staff_profiles(team_id,user_id,display_name,photo_path) values($1,$2,'Retained adult','synthetic/retained.jpg')",[t1,b]);
  const keptBefore=(await db.query('select to_jsonb(p) value from public.profiles p where id<>$1 order by id',[a])).rows;
  let failMedia=true,failAuth=true,mediaCalls=0,authCalls=0,banCalls=0;
  const provider={

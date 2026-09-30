@@ -16113,7 +16113,7 @@ window.WMConversationReview=(()=>{
 })();
 </script>
 <script id="deletionDeviceScript">
-/* DRAFT, unmounted. Local offline-workspace cleanup only; not server authorization or full device erasure. */
+/* Local offline-workspace cleanup after a matched completed server receipt. Native files remain a separate gate. */
 window.WMAccountDeletionDevice = (() => {
   'use strict';
   const DB = 'wm-coach-offline-v1';
@@ -16256,7 +16256,8 @@ window.WMScopedDeletion=(()=>{
  async function clearWebAccount(job){
   // Stop current-account writers before replacing only this account's two slots.
   if(actor()===job.actorId){window.WMOffline?.lock();window.WMChatDrafts?.reset();await window.WMChatDrafts?.flush();window.WMQuickSignIn?.signOut();}
-  if(window.WMAccountDeletionDevice)await window.WMAccountDeletionDevice.clearOfflineAccount({subjectId:job.actorId,requestId:job.requestId});
+  if(!window.WMAccountDeletionDevice)throw Error('The server deletion is complete, but this browser needs to reload before local cleanup can finish.');
+  await window.WMAccountDeletionDevice.clearOfflineAccount({subjectId:job.actorId,requestId:job.requestId});
   const prefixes=['wm-match-draft-v1:'+job.actorId+':','wm-roster-sort:'+job.actorId+':'];
   for(const key of Object.keys(localStorage))if(prefixes.some(p=>key.startsWith(p)))localStorage.removeItem(key);
   if(actor()===job.actorId){await client.auth.signOut({scope:'local'});closeSheets();show('appView',false);show('setupView',false);show('authView',true);}
@@ -16284,7 +16285,7 @@ window.WMScopedDeletion=(()=>{
   finally{view.busy=false;view.button.disabled=false;}
  }
  async function begin(choice){
-  if(typeof inNativeApp==='function'&&inNativeApp())throw Error('Use Safari for this deletion test. This native build does not yet support verified cleanup of files saved on the phone.');
+  if(window.wrestlingManagerNativeShellVersion||window.wrestlingManagerNativeLifecycle===true||window.webkit?.messageHandlers?.security)throw Error('Use Safari for this deletion test. This native build does not yet support verified cleanup of files saved on the phone.');
   const actorId=actor(),token=session?.access_token;if(!actorId||!token||managedLogin)throw Error('Sign in with your personal account.');
   if(Object.keys(localStorage).some(k=>k.startsWith(PREFIX)&&JSON.parse(localStorage.getItem(k)||'null')?.actorId===actorId))throw Error('Resume your existing deletion request first.');
   const personal=['personal','all'].includes(choice.kind);

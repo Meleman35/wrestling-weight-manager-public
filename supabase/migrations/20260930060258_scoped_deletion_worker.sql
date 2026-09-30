@@ -3,7 +3,7 @@
 begin;
 create table private.scoped_deletion_config(
  id boolean primary key default true check(id), enabled boolean not null default false,
- catalog jsonb, policy_version text not null default 'scoped-deletion-v1', catalog_hash text,
+ catalog jsonb, scheduler_hash text, policy_version text not null default 'scoped-deletion-v1', catalog_hash text,
  max_rows integer not null default 25000 check(max_rows between 1 and 100000)
 );
 insert into private.scoped_deletion_config(id) values(true);
@@ -258,6 +258,12 @@ begin
  -- The public wrapper has EXECUTE only for service_role. Check the actual SQL
  -- role too: a forged JWT claim or user metadata alone is never sufficient.
  if current_setting('role',true)<>'service_role' then raise sqlstate '42501' using message='DELETION_SERVICE_ONLY';end if;
+ if p_op='due' then
+  if p_input->>'scheduler_hash' is null or p_input->>'scheduler_hash' is distinct from (select scheduler_hash from private.scoped_deletion_config where id) then raise sqlstate '42501' using message='DELETION_SCHEDULER_ONLY';end if;
+  select coalesce(jsonb_agg(jsonb_build_object('id',id,'receiptHash',receipt_hash)),'[]') into actual from (
+   select id,receipt_hash from private.scoped_deletion_jobs where state not in ('completed','blocked') and (lease_until is null or lease_until<=now()) and (retry_after is null or retry_after<=now()) order by created_at limit 3
+  ) q;return actual;
+ end if;
  if p_op='resolve' then
   select * into j from private.scoped_deletion_jobs where request_id=(p_input->>'request_id')::uuid and receipt_hash=p_input->>'receipt_hash';
   if not found then raise exception 'DELETION_RECEIPT_REQUIRED';end if;

@@ -1,4 +1,4 @@
-/* DRAFT, unmounted. Local offline-workspace cleanup only; not server authorization or full device erasure. */
+/* Local offline-workspace cleanup after a matched completed server receipt. Native files remain a separate gate. */
 window.WMAccountDeletionDevice = (() => {
   'use strict';
   const DB = 'wm-coach-offline-v1';

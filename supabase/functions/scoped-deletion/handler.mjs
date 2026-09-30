@@ -10,7 +10,20 @@ export function providerAdapter(admin){
   async identityExists(id){const {data,error}=await admin.auth.admin.getUserById(id);if(absent(error))return false;if(error||data?.user?.id!==id)throw unavailable();return true;},
   async deleteIdentity(id){const {error}=await admin.auth.admin.deleteUser(id,false);if(error&&!absent(error))throw unavailable();},
   async removeObject(bucket,path){const {error}=await admin.storage.from(bucket).remove([path]);if(error)throw unavailable();},
-  async objectExists(bucket,path){const {data,error}=await admin.storage.from(bucket).exists(path);if(error||typeof data!=='boolean')throw unavailable();return data;}
+  async objectExists(bucket,path){
+   const storage=admin.storage.from(bucket),{data,error}=await storage.exists(path);
+   const status=error?.status??error?.originalError?.status;
+   if(data===false&&status===404)return false;
+   if(data===false&&status===400){
+    // This SDK returns a 400 error alongside false for a missing HEAD request.
+    // Confirm the explicit object-not-found response with GET metadata; generic
+    // bad requests, permission failures and timeouts never establish absence.
+    const detail=await storage.info(path);
+    if(!detail.error&&detail.data)return true;
+    if(detail.error?.status===404||(detail.error?.status===400&&detail.error?.message==='Object not found'))return false;
+   }
+   if(error||typeof data!=='boolean')throw unavailable();return data;
+  }
  };
 }
 export function createDeletionHandler({admin,caller,waitUntil=()=>{},allowedOrigins=['https://theteammanager.app','https://www.theteammanager.app']}){
@@ -38,6 +51,12 @@ export function createDeletionHandler({admin,caller,waitUntil=()=>{},allowedOrig
    const body=JSON.parse(text);
    if(!secret.test(body.receipt))return response(400,{error:'invalid_request'});
    const receiptHash=await hashSecret(body.receipt);
+   if(body.action==='schedule'){
+    const jobs=await service('due',null,null,{scheduler_hash:receiptHash});
+    if(!Array.isArray(jobs))throw Error('invalid_response');
+    waitUntil((async()=>{for(const job of jobs)await runScopedDeletion({service,provider,jobId:job.id,receiptHash:job.receiptHash});})());
+    return response(202,{accepted:true});
+   }
    if(body.action==='begin'){
     const authorization=request.headers.get('Authorization')||'';
     if(!authorization.startsWith('Bearer '))return response(401,{error:'sign_in_required'});

@@ -32,6 +32,10 @@ const sdk={auth:{admin:{
 }},storage:{from:bucket=>({remove:async paths=>{files.push([bucket,paths]);return {};},exists:async()=>({error:{status:403}})})}};
 const provider=providerAdapter(sdk);
 await assert.rejects(()=>provider.identityExists(user));await assert.rejects(()=>provider.objectExists('profile-photos','one.jpg'));
+sdk.storage.from=()=>({exists:async()=>({data:false,error:{status:404}})});assert.equal(await provider.objectExists('profile-photos','one.jpg'),false);
+sdk.storage.from=()=>({exists:async()=>({data:false,error:{status:400}})});await assert.rejects(()=>provider.objectExists('profile-photos','one.jpg'));
+sdk.storage.from=()=>({exists:async()=>({data:false,error:{status:400}}),info:async()=>({error:{status:400,message:'Object not found'}})});assert.equal(await provider.objectExists('profile-photos','one.jpg'),false);
+sdk.storage.from=()=>({exists:async()=>({data:false,error:{status:400}}),info:async()=>({error:{status:400,message:'Invalid request'}})});await assert.rejects(()=>provider.objectExists('profile-photos','one.jpg'));
 sdk.auth.admin.getUserById=async()=>({error:{status:404,code:'user_not_found'}});assert.equal(await provider.identityExists(user),false);
 sdk.storage.from=bucket=>({remove:async paths=>{files.push([bucket,paths]);return {};},exists:async()=>({data:false})});
 await provider.deleteIdentity(user);await provider.removeObject('profile-photos','one.jpg');assert.equal(await provider.objectExists('profile-photos','one.jpg'),false);
