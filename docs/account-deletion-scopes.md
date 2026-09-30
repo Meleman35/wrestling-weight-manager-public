@@ -22,7 +22,40 @@ personal account. A direct team role and inherited organization authority can
 coexist. Removing the direct role alone cannot promise to remove inherited access.
 Removing organization administration must review all teams dependent on it.
 
-## Current release: preview plus database preservation guards
+## Current release: enrolled administrator removal; erasure still unavailable
+
+v0.20.99 connects **Remove my administrator access** to a real server transaction
+for the existing privately enrolled phone tester. The other four choices remain
+previews: there is no deployed personal, team, organization or combined erasure
+worker. `deletion_enabled` stays false. A separate `actions.administrator` capability
+enables only the role RPC; it cannot activate any erasure scope.
+
+The RPC derives the caller from Auth, repeats the verified-session/enrollment gate,
+requires exact `delete`, and locks membership changes before checking authority and
+administrator continuity. Confirmed, active, non-managed alternatives are required;
+an invitation alone does not count. Removing a direct team role may proceed while
+the caller retains organization administration. The result explicitly says that
+inherited access stays.
+
+Team head coaches become assistant coaches. Existing assistant-coach or manager
+participation keeps unrelated permissions while `team_admin` is removed. Multiple
+memberships cannot overwrite guardian/athlete roles or collide with an existing
+active assistant-coach row. An inactive assistant-coach conflict blocks for review
+rather than being reactivated. Organization removal deletes only the caller's
+organization administrator membership; direct team memberships remain.
+
+Role changes and a private per-caller request receipt commit together. Retrying
+the same request returns its original receipt, including after a later regrant;
+it cannot repeat the old removal or target a different workspace. Receipts contain
+no other person's identity or credentials and cascade with the requesting account's
+eventual deletion. The phone refreshes membership access after success and drops
+late responses after account changes. Existing role-approval triggers still run.
+
+This completes one server action, **not the account-deletion project**. Installing
+the migration changes no real role or account. A fresh explicit confirmation is
+required to invoke the role action.
+
+### Earlier preview and preservation guards
 
 v0.20.98 provides five distinct preview choices in the existing bottom dropdown.
 Team/organization/role actions require an explicit server-returned target. Delete
@@ -32,8 +65,8 @@ person’s personal account and the exact checked workspaces. Selecting Delete a
 is an explicit combined choice; it does not authorize deleting other people. A
 personal-only account can preview personal deletion; administrative actions are
 disabled when no matching targets exist. Each warning explains what stays and
-what the eventual action affects. All confirmations remain default-off, require
-exact lowercase `delete`, and do not create requests, consent, jobs or data writes.
+what the eventual action affects. In v0.20.98 all confirmations remained default-off,
+required exact lowercase `delete`, and created no requests, consent, jobs or data writes.
 
 The existing argument-free `account_deletion_scope_preflight()` reuses the existing
 private enrollment and live-session check. It returns only the current caller's
@@ -84,7 +117,7 @@ The combined operation needs durable per-scope progress and safe retry behavior;
 it must not report global success when only some steps finish. Revoke the deleting
 person's access and complete shared-record preservation before final Auth removal.
 It must route only the requesting person's identity to personal/device cleanup.
-These execution requirements remain unimplemented; v0.20.98 adds the preview and
+These combined-erasure requirements remain unimplemented; v0.20.98 adds the preview and
 regression coverage, with no server mutation or worker activation.
 
 ## Required execution boundary
@@ -110,7 +143,7 @@ Before enabling mutation:
    Account deletion must never silently close a team/org; a reviewed Delete all
    list is explicit authorization for only its selected workspace scopes. Role removal should
    preserve non-admin participation where applicable; the final role mapping is
-   still to be implemented and reviewed.
+   implemented for the enrolled role handler above; identity erasure remains unfinished.
 4. Organization plans must explicitly handle every linked team and athlete row.
    Preserve teams by default; any team closure requires its own reviewed scope, either separately
    or explicitly included in the combined confirmation. Rehoming must preserve other affiliations and histories.
@@ -125,6 +158,13 @@ Before enabling mutation:
    retries and all existing access entry points before release.
 
 ## Verification limits
+
+The v0.20.99 tests execute the role migration, actual production permission/role-
+approval trigger bodies and the multi-role unique index with synthetic rows. They
+cover privilege denial, continuity, multiple memberships, receipt privacy, retries,
+later regrants, rollback and preserved personal/shared records. Chromium exercises
+the bundled phone flow, including ambiguous responses, pending controls and account
+switching. No production mutation is invoked to test a real person's role.
 
 PGlite executes the real two migrations against synthetic catalog-shaped tables.
 It checks caller isolation, direct/inherited roles, last-admin warnings, personal-

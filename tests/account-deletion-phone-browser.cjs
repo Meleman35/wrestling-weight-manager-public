@@ -152,5 +152,60 @@ const root=path.resolve(__dirname,'..'),passed=[],pass=s=>{passed.push(s);consol
  assert.equal(await page.evaluate(()=>fixture.writes.length),0);assert.deepEqual(errors,[]);
  pass('A retained personal profile with no memberships stays signed in and reaches Join a Team / Create a Team, clearing the old active team without creating a new account');
 
+ await page.evaluate(()=>{
+  session=fixture.session={user:{id:'phone-test'},access_token:'synthetic-token'};managedLogin=null;
+  fixture.preflight.actions={administrator:true,personal:false,team:false,organization:false,all:false};
+  fixture.removalCalls=[];fixture.removalRefreshes=0;
+  // Observe the existing app-refresh integration without invoking unrelated fixture flows.
+  refreshAccountView=async()=>{fixture.removalRefreshes++;};
+  const rpc=client.rpc.bind(client);client.rpc=(name,args)=>{
+   if(name!=='account_remove_my_admin_access')return rpc(name,args);
+   fixture.removalCalls.push(structuredClone(args));
+   if(fixture.removalError)return Promise.resolve({data:null,error:{message:fixture.removalError}});
+   const response={data:{status:'removed',request_id:args.p_request_id,target_kind:args.p_target_kind,target_id:args.p_target_id,personal_account_preserved:true,inherited_admin_remaining:true},error:null};
+   if(fixture.badRemovalResult)response.data.target_id='wrong';
+   return fixture.holdRemoval?new Promise(resolve=>{fixture.releaseRemoval=()=>resolve(response);}):Promise.resolve(response);
+  };
+  return openAccountSheet();
+ });
+ await page.locator('#deletionPhoneTestCard summary').click();
+ assert.match(await page.locator('#deletionPhoneTestCard').innerText(),/You can remove administrator access/);
+ await scopeType.selectOption('administrator');await target.selectOption('team:11111111-1111-4111-8111-111111111111');
+ await page.getByRole('button',{name:'Remove administrator access',exact:true}).click();
+ const removeConfirm=page.getByRole('button',{name:'Confirm removal',exact:true});
+ assert.match(await page.locator('#deletionConfirmUnavailable').innerText(),/Confirming will remove/);
+ for(const word of ['DELETE',' delete','delete ']){await input.fill(word);assert.equal(await removeConfirm.isDisabled(),true);}
+ await page.evaluate(()=>{fixture.removalError='ADMIN_REMOVAL_HANDOFF_REQUIRED';});
+ await input.fill('delete');await input.press('Enter');await page.getByText('Nothing changed. Another confirmed personal account must accept administrator access before you remove this role.',{exact:true}).waitFor();
+ assert.equal(await input.inputValue(),'');assert.equal(await page.evaluate(()=>fixture.removalRefreshes),0);
+ const firstArgs=await page.evaluate(()=>fixture.removalCalls[0]);
+ assert.deepEqual(Object.keys(firstArgs).sort(),['p_confirmation','p_request_id','p_target_id','p_target_kind']);
+ assert.equal(firstArgs.p_confirmation,'delete');assert.equal(firstArgs.p_target_kind,'team');assert.equal(firstArgs.p_target_id,'11111111-1111-4111-8111-111111111111');
+ assert.match(firstArgs.p_request_id,/^[a-f0-9-]{36}$/);
+ pass('Enabled administrator removal sends only an exact target, fresh confirmation and request ID; server handoff failures are actionable and never report success');
+ await page.evaluate(()=>{fixture.removalError='provider details should not be displayed';});
+ await input.fill('delete');await removeConfirm.click();await page.getByText('The result could not be confirmed. Retry here with the same request, or refresh your roles before starting again.',{exact:true}).waitFor();
+ assert.ok(!(await page.locator('#deletionConfirmDialog').innerText()).includes('provider details'));
+ await page.evaluate(()=>{fixture.removalError=null;fixture.badRemovalResult=true;});
+ await input.fill('delete');await removeConfirm.click();assert.match(await page.locator('#deletionConfirmStatus').innerText(),/result could not be confirmed/);
+ assert.equal(await page.evaluate(()=>fixture.removalRefreshes),0);
+ await page.evaluate(()=>{fixture.badRemovalResult=false;fixture.holdRemoval=true;});
+ await input.fill('delete');await removeConfirm.click();await page.waitForFunction(()=>!!fixture.releaseRemoval);
+ assert.equal(await removeConfirm.isDisabled(),true);assert.equal(await input.isDisabled(),true);assert.equal(await page.getByRole('button',{name:'Cancel',exact:true}).isDisabled(),true);
+ await page.keyboard.press('Escape');assert.equal(await page.locator('#deletionConfirmDialog').isVisible(),true);
+ assert.equal(await page.evaluate(()=>new Set(fixture.removalCalls.map(x=>x.p_request_id)).size),1);
+ await page.evaluate(()=>fixture.releaseRemoval());await page.getByText('Your direct team administrator role was removed. You still have administrator access through the organization. Your personal account and profile remain.',{exact:true}).waitFor();
+ assert.equal(await input.isDisabled(),true);assert.equal(await removeConfirm.isDisabled(),true);assert.equal(await page.evaluate(()=>fixture.removalRefreshes),1);
+ await page.getByRole('button',{name:'Close',exact:true}).click();await page.locator('#deletionScopeType').waitFor();
+ pass('Ambiguous and malformed results never claim success; retries retain one request ID, in-flight submissions are fenced, and confirmed role removal refreshes permissions');
+ await scopeType.selectOption('administrator');await target.selectOption('team:11111111-1111-4111-8111-111111111111');
+ await page.getByRole('button',{name:'Remove administrator access',exact:true}).click();await input.fill('delete');await removeConfirm.click();
+ await page.waitForFunction(()=>fixture.removalCalls.length===5);
+ await page.evaluate(()=>{session={user:{id:'other-person'},access_token:'other-token'};WMDeletionPhoneTest.reset();fixture.releaseRemoval();});
+ assert.equal(await page.locator('#deletionConfirmDialog').count(),0);assert.equal(await page.evaluate(()=>fixture.removalRefreshes),1);
+ assert.equal(await page.evaluate(()=>new Set(fixture.removalCalls.map(x=>x.p_request_id)).size),2);
+ assert.equal(await page.evaluate(()=>fixture.writes.length),0);assert.deepEqual(errors,[]);
+ pass('Changing accounts discards a late mutation response; a new confirmation gets a new request ID and no unrelated writes occur');
+
  fs.writeFileSync(path.join(root,'validation/account-deletion-phone-browser.json'),JSON.stringify({passed,errors,engine:'Chromium actual bundled UI, synthetic responses, phone viewport',physicalPhoneTest:false,productionDataChanged:false},null,2));await browser.close();
 })().catch(e=>{console.error(e);process.exit(1);});
