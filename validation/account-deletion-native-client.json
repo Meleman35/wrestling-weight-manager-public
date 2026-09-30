@@ -1,0 +1,15 @@
+{
+  "passed": [
+    "Native verified personal completion closes writers, removes only matched account data, signs out and acknowledges after web cleanup",
+    "Mismatched native completion cannot erase browser data or clear its receipt",
+    "Server completion without native cleanup confirmation remains pending",
+    "Workspace deletion preserves sign-in and local personal data",
+    "Native cancellation before intake removes the browser intent without attempting deletion",
+    "Lost native begin response recovers the same immutable request",
+    "Interrupted acknowledgement resumes idempotently after sign-out",
+    "Account switching preserves the other account session, email hint and active scoreboard",
+    "Older native builds remain blocked before any request"
+  ],
+  "transport": "simulated native bridge",
+  "appleSDKTested": false
+}
