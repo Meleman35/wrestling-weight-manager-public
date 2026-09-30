@@ -112,6 +112,103 @@ const {PGlite}=require('@electric-sql/pglite'),root=path.resolve(__dirname,'..')
  await as();assert.equal((await scopeCall()).scopes.teams[0].needs_handoff,true);
  pass('Managed and unconfirmed alternate administrators cannot silently satisfy a handoff');
  await db.exec('reset role');
+ const adminMigration=fs.readdirSync(path.join(root,'supabase/migrations')).filter(x=>x.endsWith('_account_deletion_admin_execution.sql'));assert.equal(adminMigration.length,1);
+ await db.exec(fs.readFileSync(path.join(root,'supabase/migrations',adminMigration[0]),'utf8'));
+ const removeAdmin=async(kind='team',id=t,word='delete',request=randomUUID())=>(await db.query('select public.account_remove_my_admin_access($1,$2,$3,$4) r',[kind,id,word,request])).rows[0].r;
+ const rows=async()=>(await db.query(`select jsonb_build_object('users',(select jsonb_agg(id order by id) from auth.users x),'profiles',(select jsonb_agg(x order by id) from public.profiles x),'athletes',(select jsonb_agg(x order by id) from public.athletes x),'athlete_profiles',(select jsonb_agg(x order by id) from public.athlete_profiles x),'teams',(select jsonb_agg(x order by id) from public.teams x),'organizations',(select jsonb_agg(x order by id) from public.organizations x),'messages',(select jsonb_agg(x order by sender_user_id) from public.communication_messages x),'objects',(select jsonb_agg(x order by owner_id) from storage.objects x)) r`)).rows[0].r;
+ await db.exec(`alter table public.team_memberships add column athlete_id uuid,add column id uuid default gen_random_uuid();
+ alter table public.organization_memberships add column id uuid default gen_random_uuid();
+ create unique index team_memberships_unique_role on public.team_memberships(team_id,user_id,role,athlete_id) nulls not distinct;
+ create table private.wrestling_role_approvals(source text,membership_id uuid,snapshot jsonb);
+ create table private.wrestling_role_review_log(source text,membership_id uuid,snapshot jsonb,reviewer_id uuid,action text);`);
+ await db.exec(fs.readFileSync(path.join(root,'tests/fixtures/account-admin-role-functions.sql'),'utf8'));
+ const preserved=await rows();
+ await as({},'anon');await assert.rejects(()=>removeAdmin(),/permission denied/);
+ await as(claims(b,sb));await assert.rejects(()=>removeAdmin(),/ADMIN_REMOVAL_SIGN_IN_REQUIRED/);
+ await as();assert.deepEqual((await scopeCall()).actions,{administrator:true,personal:false,team:false,organization:false,all:false});
+ await assert.rejects(()=>db.query('select * from private.account_admin_removal_receipts'),/permission denied/);
+ for(const phrase of ['DELETE',' delete','delete ','',null])await assert.rejects(()=>removeAdmin('team',t,phrase),/ADMIN_REMOVAL_INVALID_CONFIRMATION/);
+ for(const kind of ['personal','all','bad',null])await assert.rejects(()=>removeAdmin(kind),/ADMIN_REMOVAL_INVALID_CONFIRMATION/);
+ await assert.rejects(()=>removeAdmin('team',otherTeam),/ADMIN_REMOVAL_ROLE_CHANGED/);
+ await assert.rejects(()=>removeAdmin('organization',otherOrg),/ADMIN_REMOVAL_ROLE_CHANGED/);
+ await assert.rejects(()=>removeAdmin('team',null),/ADMIN_REMOVAL_INVALID_CONFIRMATION/);
+ await assert.rejects(()=>removeAdmin('team',t,'delete',null),/ADMIN_REMOVAL_INVALID_CONFIRMATION/);
+ pass('Role mutation is enrolled caller-only, rejects other workspaces and erasure scopes, requires exact confirmation and keeps receipts private');
+ await assert.rejects(()=>removeAdmin('organization',o),/ADMIN_REMOVAL_HANDOFF_REQUIRED/);
+ await db.exec('reset role');await db.query('delete from public.organization_memberships where organization_id=$1 and user_id=$2',[o,a]);
+ await as();await assert.rejects(()=>removeAdmin(),/ADMIN_REMOVAL_HANDOFF_REQUIRED/);
+ await db.exec('reset role');await db.query('update public.team_memberships set active=true where user_id=$1',[b]);
+ for(const [change,undo] of [
+  ["update auth.users set banned_until=now()+interval '1 day' where id=$1","update auth.users set banned_until=null where id=$1"],
+  ["update auth.users set email_confirmed_at=null where id=$1","update auth.users set email_confirmed_at=now() where id=$1"],
+  ["update auth.users set deleted_at=now() where id=$1","update auth.users set deleted_at=null where id=$1"],
+  ['insert into private.team_logins values($1)','delete from private.team_logins where user_id=$1']
+ ]){await db.query(change,[b]);await as();await assert.rejects(()=>removeAdmin(),/ADMIN_REMOVAL_HANDOFF_REQUIRED/);await db.exec('reset role');await db.query(undo,[b]);}
+ await db.query('update public.team_memberships set active=false where user_id=$1',[b]);
+ await as();await assert.rejects(()=>removeAdmin(),/ADMIN_REMOVAL_HANDOFF_REQUIRED/);
+ pass('The server blocks sole-admin removal and excludes inactive, banned, deleted, unconfirmed and managed replacements');
+ await db.exec('reset role');await db.query("insert into public.organization_memberships(organization_id,user_id,role) values($1,$2,'organization_admin')",[o,a]);
+ await db.query("update public.team_memberships set permissions='{"+'"team_admin":true,"record_matches":true'+"}' where team_id=$1 and user_id=$2",[t,a]);
+ const request=randomUUID();await as();const result=await removeAdmin('team',t,'delete',request);
+ assert.equal(result.status,'removed');assert.equal(result.inherited_admin_remaining,true);assert.equal(result.personal_account_preserved,true);assert.equal(result.participation_role,'assistant_coach');
+ assert.deepEqual(await removeAdmin('team',t,'delete',request),result);
+ await assert.rejects(()=>removeAdmin('organization',o,'delete',request),/ADMIN_REMOVAL_REQUEST_MISMATCH/);
+ await assert.rejects(()=>removeAdmin(),/ADMIN_REMOVAL_ROLE_CHANGED/);
+ await db.exec('reset role');assert.deepEqual((await db.query('select role,permissions,active from public.team_memberships where team_id=$1 and user_id=$2',[t,a])).rows,[{role:'assistant_coach',permissions:{record_matches:true},active:true}]);
+ assert.deepEqual(await rows(),preserved);
+ pass('Direct role removal preserves coaching participation, unrelated permissions and all identities/content; inherited access is explicit and duplicate requests are idempotent');
+ // Regranting later must not be undone by a retry of the old successful request.
+ await db.query("update public.team_memberships set role='head_coach' where team_id=$1 and user_id=$2",[t,a]);
+ await as();assert.deepEqual(await removeAdmin('team',t,'delete',request),result);
+ await db.exec('reset role');assert.equal((await db.query('select role from public.team_memberships where team_id=$1 and user_id=$2',[t,a])).rows[0].role,'head_coach');
+ await db.query('update auth.users set email_confirmed_at=now() where id=$1',[c]);
+ await as();const orgResult=await removeAdmin('organization',o);assert.equal(orgResult.status,'removed');assert.equal(orgResult.personal_account_preserved,true);
+ await db.exec('reset role');assert.equal((await db.query('select count(*)::int n from public.organization_memberships where organization_id=$1 and user_id=$2',[o,a])).rows[0].n,0);
+ assert.equal((await db.query('select role from public.team_memberships where team_id=$1 and user_id=$2',[t,a])).rows[0].role,'head_coach');
+ // Restore only the fixture's changed eligibility field before preservation comparison.
+ await db.query('update auth.users set email_confirmed_at=null where id=$1',[c]);
+ // Timestamp changes for b were deliberate test setup, so compare identities/content excluding mutable Auth status.
+ const finalPreserved=await rows();delete finalPreserved.users;const withoutUsers={...preserved};delete withoutUsers.users;assert.deepEqual(finalPreserved,withoutUsers);
+ pass('A retry cannot undo a later regrant; organization removal preserves direct team roles, other accounts, workspaces, media and profiles');
+ // An insertion failure must roll back the role change and must not report completion.
+ await db.query("insert into public.organization_memberships(organization_id,user_id,role) values($1,$2,'organization_admin')",[o,a]);
+ await db.exec("create function private.fail_receipt() returns trigger language plpgsql as $$begin raise exception 'receipt unavailable';end$$;create trigger fail_receipt before insert on private.account_admin_removal_receipts for each row execute function private.fail_receipt();");
+ await as();await assert.rejects(()=>removeAdmin(),/receipt unavailable/);
+ await db.exec('reset role');assert.equal((await db.query('select role from public.team_memberships where team_id=$1 and user_id=$2',[t,a])).rows[0].role,'head_coach');
+ await db.exec('drop trigger fail_receipt on private.account_admin_removal_receipts;drop function private.fail_receipt();');
+ for(const bad of [claims(a,sb),{...claims(),exp:0}]){await as(bad);await assert.rejects(()=>removeAdmin(),/ADMIN_REMOVAL_SIGN_IN_REQUIRED/);}
+ await db.exec('reset role');
+ const removalDefs=(await db.query("select n.nspname,p.prosecdef,p.provolatile,p.proconfig from pg_proc p join pg_namespace n on n.oid=p.pronamespace where p.proname='account_remove_my_admin_access' order by n.nspname")).rows;
+ assert.deepEqual(removalDefs.map(x=>x.prosecdef),[true,false]);assert.ok(removalDefs.every(x=>x.provolatile==='v'&&x.proconfig.includes('search_path=\"\"')));
+ pass('Role and receipt commit together; failed receipts roll back changes, expired/wrong sessions fail, and the public function stays invoker-only');
+ await db.query('delete from public.organization_memberships where organization_id=$1 and user_id=$2',[o,a]);
+ await db.query('update public.team_memberships set active=true where user_id=$1',[b]);
+ await db.query(`insert into public.team_memberships(team_id,user_id,active,role,permissions,athlete_id) values
+   ($1,$2,true,'assistant_coach','{"team_admin":true,"schedule":true}',null),
+   ($1,$2,true,'manager','{"team_admin":true,"equipment":true}',null),
+   ($1,$2,true,'parent_guardian','{"unchanged":true}',$3),
+   ($1,$2,false,'athlete','{"unchanged":true}',$3)`,[t,a,athlete]);
+ await db.query("insert into private.wrestling_role_approvals select 'team',id,'{}'::jsonb from public.team_memberships where team_id=$1 and user_id=$2 and role='head_coach'",[t,a]);
+ await as();assert.equal((await db.query('select public.is_team_admin($1) r',[t])).rows[0].r,true);
+ await removeAdmin();assert.equal((await db.query('select public.is_team_admin($1) r',[t])).rows[0].r,false);
+ await db.exec('reset role');
+ const roleRows=(await db.query('select role,active,permissions from public.team_memberships where team_id=$1 and user_id=$2 order by role',[t,a])).rows;
+ assert.deepEqual(roleRows,[{role:'assistant_coach',active:true,permissions:{schedule:true}},{role:'athlete',active:false,permissions:{unchanged:true}},{role:'manager',active:true,permissions:{equipment:true}},{role:'parent_guardian',active:true,permissions:{unchanged:true}}]);
+ assert.equal((await db.query('select count(*)::int n from private.wrestling_role_approvals')).rows[0].n,0);
+ assert.equal((await db.query("select count(*)::int n from private.wrestling_role_review_log where action='assignment_changed'")).rows[0].n,1);
+ pass('Actual permission helpers deny removed administration; multiple roles avoid unique-index collisions, preserve guardian/athlete participation and invalidate old role approvals');
+ await db.query("update public.team_memberships set active=false where team_id=$1 and user_id=$2 and role='assistant_coach'",[t,a]);
+ await db.query("insert into public.team_memberships(team_id,user_id,active,role,permissions) values($1,$2,true,'head_coach','{}')",[t,a]);
+ await as();await assert.rejects(()=>removeAdmin(),/ADMIN_REMOVAL_MEMBERSHIP_REVIEW/);
+ await db.exec('reset role');assert.deepEqual((await db.query("select role,active from public.team_memberships where team_id=$1 and user_id=$2 and role in ('head_coach','assistant_coach') order by role",[t,a])).rows,[{role:'assistant_coach',active:false},{role:'head_coach',active:true}]);
+ await db.query("delete from public.team_memberships where team_id=$1 and user_id=$2 and role='head_coach'",[t,a]);
+ await db.query("update public.team_memberships set active=true where team_id=$1 and user_id=$2 and role='assistant_coach'",[t,a]);
+ pass('An inactive assistant-coach conflict blocks atomically without reactivating an old membership or removing the current head coach');
+ // Restore the original fixture shape for the independent preservation guards below.
+ await db.query("delete from public.team_memberships where team_id=$1 and user_id=$2 and role in ('athlete','manager','parent_guardian')",[t,a]);
+ await db.query("update public.team_memberships set role='head_coach' where team_id=$1 and user_id=$2",[t,a]);
+ await db.query("insert into public.organization_memberships(organization_id,user_id,role) values($1,$2,'organization_admin')",[o,a]);
+ await db.exec('reset role');
  const beforeScope=(await db.query('select (select count(*) from auth.users) users,(select count(*) from public.profiles) profiles,(select count(*) from public.athlete_profiles) athlete_profiles,(select count(*) from public.athletes) athletes,(select count(*) from public.teams) teams')).rows;
  await as();await scopeCall();await db.exec('reset role');
  assert.deepEqual((await db.query('select (select count(*) from auth.users) users,(select count(*) from public.profiles) profiles,(select count(*) from public.athlete_profiles) athlete_profiles,(select count(*) from public.athletes) athletes,(select count(*) from public.teams) teams')).rows,beforeScope);

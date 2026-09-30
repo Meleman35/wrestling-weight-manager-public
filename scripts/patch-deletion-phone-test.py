@@ -1,4 +1,4 @@
-"""Embed the read-only phone inventory. No network or deletion capability."""
+"""Embed enrolled account controls; administrator role removal has its own RPC."""
 from pathlib import Path
 import re
 import sys
@@ -35,6 +35,9 @@ if 'Build v0.20.96' in s:
 if 'Build v0.20.97' in s:
     s=s.replace('Build v0.20.97','Build v0.20.98')
     s=s.replace('Wrestling Manager v0.20.97: Separate personal, administrator, team and organization deletion choices.', 'Wrestling Manager v0.20.98: Combined Delete all preview with personal-profile preservation.')
+if 'Build v0.20.98' in s:
+    s=s.replace('Build v0.20.98','Build v0.20.99')
+    s=s.replace('Wrestling Manager v0.20.98: Combined Delete all preview with personal-profile preservation.', 'Wrestling Manager v0.20.99: Enrolled administrator-role removal with server continuity checks.')
 replace('Your account is ready. Accept your invitation or connect to a team below.', 'Your personal account is ready. Join a team, accept an invitation or create your own team below.')
 replace('<h2>Create Your First Team</h2>', '<h2>Create a Team</h2>')
 sw=root / 'sw.js'
@@ -42,6 +45,7 @@ w=sw.read_text()
 updated=w.replace("const CACHE='wm-shell-0.20.94';", "const CACHE='wm-shell-0.20.96';").replace("const CACHE='wm-shell-0.20.95';", "const CACHE='wm-shell-0.20.96';")
 updated=updated.replace("const CACHE='wm-shell-0.20.96';", "const CACHE='wm-shell-0.20.97';")
 updated=updated.replace("const CACHE='wm-shell-0.20.97';", "const CACHE='wm-shell-0.20.98';")
+updated=updated.replace("const CACHE='wm-shell-0.20.98';", "const CACHE='wm-shell-0.20.99';")
 if '--check' in sys.argv:
     assert s == original, 'Phone setup bundle differs from source'
     assert updated == w, 'Service worker version differs'
