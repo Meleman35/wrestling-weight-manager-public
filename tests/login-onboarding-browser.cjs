@@ -211,7 +211,7 @@ async function main() {
     const enrolling = await page('',390,{saved:false});
     const e=enrolling.p;
     assert.equal(await e.locator('#quickAutoSignIn').isDisabled(),true);
-    await e.evaluate(()=>fixture.confirmation=false);
+    await e.evaluate(()=>{fixture.confirmation=false;const rpc=client.rpc;client.rpc=(name,args)=>name==='get_operations'&&args?.p_request?.action==='context'?Promise.resolve({data:[],error:null}):rpc(name,args);});
     await e.locator('#signUpBtn').click();await e.locator('[data-signup-role="athlete"]').click();
     await e.locator('#signUpFirstName').fill('Test');await e.locator('#signUpLastName').fill('Athlete');
     await e.locator('#signUpEmail').fill('new@example.test');await e.locator('#signUpPassword').fill('synthetic-password');
