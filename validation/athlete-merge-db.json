@@ -1,0 +1,17 @@
+{
+  "checks": [
+    "Only personal team administrators can select and review two distinct team athletes",
+    "Merge requires exact typed confirmation and the reviewed version",
+    "Actual full-schema merge preserves weights, scorebooks and paths, removes the duplicate roster row and is retry-safe",
+    "Compatible personal fields merge and sharing keeps the stricter consent",
+    "Conflicting identity values block without changing either athlete",
+    "Membership on another team cannot be moved without authority for that team",
+    "Two attendance records for one event require review instead of being overwritten",
+    "Established family/social identities are protected from silent cascading deletion",
+    "Saved opposing wrestlers cannot be merged without identity review",
+    "Family and athlete memberships move without deleting sign-in accounts or changing their roles",
+    "Late record conflicts roll back roster and profile changes atomically",
+    "Internal helpers stay private; schema drift stops merge until reviewed"
+  ],
+  "realAthletesMerged": false
+}

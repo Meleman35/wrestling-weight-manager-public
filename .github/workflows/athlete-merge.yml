@@ -1,0 +1,36 @@
+name: Athlete merge regression
+on:
+  pull_request:
+    paths:
+      - index.html
+      - src/athlete-merge.js
+      - scripts/patch-athlete-merge.py
+      - supabase/migrations/*athlete_merge*.sql
+      - tests/athlete-merge*
+      - tests/fixtures/athlete-merge*
+      - .github/workflows/athlete-merge.yml
+permissions:
+  contents: read
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NODE_PATH: ${{ github.workspace }}/.ci/node_modules
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - run: npm ci --prefix .ci --ignore-scripts --no-audit --no-fund
+      - run: python3 scripts/patch-athlete-merge.py --check
+      - run: node tests/athlete-merge-db.mjs
+      - run: .ci/node_modules/.bin/playwright install --with-deps chromium
+      - run: node tests/athlete-merge-browser.cjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: athlete-merge-results
+          path: validation/athlete-merge*
