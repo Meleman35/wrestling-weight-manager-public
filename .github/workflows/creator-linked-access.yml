@@ -55,7 +55,7 @@ jobs:
       - run: python3 scripts/prepare-creator-linked-access.py && python3 scripts/patch-creator-protocol-test.py && python3 scripts/prepare-linked-creator-release.py
       - run: python3 scripts/prepare-creator-linked-access.py --check && python3 scripts/patch-creator-protocol-test.py --check && python3 scripts/prepare-linked-creator-release.py --check && python3 scripts/prepare-trainer-dashboard.py --check
       - run: node --check src/creator-offers.js && node --check src/creator-role-preview.js && node tests/creator-offers-db.mjs && node tests/creator-offers-compatibility.mjs && node tests/creator-linked-access-db.mjs && node tests/creator-linked-access-compatibility.mjs
-      - run: node tests/athlete-health-db.mjs && node tests/practice-plans-db.mjs && node tests/scoped-deletion-plan.mjs && node tests/scoped-deletion-worker.mjs
+      - run: node tests/athlete-health-db.mjs && node tests/practice-plans-db.mjs && node tests/scoped-deletion-plan.mjs && node tests/scoped-deletion-service.mjs && node tests/scoped-deletion-handler.mjs
       - run: .ci/node_modules/.bin/playwright install --with-deps chromium
       - name: Select installed Chromium
         run: node -e 'process.stdout.write("CHROMIUM_EXECUTABLE_PATH="+require("playwright").chromium.executablePath()+"\n")' >> "$GITHUB_ENV"
