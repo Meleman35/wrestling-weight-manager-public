@@ -1,0 +1,6 @@
+#creatorRolePreviewSheet{top:0;bottom:0;width:min(1040px,100%);height:100vh;height:100dvh;max-height:100vh;max-height:100dvh;padding:0;border-radius:0;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+#creatorRolePreviewSheet .role-preview-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex:0 0 auto;padding:calc(12px + env(safe-area-inset-top)) 14px 12px;background:var(--card);border-bottom:1px solid var(--line)}
+#creatorRolePreviewTitle{font-size:21px;line-height:1.2;margin:4px 0 0}#creatorRolePreviewClose{min-height:44px;font-size:14px;white-space:nowrap;padding:10px 12px}
+#creatorRolePreviewStatus{margin:0;padding:18px;color:var(--ink)}#creatorRolePreviewStatus:empty{display:none}
+#creatorRolePreviewMount{flex:1;min-height:0;display:flex;padding-bottom:env(safe-area-inset-bottom)}#creatorRolePreviewFrame{border:0;display:block;width:100%;height:100%;background:#f3f5f8}
+#creatorAccountRolePreviewBtn{margin-top:8px}
