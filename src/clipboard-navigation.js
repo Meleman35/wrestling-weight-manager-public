@@ -2,7 +2,7 @@
 (() => {
  const groups=[
   {id:'people',icon:'👥',name:'People & Roles',detail:'Roster, leaders, parents & goals',ids:['staffAccessBtn','rosterBtn','joinRequestsBtn','joinBtn','staffDirectoryBtn','teamGoalsBtn','memberProfilesBtn','familyBtn','findProfilesBtn']},
-  {id:'practice',icon:'🤼',name:'Practice & Competition',detail:'Attendance, lineup & Match Book',ids:['tournamentDayBtn','clipboardAttendanceBtn','clipboardLineupBtn','matchBookBtn']},
+  {id:'practice',icon:'🤼',name:'Practice & Competition',detail:'Practice plans, attendance & Match Book',ids:['practicePlansBtn','tournamentDayBtn','clipboardAttendanceBtn','clipboardLineupBtn','matchBookBtn']},
   {id:'health',icon:'✍️',name:'Forms & Health',detail:'Agreements & medical clearance',ids:['athleteHealthBtn','agreementsBtn','medicalClearanceBtn']},
   {id:'gear',icon:'🎒',name:'Gear & Files',detail:'Equipment & team resources',ids:['clipboardEquipmentBtn','clipboardFilesBtn']},
   {id:'settings',icon:'⚙️',name:'Settings',detail:'Account, team settings & feedback',ids:['accountBtn','feedbackBtn']},

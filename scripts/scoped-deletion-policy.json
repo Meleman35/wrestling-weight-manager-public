@@ -7,7 +7,7 @@
     "public.seasons", "public.team_events", "public.practice_series", "public.practice_series_exceptions",
     "private.event_repeat_batches", "private.event_series_edits", "public.event_rsvps", "public.event_attendance", "public.event_checkouts",
     "public.roster_memberships", "public.team_weight_classes", "public.team_challenge_rules", "public.wrestle_off_days",
-    "public.team_attendance_settings", "private.attendance_preferences", "private.team_saved_locations", "private.team_practice_levels",
+    "public.team_attendance_settings", "private.attendance_preferences", "private.team_saved_locations", "private.team_practice_levels", "private.practice_plans",
     "public.communication_threads", "public.communication_thread_members", "public.communication_messages", "public.communication_attachments",
     "public.communication_message_receipts", "public.communication_message_audit", "public.communication_notifications",
     "public.communication_delivery_queue", "public.communication_scheduled_messages", "public.communication_preferences", "public.communication_blocks",
@@ -43,7 +43,7 @@
     "private.invitation_email_attempts.requested_by", "private.profile_team_follows.requested_by"
   ],
   "nullUserEdges": [
-    "public.team_events.created_by", "public.communication_threads.created_by", "public.communication_threads.test_started_by",
+    "public.team_events.created_by", "private.practice_plans.created_by", "private.practice_plans.updated_by", "public.communication_threads.created_by", "public.communication_threads.test_started_by",
     "public.communication_thread_members.added_by", "public.communication_messages.deleted_by",
     "private.communication_member_exclusions.removed_by", "private.communication_member_changes.actor_id",
     "public.athlete_profile_details.updated_by", "public.athlete_guardians.requested_by_user_id",
