@@ -2,6 +2,8 @@
 
 Release 0.20.107 adds a private **Account & Team → Creator · Offers & Trial** console. The current RPC prepares discount drafts and records whether a seven-day Team Pro trial should be offered at launch. It does not activate billing, trials, discounts, or paid access.
 
+Release 0.20.108 gives the authorized Creator a separate home immediately after sign-in, before invitation acceptance or membership onboarding. It has Offers & Trial, Sign-In & Security, My Account and Sign Out; no team, organization or athlete profile is required. Other accounts keep their existing onboarding. The route uses the server grant, never an email address or a client preference. No new backend privilege or paid entitlement is added.
+
 ## Access
 
 `private.creator_accounts` accepts one reviewed, confirmed personal Auth UUID. No account is enrolled by the migration. The requested account must first be created and email-confirmed, then its exact UUID provisioned privately by the operator. Never publish the owner's email/UUID or enroll using a signup trigger, email comparison, JWT metadata, team role, or client code. Provisioning is not exposed through a public RPC.

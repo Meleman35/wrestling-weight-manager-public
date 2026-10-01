@@ -6,17 +6,32 @@
  const sheet=document.createElement('section');sheet.id='creatorOffersSheet';sheet.className='sheet hidden';sheet.setAttribute('role','dialog');sheet.setAttribute('aria-modal','true');sheet.setAttribute('aria-labelledby','creatorTitle');
  sheet.innerHTML='<div class="sheet-handle"></div><div class="sheet-head"><div><div class="eyebrow">APP CREATOR</div><h2 id="creatorTitle">Offers & Trial</h2></div><button type="button" class="icon-close" id="creatorClose" aria-label="Close Creator">×</button></div><div id="creatorOfferStatus" role="status"></div><div id="creatorOfferBody"></div>';
  document.body.append(sheet);
- let generation=0,owner='',data=null,busy=false,accessGeneration=0,checking=false,lastCheck=0;
- const actor=()=>session?.user?.id&&!managedLogin&&!document.body.classList.contains('kiosk-locked')&&!document.querySelector('#appLockOverlay:not(.hidden)')?session.user.id:'';
+ const home=document.createElement('section');home.id='creatorHomePanel';home.className='hidden';home.setAttribute('aria-labelledby','creatorHomeTitle');
+ home.innerHTML='<div class="brand-lockup compact"><div class="brand-mark">WM</div><div><div class="eyebrow">APP MANAGEMENT</div><h1 id="creatorHomeTitle">Creator</h1></div></div><div class="card"><p id="creatorHomeEmail" class="muted"></p><h2>Your app workspace</h2><p>Manage discounts and trial settings here. No team or organization is required.</p><button id="creatorHomeOffersBtn" type="button" class="wide">Offers &amp; Trial</button><p class="fine">Discounts and customer trials are awaiting billing setup.</p></div><div class="card creator-home-actions"><button id="creatorHomeSecurityBtn" type="button" class="wide secondary">Sign-In &amp; Security</button><button id="creatorHomeAccountBtn" type="button" class="wide secondary">My Account</button><button id="creatorHomeCheckBtn" type="button" class="wide secondary">Refresh Access</button><button id="creatorHomeSignOutBtn" type="button" class="wide secondary">Sign Out</button><p id="creatorHomeStatus" class="fine" role="status"></p></div>';
+ $c('setupView').prepend(home);
+ let generation=0,owner='',data=null,busy=false,accessGeneration=0,checking=false,lastCheck=0,homeOwner='',homeGeneration=0;
+ const identity=()=>session?.user?.id&&!managedLogin?session.user.id:'';
+ const actor=()=>identity()&&!document.body.classList.contains('kiosk-locked')&&!document.querySelector('#appLockOverlay:not(.hidden)')?identity():'';
  const active=g=>g===generation&&owner&&owner===actor()&&!sheet.classList.contains('hidden')&&navigator.onLine;
  const status=(s,error=false)=>{$c('creatorOfferStatus').textContent=s;$c('creatorOfferStatus').classList.toggle('error',error)};
  function close(){generation++;owner='';data=null;busy=false;checking=false;$c('creatorOfferBody').replaceChildren();status('');show(sheet.id,false);recoverInteractionLayer()}
  function hideAccess(){accessGeneration++;show('creatorOffersBtn',false)}
  async function refreshAccess(){
-  hideAccess();const g=accessGeneration,u=actor();lastActor=u;if(!u||!navigator.onLine)return;
+  hideAccess();const g=accessGeneration,u=identity();lastActor=actor();if(!u||!navigator.onLine)return false;
   try{const {data:out,error}=await client.rpc('creator_offers_request',{p_action:'access',p_data:{}});
-   if(g===accessGeneration&&u===actor()&&navigator.onLine&&!error&&out?.creator===true)show('creatorOffersBtn',true);
-  }catch{/* Access stays hidden on a failed or stale check. */}
+   if(g===accessGeneration&&u===identity()&&navigator.onLine&&!error&&out?.creator===true){show('creatorOffersBtn',true);return true}
+  }catch{/* Access stays hidden on a failed or stale check. */}return false;
+ }
+ function resetHome(){homeGeneration++;homeOwner='';$c('setupView').classList.remove('creator-home-mode');show(home.id,false);$c('creatorHomeEmail').textContent='';$c('creatorHomeStatus').textContent=''}
+ async function showHome(){
+  const g=++homeGeneration,u=identity();if(!u||!await refreshAccess()||g!==homeGeneration||u!==identity())return false;
+  // Creator authorization is independent of memberships and never makes a team.
+  closeSheets();homeOwner=u;activeTeam=null;activeSeason=null;availableTeams=[];
+  organizationMemberships=[];teamMemberships=[];currentTeamMemberships=[];familyAthletes=[];memberAthletes=[];personalWeightSnapshots=[];
+  actualIsStaff=false;actualIsTeamAdmin=false;actualIsManager=false;actualCanAttendance=false;actualCanWeighIn=false;actualCanMassText=false;
+  isStaff=false;isTeamAdmin=false;isManager=false;canAttendance=false;canWeighIn=false;canMassText=false;staffMembership=null;
+  $c('creatorHomeEmail').textContent=session.user.email||'';$c('creatorHomeStatus').textContent='';
+  $c('setupView').classList.add('creator-home-mode');show(home.id,true);show('authView',false);show('appView',false);show('setupView',true);window.scrollTo(0,0);return true;
  }
  async function call(action,body={},g=generation){
   if(!active(g))throw Error('Reconnect and reopen Creator.');
@@ -61,9 +76,13 @@
   $c('creatorOfferForm').onsubmit=e=>{e.preventDefault();const payload={id,code:$c('creatorCode').value,product:$c('creatorProduct').value,discount_percent:Number($c('creatorDiscount').value),billing_periods:Number($c('creatorPeriods').value),redemption_limit:Number($c('creatorLimit').value),expires_at:new Date($c('creatorExpiry').value).toISOString()};if(o)payload.revision=o.revision;
    save($c('creatorDraftSave'),g=>call(o?'update':'create',payload,g));};
  }
- $c('creatorOffersBtn').onclick=open;$c('creatorClose').onclick=()=>closeSheets();
- let lastActor=actor();setInterval(()=>{const u=actor();if(u!==lastActor){lastActor=u;hideAccess();close()}if(owner&&(owner!==u||!navigator.onLine))close()},300);
+ $c('creatorOffersBtn').onclick=open;$c('creatorClose').onclick=()=>closeSheets();$c('creatorHomeOffersBtn').onclick=open;
+ $c('creatorHomeSecurityBtn').onclick=()=>{if(actor()===homeOwner)openSecuritySheet()};
+ $c('creatorHomeAccountBtn').onclick=()=>{if(actor()===homeOwner)openAccountSheet()};
+ $c('creatorHomeSignOutBtn').onclick=signOutCurrentPhone;
+ $c('creatorHomeCheckBtn').onclick=async e=>{const b=e.currentTarget;b.disabled=true;try{if(!navigator.onLine){$c('creatorHomeStatus').textContent='Reconnect to refresh Creator access.';return}await refresh()}finally{b.disabled=false}};
+ let lastActor=actor();setInterval(()=>{const u=actor();if(u!==lastActor){lastActor=u;hideAccess();close()}if(owner&&(owner!==u||!navigator.onLine))close();if(homeOwner&&homeOwner!==identity())resetHome()},300);
  setInterval(async()=>{if(!owner||busy||checking||Date.now()-lastCheck<15000)return;checking=true;const g=generation;try{const a=await call('access',{},g);if(!a?.creator){close();hideAccess()}else lastCheck=Date.now()}catch{if(active(g)){close();hideAccess()}}finally{checking=false}},1000);
  window.addEventListener('offline',()=>{close();hideAccess()});document.addEventListener('visibilitychange',()=>{if(document.hidden){close();hideAccess()}});
- window.WMCreatorOffers={open,close,refreshAccess};
+ window.WMCreatorOffers={open,close,refreshAccess,showHome,resetHome};
 })();
