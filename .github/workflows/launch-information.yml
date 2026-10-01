@@ -1,0 +1,75 @@
+name: Launch information verification
+on:
+  push:
+    branches: [codex/launch-privacy-review-pack]
+    paths:
+      - scripts/prepare-launch-information.py
+      - scripts/launch_privacy_disclosures.py
+      - tests/launch-information-browser.cjs
+      - .github/workflows/launch-information.yml
+  pull_request:
+    paths:
+      - index.html
+      - support.html
+      - privacy.html
+      - scripts/prepare-launch-information.py
+      - scripts/launch_privacy_disclosures.py
+      - tests/launch-information-browser.cjs
+      - .github/workflows/launch-information.yml
+permissions:
+  contents: read
+jobs:
+  prepare:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: write
+    env:
+      NODE_PATH: ${{ github.workspace }}/.ci/node_modules
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - run: npm ci --prefix .ci --ignore-scripts --no-audit --no-fund
+      - run: python3 scripts/prepare-launch-information.py && python3 scripts/prepare-launch-information.py --check && python3 scripts/prepare-linked-creator-release.py --check && python3 scripts/prepare-trainer-dashboard.py --check
+      - run: .ci/node_modules/.bin/playwright install --with-deps chromium
+      - run: node tests/launch-information-browser.cjs && node tests/creator-linked-release-browser.cjs && node tests/trainer-dashboard-browser.cjs
+      - name: Save verified generated information on this branch only
+        run: |
+          test "$GITHUB_REF" = refs/heads/codex/launch-privacy-review-pack
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html support.html privacy.html sw.js scripts/prepare-linked-creator-release.py
+          if ! git diff --cached --quiet; then
+            git commit -m 'Materialize verified v0.20.115 beta support and privacy disclosures'
+            git push origin HEAD:refs/heads/codex/launch-privacy-review-pack
+          fi
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: launch-information-checks
+          path: validation/launch-*
+  verify:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      NODE_PATH: ${{ github.workspace }}/.ci/node_modules
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - run: npm ci --prefix .ci --ignore-scripts --no-audit --no-fund
+      - run: python3 scripts/prepare-launch-information.py --check
+      - run: .ci/node_modules/.bin/playwright install --with-deps chromium
+      - run: node tests/launch-information-browser.cjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: launch-information-pr-checks
+          path: validation/launch-*
