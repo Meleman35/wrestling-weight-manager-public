@@ -12,7 +12,7 @@
  const unlocked=()=>!!context()&&!document.hidden&&!document.body.classList.contains('kiosk-locked')&&!document.querySelector('#appLockOverlay:not(.hidden)');
  const current=g=>g===epoch&&owner===context()&&unlocked()&&navigator.onLine&&!sheet.classList.contains('hidden');
  function entries(visible){show(homeButton.id,visible);show(accountButton.id,visible)}
- function syncEntries(){entries(unlocked()&&navigator.onLine&&!$p('creatorOffersBtn').classList.contains('hidden'))}
+ function syncEntries(){entries(unlocked()&&navigator.onLine&&(!$p('creatorOffersBtn').classList.contains('hidden')||!$p('creatorHomePanel').classList.contains('hidden')))}
  function dispose(){frame?.remove();frame=null;$p('creatorRolePreviewMount').replaceChildren()}
  function close(){epoch++;owner='';checking=false;lastCheck=0;dispose();$p('creatorRolePreviewStatus').textContent='';show(sheet.id,false);recoverInteractionLayer()}
  function exit(){const target=opener;closeSheets();if(target?.isConnected&&!target.classList.contains('hidden'))target.focus()}

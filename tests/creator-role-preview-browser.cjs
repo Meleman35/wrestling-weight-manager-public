@@ -18,7 +18,8 @@ const fs=require('fs'),assert=require('node:assert/strict'),{chromium}=require('
  assert.equal(await p.locator('#creatorRolePreviewFrame').getAttribute('sandbox'),'allow-scripts');
  assert.equal(await p.evaluate(()=>document.getElementById('creatorRolePreviewFrame').contentDocument),null);
  const source=await p.locator('#creatorRolePreviewFrame').getAttribute('srcdoc');assert(!source.includes('sentinel-private-token'));assert(!source.includes('creator-fixture-id'));assert(!source.includes('creator-fixture@example.test'));
- const child=()=>p.frames().find(f=>f.parentFrame());
+ const previewElement=await p.locator('#creatorRolePreviewFrame').elementHandle(),previewFrame=await previewElement.contentFrame();
+ const child=()=>previewFrame;
  assert.equal(await child().evaluate(()=>{try{return !!parent.document}catch{return false}}),false);
  assert.equal(await child().evaluate(()=>{try{localStorage.getItem('secret');return true}catch{return false}}),false);
  assert.equal(await child().evaluate(()=>typeof window.supabase),'undefined');
@@ -52,6 +53,9 @@ const fs=require('fs'),assert=require('node:assert/strict'),{chromium}=require('
  assert.equal(await p.evaluate(()=>fixture.writes.length),0);assert(await p.evaluate(()=>previewTest.calls.every(c=>c.p_action==='access')));
  await p.locator('#creatorRolePreviewClose').click();assert.equal(await p.locator('#creatorRolePreviewFrame').count(),0);assert.equal(await p.locator('#creatorHomePanel').isVisible(),true);assert.equal(await p.locator('#sheetBackdrop').isVisible(),false);
  console.log('PASS Phone/tablet widths fit; exit destroys the demo and returns to the signed-in Creator with no data writes');
+ await p.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'))});
+ await p.evaluate(()=>{delete document.hidden;document.dispatchEvent(new Event('visibilitychange'))});await p.waitForSelector('#creatorHomeRolePreviewBtn:not(.hidden)');
+ console.log('PASS Dedicated Creator preview entry returns after background without a new sign-in');
  await p.evaluate(()=>{
   activeTeam={id:'team-sentinel',name:'Never copy this real-context name'};activeSeason={id:'season-sentinel'};availableTeams=[activeTeam];actualIsStaff=isStaff=true;
   window.previewBefore=JSON.stringify([session,activeTeam,activeSeason,availableTeams,actualIsStaff,isStaff]);return WMCreatorRolePreview.open();
