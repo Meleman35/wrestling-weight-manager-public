@@ -4,6 +4,7 @@ This is an interim disclosure correction, not a finalized release privacy policy
 """
 from pathlib import Path
 import re, sys
+from launch_privacy_disclosures import preserve_privacy
 ROOT=Path(__file__).resolve().parents[1]
 CHECK='--check' in sys.argv
 
@@ -21,7 +22,7 @@ def write(path, text):
     else:
         target.write_text(text)
 
-privacy=(ROOT/'privacy.html').read_text()
+privacy=preserve_privacy((ROOT/'privacy.html').read_text())
 changes=[
  ('<aside class="wm-doc-note"><strong>Beta information · September 20, 2026</strong><p>The final privacy policy and complete account-deletion process are still being prepared before the athlete pilot. This page explains current handling and how to contact us with a privacy question.</p></aside>',
   '<aside class="wm-doc-note"><strong>Beta privacy information · Updated October 1, 2026</strong><p>This page describes current beta handling. Final release disclosures, retention schedules and younger-athlete enrollment safeguards remain under review. Native account deletion is in a limited, build-dependent test pilot; it is not generally enabled.</p></aside>\n<p><strong>Product company:</strong> Mele Sports Technologies LLC · The Team Manager / Wrestling Manager. For privacy questions, contact <a href="mailto:support@theteammanager.app">support@theteammanager.app</a>.</p>'),
@@ -74,4 +75,4 @@ release=(ROOT/p).read_text()
 release=replace_once(release,"assert '0.20.113' in s or '0.20.114' in s,'Unexpected release version: '+path",
                     "assert any(v in s for v in ('0.20.113','0.20.114','0.20.115')),'Unexpected release version: '+path")
 for path,text in [('privacy.html',privacy),('support.html',support),('index.html',index),('sw.js',worker),(p,release)]:write(path,text)
-print('PASS Paired v0.20.115 beta support/privacy pages and in-app templates; no authorization changes')
+print('PASS Paired v0.20.115 beta support/privacy pages and in-app templates; published privacy detail preserved; no authorization changes')
