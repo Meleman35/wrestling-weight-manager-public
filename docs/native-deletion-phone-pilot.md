@@ -1,6 +1,16 @@
 # Enrolled native deletion phone pilot
 
-The owner reported a successful Apple build of the private Scale & NFC Cleanup Xcode project on September 30, 2026. Physical-device acceptance is still pending. This change makes that acceptance test reachable from the live app; it is not general native-deletion activation.
+The owner reported a successful Apple build of the private Scale & NFC Cleanup Xcode project on September 30, 2026. The first disposable personal-account deletion has now completed on the device, with server completion independently checked. This is one acceptance case, not general native-deletion activation.
+
+## Verified progress — October 1, 2026 UTC
+
+The owner reported the app's account-and-record deletion completion message. Read-only server checks found the personal deletion job completed at 04:22:09 UTC, no remaining Auth identity or sessions for the disposable test account, and both the primary and Creator accounts still present. This confirms the tested personal-account path; it does not establish every data-heavy, interruption, or shared-team case. Device cleanup confirmation was observed by the owner, not independently inspected with Apple device tooling here.
+
+Private native fixes used during that test added scoped test-Mat-data clearing behind PIN and typed confirmation, and corrected biometric authentication context handling for Keychain cleanup. Preserve that working Xcode project and its current signing/build settings. The older full-project archive alone does not include all of these follow-up fixes.
+
+Web v0.20.111 routes plain Mat Mode links to the installed app's existing Offline Mat Mode screen. The browser scorebook now shows an empty-history message and cannot export an empty list. Active web sessions retain their exit-PIN route, including when the native shell is present. This web update does not require another Xcode build. On the next device check, open Mat Mode from sign-in and Account and confirm that the Offline Mat Mode screen appears; an already-active web session must be exited with its PIN first.
+
+## Pilot boundaries
 
 The web controller builds on draft PR #35. New native requests require a fresh `account_deletion_scope_preflight` response for the exact signed-in subject and chosen scope. The existing private, expiring tester enrollment and all worker authority, schema, shared-record and administrator-handoff checks remain in force. No account identifiers, emails or enrollments are embedded in this release. Server configuration and public enrollment permissions are unchanged.
 
