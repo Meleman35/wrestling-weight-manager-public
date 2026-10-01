@@ -4,6 +4,7 @@ on:
     branches: [codex/launch-privacy-review-pack]
     paths:
       - scripts/prepare-launch-information.py
+      - scripts/launch_privacy_disclosures.py
       - tests/launch-information-browser.cjs
       - .github/workflows/launch-information.yml
   pull_request:
@@ -12,6 +13,7 @@ on:
       - support.html
       - privacy.html
       - scripts/prepare-launch-information.py
+      - scripts/launch_privacy_disclosures.py
       - tests/launch-information-browser.cjs
       - .github/workflows/launch-information.yml
 permissions:
