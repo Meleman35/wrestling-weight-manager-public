@@ -1,0 +1,37 @@
+name: Practice plans regression
+on:
+  pull_request:
+    paths:
+      - index.html
+      - src/practice-plans.*
+      - supabase/practice-plans*.sql
+      - supabase/migrations/*practice_plans*.sql
+      - scripts/*practice-plans.py
+      - scripts/scoped-deletion-policy.json
+      - tests/practice-plans*
+      - .github/workflows/practice-plans.yml
+permissions:
+  contents: read
+jobs:
+  practice:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NODE_PATH: ${{ github.workspace }}/.ci/node_modules
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - run: npm ci --prefix .ci --ignore-scripts --no-audit --no-fund
+      - run: python3 scripts/assemble-practice-plans.py --check && python3 scripts/patch-practice-plans.py --check
+      - run: node tests/practice-plans-db.mjs && node tests/practice-plans-compatibility.mjs
+      - run: .ci/node_modules/.bin/playwright install --with-deps chromium
+      - run: node tests/practice-plans-browser.cjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: practice-plans-results
+          path: validation/practice-plans*

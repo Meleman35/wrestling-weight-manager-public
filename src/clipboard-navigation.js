@@ -2,7 +2,7 @@
 (() => {
  const groups=[
   {id:'people',icon:'👥',name:'People & Roles',detail:'Roster, leaders, parents & goals',ids:['staffAccessBtn','rosterBtn','joinRequestsBtn','joinBtn','staffDirectoryBtn','teamGoalsBtn','memberProfilesBtn','familyBtn','findProfilesBtn']},
-  {id:'practice',icon:'🤼',name:'Practice & Competition',detail:'Attendance, lineup & Match Book',ids:['tournamentDayBtn','clipboardAttendanceBtn','clipboardLineupBtn','matchBookBtn']},
+  {id:'practice',icon:'🤼',name:'Practice & Competition',detail:'Practice plans, attendance & Match Book',ids:['practicePlansBtn','tournamentDayBtn','clipboardAttendanceBtn','clipboardLineupBtn','matchBookBtn']},
   {id:'health',icon:'✍️',name:'Forms & Health',detail:'Agreements & medical clearance',ids:['athleteHealthBtn','agreementsBtn','medicalClearanceBtn']},
   {id:'gear',icon:'🎒',name:'Gear & Files',detail:'Equipment & team resources',ids:['clipboardEquipmentBtn','clipboardFilesBtn']},
   {id:'settings',icon:'⚙️',name:'Settings',detail:'Account, team settings & feedback',ids:['accountBtn','feedbackBtn']},
@@ -15,7 +15,6 @@
  function tools(g){return g.ids.map(e).filter(accessible);}
  UI_LAYOUT_META.clipboard=Object.fromEntries(groups.map(g=>[g.id,[g.icon,g.name]]));DEFAULT_UI_LAYOUT.clipboard=groups.map(g=>g.id);
  for(const g of groups){UI_LAYOUT_META[key(g)]=Object.fromEntries(g.ids.map(id=>{const n=e(id);return [id,[n?.querySelector('span')?.textContent||'›',n?.querySelector('b')?.textContent||id]];}));DEFAULT_UI_LAYOUT[key(g)]=g.ids;}
- const edit=e('clipboardCustomizeBtn');edit.onclick=()=>{openLayoutEditor();requestAnimationFrame(()=>e('clipboardLayoutEditors').scrollIntoView({block:'start'}));};
  function upgrade(source){
   // Carry legacy Toolbox order/visibility into each category until separately customized.
   source={...source,hidden:{...source.hidden}};

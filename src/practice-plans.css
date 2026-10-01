@@ -1,0 +1,30 @@
+#practicePlansSheet{max-width:720px;overflow-x:hidden;padding-bottom:calc(28px + env(safe-area-inset-bottom));font-size:16px}
+#practicePlansSheet .sheet-head h2{font-size:25px;margin:0}
+#practicePlansSheet #ppTeam{margin:2px 0 12px}
+#practicePlansSheet #ppStatus:empty{display:none}
+#practicePlansSheet #ppStatus{padding:10px 12px;background:#eef4fb;border-radius:12px;font-size:14px;overflow-wrap:anywhere}
+#practicePlansSheet #ppStatus.error{background:#fff4dd;color:#744b00}
+#practicePlansSheet fieldset{border:0;padding:0;margin:0;min-width:0}
+#practicePlansSheet label{display:block;font-size:14px;font-weight:650;margin:14px 0 6px}
+#practicePlansSheet input,#practicePlansSheet select,#practicePlansSheet textarea{box-sizing:border-box;width:100%;min-width:0;font-size:16px;padding:11px 12px;border:1px solid #d3dce6;border-radius:11px;background:#fff;color:#172334}
+#practicePlansSheet textarea{resize:vertical}
+#practicePlansSheet button{font-size:15px;min-height:44px;padding:11px 16px;border-radius:12px;box-shadow:none;white-space:normal}
+#practicePlansSheet button:disabled{opacity:.5}
+#practicePlansSheet h3{font-size:18px;line-height:1.3;margin:6px 0;overflow-wrap:anywhere}
+#practicePlansSheet .pp-fine{font-size:13px;line-height:1.45;color:#667487;overflow-wrap:anywhere}
+#practicePlansSheet .pp-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+#practicePlansSheet .pp-actions,#practicePlansSheet .pp-block-actions{display:flex;gap:8px;flex-wrap:wrap}
+#practicePlansSheet .pp-block-actions{margin-top:12px}
+#practicePlansSheet .pp-block-actions button{flex:1;padding:8px}
+#practicePlansSheet .pp-section-head,#practicePlansSheet .pp-editor-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+#practicePlansSheet .pp-editor-head{margin:15px 0}
+#practicePlansSheet .pp-section-head{margin:20px 0 10px}
+#practicePlansSheet .pp-block .pp-section-head{margin:0 0 8px}
+#practicePlansSheet #ppSummary{font-size:14px;font-weight:650;color:#224b79;margin:0}
+#practicePlansSheet .pp-card,#practicePlansSheet .pp-block,#practicePlansSheet .pp-link{border:1px solid #dde4ec;background:#f8fafc;border-radius:16px;padding:16px;margin:14px 0}
+#practicePlansSheet .pp-block{border-left:4px solid #254e7d}
+#practicePlansSheet .pp-empty{font-size:15px;color:#667487;line-height:1.5;padding:16px 0}
+#practicePlansSheet .pp-delete{color:#a72626;margin-top:8px}
+#practicePlansSheet summary{font-size:15px;font-weight:650;cursor:pointer}
+#practicePlansSheet .pp-list h3{margin:6px 0}
+@media(max-width:359px){#practicePlansSheet .pp-fields{grid-template-columns:minmax(0,1fr)}#practicePlansSheet .pp-card,#practicePlansSheet .pp-block{padding:12px}}
