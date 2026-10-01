@@ -5,9 +5,9 @@
 #trainerDashboardPanel .trainer-team-choice{margin-bottom:18px}
 #trainerDashboardPanel select{width:100%;min-height:44px}
 #trainerDashboardPanel .trainer-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
-#trainerDashboardPanel .trainer-metric{display:flex;flex-direction:column;align-items:start;text-align:left;gap:8px;padding:18px 12px;min-height:104px;white-space:normal;background:var(--card,#172338);color:var(--text,#f3f6fc);border:1px solid var(--border,#405069);border-radius:16px}
-#trainerDashboardPanel .trainer-metric strong{font-size:30px;line-height:1}
-#trainerDashboardPanel .trainer-metric span{font-size:14px;line-height:1.35}
+#trainerDashboardPanel .trainer-metric{display:flex;flex-direction:column;align-items:start;text-align:left;gap:8px;padding:18px 12px;min-height:104px;white-space:normal;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:16px;box-shadow:0 2px 10px rgba(0,0,0,.04)}
+#trainerDashboardPanel .trainer-metric strong{font-size:30px;line-height:1;color:var(--ink)}
+#trainerDashboardPanel .trainer-metric span{font-size:14px;line-height:1.35;color:var(--ink)}
 #trainerDashboardPanel .trainer-links{display:grid;gap:10px;margin:20px 0 8px}
 #trainerDashboardPanel button{min-height:44px;white-space:normal}
 #trainerDashboardPanel .fine{line-height:1.5}
