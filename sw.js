@@ -1,5 +1,5 @@
 /* Static resources only. Never cache Supabase, authenticated responses, attachments, or invite URLs. */
-const CACHE='wm-shell-0.20.106';
+const CACHE='wm-shell-0.20.107';
 const ROOT=new URL('./',self.location.href);
 const FILES=['index.html','vendor/supabase.js','assets/wrestling-manager-icon.png','manifest.webmanifest'];
 self.addEventListener('install',event=>event.waitUntil((async()=>{const c=await caches.open(CACHE);await c.addAll(FILES.map(p=>new Request(new URL(p,ROOT),{cache:'reload'})));})()));

@@ -1,0 +1,37 @@
+name: Creator offers regression
+on:
+  pull_request:
+    paths:
+      - index.html
+      - src/creator-offers.*
+      - supabase/creator-offers*.sql
+      - supabase/migrations/*creator_offer_controls*.sql
+      - scripts/*creator-offers.py
+      - scripts/scoped-deletion-policy.json
+      - tests/creator-offers*
+      - .github/workflows/creator-offers.yml
+permissions:
+  contents: read
+jobs:
+  creator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NODE_PATH: ${{ github.workspace }}/.ci/node_modules
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - run: npm ci --prefix .ci --ignore-scripts --no-audit --no-fund
+      - run: python3 scripts/assemble-creator-offers.py --check && python3 scripts/patch-creator-offers.py --check
+      - run: node tests/creator-offers-db.mjs && node tests/creator-offers-compatibility.mjs
+      - run: .ci/node_modules/.bin/playwright install --with-deps chromium
+      - run: node tests/creator-offers-browser.cjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: creator-offers-results
+          path: validation/creator-offers*
