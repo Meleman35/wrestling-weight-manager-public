@@ -29,7 +29,7 @@ const fs=require('fs'),assert=require('node:assert/strict'),{chromium}=require('
   };
   const originalFrom=client.from;client.from=name=>{
    if(name!=='team_events')return originalFrom(name);
-   const query={};const q={select:v=>(query.select=v,q),eq:(k,v)=>(query[k]=v,q),gte:(k,v)=>(query[k]=v,q),order:()=>q,limit:()=>{trainerTest.readCalls.push(query);return Promise.resolve({data:[{id:'event-a',title:'Practice',starts_at:'2026-12-01T17:00:00Z',location:'Wrestling room'}],error:null})}};return q;
+   const query={};const q={select:v=>(query.select=v,q),eq:(k,v)=>(query[k]=v,q),gte:(k,v)=>(query[k]=v,q),order:()=>q,limit:()=>{trainerTest.readCalls.push(query);return Promise.resolve({data:[{id:'event-a',title:'Practice',starts_at:'2026-12-01T17:00:00Z',location_name:'Wrestling room'}],error:null})}};return q;
   };
   WMTrainerDashboard.prepared();
  });
@@ -48,7 +48,7 @@ const fs=require('fs'),assert=require('node:assert/strict'),{chromium}=require('
  assert.match(await p.locator('#healthRoster').innerText(),/Restricted Athlete/);assert(!((await p.locator('#healthRoster').innerText()).includes('Review Athlete')));
  await p.locator('#healthClose').click();await p.waitForSelector('#trainerSchedule');await p.locator('#trainerSchedule').click();await p.waitForSelector('#trainerScheduleBody article');
  assert.equal(await p.locator('#trainerScheduleBody button').count(),0);assert.equal(await p.evaluate(()=>trainerTest.readCalls[0].team_id),'team-a');
- assert.match(await p.evaluate(()=>trainerTest.readCalls[0].select),/^id,title,event_type,starts_at,ends_at,location$/);
+ assert.match(await p.evaluate(()=>trainerTest.readCalls[0].select),/^id,title,event_type,starts_at,ends_at,location_name$/);
  pass('Dashboard cards open filtered existing health records; the schedule is a current-team read-only query');
  await p.locator('#trainerReturnHome').click();assert.equal(await p.locator('#trainerDashboardPanel').isVisible(),false);await p.locator('#trainerHomeEntry').click();await p.waitForSelector('#trainerAthletes');
  await p.evaluate(()=>{WMTrainerDashboard.reset();familyAthletes=[{athlete_id:'child'}];WMTrainerDashboard.prepared()});await p.waitForSelector('#trainerHomeEntry');assert.equal(await p.locator('#trainerDashboardPanel').isVisible(),false);

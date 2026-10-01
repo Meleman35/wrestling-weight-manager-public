@@ -70,9 +70,9 @@
   try{
    const {data:access,error:denied}=await client.rpc('athlete_health_request',{p_action:'dashboard',p_data:{team_id:team}});
    if(!current(g))return;if(denied||access?.trainer!==true||access?.assigned_trainer!==true)throw Error('Trainer access changed. Refresh to check your assignment.');
-   const {data,error}=await client.from('team_events').select('id,title,event_type,starts_at,ends_at,location').eq('team_id',team).gte('starts_at',new Date().toISOString()).order('starts_at',{ascending:true}).limit(12);
+   const {data,error}=await client.from('team_events').select('id,title,event_type,starts_at,ends_at,location_name').eq('team_id',team).gte('starts_at',new Date().toISOString()).order('starts_at',{ascending:true}).limit(12);
    if(!current(g))return;if(error)throw Error('Schedule could not load. Try again when connected.');
-   box.innerHTML='<h3>Upcoming team events</h3>'+(data?.length?data.map(e=>`<article class="health-card"><b>${esc(e.title||e.event_type||'Team event')}</b><p>${esc(new Date(e.starts_at).toLocaleString())}</p>${e.location?'<p>'+esc(e.location)+'</p>':''}</article>`).join(''):'<p>No upcoming team events were returned.</p>');
+   box.innerHTML='<h3>Upcoming team events</h3>'+(data?.length?data.map(e=>`<article class="health-card"><b>${esc(e.title||e.event_type||'Team event')}</b><p>${esc(new Date(e.starts_at).toLocaleString())}</p>${e.location_name?'<p>'+esc(e.location_name)+'</p>':''}</article>`).join(''):'<p>No upcoming team events were returned.</p>');
   }catch(e){if(current(g)){box.textContent=e.message;validAccess=false}}
  }
  async function load(){

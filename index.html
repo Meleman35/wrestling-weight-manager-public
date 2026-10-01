@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.111: Native Mat Mode entry and a clear empty saved-bouts screen. -->
+<!-- Wrestling Manager v0.20.112: Trainer Dashboard with assigned-team care navigation. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -2377,7 +2377,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.111</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.112</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -17226,9 +17226,9 @@ window.WMAthleteMerge=(()=>{
 #trainerDashboardPanel .trainer-team-choice{margin-bottom:18px}
 #trainerDashboardPanel select{width:100%;min-height:44px}
 #trainerDashboardPanel .trainer-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
-#trainerDashboardPanel .trainer-metric{display:flex;flex-direction:column;align-items:start;text-align:left;gap:8px;padding:18px 12px;min-height:104px;white-space:normal;background:var(--card,#172338);color:var(--text,#f3f6fc);border:1px solid var(--border,#405069);border-radius:16px}
-#trainerDashboardPanel .trainer-metric strong{font-size:30px;line-height:1}
-#trainerDashboardPanel .trainer-metric span{font-size:14px;line-height:1.35}
+#trainerDashboardPanel .trainer-metric{display:flex;flex-direction:column;align-items:start;text-align:left;gap:8px;padding:18px 12px;min-height:104px;white-space:normal;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:16px;box-shadow:0 2px 10px rgba(0,0,0,.04)}
+#trainerDashboardPanel .trainer-metric strong{font-size:30px;line-height:1;color:var(--ink)}
+#trainerDashboardPanel .trainer-metric span{font-size:14px;line-height:1.35;color:var(--ink)}
 #trainerDashboardPanel .trainer-links{display:grid;gap:10px;margin:20px 0 8px}
 #trainerDashboardPanel button{min-height:44px;white-space:normal}
 #trainerDashboardPanel .fine{line-height:1.5}
@@ -17310,9 +17310,9 @@ window.WMAthleteMerge=(()=>{
   try{
    const {data:access,error:denied}=await client.rpc('athlete_health_request',{p_action:'dashboard',p_data:{team_id:team}});
    if(!current(g))return;if(denied||access?.trainer!==true||access?.assigned_trainer!==true)throw Error('Trainer access changed. Refresh to check your assignment.');
-   const {data,error}=await client.from('team_events').select('id,title,event_type,starts_at,ends_at,location').eq('team_id',team).gte('starts_at',new Date().toISOString()).order('starts_at',{ascending:true}).limit(12);
+   const {data,error}=await client.from('team_events').select('id,title,event_type,starts_at,ends_at,location_name').eq('team_id',team).gte('starts_at',new Date().toISOString()).order('starts_at',{ascending:true}).limit(12);
    if(!current(g))return;if(error)throw Error('Schedule could not load. Try again when connected.');
-   box.innerHTML='<h3>Upcoming team events</h3>'+(data?.length?data.map(e=>`<article class="health-card"><b>${esc(e.title||e.event_type||'Team event')}</b><p>${esc(new Date(e.starts_at).toLocaleString())}</p>${e.location?'<p>'+esc(e.location)+'</p>':''}</article>`).join(''):'<p>No upcoming team events were returned.</p>');
+   box.innerHTML='<h3>Upcoming team events</h3>'+(data?.length?data.map(e=>`<article class="health-card"><b>${esc(e.title||e.event_type||'Team event')}</b><p>${esc(new Date(e.starts_at).toLocaleString())}</p>${e.location_name?'<p>'+esc(e.location_name)+'</p>':''}</article>`).join(''):'<p>No upcoming team events were returned.</p>');
   }catch(e){if(current(g)){box.textContent=e.message;validAccess=false}}
  }
  async function load(){
