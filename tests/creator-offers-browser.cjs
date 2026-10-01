@@ -25,8 +25,17 @@ await p.evaluate(()=>{
 await p.evaluate(()=>WMCreatorOffers.refreshAccess());assert(await p.locator('#creatorOffersBtn').evaluate(el=>el.classList.contains('hidden')));
 await p.evaluate(()=>WMCreatorOffers.open());await p.waitForFunction(()=>document.querySelector('#creatorOffersSheet').classList.contains('hidden'));
 assert.equal(await p.locator('#creatorOfferBody').innerText(),'');console.log('PASS Unprivileged accounts have no Creator content, including direct open attempts');
-await p.evaluate(()=>{creatorTest.allowed=true;return WMCreatorOffers.refreshAccess()});assert(!(await p.locator('#creatorOffersBtn').evaluate(el=>el.classList.contains('hidden'))));
-await p.evaluate(()=>WMCreatorOffers.open());await p.waitForSelector('#creatorTrialSave');assert.match(await p.locator('#creatorOfferBody').innerText(),/Billing is not connected/);assert.match(await p.locator('#creatorOfferBody').innerText(),/7-day full-feature trial/);
+await p.evaluate(()=>{creatorTest.allowed=true;fixture.calls=[];return refresh()});await p.waitForSelector('#creatorHomePanel:not(.hidden)');
+assert.equal(await p.locator('#setupChoices').isVisible(),false);assert.equal(await p.locator('#setupCreateTeamCard').isVisible(),false);assert.equal(await p.locator('#appView').isVisible(),false);
+assert.equal(await p.locator('#creatorHomeEmail').innerText(),'creator@example.test');
+assert.equal(await p.evaluate(()=>fixture.calls.some(c=>c.name==='accept_verified_email_invitations')),false);assert.equal(await p.evaluate(()=>fixture.writes.length),0);
+assert.equal(await p.evaluate(()=>activeTeam),null);
+for(const width of [320,390,768]){await p.setViewportSize({width,height:844});assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1))}
+await p.setViewportSize({width:390,height:844});await p.screenshot({path:'validation/creator-offers-home-phone.png'});
+await p.locator('#creatorHomeSecurityBtn').click();await p.waitForSelector('#securitySheet:not(.hidden)');await p.evaluate(()=>closeSheets());
+assert.equal(await p.locator('#creatorHomePanel').isVisible(),true);
+console.log('PASS Actual sign-in routing opens a separate Creator home before invitations or team setup; security remains accessible without a team');
+await p.locator('#creatorHomeOffersBtn').click();await p.waitForSelector('#creatorTrialSave');assert.match(await p.locator('#creatorOfferBody').innerText(),/Billing is not connected/);assert.match(await p.locator('#creatorOfferBody').innerText(),/7-day full-feature trial/);
 for(const width of [320,390,768]){await p.setViewportSize({width,height:844});assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1))}
 await p.setViewportSize({width:390,height:844});await p.screenshot({path:'validation/creator-offers-phone.png'});
 await p.locator('#creatorTrialWanted').uncheck();await p.locator('#creatorTrialSave').click();await p.waitForFunction(()=>creatorTest.trial.requested===false);await p.waitForFunction(()=>!document.querySelector('#creatorTrialSave').disabled);
@@ -37,5 +46,11 @@ await p.locator('#creatorClose').click();assert.equal(await p.locator('#creatorO
 await p.evaluate(()=>WMCreatorOffers.open());await p.waitForSelector('#creatorTrialSave');await p.evaluate(()=>show('appLockOverlay',true));await p.waitForSelector('#creatorOffersSheet.hidden',{state:'attached'});assert.equal(await p.locator('#creatorOfferBody').innerText(),'');await p.evaluate(()=>show('appLockOverlay',false));
 await p.evaluate(()=>{creatorTest.delay=800;WMCreatorOffers.open()});await p.evaluate(()=>{session={user:{id:'another-account'}};fixture.session=session});await p.waitForTimeout(1000);assert.equal(await p.locator('#creatorOfferBody').innerText(),'');
 await p.evaluate(()=>{creatorTest.delay=0;return WMCreatorOffers.open()});await p.waitForSelector('#creatorTrialSave');await ctx.setOffline(true);await p.waitForSelector('#creatorOffersSheet.hidden',{state:'attached'});assert.equal(await p.locator('#creatorOfferBody').innerText(),'');console.log('PASS Lock, account changes, delayed replies and disconnection clear private Creator content');
+await ctx.setOffline(false);await p.evaluate(()=>{creatorTest.allowed=false;session=fixture.session={user:{id:'regular-user',email:'regular@example.test',user_metadata:{creator:true}}};return refresh()});
+assert.equal(await p.locator('#creatorHomePanel').isVisible(),false);assert.equal(await p.locator('#creatorHomeEmail').innerText(),'');assert.equal(await p.locator('#setupChoices').isVisible(),true);
+console.log('PASS Other accounts retain normal onboarding and cannot select the Creator route through metadata');
+await p.evaluate(()=>{creatorTest.allowed=true;session=fixture.session={user:{id:'creator',email:'creator@example.test'}};return refresh()});await p.waitForSelector('#creatorHomePanel:not(.hidden)');
+await p.locator('#creatorHomeSignOutBtn').click();await p.waitForSelector('#authView:not(.hidden)');assert.equal(await p.locator('#creatorHomePanel').isVisible(),false);
+console.log('PASS The dedicated Creator home signs out without creating a team or changing memberships');
 assert.deepEqual(errors,[]);await browser.close();
 })().catch(e=>{console.error(e);process.exit(1)});

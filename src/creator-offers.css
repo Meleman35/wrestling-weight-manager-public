@@ -12,3 +12,9 @@
 #creatorOffersSheet .creator-fine{font-size:13px;line-height:1.5;color:var(--muted,#606c7a)}
 #creatorOfferStatus{margin-top:8px;font-size:14px;min-height:20px}#creatorOfferStatus.error{color:#a21c21}
 @media(max-width:360px){#creatorOffersSheet{padding:14px}#creatorOffersSheet .creator-fields{grid-template-columns:1fr}}
+#setupView.creator-home-mode>:not(#creatorHomePanel){display:none!important}
+#setupView.creator-home-mode{max-width:560px;padding-top:28px}
+#creatorHomePanel h1{font-size:30px;margin:0}#creatorHomePanel h2{font-size:22px;margin:12px 0}
+#creatorHomePanel p{line-height:1.5}#creatorHomeEmail{overflow-wrap:anywhere;font-size:14px}
+#creatorHomePanel .card{padding:20px;margin-bottom:16px}#creatorHomePanel button{font-size:16px;min-height:46px;margin-top:10px}
+#creatorHomePanel .creator-home-actions{display:grid;gap:4px}#creatorHomePanel .fine{font-size:13px}
