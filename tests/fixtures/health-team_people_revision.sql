@@ -14,4 +14,3 @@ AS $function$
    where m.team_id=t and m.user_id=u)
  )::text);
 $function$;
-

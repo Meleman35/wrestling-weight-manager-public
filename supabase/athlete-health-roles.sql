@@ -266,4 +266,3 @@ begin
   return v_inv.team_id;
 end;
 $function$;
-

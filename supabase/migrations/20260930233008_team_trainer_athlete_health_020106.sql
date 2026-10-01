@@ -274,7 +274,6 @@ begin
 end;
 $function$;
 
-
 -- Athlete Health is a record/communication system; no automated medical decisions.
 -- Private tables have no client table grants. All access passes current-session
 -- checks and team/family authorization through the bounded RPC below.

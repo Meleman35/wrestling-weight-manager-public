@@ -7,15 +7,15 @@
  sheet.innerHTML='<div class="sheet-handle"></div><div class="sheet-head"><div><div class="eyebrow">TEAM TRAINER</div><h2 id="healthTitle">Athlete Health</h2><p id="healthSubtitle" class="muted"></p></div><button id="healthClose" class="icon-close" aria-label="Close Athlete Health">×</button></div><div id="healthStatus" class="fine" role="status"></div><div id="healthBody"></div>';
  document.body.append(sheet);
  let epoch=0,owner='',state=null,selected=null,busy=false,lastCheck=0,checking=false,urls=[];
- const actor=()=>session?.user?.id&&activeTeam?.id&&!managedLogin?session.user.id+'/'+activeTeam.id:'';
+ const actor=()=>session?.user?.id&&activeTeam?.id&&!managedLogin&&!document.body.classList.contains('kiosk-locked')&&!document.querySelector('#appLockOverlay:not(.hidden)')?session.user.id+'/'+activeTeam.id:'';
  const active=g=>g===epoch&&owner&&owner===actor()&&!sheet.classList.contains('hidden')&&navigator.onLine;
  const today=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10)};
  const date=d=>d?new Date(d+'T12:00:00').toLocaleDateString():'—';
  const note=(s,error=false)=>{$h('healthStatus').textContent=s;$h('healthStatus').classList.toggle('error',error)};
  const release=()=>{urls.forEach(u=>URL.revokeObjectURL(u));urls=[]};
  function reset(){epoch++;owner='';state=null;selected=null;busy=false;release();$h('healthBody').replaceChildren();note('')}
- function close(){reset();show(sheet.id,false)}
- $h('healthClose').onclick=close;
+ function close(){reset();show(sheet.id,false);recoverInteractionLayer()}
+ $h('healthClose').onclick=()=>closeSheets();
  async function call(action,data={},g=epoch){
   if(!active(g))throw Error('Reconnect and reopen Athlete Health.');
   const team=activeTeam.id,{data:out,error}=await client.rpc('athlete_health_request',{p_action:action,p_data:{...data,team_id:team}});
@@ -131,8 +131,8 @@
   const link=document.createElement('a');link.href=url;link.download=file.mime==='application/pdf'?'provider-release.pdf':'private-health-photo.jpg';link.textContent=file.mime==='application/pdf'?'Open / save private release':'Save private photo';box.append(link);
  }
  function sync(){
-  const button=$h('athleteHealthBtn');if(button)show(button.id,!!actor()&&(!isManager||staffMembership?.permissions?.staff_role==='team_trainer'||isStaff));
-  if(owner&&(owner!==actor()||!navigator.onLine||sheet.classList.contains('hidden'))){reset();show(sheet.id,false)}
+  const button=$h('athleteHealthBtn'),visible=!!actor()&&(!isManager||staffMembership?.permissions?.staff_role==='team_trainer'||isStaff);if(button&&button.classList.contains('hidden')===visible){show(button.id,visible);window.WMClipboard?.sync()}
+  if(owner&&(owner!==actor()||!navigator.onLine||sheet.classList.contains('hidden'))){close()}
  }
  setInterval(sync,500);window.addEventListener('offline',close);document.addEventListener('visibilitychange',()=>{if(document.hidden)close()});
  setInterval(async()=>{

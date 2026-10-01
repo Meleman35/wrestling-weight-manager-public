@@ -27,4 +27,3 @@ AS $function$
    and lower(trim(c.name))<>lower(split_part(coalesce(a.email,''),'@',1))
   order by priority,lower(c.name) limit 1),'Team member');
 $function$;
-
