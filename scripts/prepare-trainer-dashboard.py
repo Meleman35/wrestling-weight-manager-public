@@ -1,8 +1,12 @@
-"""Prepare trainer-filtered health navigation, embed workspace, and check source consistency."""
+"""Prepare trainer-filtered health navigation and reproducible web release 0.20.112."""
 from pathlib import Path
 import sys,subprocess
 root=Path(__file__).resolve().parents[1];p=root/'src/athlete-health.js';s=p.read_text();check='--check' in sys.argv
 marker='/* Trainer Dashboard filters v1. */\n'
+def put(path,text):
+ target=root/path
+ if check:assert target.read_text()==text,'Generated source differs: '+path
+ else:target.write_text(text)
 if not s.startswith(marker):
  def replace(old,new):
   global s
@@ -16,8 +20,16 @@ if not s.startswith(marker):
  replace("$h('healthSearch').oninput=renderRoster;", "if(!state.trainer)rosterFilter='all';if($h('healthFilter')){$h('healthFilter').value=rosterFilter;$h('healthFilter').onchange=()=>{rosterFilter=$h('healthFilter').value;renderRoster()}}\n  $h('healthSearch').oninput=renderRoster;")
  replace("rows=state.athletes.filter(a=>a.name.toLowerCase().includes(q));", "rows=state.athletes.filter(a=>a.name.toLowerCase().includes(q)&&(!state.trainer||!window.WMTrainerDashboard||window.WMTrainerDashboard.matches(a,rosterFilter,today(),state.baseline_required)));")
  s=marker+s
-if check:assert p.read_text()==s,'Health filter source differs'
-else:p.write_text(s)
+put('src/athlete-health.js',s)
+# Field names checked against the hosted public.team_events schema, without reading events.
+for path in ['src/trainer-dashboard.js','tests/trainer-dashboard-browser.cjs']:
+ text=(root/path).read_text().replace('starts_at,ends_at,location','starts_at,ends_at,location_name')
+ text=text.replace('location_name_name','location_name').replace("location:'Wrestling room'","location_name:'Wrestling room'").replace('e.location?', 'e.location_name?').replace('esc(e.location)', 'esc(e.location_name)')
+ put(path,text)
 for script in ['patch-athlete-health.py','patch-trainer-dashboard.py']:
  subprocess.run([sys.executable,str(root/'scripts'/script)]+(['--check'] if check else []),cwd=root,check=True)
-print('PASS Trainer workspace source preparation')
+for path in ['index.html','sw.js']:
+ text=(root/path).read_text().replace('0.20.111','0.20.112')
+ if path=='index.html':text=text.replace('Native Mat Mode entry and a clear empty saved-bouts screen.','Trainer Dashboard with assigned-team care navigation.')
+ put(path,text)
+print('PASS Trainer workspace source preparation and paired web/service-worker version')
