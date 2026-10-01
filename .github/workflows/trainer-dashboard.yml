@@ -1,0 +1,65 @@
+name: Trainer Dashboard verification
+on:
+  push:
+    branches: [codex/trainer-dashboard-web]
+    paths: [src/trainer-dashboard.js, src/trainer-dashboard.css, scripts/prepare-trainer-dashboard.py, scripts/patch-trainer-dashboard.py, tests/trainer-dashboard-browser.cjs, .github/workflows/trainer-dashboard.yml]
+  pull_request:
+    paths: [index.html, src/athlete-health.js, src/trainer-dashboard.js, src/trainer-dashboard.css, scripts/prepare-trainer-dashboard.py, scripts/patch-trainer-dashboard.py, tests/trainer-dashboard-browser.cjs, .github/workflows/trainer-dashboard.yml]
+permissions:
+  contents: read
+jobs:
+  prepare:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/codex/trainer-dashboard-web'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      NODE_PATH: ${{ github.workspace }}/.ci/node_modules
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - run: npm ci --prefix .ci --ignore-scripts --no-audit --no-fund
+      - run: python3 scripts/prepare-trainer-dashboard.py && python3 scripts/prepare-trainer-dashboard.py --check
+      - run: node --check src/trainer-dashboard.js && node --check src/athlete-health.js && node tests/athlete-health-db.mjs && node tests/creator-offers-db.mjs && node tests/practice-plans-db.mjs
+      - run: .ci/node_modules/.bin/playwright install --with-deps chromium
+      - run: node tests/trainer-dashboard-browser.cjs && node tests/athlete-health-browser.cjs && node tests/creator-offers-browser.cjs
+      - name: Save tested generated files to this branch only
+        run: |
+          test "$GITHUB_REF" = refs/heads/codex/trainer-dashboard-web
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html src/athlete-health.js
+          if ! git diff --cached --quiet; then
+            git commit -m 'Materialize tested Trainer Dashboard web workspace'
+            git push origin HEAD:refs/heads/codex/trainer-dashboard-web
+          fi
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: trainer-dashboard-results
+          path: validation/trainer-dashboard*
+  verify:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NODE_PATH: ${{ github.workspace }}/.ci/node_modules
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - run: npm ci --prefix .ci --ignore-scripts --no-audit --no-fund
+      - run: python3 scripts/prepare-trainer-dashboard.py --check
+      - run: .ci/node_modules/.bin/playwright install --with-deps chromium
+      - run: node tests/trainer-dashboard-browser.cjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: trainer-dashboard-pr-results
+          path: validation/trainer-dashboard*

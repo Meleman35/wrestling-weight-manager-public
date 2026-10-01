@@ -1,0 +1,16 @@
+#homeTab.wm-trainer-home > :not(#trainerDashboardPanel){display:none!important}
+#trainerDashboardPanel{min-width:0;max-width:900px;margin:auto;padding-bottom:18px}
+#trainerDashboardPanel .trainer-heading{display:flex;justify-content:space-between;align-items:start;gap:10px;margin-bottom:18px}
+#trainerDashboardPanel h2{font-size:27px;margin:3px 0 8px;line-height:1.15}
+#trainerDashboardPanel .trainer-team-choice{margin-bottom:18px}
+#trainerDashboardPanel select{width:100%;min-height:44px}
+#trainerDashboardPanel .trainer-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
+#trainerDashboardPanel .trainer-metric{display:flex;flex-direction:column;align-items:start;text-align:left;gap:8px;padding:18px 12px;min-height:104px;white-space:normal;background:var(--card,#172338);color:var(--text,#f3f6fc);border:1px solid var(--border,#405069);border-radius:16px}
+#trainerDashboardPanel .trainer-metric strong{font-size:30px;line-height:1}
+#trainerDashboardPanel .trainer-metric span{font-size:14px;line-height:1.35}
+#trainerDashboardPanel .trainer-links{display:grid;gap:10px;margin:20px 0 8px}
+#trainerDashboardPanel button{min-height:44px;white-space:normal}
+#trainerDashboardPanel .fine{line-height:1.5}
+#trainerHomeEntry{margin-bottom:16px}
+#healthFilter{min-height:44px;width:100%;margin:0 0 12px}
+@media(min-width:700px){#trainerDashboardPanel .trainer-metrics{grid-template-columns:repeat(4,minmax(0,1fr))}}
