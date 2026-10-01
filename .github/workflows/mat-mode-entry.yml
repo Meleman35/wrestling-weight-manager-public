@@ -1,0 +1,37 @@
+name: Mat Mode entry regression
+on:
+  pull_request:
+    paths:
+      - index.html
+      - mat-mode.html
+      - sw.js
+      - src/mat-mode-entry.js
+      - src/tournaments.js
+      - scripts/patch-mat-mode-entry.py
+      - tests/mat-mode-entry-browser.cjs
+      - tests/browser-fixture.js
+      - .github/workflows/mat-mode-entry.yml
+permissions:
+  contents: read
+jobs:
+  mat-entry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      NODE_PATH: ${{ github.workspace }}/.ci/node_modules
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - run: npm ci --prefix .ci --ignore-scripts --no-audit --no-fund
+      - run: python3 scripts/patch-mat-mode-entry.py --check
+      - run: .ci/node_modules/.bin/playwright install --with-deps chromium
+      - run: node tests/mat-mode-entry-browser.cjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: mat-mode-entry-results
+          path: validation/mat-mode-entry-browser.json
