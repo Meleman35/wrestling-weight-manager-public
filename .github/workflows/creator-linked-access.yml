@@ -1,0 +1,114 @@
+name: Linked Creator workspace verification
+on:
+  push:
+    branches: [codex/creator-linked-access]
+    paths:
+      - scripts/prepare-creator-linked-access.py
+      - scripts/prepare-linked-creator-release.py
+      - scripts/patch-creator-protocol-test.py
+      - tests/creator-linked-access-db.mjs
+      - tests/creator-linked-access-browser.cjs
+      - .github/workflows/creator-linked-access.yml
+  pull_request:
+    paths:
+      - index.html
+      - src/creator-offers.*
+      - src/creator-role-preview.js
+      - supabase/creator-linked-access.sql
+      - scripts/prepare-creator-linked-access.py
+      - scripts/prepare-linked-creator-release.py
+      - scripts/patch-creator-protocol-test.py
+      - scripts/scoped-deletion-policy.json
+      - tests/creator-linked-*
+      - tests/account-deletion-phone-browser.cjs
+      - .github/workflows/creator-linked-access.yml
+permissions:
+  contents: read
+concurrency:
+  group: linked-creator-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  prepare:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/codex/creator-linked-access'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      NODE_PATH: ${{ github.workspace }}/.ci/node_modules
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - name: Reconcile reviewed released trainer and role-preview source
+        run: |
+          test "$GITHUB_REF" = refs/heads/codex/creator-linked-access
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = 468ff24ba7b6de8fe63721d56686174196e5b290
+          git merge --no-edit 468ff24ba7b6de8fe63721d56686174196e5b290
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - run: npm ci --prefix .ci --ignore-scripts --no-audit --no-fund
+      - run: python3 scripts/prepare-creator-linked-access.py && python3 scripts/patch-creator-protocol-test.py && python3 scripts/prepare-linked-creator-release.py
+      - run: python3 scripts/prepare-creator-linked-access.py --check && python3 scripts/patch-creator-protocol-test.py --check && python3 scripts/prepare-linked-creator-release.py --check && python3 scripts/prepare-trainer-dashboard.py --check
+      - run: node --check src/creator-offers.js && node --check src/creator-role-preview.js && node tests/creator-offers-db.mjs && node tests/creator-offers-compatibility.mjs && node tests/creator-linked-access-db.mjs && node tests/creator-linked-access-compatibility.mjs
+      - run: node tests/athlete-health-db.mjs && node tests/practice-plans-db.mjs && node tests/scoped-deletion-plan.mjs && node tests/scoped-deletion-service.mjs && node tests/scoped-deletion-handler.mjs
+      - run: .ci/node_modules/.bin/playwright install --with-deps chromium
+      - name: Select installed Chromium
+        run: node -e 'process.stdout.write("CHROMIUM_EXECUTABLE_PATH="+require("playwright").chromium.executablePath()+"\n")' >> "$GITHUB_ENV"
+      - run: node tests/creator-offers-browser.cjs && node tests/creator-linked-access-browser.cjs && node tests/creator-linked-release-browser.cjs && node tests/creator-role-preview-browser.cjs && node tests/trainer-dashboard-browser.cjs && node tests/athlete-health-browser.cjs
+      - run: node tests/account-deletion-phone-browser.cjs && node tests/account-deletion-scoped-browser.cjs && node tests/account-deletion-native-browser.cjs
+      - name: Generate migration filename using pinned Supabase CLI, without any project connection
+        run: |
+          if ! compgen -G 'supabase/migrations/*_creator_linked_access_020114.sql' > /dev/null; then
+            npx --yes supabase@2.81.3 --help >/dev/null
+            npx --yes supabase@2.81.3 migration new --help
+            npx --yes supabase@2.81.3 migration new creator_linked_access_020114
+            python3 -c "from pathlib import Path; p,=Path('supabase/migrations').glob('*_creator_linked_access_020114.sql'); p.write_text(Path('supabase/creator-linked-access.sql').read_text()); print(p)"
+          fi
+      - name: Save verified sources on this development branch only
+        run: |
+          test "$GITHUB_REF" = refs/heads/codex/creator-linked-access
+          git add index.html sw.js src/creator-offers.js src/creator-role-preview.js supabase/creator-linked-access.sql scripts/scoped-deletion-policy.json tests/creator-linked-access-compatibility.mjs tests/creator-linked-release-browser.cjs tests/account-deletion-phone-browser.cjs supabase/migrations/*_creator_linked_access_020114.sql
+          if ! git diff --cached --quiet; then
+            git commit -m 'Reconcile verified linked Creator dashboard with web 0.20.114'
+          fi
+          git push origin HEAD:refs/heads/codex/creator-linked-access
+      - name: Package reviewed public source for deployment verification
+        if: success()
+        run: |
+          mkdir -p validation
+          git archive --format=zip -o validation/creator-linked-release-source.zip HEAD
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: linked-creator-results
+          path: |
+            validation/creator-*
+            validation/account-deletion-*.json
+  verify:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NODE_PATH: ${{ github.workspace }}/.ci/node_modules
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - run: npm ci --prefix .ci --ignore-scripts --no-audit --no-fund
+      - run: python3 scripts/prepare-creator-linked-access.py --check && python3 scripts/patch-creator-protocol-test.py --check && python3 scripts/prepare-linked-creator-release.py --check
+      - run: node tests/creator-linked-access-db.mjs && node tests/creator-linked-access-compatibility.mjs
+      - run: .ci/node_modules/.bin/playwright install --with-deps chromium
+      - run: node tests/creator-linked-access-browser.cjs && node tests/creator-linked-release-browser.cjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: linked-creator-pr-results
+          path: validation/creator-linked*

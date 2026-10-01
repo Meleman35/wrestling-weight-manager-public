@@ -15,7 +15,7 @@
  function syncEntries(){entries(unlocked()&&navigator.onLine&&(!$p('creatorOffersBtn').classList.contains('hidden')||!$p('creatorHomePanel').classList.contains('hidden')))}
  function dispose(){frame?.remove();frame=null;$p('creatorRolePreviewMount').replaceChildren()}
  function close(){epoch++;owner='';checking=false;lastCheck=0;dispose();$p('creatorRolePreviewStatus').textContent='';show(sheet.id,false);recoverInteractionLayer()}
- function exit(){const target=opener;closeSheets();if(target?.isConnected&&!target.classList.contains('hidden'))target.focus()}
+ function exit(){const target=opener,returnToDashboard=target?.id==='creatorDashboardRolePreviewBtn'&&owner===context()&&unlocked()&&navigator.onLine;closeSheets();if(returnToDashboard){void window.WMCreatorOffers?.open();return}if(target?.isConnected&&!target.classList.contains('hidden'))target.focus()}
  async function authorize(g){
   const {data,error}=await client.rpc('creator_offers_request',{p_action:'access',p_data:{client:'creator-linked-v1'}});
   if(!current(g))return false;

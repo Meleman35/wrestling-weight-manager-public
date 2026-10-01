@@ -1,0 +1,67 @@
+const fs=require('fs'),assert=require('node:assert/strict'),{chromium}=require('playwright');
+(async()=>{
+ const browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage']}),ctx=await browser.newContext({viewport:{width:390,height:844}}),p=await ctx.newPage(),errors=[];
+ p.on('pageerror',e=>errors.push(e.message));fs.mkdirSync('validation',{recursive:true});
+ await ctx.addInitScript({content:fs.readFileSync('tests/browser-fixture.js','utf8')});
+ await p.route('**/*',r=>r.request().isNavigationRequest()?r.fulfill({contentType:'text/html',body:fs.readFileSync('index.html','utf8')}):r.request().url().includes('supabase-js')?r.fulfill({contentType:'text/javascript',body:''}):r.abort());
+ await p.goto('https://wm.example.test/');await p.waitForFunction(()=>window.wrestlingManagerSignInReady&&!accountRefreshFlight);
+ await p.evaluate(()=>{
+  session=fixture.session={user:{id:'linked-personal',email:'linked@example.test'}};managedLogin=null;
+  activeTeam={id:'team-fixture',name:'Unchanged Team'};activeSeason={id:'season-fixture'};availableTeams=[activeTeam];
+  actualIsStaff=isStaff=true;actualIsTeamAdmin=isTeamAdmin=false;actualCanWeighIn=canWeighIn=false;
+  show('authView',false);show('setupView',false);show('appView',true);show('appLockOverlay',false);setTab('more');
+  window.linkTest={allowed:true,mode:'team',delay:0,calls:[],offers:[],events:[],trial:{requested:true,revision:1}};
+  const old=client.rpc;client.rpc=async(name,args)=>{
+   if(name!=='creator_offers_request')return old(name,args);
+   linkTest.calls.push(structuredClone(args));const permitted=linkTest.allowed,mode=linkTest.mode;
+   if(linkTest.delay)await new Promise(r=>setTimeout(r,linkTest.delay));
+   if(args.p_action==='access')return {data:{creator:permitted,home_mode:permitted?mode:null}};
+   if(!permitted)return {error:{code:'42501',message:'Creator access removed'}};
+   if(args.p_action==='dashboard')return {data:{creator:true,home_mode:mode,workspace_shared:true,offers:linkTest.offers,events:linkTest.events,trial:linkTest.trial,billing_connected:false}};
+   if(args.p_action==='create'){linkTest.offers.push({...args.p_data,status:'draft',revision:1});return {data:{saved:true}}}
+   return {error:{message:'Unexpected test operation'}};
+  };
+  window.teamBefore=JSON.stringify([activeTeam,activeSeason,availableTeams,actualIsStaff,isStaff,actualIsTeamAdmin,isTeamAdmin,canWeighIn]);
+ });
+ assert.equal(await p.evaluate(()=>WMCreatorOffers.showHome()),false);
+ assert.equal(await p.evaluate(()=>JSON.stringify([activeTeam,activeSeason,availableTeams,actualIsStaff,isStaff,actualIsTeamAdmin,isTeamAdmin,canWeighIn])===teamBefore),true);
+ assert.equal(await p.locator('#creatorHomePanel').isVisible(),false);assert.equal(await p.locator('#appView').isVisible(),true);
+ assert.equal(await p.evaluate(()=>fixture.writes.length),0);console.log('PASS Linked personal login keeps its team, season, roles and ordinary landing page');
+ await p.locator('#creatorDashboardMoreBtn').click();await p.waitForSelector('#creatorNewOffer');
+ assert.equal(await p.locator('#creatorReturnToTeam').isVisible(),true);assert.match(await p.locator('#creatorTitle').innerText(),/Creator Dashboard/);
+ for(const width of [320,390,768]){await p.setViewportSize({width,height:844});assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1))}
+ await p.setViewportSize({width:390,height:844});await p.screenshot({path:'validation/creator-linked-dashboard-phone.png'});
+ await p.locator('#creatorNewOffer').click();await p.locator('#creatorCode').fill('SHARED20');await p.locator('#creatorDraftSave').click();await p.waitForSelector('[data-creator-edit]');
+ assert.equal(await p.evaluate(()=>linkTest.calls.every(c=>c.p_data.client==='creator-linked-v1')),true);
+ await p.locator('#creatorReturnToTeam').click();assert.equal(await p.locator('#creatorOfferBody').innerText(),'');
+ assert.equal(await p.evaluate(()=>JSON.stringify([activeTeam,activeSeason,availableTeams,actualIsStaff,isStaff,actualIsTeamAdmin,isTeamAdmin,canWeighIn])===teamBefore),true);
+ assert.equal(await p.evaluate(()=>session.user.id),'linked-personal');assert.equal(await p.locator('#sheetBackdrop').isVisible(),false);
+ console.log('PASS More shortcut opens shared tools and Return to Team preserves the same signed-in account without changing permissions');
+ await p.evaluate(()=>{linkTest.allowed=false;return WMCreatorOffers.refreshAccess()});assert.equal(await p.locator('#creatorDashboardMoreBtn').isVisible(),false);
+ await p.evaluate(()=>WMCreatorOffers.open());await p.waitForSelector('#creatorOffersSheet.hidden',{state:'attached'});assert.equal(await p.locator('#creatorOfferBody').innerText(),'');
+ console.log('PASS Removed access hides both shortcuts and denies direct dashboard entry');
+ await p.evaluate(()=>{linkTest.allowed=true;linkTest.delay=600;WMCreatorOffers.open()});
+ await p.evaluate(()=>{session=fixture.session={user:{id:'unprivileged'}};linkTest.allowed=false});await p.waitForTimeout(950);
+ assert.equal(await p.locator('#creatorOfferBody').innerText(),'');console.log('PASS Late responses cannot populate another account with shared Creator data');
+ await p.evaluate(()=>{session=fixture.session={user:{id:'linked-personal'}};linkTest.allowed=true;linkTest.delay=0;return WMCreatorOffers.open()});await p.waitForSelector('#creatorNewOffer');
+ await p.locator('#creatorDashboardRolePreviewBtn').click();
+ await p.waitForSelector('#creatorRolePreviewFrame');
+ const demo=p.frameLocator('#creatorRolePreviewFrame');
+ await demo.locator('#demoRole').selectOption('trainer');
+ assert.equal(await p.evaluate(()=>session.user.id),'linked-personal');
+ assert.equal(await p.evaluate(()=>JSON.stringify([activeTeam,activeSeason,availableTeams,actualIsStaff,isStaff,actualIsTeamAdmin,isTeamAdmin,canWeighIn])===teamBefore),true);
+ const content=await p.locator('#creatorRolePreviewFrame').getAttribute('srcdoc');
+ assert(!content.includes('linked-personal'));assert(!content.includes('team-fixture'));
+ assert.equal(await p.evaluate(()=>fixture.writes.length),0);
+ await p.screenshot({path:'validation/creator-linked-role-preview-phone.png'});
+ await p.locator('#creatorRolePreviewClose').click();
+ await p.waitForSelector('#creatorNewOffer');
+ assert.equal(await p.locator('#creatorRolePreviewFrame').count(),0);
+ assert.equal(await p.locator('#creatorReturnToTeam').isVisible(),true);
+ assert.equal(await p.evaluate(()=>session.user.id),'linked-personal');
+ await p.screenshot({path:'validation/creator-linked-complete-dashboard-phone.png'});
+ console.log('PASS Personal login opens fictional role previews from Creator and returns to the same dashboard without changing team context');
+ await ctx.setOffline(true);await p.waitForSelector('#creatorOffersSheet.hidden',{state:'attached'});assert.equal(await p.locator('#creatorOfferBody').innerText(),'');
+ console.log('PASS Going offline clears the dashboard without signing out or deleting team data');
+ assert.deepEqual(errors,[]);await browser.close();
+})().catch(e=>{console.error(e);process.exit(1)});
