@@ -1,3 +1,4 @@
+/* Trainer Dashboard filters v1. */
 /* Private team health records. No localStorage, offline queue or public media URLs. */
 (() => {
  const $h=id=>document.getElementById(id),escape=esc;
@@ -6,14 +7,14 @@
  const sheet=document.createElement('section');sheet.id='athleteHealthSheet';sheet.className='sheet hidden';sheet.setAttribute('aria-modal','true');sheet.setAttribute('role','dialog');sheet.setAttribute('aria-labelledby','healthTitle');
  sheet.innerHTML='<div class="sheet-handle"></div><div class="sheet-head"><div><div class="eyebrow">TEAM TRAINER</div><h2 id="healthTitle">Athlete Health</h2><p id="healthSubtitle" class="muted"></p></div><button id="healthClose" class="icon-close" aria-label="Close Athlete Health">×</button></div><div id="healthStatus" class="fine" role="status"></div><div id="healthBody"></div>';
  document.body.append(sheet);
- let epoch=0,owner='',state=null,selected=null,busy=false,lastCheck=0,checking=false,urls=[];
+ let rosterFilter='all',epoch=0,owner='',state=null,selected=null,busy=false,lastCheck=0,checking=false,urls=[];
  const actor=()=>session?.user?.id&&activeTeam?.id&&!managedLogin&&!document.body.classList.contains('kiosk-locked')&&!document.querySelector('#appLockOverlay:not(.hidden)')?session.user.id+'/'+activeTeam.id:'';
  const active=g=>g===epoch&&owner&&owner===actor()&&!sheet.classList.contains('hidden')&&navigator.onLine;
  const today=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10)};
  const date=d=>d?new Date(d+'T12:00:00').toLocaleDateString():'—';
  const note=(s,error=false)=>{$h('healthStatus').textContent=s;$h('healthStatus').classList.toggle('error',error)};
  const release=()=>{urls.forEach(u=>URL.revokeObjectURL(u));urls=[]};
- function reset(){epoch++;owner='';state=null;selected=null;busy=false;release();$h('healthBody').replaceChildren();note('')}
+ function reset(){epoch++;rosterFilter='all';owner='';state=null;selected=null;busy=false;release();$h('healthBody').replaceChildren();note('')}
  function close(){reset();show(sheet.id,false);recoverInteractionLayer()}
  $h('healthClose').onclick=()=>closeSheets();
  async function call(action,data={},g=epoch){
@@ -39,10 +40,10 @@
   selected=null;release();note('Loading…');const data=await call('dashboard',{},g);if(!active(g))return;
   state=data;lastCheck=Date.now();render();note('');
  }
- async function open(){
+ async function open(options={}){
   if(!actor()){message('Sign in to your personal account first.',true);return;}
   if(!navigator.onLine){message('Athlete Health needs an internet connection.',true);return;}
-  reset();owner=actor();$h('healthSubtitle').textContent=activeTeam.name;openSheet(sheet.id);const g=epoch;
+  reset();rosterFilter=['all','awaiting','restricted','due','baseline'].includes(options?.filter)?options.filter:'all';owner=actor();$h('healthSubtitle').textContent=activeTeam.name;openSheet(sheet.id);const g=epoch;
   try{await load(g)}catch(e){if(active(g))note(e.message,true)}
  }
  function render(){
@@ -51,16 +52,17 @@
   $h('healthBody').innerHTML=`<p class="fine">${trainers?'Trainer: '+trainers:'Your team administrator can assign a Team Trainer in People & Roles.'}</p>
    ${state.assigned_trainer&&!state.trainer?'<div class="health-card"><h3>Accept trainer access</h3><p>Confirm you are an adult authorized by this school or team to handle athlete health information and record decisions within your professional role.</p><label class="toggle-row"><span>I accept this responsibility.</span><input id="healthAcceptCheck" type="checkbox"></label><button id="healthAccept" type="button" disabled>Accept Team Trainer Role</button></div>':''}
    <div class="health-year"><b>School year ${date(state.school_year_start)}–${date(nextYear(state.school_year_start))}</b><span>${state.baseline_required?'Baseline required before participation':'Baseline tracking optional for this team'}</span></div>
-   <div class="health-toolbar"><input id="healthSearch" aria-label="Find an athlete" placeholder="Find an athlete"><button type="button" id="healthReload" class="secondary">Refresh</button></div><div id="healthRoster"></div>
+   <div class="health-toolbar"><input id="healthSearch" aria-label="Find an athlete" placeholder="Find an athlete"><button type="button" id="healthReload" class="secondary">Refresh</button></div>${state.trainer?'<label for="healthFilter">Show athletes</label><select id="healthFilter"><option value="all">All athletes</option><option value="awaiting">Awaiting trainer review</option><option value="restricted">Recorded activity restrictions</option><option value="due">Reviews due</option><option value="baseline">Missing required baselines</option></select>':''}<div id="healthRoster"></div>
    ${state.admin?`<details class="health-card"><summary>School-year settings</summary><label for="healthYearStart">School-year start</label><input id="healthYearStart" type="date" value="${escape(state.school_year_start)}"><label class="toggle-row"><span>Require a baseline before sports</span><input id="healthRequired" type="checkbox" ${state.baseline_required?'checked':''}></label><button type="button" id="healthSaveSettings">Save Settings</button></details>`:''}
    <details class="health-help"><summary>Testing, clearance and privacy</summary><p>Testing happens in Sway or your school’s testing provider. The trainer verifies its completion here. Baseline completion does not clear an injury. Follow the trainer’s current instructions and your school’s required release process.</p><p>Coaches see participation updates and their own submissions. Private notes and photos are available to accepted trainers and the connected family with permission. Health records are available online only.</p><p>For an urgent concern, contact your trainer or emergency services directly. This inbox is not monitored continuously.</p><a href="https://www.swaymedical.com/sports" target="_blank" rel="noopener noreferrer">About Sway testing ↗</a></details>`;
+  if(!state.trainer)rosterFilter='all';if($h('healthFilter')){$h('healthFilter').value=rosterFilter;$h('healthFilter').onchange=()=>{rosterFilter=$h('healthFilter').value;renderRoster()}}
   $h('healthSearch').oninput=renderRoster;$h('healthReload').onclick=()=>load().catch(e=>note(e.message,true));renderRoster();
   if($h('healthAccept')){$h('healthAcceptCheck').onchange=()=>$h('healthAccept').disabled=!$h('healthAcceptCheck').checked;$h('healthAccept').onclick=e=>save(e.currentTarget,async g=>{await call('accept_trainer',{acknowledgement:'trainer-v1'},g);await load(g)})}
   if(state.admin)$h('healthSaveSettings').onclick=e=>save(e.currentTarget,async g=>{await call('settings',{school_year_start:$h('healthYearStart').value,baseline_required:$h('healthRequired').checked},g);await load(g)});
  }
  function nextYear(v){const d=new Date(v+'T12:00:00');d.setFullYear(d.getFullYear()+1);d.setDate(d.getDate()-1);return d.toISOString().slice(0,10)}
  function renderRoster(){
-  const q=$h('healthSearch').value.trim().toLowerCase(),rows=state.athletes.filter(a=>a.name.toLowerCase().includes(q));
+  const q=$h('healthSearch').value.trim().toLowerCase(),rows=state.athletes.filter(a=>a.name.toLowerCase().includes(q)&&(!state.trainer||!window.WMTrainerDashboard||window.WMTrainerDashboard.matches(a,rosterFilter,today(),state.baseline_required)));
   $h('healthRoster').innerHTML=rows.length?rows.map(a=>{const r=readiness(a);return `<article class="health-card"><div class="health-person"><b>${escape(a.name)}</b><span class="health-badge ${r.attention?'health-attention':''}">${escape(r.text)}</span></div><p class="fine">${a.baseline?'Sway / provider: '+escape(a.baseline.provider)+' · completed '+date(a.baseline.completed_on):'No verified baseline for this school year.'}</p><div class="health-actions"><button type="button" data-health-athlete="${escape(a.id)}">Open Health Record</button>${state.trainer?`<button type="button" class="secondary" data-health-baseline="${escape(a.id)}">${a.baseline?'Review':'Verify'} Baseline</button>`:''}</div></article>`}).join(''):'<p class="empty-card">No athletes available to this account.</p>';
   sheet.querySelectorAll('[data-health-athlete]').forEach(b=>b.onclick=()=>athlete(b.dataset.healthAthlete));
   sheet.querySelectorAll('[data-health-baseline]').forEach(b=>b.onclick=()=>baseline(b.dataset.healthBaseline));
