@@ -16843,7 +16843,7 @@ window.WMAthleteMerge=(()=>{
   const link=document.createElement('a');link.href=url;link.download=file.mime==='application/pdf'?'provider-release.pdf':'private-health-photo.jpg';link.textContent=file.mime==='application/pdf'?'Open / save private release':'Save private photo';box.append(link);
  }
  function sync(){
-  const button=$h('athleteHealthBtn'),visible=!!actor()&&(!isManager||staffMembership?.permissions?.staff_role==='team_trainer'||isStaff);if(button&&button.classList.contains('hidden')===visible){show(button.id,visible);window.WMClipboard?.sync()}
+  const button=$h('athleteHealthBtn'),visible=!!actor()&&(!isManager||staffMembership?.permissions?.staff_role==='team_trainer'||isStaff||currentTeamMemberships.some(m=>m.active!==false&&['parent_guardian','athlete'].includes(m.role)));if(button&&button.classList.contains('hidden')===visible){show(button.id,visible);window.WMClipboard?.sync()}
   if(owner&&(owner!==actor()||!navigator.onLine||sheet.classList.contains('hidden'))){close()}
  }
  setInterval(sync,500);window.addEventListener('offline',close);document.addEventListener('visibilitychange',()=>{if(document.hidden)close()});
