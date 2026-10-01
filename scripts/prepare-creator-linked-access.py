@@ -86,7 +86,7 @@ if not s.startswith(marker):
     s=replace(s,"$c('creatorOffersBtn').onclick=open;", """$c('creatorOffersBtn').textContent='Creator Dashboard';
  const more=document.createElement('button');more.type='button';more.id='creatorDashboardMoreBtn';more.className='menu-row hidden';
  more.innerHTML='<span>⚙️</span><div><b>Creator Dashboard</b><small>Shared app management workspace</small></div><i>›</i>';
- $c('accountBtn').after(more);more.onclick=open;
+ $c('moreTab').querySelector('.toolbox-title').after(more);more.onclick=open;
  $c('creatorReturnToTeam').onclick=()=>closeSheets();
  $c('creatorOffersBtn').onclick=open;""")
     s=replace(s,"if(u!==lastActor){lastActor=u;hideAccess();close()}", "if(u!==lastActor){lastActor=u;hideAccess();close();if(u&&navigator.onLine)void refreshAccess()}")
