@@ -71,7 +71,11 @@ const root=path.resolve(__dirname,'..'),passed=[],pass=s=>{passed.push(s);consol
  assert.match(await page.locator('#deletionConfirmDialog').innerText(),/last administrator/);
  await input.fill('delete');await page.evaluate(()=>{const s=document.getElementById('deletionScopeType');s.value='personal';s.dispatchEvent(new Event('change'));});
  assert.equal(await page.locator('#deletionConfirmDialog').count(),0);
- assert.equal(await page.evaluate(()=>fixture.calls.length),rpcCount+1); // reopening the account sheet refreshed once
+ // Reopening checks both read-only account capabilities. Scope selections and
+ // unavailable deletion confirmations must still issue no mutation request.
+ const reopenedCalls=await page.evaluate(n=>fixture.calls.slice(n),rpcCount);
+ assert.deepEqual(reopenedCalls.map(c=>c.name).sort(),['account_deletion_scope_preflight','creator_offers_request']);
+ assert.deepEqual(reopenedCalls.find(c=>c.name==='creator_offers_request').args,{p_action:'access',p_data:{}});
  assert.equal(await page.evaluate(()=>fixture.writes.length),0);
  pass('Four separate scopes require a specific workspace, preserve other people’s profiles, explain inherited access and clear confirmation on scope changes');
  const allRPCCount=await page.evaluate(()=>fixture.calls.length);
