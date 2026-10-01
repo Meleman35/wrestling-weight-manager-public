@@ -25,7 +25,7 @@ window.WMDeletionPhoneTest=(()=>{
   card.addEventListener('toggle',()=>{if(!card?.open)closeConfirmation();});
   document.getElementById('signOutBtn').after(card);return card;
  }
- function heading(box,actions){box.append(element('summary','Account deletion'));box.append(element('p',actions?.personal===true?'Deletion is enabled for this test account in Safari. Review the selected scope carefully. Shared or unsupported records stop the request before erasure.':actions?.administrator===true?'You can remove administrator access. Personal account, team, organization and Delete all deletion are not available yet.':'Deletion is not available yet. You can review your stored data and preview the confirmation below.','fine'));}
+ function heading(box,actions){const native=!!window.webkit?.messageHandlers?.wmAccountDeletion;box.append(element('summary','Account deletion'));box.append(element('p',actions?.personal===true?'Deletion is enabled for this test account'+(native?' in this app. The app will confirm your account and check its saved files before starting.':' in Safari.')+' Review the selected scope carefully. Shared or unsupported records stop the request before erasure.':actions?.administrator===true?'You can remove administrator access. Personal account, team, organization and Delete all deletion are not available yet.':'Deletion is not available yet. You can review your stored data and preview the confirmation below.','fine'));}
  function refreshButton(box){const b=element('button','Refresh stored data','secondary wide');b.type='button';b.onclick=()=>refresh();box.append(b);}
  function confirmation(opener,choice,scopes,actions){
   if(!admitted||!actor()||!visible()||!card?.contains(opener))return;
