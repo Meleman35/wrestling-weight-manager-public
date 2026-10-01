@@ -24,7 +24,7 @@
     "private.profile_family_access", "private.profile_family_events", "private.profile_approval_requests", "private.profile_approval_preferences",
     "public.athlete_chat_permissions", "private.bulletin_parent_choices", "private.team_goal_settings", "private.athlete_team_goals", "private.athlete_goal_profile_sharing",
     "private.team_social_profiles", "private.team_social_follows", "private.team_photo_uploads", "public.team_communication_settings",
-    "private.invitation_email_attempts"
+    "private.invitation_email_attempts", "private.creator_accounts", "private.creator_offer_drafts", "private.creator_offer_events"
   ],
   "deleteUserEdges": [
     "public.profiles.id", "private.wrestling_profiles.user_id", "private.account_deletion_phone_testers.user_id", "private.account_admin_removal_receipts.actor_id",
@@ -39,6 +39,7 @@
     "private.notification_badge_sync_state.user_id", "private.offline_operations.user_id", "private.app_feedback.user_id",
     "private.event_repeat_batches.created_by", "private.event_series_edits.actor", "public.audit_log.actor_user_id",
     "private.profile_family_access.created_by", "private.profile_family_access.recipient",
+    "private.creator_accounts.user_id", "private.creator_offer_drafts.created_by", "private.creator_offer_events.actor_id",
     "private.invitation_email_attempts.requested_by", "private.profile_team_follows.requested_by"
   ],
   "nullUserEdges": [
