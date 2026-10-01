@@ -5,17 +5,17 @@
  const $c=id=>document.getElementById(id);
  const plans={team_pro_year:'Team Pro · annual',team_pro_month:'Team Pro · monthly',family_video_year:'Family Video · annual',family_video_month:'Family Video · monthly',college_pro_year:'College Pro · annual',college_pro_month:'College Pro · monthly'};
  const sheet=document.createElement('section');sheet.id='creatorOffersSheet';sheet.className='sheet hidden';sheet.setAttribute('role','dialog');sheet.setAttribute('aria-modal','true');sheet.setAttribute('aria-labelledby','creatorTitle');
- sheet.innerHTML='<div class="sheet-handle"></div><div class="sheet-head"><div><div class="eyebrow">APP CREATOR</div><h2 id="creatorTitle">Creator Dashboard</h2></div><button type="button" class="icon-close" id="creatorClose" aria-label="Close Creator">×</button></div><button id="creatorReturnToTeam" type="button" class="secondary hidden">‹ Return to Team</button><div id="creatorOfferStatus" role="status"></div><div id="creatorOfferBody"></div>';
+ sheet.innerHTML='<div class="sheet-handle"></div><div class="sheet-head"><div><div class="eyebrow">APP CREATOR</div><h2 id="creatorTitle">Creator Dashboard</h2></div><button type="button" class="icon-close" id="creatorClose" aria-label="Close Creator">×</button></div><button id="creatorReturnToTeam" type="button" class="secondary hidden">‹ Return to Team</button><button id="creatorDashboardRolePreviewBtn" type="button" class="wide secondary hidden">Explore Role Views · Demo</button><div id="creatorOfferStatus" role="status"></div><div id="creatorOfferBody"></div>';
  document.body.append(sheet);
  const home=document.createElement('section');home.id='creatorHomePanel';home.className='hidden';home.setAttribute('aria-labelledby','creatorHomeTitle');
  home.innerHTML='<div class="brand-lockup compact"><div class="brand-mark">WM</div><div><div class="eyebrow">APP MANAGEMENT</div><h1 id="creatorHomeTitle">Creator</h1></div></div><div class="card"><p id="creatorHomeEmail" class="muted"></p><h2>Your app workspace</h2><p>Manage discounts and trial settings here. No team or organization is required.</p><button id="creatorHomeOffersBtn" type="button" class="wide">Offers &amp; Trial</button><p class="fine">Discounts and customer trials are awaiting billing setup.</p></div><div class="card creator-home-actions"><button id="creatorHomeSecurityBtn" type="button" class="wide secondary">Sign-In &amp; Security</button><button id="creatorHomeAccountBtn" type="button" class="wide secondary">My Account</button><button id="creatorHomeCheckBtn" type="button" class="wide secondary">Refresh Access</button><button id="creatorHomeSignOutBtn" type="button" class="wide secondary">Sign Out</button><p id="creatorHomeStatus" class="fine" role="status"></p></div>';
  $c('setupView').prepend(home);
  let accessMode='',generation=0,owner='',data=null,busy=false,accessGeneration=0,checking=false,lastCheck=0,homeOwner='',homeGeneration=0;
  const identity=()=>session?.user?.id&&!managedLogin?session.user.id:'';
- const actor=()=>identity()&&!document.body.classList.contains('kiosk-locked')&&!document.querySelector('#appLockOverlay:not(.hidden)')?identity():'';
+ const actor=()=>identity()&&!document.hidden&&!document.body.classList.contains('kiosk-locked')&&!document.querySelector('#appLockOverlay:not(.hidden)')?identity():'';
  const active=g=>g===generation&&owner&&owner===actor()&&!sheet.classList.contains('hidden')&&navigator.onLine;
  const status=(s,error=false)=>{$c('creatorOfferStatus').textContent=s;$c('creatorOfferStatus').classList.toggle('error',error)};
- function close(){generation++;owner='';data=null;busy=false;checking=false;$c('creatorOfferBody').replaceChildren();show('creatorReturnToTeam',false);status('');show(sheet.id,false);recoverInteractionLayer()}
+ function close(){generation++;owner='';data=null;busy=false;checking=false;$c('creatorOfferBody').replaceChildren();show('creatorReturnToTeam',false);show('creatorDashboardRolePreviewBtn',false);status('');show(sheet.id,false);recoverInteractionLayer()}
  function hideAccess(){accessGeneration++;accessMode='';show('creatorOffersBtn',false);show('creatorDashboardMoreBtn',false)}
  async function refreshAccess(){
   hideAccess();const g=accessGeneration,u=actor();lastActor=actor();if(!u||!navigator.onLine)return false;
@@ -53,6 +53,7 @@
  }
  function render(){
   show('creatorReturnToTeam',data.home_mode==='team'||accessMode==='team');
+  show('creatorDashboardRolePreviewBtn',!!window.WMCreatorRolePreview);
   $c('creatorOfferBody').innerHTML=`<p class="creator-note"><b>Prepare your launch offers.</b><br>Billing is not connected yet. These drafts cannot be redeemed or unlock paid features.</p>
    <section class="creator-card"><h3>7-day full-feature trial</h3><span class="creator-tag">Awaiting billing setup</span><p>Team Pro access for 7 days, with the plan’s normal limits and account permissions.</p><label class="creator-switch"><span>Offer this trial at launch</span><input id="creatorTrialWanted" type="checkbox" ${data.trial.requested?'checked':''}></label><p class="creator-fine">Apple trial eligibility and the price after the trial must be shown at checkout before the customer agrees. Saving this setting does not start a trial or charge anyone.</p><button id="creatorTrialSave" type="button" class="secondary">Save Trial Setting</button></section>
    <div class="creator-actions"><button id="creatorNewOffer" type="button">Prepare Discount Code</button><button id="creatorRefresh" type="button" class="secondary">Refresh</button></div>
@@ -83,6 +84,7 @@
  more.innerHTML='<span>⚙️</span><div><b>Creator Dashboard</b><small>Shared app management workspace</small></div><i>›</i>';
  $c('moreTab').querySelector('.toolbox-title').after(more);more.onclick=open;
  $c('creatorReturnToTeam').onclick=()=>closeSheets();
+ $c('creatorDashboardRolePreviewBtn').onclick=()=>window.WMCreatorRolePreview?.open();
  $c('creatorOffersBtn').onclick=open;$c('creatorClose').onclick=()=>closeSheets();$c('creatorHomeOffersBtn').onclick=open;
  $c('creatorHomeSecurityBtn').onclick=()=>{if(actor()===homeOwner)openSecuritySheet()};
  $c('creatorHomeAccountBtn').onclick=()=>{if(actor()===homeOwner)openAccountSheet()};
