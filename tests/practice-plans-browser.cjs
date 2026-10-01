@@ -30,7 +30,7 @@ const fs=require('fs'),assert=require('node:assert/strict'),{chromium}=require('
   };
  });
  p.on('dialog',d=>d.accept());
- await p.evaluate(()=>WMPracticePlans.open());await p.waitForSelector('#ppSample');assert.equal(await p.locator('#ppNew').count(),0);assert.equal(await p.evaluate(()=>practiceTest.calls.some(c=>c.p_action!=='context')),false);
+ await p.evaluate(()=>{WMPracticePlans.sync();setTab('more')});await p.locator('[data-clipboard-category="practice"]').click();await p.locator('[data-clipboard-tool="practicePlansBtn"]').click();await p.waitForSelector('#ppSample');assert.equal(await p.locator('#ppNew').count(),0);assert.equal(await p.evaluate(()=>practiceTest.calls.some(c=>c.p_action!=='context')),false);
  await p.locator('#ppSample').click();assert.match(await p.locator('#ppBody').innerText(),/Fictional practice/);assert.equal(await p.locator('#ppSave').count(),0);await p.screenshot({path:'validation/practice-plans-paid-preview.png'});
  console.log('PASS Free coaches see a labeled sample with no real reads, editor, or save controls');
  await p.evaluate(()=>{practiceTest.covered=true;return WMPracticePlans.open('event')});await p.waitForSelector('#ppTitle');assert.equal(await p.locator('#ppDate').inputValue(),'2026-10-01');assert.equal(await p.locator('#ppStart').inputValue(),'15:30');assert.equal(await p.locator('#ppTarget').inputValue(),'90');
