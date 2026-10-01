@@ -8807,8 +8807,8 @@ async function openAccountSheet(){
   const url=await accountPhotoUrl(profile?.photo_path);
   $('accountProfilePhotoBox').innerHTML=url?`<img class="staff-profile-photo" src="${esc(url)}" alt="Account profile photo">`:'👤';
   show('editStaffProfileBtn',!!activeTeam&&(isStaff||isTeamAdmin));
-  openSheet('accountSheet');
   void window.WMCreatorOffers?.refreshAccess();
+  openSheet('accountSheet');
   void window.WMDeletionPhoneTest?.refresh();
 }
 
