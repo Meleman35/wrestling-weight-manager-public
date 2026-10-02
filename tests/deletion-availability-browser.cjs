@@ -1,7 +1,8 @@
 'use strict';
 // Extend, rather than replace, the full synthetic account-deletion UI suite.
 let source=require('node:fs').readFileSync('tests/account-deletion-phone-browser.cjs','utf8');
-const marker=" await page.evaluate(()=>openAccountSheet());await page.locator('#deletionPhoneTestCard').waitFor();";
+// Anchor to the end of initial fixture setup; the later reopen stays untouched.
+const marker="\n });\n await page.evaluate(()=>openAccountSheet());await page.locator('#deletionPhoneTestCard').waitFor();";
 if(source.split(marker).length!==2)throw Error('Account fixture entry changed');
 const checks=`
  await page.evaluate(()=>{fixture.originalPreflight=structuredClone(fixture.preflight);fixture.preflight={enabled:false};fixture.holdPreflight=true;});
@@ -47,5 +48,5 @@ const checks=`
  assert.equal(await page.evaluate(()=>fixture.calls.some(c=>c.name==='scoped_deletion_begin'||c.name==='account_remove_my_admin_access')),false);
  await page.evaluate(()=>{fixture.holdPreflight=false;fixture.preflight=structuredClone(fixture.originalPreflight);WMDeletionPhoneTest.reset();closeSheets();});
 `;
-source=source.replace(marker,checks+'\n'+marker).replace('validation/account-deletion-phone-browser.json','validation/deletion-availability-browser.json');
+source=source.replace(marker,'\n });\n'+checks+'\n'+marker.slice('\n });\n'.length)).replace('validation/account-deletion-phone-browser.json','validation/deletion-availability-browser.json');
 eval(source);
