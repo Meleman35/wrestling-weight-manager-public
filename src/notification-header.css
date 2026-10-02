@@ -12,6 +12,6 @@
 .app-header #roleNotificationsBtn:focus-visible{outline:3px solid currentColor;outline-offset:2px}
 .app-header #roleNotificationsBtn .team-unread-badge{
  top:-3px;right:-3px;min-width:20px;height:20px;padding:1px 4px;
- font-size:10px;line-height:1;border-width:2px;pointer-events:none;
+ font-size:10px;line-height:1;border-width:2px;
 }
 .app-header #profileBtn{flex:0 0 44px}
