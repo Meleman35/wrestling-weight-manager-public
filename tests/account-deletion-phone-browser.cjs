@@ -15,7 +15,7 @@ const root=path.resolve(__dirname,'..'),passed=[],pass=s=>{passed.push(s);consol
   const rpc=client.rpc.bind(client);client.rpc=(name,args)=>{if(name!=='account_deletion_scope_preflight')return rpc(name,args);fixture.calls.push({name,args});const result=structuredClone({data:fixture.preflight,error:fixture.preflightError?{message:'private backend details'}:null});return fixture.holdPreflight?new Promise(resolve=>{fixture.releasePreflight=()=>resolve(result);}):Promise.resolve(result);};
  });
  await page.evaluate(()=>openAccountSheet());await page.locator('#deletionPhoneTestCard').waitFor();
- assert.equal(await page.locator('#deletionPhoneTestCard').evaluate(e=>e.tagName==='DETAILS'&&!e.open&&e.previousElementSibling.id==='signOutBtn'),true);
+ assert.equal(await page.locator('#deletionPhoneTestCard').evaluate(e=>e.tagName==='DETAILS'&&!e.open&&e.nextElementSibling.id==='signOutBtn'),true);
  assert.equal(await page.locator('[data-count="messages"]').isVisible(),false);
  await page.locator('#deletionPhoneTestCard summary').click();
  assert.match(await page.locator('#deletionPhoneTestCard').innerText(),/Deletion is not available yet/);
@@ -23,7 +23,7 @@ const root=path.resolve(__dirname,'..'),passed=[],pass=s=>{passed.push(s);consol
  assert.equal(await page.locator('[data-count="messages"]').innerText(),'2');assert.equal(await page.locator('#deletionPhoneTestCard button').count(),2);
  assert.equal(await page.locator('#deletionPhoneTestCard').evaluate(e=>e.lastElementChild.textContent),'Delete Account');
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
- pass('Account deletion is collapsed at the bottom; expanding shows counts and the final Delete Account button at phone width');
+ pass('Account deletion is collapsed above Sign Out; expanding shows counts and the final Delete Account button at phone width');
  const rpcCount=await page.evaluate(()=>fixture.calls.length);
  await page.getByRole('button',{name:'Delete Account',exact:true}).click();
  const input=page.locator('#deletionConfirmInput'),confirm=page.getByRole('button',{name:'Confirm deletion',exact:true});
@@ -121,12 +121,12 @@ const root=path.resolve(__dirname,'..'),passed=[],pass=s=>{passed.push(s);consol
  await page.evaluate(()=>{fixture.preflight.counts.messages=4;});await page.getByRole('button',{name:'Refresh stored data'}).click();await page.waitForFunction(()=>document.querySelector('[data-count="messages"]').textContent==='4');
  assert.equal(await page.evaluate(()=>fixture.calls.filter(x=>x.name==='account_deletion_scope_preflight').every(x=>x.args===undefined)),true);
  pass('Refresh reads current own-account counts through the argument-free RPC');
- await page.evaluate(()=>{fixture.preflightError=true;});await page.getByRole('button',{name:'Refresh stored data'}).click();await page.getByText('Stored data could not be checked. Reconnect and try again.').waitFor();
+ await page.evaluate(()=>{fixture.preflightError=true;});await page.getByRole('button',{name:'Refresh stored data'}).click();await page.getByText('Account-deletion availability could not be checked. Reconnect and try again. No new deletion request has been started.').waitFor();
  assert.equal(await page.locator('[data-count]').count(),0);assert.ok(!(await page.locator('#deletionPhoneTestCard').innerText()).includes('private backend details'));
  await page.evaluate(()=>{fixture.preflightError=false;fixture.preflight.subject_id='other-person';return WMDeletionPhoneTest.refresh();});assert.equal(await page.locator('[data-count]').count(),0);
  await page.evaluate(()=>{fixture.preflight.subject_id='phone-test';fixture.preflight.scope_version=999;return WMDeletionPhoneTest.refresh();});assert.equal(await page.locator('#deletionScopeType').count(),0);
  await page.evaluate(()=>{fixture.preflight.scope_version=1;});
- await page.evaluate(()=>{fixture.preflight.subject_id='phone-test';fixture.preflight.enabled=false;return WMDeletionPhoneTest.refresh();});assert.equal(await page.locator('#deletionPhoneTestCard').count(),0);
+ await page.evaluate(()=>{fixture.preflight.subject_id='phone-test';fixture.preflight.enabled=false;return WMDeletionPhoneTest.refresh();});assert.equal(await page.locator('#deletionPhoneTestCard').count(),1);assert.equal(await page.locator('[data-count]').count(),0);assert.equal(await page.locator('#deletionScopeType').count(),0);assert.equal(await page.locator('#deletionPhoneTestCard').getAttribute('data-availability'),'unavailable');
  pass('Errors clear old counts; wrong identities and unenrolled accounts cannot display an inventory');
  await page.evaluate(()=>{fixture.preflight.enabled=true;fixture.holdPreflight=true;fixture.pendingPreflight=WMDeletionPhoneTest.refresh();});await page.waitForFunction(()=>!!fixture.releasePreflight);
  await page.evaluate(()=>{session={user:{id:'other-person'},access_token:'other-token'};WMDeletionPhoneTest.reset();fixture.releasePreflight();return fixture.pendingPreflight;});assert.equal(await page.locator('#deletionPhoneTestCard').count(),0);

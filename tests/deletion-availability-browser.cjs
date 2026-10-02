@@ -1,0 +1,52 @@
+'use strict';
+// Extend, rather than replace, the full synthetic account-deletion UI suite.
+let source=require('node:fs').readFileSync('tests/account-deletion-phone-browser.cjs','utf8');
+// Anchor to the end of initial fixture setup; the later reopen stays untouched.
+const marker="\n });\n await page.evaluate(()=>openAccountSheet());await page.locator('#deletionPhoneTestCard').waitFor();";
+if(source.split(marker).length!==2)throw Error('Account fixture entry changed');
+const checks=`
+ await page.evaluate(()=>{fixture.originalPreflight=structuredClone(fixture.preflight);fixture.preflight={enabled:false};fixture.holdPreflight=true;});
+ await page.evaluate(()=>openAccountSheet());await page.waitForFunction(()=>!!fixture.releasePreflight);
+ const availabilityCard=page.locator('#deletionPhoneTestCard');
+ assert.equal(await availabilityCard.getAttribute('data-availability'),'checking');
+ assert.equal(await availabilityCard.evaluate(e=>e.nextElementSibling.id==='signOutBtn'),true);
+ assert.equal(await page.locator('[data-count],#deletionScopeType,#deletionConfirmDialog').count(),0);
+ await page.evaluate(()=>{fixture.releasePreflight();fixture.holdPreflight=false;});
+ await page.waitForFunction(()=>document.getElementById('deletionPhoneTestCard').dataset.availability==='unavailable');
+ await availabilityCard.locator('summary').click();
+ assert.match(await availabilityCard.innerText(),/This beta currently limits deletion/);
+ assert.equal(await page.locator('[data-count],#deletionScopeType,#deletionConfirmDialog').count(),0);
+ assert.equal(await page.getByRole('button',{name:'Delete Account',exact:true}).count(),0);
+ for(const width of [320,390,768]){await page.setViewportSize({width,height:844});await availabilityCard.scrollIntoViewIfNeeded();assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);}
+ await page.setViewportSize({width:390,height:844});
+ await availabilityCard.screenshot({path:'validation/deletion-availability-phone.png'});
+ pass('An unenrolled account sees a findable status above Sign Out, without counts, scope choices or a destructive button');
+ await page.evaluate(()=>{fixture.preflightError=true;});await page.locator('#deletionAvailabilityRetry').click();
+ await page.waitForFunction(()=>document.getElementById('deletionPhoneTestCard').dataset.availability==='error');
+ assert.ok(!(await availabilityCard.innerText()).includes('private backend details'));
+ await page.evaluate(()=>{fixture.preflightError=false;fixture.preflight=null;return WMDeletionPhoneTest.refresh();});
+ assert.equal(await availabilityCard.getAttribute('data-availability'),'error');
+ assert.equal(await page.locator('[data-count],#deletionScopeType,#deletionConfirmDialog').count(),0);
+ pass('Initial RPC errors and malformed replies remain visible and retryable, without exposing backend text or an inventory');
+ await context.setOffline(true);const beforeOffline=await page.evaluate(()=>fixture.calls.length);
+ await page.locator('#deletionAvailabilityRetry').click();await page.waitForFunction(()=>document.getElementById('deletionPhoneTestCard').dataset.availability==='offline');
+ assert.equal(await page.evaluate(()=>fixture.calls.length),beforeOffline);
+ await context.setOffline(false);
+ await page.evaluate(()=>{fixture.preflight=structuredClone(fixture.originalPreflight);});await page.locator('#deletionAvailabilityRetry').click();
+ await page.waitForFunction(()=>document.getElementById('deletionPhoneTestCard').dataset.availability==='ready');
+ assert.equal(await page.locator('[data-count="messages"]').innerText(),'2');
+ pass('Offline availability issues no RPC; reconnect and explicit retry restore only verified current-account data');
+ await page.evaluate(()=>{fixture.holdPreflight=true;fixture.timeoutTest=WMDeletionPhoneTest.refresh();});
+ await page.waitForFunction(()=>document.getElementById('deletionPhoneTestCard').dataset.availability==='checking');
+ assert.equal(await page.locator('[data-count],#deletionScopeType').count(),0);
+ await page.waitForFunction(()=>document.getElementById('deletionPhoneTestCard').dataset.availability==='error',null,{timeout:16000});
+ await page.evaluate(()=>{fixture.releasePreflight();return fixture.timeoutTest;});
+ assert.equal(await availabilityCard.getAttribute('data-availability'),'error');
+ assert.equal(await page.locator('[data-count],#deletionScopeType').count(),0);
+ pass('A hanging availability check times out; old counts clear immediately and a late success cannot restore them');
+ assert.equal(await page.evaluate(()=>fixture.writes.length),0);
+ assert.equal(await page.evaluate(()=>fixture.calls.some(c=>c.name==='scoped_deletion_begin'||c.name==='account_remove_my_admin_access')),false);
+ await page.evaluate(()=>{fixture.holdPreflight=false;fixture.preflight=structuredClone(fixture.originalPreflight);WMDeletionPhoneTest.reset();closeSheets();});
+`;
+source=source.replace(marker,'\n });\n'+checks+'\n'+marker.slice('\n });\n'.length)).replace('validation/account-deletion-phone-browser.json','validation/deletion-availability-browser.json');
+eval(source);
