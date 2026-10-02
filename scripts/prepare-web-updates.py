@@ -16,7 +16,8 @@ if 'id="wm-web-updates"' in html:
 else:
  assert html.count('</body>')==1
  html=html.replace('</body>',script+'\n</body>')
-put('index.html',html.replace('0.20.118','0.20.119'))
+html=html.replace('0.20.118','0.20.119')
+put('index.html',html)
 put('sw.js',(root/'sw.js').read_text().replace('0.20.118','0.20.119'))
 for path in ['scripts/prepare-linked-creator-release.py','scripts/prepare-launch-information.py','scripts/prepare-notification-header.py']:
  text=(root/path).read_text()
