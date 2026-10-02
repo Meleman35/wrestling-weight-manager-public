@@ -54,6 +54,6 @@ for script in ['patch-creator-offers.py','patch-creator-role-preview.py']:
  subprocess.run([sys.executable,str(root/'scripts'/script)]+(['--check'] if check else []),check=True,cwd=root)
 for path in ['index.html','sw.js']:
  s=(root/path).read_text()
- assert any(v in s for v in ('0.20.113','0.20.114','0.20.115','0.20.116')),'Unexpected release version: '+path
+ assert any(v in s for v in ('0.20.113','0.20.114','0.20.115','0.20.116','0.20.117')),'Unexpected release version: '+path
  put(path,s.replace('0.20.113','0.20.114').replace('Creator role previews with fictional, isolated account views.','Shared Creator dashboard with personal-login access and fictional role previews.'))
 print('PASS Linked Creator release embeds previews and keeps web/service-worker version paired')
