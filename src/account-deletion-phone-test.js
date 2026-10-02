@@ -1,4 +1,4 @@
-/* Enrolled deletion choices. Each action requires its own server capability. */
+/* Visible deletion availability. Each action still requires its own server capability. */
 window.WMDeletionPhoneTest=(()=>{
  'use strict';
  const fields=[['account_photos','Account profile photos'],['wrestling_profile_photos','Wrestling profile photos'],['messages','Messages sent'],['message_attachments','Message attachments uploaded'],['team_posts','Team posts written'],['post_attachments','Attachments on those posts'],['uploaded_objects','Stored files uploaded'],['teams','Team memberships'],['teams_needing_handoff','Teams needing an administrator handoff'],['guardian_links','Guardian links'],['organization_roles','Organization roles']];
@@ -23,7 +23,7 @@ window.WMDeletionPhoneTest=(()=>{
   if(card)return card;
   card=element('details',null,'feature-card');card.id='deletionPhoneTestCard';
   card.addEventListener('toggle',()=>{if(!card?.open)closeConfirmation();});
-  document.getElementById('signOutBtn').after(card);return card;
+  document.getElementById('signOutBtn').before(card);return card;
  }
  function heading(box,actions){const native=!!window.webkit?.messageHandlers?.wmAccountDeletion;box.append(element('summary','Account deletion'));box.append(element('p',actions?.personal===true?'Deletion is enabled for this test account'+(native?' in this app. The app will confirm your account and check its saved files before starting.':' in Safari.')+' Review the selected scope carefully. Shared or unsupported records stop the request before erasure.':actions?.administrator===true?'You can remove administrator access. Personal account, team, organization and Delete all deletion are not available yet.':'Deletion is not available yet. You can review your stored data and preview the confirmation below.','fine'));}
  function refreshButton(box){const b=element('button','Refresh stored data','secondary wide');b.type='button';b.onclick=()=>refresh();box.append(b);}
@@ -156,19 +156,40 @@ window.WMDeletionPhoneTest=(()=>{
    teams.every(x=>base(x)&&typeof x.direct_admin==='boolean'&&typeof x.inherited_admin==='boolean'&&(x.direct_admin||x.inherited_admin))&&
    orgs.every(x=>base(x)&&Number.isSafeInteger(x.team_count)&&x.team_count>=0&&Number.isSafeInteger(x.athlete_count)&&x.athlete_count>=0);
  }
+ // Showing an entry is not authorization. Counts and actions require a fresh,
+ // validated current-account response; unavailable/error states have neither.
+ function availability(status, text, retry=true){
+  admitted=false;const box=mount();box.replaceChildren();
+  box.dataset.availability=status;
+  box.append(element('summary','Account deletion'));
+  const message=element('p',text,'fine');message.id='deletionAvailabilityStatus';
+  message.setAttribute('role','status');message.setAttribute('aria-live','polite');box.append(message);
+  if(retry){const button=element('button','Check availability again','secondary wide');
+   button.id='deletionAvailabilityRetry';button.type='button';button.onclick=()=>refresh();box.append(button);}
+  return box;
+ }
+ async function preflight(){
+  let timer;
+  try{return await Promise.race([
+   client.rpc('account_deletion_scope_preflight'),
+   new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('unavailable')),12000);})
+  ]);}finally{clearTimeout(timer);}
+ }
  async function refresh(){
   const uid=actor();if(!uid||!visible()){reset();return;}
   closeConfirmation();const g=++epoch,token=session.access_token;
   const valid=()=>epoch===g&&actor()===uid&&session?.access_token===token&&visible();
-  const wasAdmitted=admitted;
-  if(wasAdmitted){const box=mount();box.replaceChildren();heading(box);box.append(element('p','Checking stored data…','fine'));}
+  availability('checking','Checking account-deletion availability…',false);
+  if(!navigator.onLine){availability('offline','Connect to the internet to check account deletion. No new deletion request has been started.');return;}
   try{
-   const {data,error}=await client.rpc('account_deletion_scope_preflight');
+   const {data,error}=await preflight();
    if(!valid())return;
    if(error)throw Error('unavailable');
-   if(data?.enabled!==true){reset();return;}
-   if(typeof data.deletion_enabled!=='boolean'||!validScopes(data)||data.subject_id!==uid||!Number.isFinite(Date.parse(data.checked_at))||fields.some(([key])=>!Number.isSafeInteger(data.counts?.[key])||data.counts[key]<0))throw Error('invalid response');
-   admitted=true;const box=mount();box.replaceChildren();heading(box,data.actions);
+   if(data?.enabled===false){
+    availability('unavailable','Account deletion is not available for this session. This beta currently limits deletion to approved test accounts. No new deletion request has been started.');return;
+   }
+   if(data?.enabled!==true||typeof data.deletion_enabled!=='boolean'||!validScopes(data)||data.subject_id!==uid||!Number.isFinite(Date.parse(data.checked_at))||fields.some(([key])=>!Number.isSafeInteger(data.counts?.[key])||data.counts[key]<0))throw Error('invalid response');
+   admitted=true;const box=mount();box.dataset.availability='ready';box.replaceChildren();heading(box,data.actions);
    box.append(element('h3','Your personal account data'));box.append(element('p','These counts belong to your personal account. Choose the action below after reviewing them.','fine'));
    const list=element('dl');list.style.cssText='display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 16px;margin:16px 0';
    for(const [key,label] of fields){list.append(element('dt',label));const n=element('dd',String(data.counts[key]));n.style.margin='0';n.dataset.count=key;list.append(n);}box.append(list);
@@ -178,8 +199,7 @@ window.WMDeletionPhoneTest=(()=>{
    scopeChoices(box,data.scopes,data.actions);
   }catch{
    if(!valid())return;
-   if(!wasAdmitted){reset();return;}
-   const box=mount();box.replaceChildren();heading(box);box.append(element('p','Stored data could not be checked. Reconnect and try again.','fine'));refreshButton(box);
+   availability('error','Account-deletion availability could not be checked. Reconnect and try again. No new deletion request has been started.');
   }
  }
  // Clear account data immediately, before asynchronous auth/UI refreshes.
