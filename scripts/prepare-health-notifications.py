@@ -77,7 +77,13 @@ compat=(root/'supabase/creator-offers-compatibility.sql').read_text().replace('2
 guard="""-- HELD: in-app health notices and role-aware composer. Not push/email/SMS.
 -- A coordinated web release and fresh source/advisor review are required.
 begin;
+lock table public.communication_notifications,private.health_updates in share row exclusive mode;
 do $$begin
+ if not exists(select 1 from pg_proc where oid='private.athlete_health_request(text,jsonb)'::regprocedure
+  and encode(sha256(convert_to(prosrc,'UTF8')),'hex')='1ebc7e3c0121f8ed763fa017b8ef8bd50dee5ea1c264e19c32b8b3bdfe180a8c')
+ then raise exception 'Care router changed; review the function before deployment';end if;
+ if not exists(select 1 from pg_class where oid='public.communication_notifications'::regclass and relrowsecurity)
+ then raise exception 'Notification RLS is required';end if;
  if private.scoped_deletion_schema_hash()<>'EXPECTED_HASH'
  or not exists(select 1 from private.scoped_deletion_config where id and catalog_hash=private.scoped_deletion_schema_hash())
  then raise exception 'Care notifications require a fresh schema compatibility review';end if;

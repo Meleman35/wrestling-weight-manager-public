@@ -1,7 +1,13 @@
 -- HELD: in-app health notices and role-aware composer. Not push/email/SMS.
 -- A coordinated web release and fresh source/advisor review are required.
 begin;
+lock table public.communication_notifications,private.health_updates in share row exclusive mode;
 do $$begin
+ if not exists(select 1 from pg_proc where oid='private.athlete_health_request(text,jsonb)'::regprocedure
+  and encode(sha256(convert_to(prosrc,'UTF8')),'hex')='1ebc7e3c0121f8ed763fa017b8ef8bd50dee5ea1c264e19c32b8b3bdfe180a8c')
+ then raise exception 'Care router changed; review the function before deployment';end if;
+ if not exists(select 1 from pg_class where oid='public.communication_notifications'::regclass and relrowsecurity)
+ then raise exception 'Notification RLS is required';end if;
  if private.scoped_deletion_schema_hash()<>'73d4ab1a9cf488dc3a0112e1895813cab8698e46335e7f64a9a94d28f1597246'
  or not exists(select 1 from private.scoped_deletion_config where id and catalog_hash=private.scoped_deletion_schema_hash())
  then raise exception 'Care notifications require a fresh schema compatibility review';end if;
@@ -112,6 +118,17 @@ create or replace function public.notification_badge_count_for_delivery(p_user_i
 $$;
 revoke all on function public.notification_badge_count_for_delivery(uuid) from public,anon,authenticated;
 grant execute on function public.notification_badge_count_for_delivery(uuid) to service_role;
+
+-- LEGACY-CARE-NOTICE-GUARD: current access also applies to the old inbox RPC.
+do $guard$declare source text;begin
+ if not exists(select 1 from pg_proc where oid=to_regprocedure('public.get_communication_notifications(uuid,integer)')
+  and encode(sha256(convert_to(prosrc,'UTF8')),'hex')='6317d5b9f00335bd944e4a9b5e1e57be6853c1ad18b6bede63f2b9de5d9e8d52')
+ then raise exception 'Legacy notification router changed; review before deployment';end if;
+ source:=pg_get_functiondef('public.get_communication_notifications(uuid,integer)'::regprocedure);
+ if position(' order by n.created_at desc' in source)=0 then raise exception 'Unexpected legacy inbox ordering';end if;
+ execute replace(source,' order by n.created_at desc',
+  ' and (n.health_update_id is null or private.health_notification_readable(n.health_update_id)) order by n.created_at desc');
+end $guard$;
 
 create or replace function private.athlete_health_request(p_action text,p_data jsonb default '{}') returns jsonb language plpgsql security definer set search_path='' as $$
 declare u uuid=private.health_actor();t uuid; a uuid;org uuid;c private.health_cases%rowtype;f private.health_files%rowtype;

@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.115: Updated beta privacy and support guidance; native and billing access unchanged. -->
+<!-- Wrestling Manager v0.20.116: Trainer-directed care updates and in-app notification destinations. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -2377,7 +2377,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.115</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.116</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -12143,7 +12143,10 @@ document.getElementById('organizationHomeBtn').onclick=()=>WMOperations.open(sel
 <p>Keep passwords, sign-in codes, medical documents and children's private information out of your initial support message.</p>
 <p><a href="./privacy.html" data-wm-info="privacy">Read the current privacy information →</a></p>
 <h2>Concern about a team communication?</h2>
-<p>Use the app's reporting tools where available and contact your team or organization's designated safety contact. For an app access or privacy problem, email support. Support is not an emergency service; contact emergency services for immediate danger.</p></template><template id="wmPrivacyTemplate"><p class="wm-doc-kicker">THE TEAM MANAGER · WRESTLING</p>
+<p>Use the app's reporting tools where available and contact your team or organization's designated safety contact. For an app access or privacy problem, email support. Support is not an emergency service; contact emergency services for immediate danger.</p><h2>Care updates and notifications</h2>
+<p>Open <strong>Toolbox → Athlete Health</strong>, or the assigned trainer’s <strong>Trainer Dashboard</strong>. Trainers choose <strong>Send to Parents / Guardians</strong> for a private update or <strong>Send to Parents &amp; Coaches</strong> for a shared participation update. Other permitted senders use <strong>Send to Team Trainer</strong>. Family and trainer authorization still controls visibility; general conversation reviewers do not gain clinical access.</p>
+<p>Use <strong>Notifications</strong> in the header, Board Room or Athlete Health. Unread titles are marked in bold red and also labeled Unread. Open a care notice to go directly to its concern and highlighted update. Notices are created for new activity only; previously saved notes are not resent. A saved update with no other authorized recipients is not a delivery failure. Do not repeatedly create a concern while waiting for an alert. Health notices are in-app only in this release, not email, text or lock-screen alert delivery. Urgent concerns require direct contact.</p>
+</template><template id="wmPrivacyTemplate"><p class="wm-doc-kicker">THE TEAM MANAGER · WRESTLING</p>
 <h1>Privacy information</h1>
 <p class="wm-doc-lead">How Wrestling Manager handles information in the current beta.</p>
 <aside class="wm-doc-note"><strong>Beta privacy information · Updated October 1, 2026</strong><p>This page describes current beta handling. Final release disclosures, retention schedules and younger-athlete enrollment safeguards remain under review. Native account deletion is in a limited, build-dependent test pilot; it is not generally enabled.</p></aside>
@@ -12173,6 +12176,7 @@ document.getElementById('organizationHomeBtn').onclick=()=>WMOperations.open(sel
 <h2>Team Trainer and Athlete Health</h2>
 <p>Assigned adult trainers who accept the responsibility can record baseline completion, participation restrictions and authorized clearance. Testing happens in Sway or the school’s provider; this version does not retrieve Sway scores or make medical decisions. Coaches see baseline completion, participation updates and their own submissions. Private care notes and photos are limited to accepted team trainers, authorized connected family and the submitting account.</p>
 <p>Connected guardians can approve health updates for athletes aged 13–17, with a separate photo/document choice, and withdraw permission in the health record. General profile or messaging approval does not grant this permission. Younger athletes use the parent or trainer submission path. The app records permission changes, trainer verification, decisions and record/file access. Clinical records are not available offline; downloaded copies cannot be recalled. Protected medical records require review before account deletion or athlete merging. Contact support for correction, access or retention questions.</p>
+<p>New care updates, participation decisions and completed private attachments create generic in-app notices for other currently authorized recipients. Notices contain no clinical note, diagnosis, photo or athlete name; opening one checks your current access and goes to the specific concern/update. The trainer chooses a private family/care update or an explicitly coach-shared participation update. Earlier private notes and attachments are not made public by a later shared update. Reading a notice is not a care decision. This release does not send health-specific lock-screen alert pushes, email or SMS. Existing device badge synchronization may include eligible unread care notices; a badge is not proof an alert was delivered. Urgent concerns require direct contact.</p>
 <h2>Services that handle information</h2>
 <ul><li><strong>Supabase</strong> handles accounts, the database, stored files and backend processing.</li>
 <li><strong>GitHub Pages</strong> delivers the web app, including its bundled client library. Requests to hosting services include technical information such as an IP address. This disclosure does not establish the retention period of hosting logs.</li>

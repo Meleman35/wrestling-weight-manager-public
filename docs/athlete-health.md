@@ -1,6 +1,6 @@
 # Team Trainer and Athlete Health
 
-Team administrators can invite an adult as **Team Trainer**, or assign that role to an existing adult under **People & Roles**. The trainer signs in with their personal account, opens **Forms & Health → Athlete Health**, and accepts the responsibility. This role does not grant coaching, weight-history, or administrator permissions. Other existing operational permissions remain separate.
+Team administrators can invite an adult as **Team Trainer**, or assign that role to an existing adult under **People & Roles**. The trainer signs in with their personal account, opens **Toolbox → Athlete Health**, and accepts the responsibility. This role does not grant coaching, weight-history, or administrator permissions. Other existing operational permissions remain separate.
 
 ## School-year baselines
 
@@ -16,7 +16,7 @@ Coaches, accepted trainers, connected guardians, and permitted athletes can subm
 
 To record clearance, the trainer names the authorizing provider, enters a return date, and confirms the school's required release process is complete. Concussion clearance also requires an uploaded written provider release. The app records an authorized decision; it does not verify clinical credentials, diagnose photos, prescribe care, or independently determine medical clearance.
 
-The trainer can send a private update to the connected family or share a participation update with coaches and family. Coaches see baseline completion, participation status/instructions, shared updates and their own submissions. Private care notes and uploaded files are available to accepted team trainers, authorized connected family, and the submitting account. The general conversation-reviewer role grants no clinical access. Use **Refresh Updates** to fetch new replies. This release has no health-specific push or email alerts; urgent issues require direct contact.
+The trainer can send a private update to the connected family or share a participation update with coaches and family. Coaches see baseline completion, participation status/instructions, shared updates and their own submissions. Private care notes and uploaded files are available to accepted team trainers, authorized connected family, and the submitting account. The general conversation-reviewer role grants no clinical access. Use **Refresh Updates** to fetch new replies. New authorized care activity creates generic in-app notifications that open the exact concern/update. Trainers choose Send to Parents / Guardians or Send to Parents & Coaches; earlier private notes stay private. The sender is excluded and current access is rechecked before showing a notice or its destination. This release has no health-specific lock-screen alert push, email or SMS delivery; urgent issues require direct contact. Native badge synchronization is not alert delivery.
 
 ## Family permission and files
 

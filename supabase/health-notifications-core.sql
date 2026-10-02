@@ -102,3 +102,14 @@ create or replace function public.notification_badge_count_for_delivery(p_user_i
 $$;
 revoke all on function public.notification_badge_count_for_delivery(uuid) from public,anon,authenticated;
 grant execute on function public.notification_badge_count_for_delivery(uuid) to service_role;
+
+-- LEGACY-CARE-NOTICE-GUARD: current access also applies to the old inbox RPC.
+do $guard$declare source text;begin
+ if not exists(select 1 from pg_proc where oid=to_regprocedure('public.get_communication_notifications(uuid,integer)')
+  and encode(sha256(convert_to(prosrc,'UTF8')),'hex')='6317d5b9f00335bd944e4a9b5e1e57be6853c1ad18b6bede63f2b9de5d9e8d52')
+ then raise exception 'Legacy notification router changed; review before deployment';end if;
+ source:=pg_get_functiondef('public.get_communication_notifications(uuid,integer)'::regprocedure);
+ if position(' order by n.created_at desc' in source)=0 then raise exception 'Unexpected legacy inbox ordering';end if;
+ execute replace(source,' order by n.created_at desc',
+  ' and (n.health_update_id is null or private.health_notification_readable(n.health_update_id)) order by n.created_at desc');
+end $guard$;
