@@ -58,7 +58,7 @@ jobs:
           test "$GITHUB_REF" = refs/heads/codex/health-update-notifications
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html sw.js support.html privacy.html docs/athlete-health.md src/athlete-health.js src/athlete-health.css src/notification-inbox.js supabase/health-notifications.sql scripts/prepare-health-notifications.py scripts/prepare-linked-creator-release.py scripts/prepare-launch-information.py tests/health-notifications-db.mjs tests/health-notification-fixture.mjs tests/health-notifications-browser.cjs
+          git add index.html sw.js support.html privacy.html docs/athlete-health.md src/athlete-health.js src/athlete-health.css src/notification-inbox.js supabase/health-notifications.sql supabase/health-notifications-core.sql scripts/prepare-health-notifications.py scripts/prepare-linked-creator-release.py scripts/prepare-launch-information.py tests/health-notifications-db.mjs tests/health-notification-fixture.mjs tests/health-notifications-browser.cjs
           if ! git diff --cached --quiet; then
             git commit -m 'Materialize verified 0.20.116 care release; hosted deployment separate'
             git push origin HEAD:refs/heads/codex/health-update-notifications
