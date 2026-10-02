@@ -1,0 +1,17 @@
+/* The notification inbox belongs beside Account, not inside the team switcher. */
+.app-header{gap:8px}
+.app-header #teamSwitcherBtn{padding-right:4px;max-width:none;min-width:0;flex:1 1 auto}
+.app-header #roleNotificationsBtn{
+ position:relative;display:inline-flex;align-items:center;justify-content:center;
+ flex:0 0 44px;width:44px;height:44px;min-width:44px;min-height:44px;
+ padding:0;margin:0;border-radius:50%;box-shadow:none;
+ background:transparent;border:1px solid var(--team-nav-line);
+ color:var(--team-primary-text)!important;
+}
+.app-header #roleNotificationsBtn svg{display:block;flex:none;pointer-events:none}
+.app-header #roleNotificationsBtn:focus-visible{outline:3px solid currentColor;outline-offset:2px}
+.app-header #roleNotificationsBtn .team-unread-badge{
+ top:-3px;right:-3px;min-width:20px;height:20px;padding:1px 4px;
+ font-size:10px;line-height:1;border-width:2px;pointer-events:none;
+}
+.app-header #profileBtn{flex:0 0 44px}
