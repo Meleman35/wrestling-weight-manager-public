@@ -35,7 +35,11 @@ extra="""// RELEASE-PRESERVATION: run only in the isolated synthetic database.
 await admin();
 const {planDeletion}=await import('../scripts/scoped-deletion-plan.mjs');
 const {relation}=await import('./helpers/scoped-deletion-db.mjs');
-const reader={async select(table,predicates,limit){const values=[];const where=predicates.map(p=>'('+Object.entries(p).map(([k,v])=>{values.push(v);return '"'+k+'" is not distinct from $'+values.length}).join(' and ')+')').join(' or ');values.push(limit);return(await db.query('select * from '+relation(table)+' where '+where+' limit $'+values.length,values)).rows}};
+const quote=x=>{if(!/^[a-z_][a-z0-9_]*$/.test(x))throw Error('Invalid fixture identifier');return '"'+x+'"'};
+const reader={
+ async select(table,predicates,limit){const values=[];const where=predicates.map(p=>'('+Object.entries(p).map(([k,v])=>{values.push(v);return quote(k)+' is not distinct from $'+values.length}).join(' and ')+')').join(' or ');values.push(limit);return(await db.query('select * from '+relation(table)+' where '+where+' limit $'+values.length,values)).rows},
+ async identityMentions(table,columns,id,limit){return(await db.query('select * from '+relation(table)+' where '+columns.map(c=>quote(c)+'::text like $1').join(' or ')+' limit $2',['%'+id+'%',limit])).rows}
+};
 const preserved=JSON.stringify((await db.query('select id,case_id,author_id,visibility,body from private.health_updates order by id')).rows);
 const otherNotices=JSON.stringify((await db.query('select id,user_id,health_update_id from public.communication_notifications where user_id<>$1 order by id',[ids.orgAdmin])).rows);
 const recipientPlan=await planDeletion({scope:{actorId:ids.orgAdmin,kind:'personal',teamIds:[],organizationIds:[]},catalog:after.catalog,reader});
@@ -55,7 +59,7 @@ put(p,s)
 # Update both public and embedded disclosures; preserve every other paragraph.
 p='privacy.html';s=(root/p).read_text()
 text='<p>New care updates, participation decisions and completed private attachments create generic in-app notices for other currently authorized recipients. Notices contain no clinical note, diagnosis, photo or athlete name; opening one checks your current access and goes to the specific concern/update. The trainer chooses a private family/care update or an explicitly coach-shared participation update. Earlier private notes and attachments are not made public by a later shared update. Reading a notice is not a care decision. This release does not send health-specific lock-screen alert pushes, email or SMS. Existing device badge synchronization may include eligible unread care notices; a badge is not proof an alert was delivered. Urgent concerns require direct contact.</p>'
-if text not in s:s=change(s,'<h2>Services used</h2>',text+'\n<h2>Services used</h2>')
+if text not in s:s=change(s,'<h2>Services that handle information</h2>',text+'\n<h2>Services that handle information</h2>')
 put(p,s)
 p='support.html';s=(root/p).read_text()
 text='<h2>Care updates and notifications</h2>\n<p>Open <strong>Toolbox → Athlete Health</strong>, or the assigned trainer’s <strong>Trainer Dashboard</strong>. Trainers choose <strong>Send to Parents / Guardians</strong> for a private update or <strong>Send to Parents &amp; Coaches</strong> for a shared participation update. Other permitted senders use <strong>Send to Team Trainer</strong>. Family and trainer authorization still controls visibility; general conversation reviewers do not gain clinical access.</p>\n<p>Use <strong>Notifications</strong> in the header, Board Room or Athlete Health. Unread titles are marked in bold red and also labeled Unread. Open a care notice to go directly to its concern and highlighted update. Notices are created for new activity only; previously saved notes are not resent. A saved update with no other authorized recipients is not a delivery failure. Do not repeatedly create a concern while waiting for an alert. Health notices are in-app only in this release, not email, text or lock-screen alert delivery. Urgent concerns require direct contact.</p>'
