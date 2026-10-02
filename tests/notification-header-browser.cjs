@@ -27,12 +27,14 @@ for(const width of [320,390,430,768]){
 }
 pass('Compact bell preserves team-name space at 320/390/430/768px and keeps its icon after unread refresh, including 99+');
 await p.setViewportSize({width:390,height:844});
+await p.locator('.app-header').screenshot({path:'validation/notification-header-unread-phone.png'});
+await p.evaluate(()=>{healthTest.notices=[];return WMNotificationSync.refresh()});
+await p.locator('.app-header').screenshot({path:'validation/notification-header-phone.png'});
 await p.locator('#roleNotificationsBtn').focus();await p.keyboard.press('Enter');
 assert(await p.locator('#communicationNotificationsSheet').isVisible());assert.equal(await p.locator('#teamSwitcherSheet').isVisible(),false);
 await p.evaluate(()=>closeSheets());await p.locator('#teamSwitcherBtn').click();
 assert(await p.locator('#teamSwitcherSheet').isVisible());assert.equal(await p.locator('#communicationNotificationsSheet').isVisible(),false);
-await p.evaluate(()=>{closeSheets();healthTest.notices=[];return WMNotificationSync.refresh()});
-await p.locator('.app-header').screenshot({path:'validation/notification-header-phone.png'});
+await p.evaluate(()=>closeSheets());
 pass('Bell keyboard action opens only the inbox; team switcher still opens only team selection; no notification or care access rules changed');
 `;
 eval(source.replace(marker,checks+'\n'+marker));
