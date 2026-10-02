@@ -56,7 +56,7 @@ window.WMNotificationSync = (() => {
     const outside=all.filter(r=>r.team_id!==activeTeam?.id).length;
     const header=$n('teamUnreadBadge');header.textContent=display(count);header.classList.toggle('hidden',!count);
     header.setAttribute('aria-label',`${count} unread updates across your teams`);
-    $n('teamSwitcherBtn').setAttribute('aria-label',`Switch team${count?`, ${count} unread updates across your teams`:''}`);
+    $n('teamSwitcherBtn').setAttribute('aria-label','Switch team');
     for(const b of document.querySelectorAll('[data-team-notifications]')){
       const n=available()?(counts.get(b.dataset.teamNotifications)||0):0;
       b.textContent=display(n);b.classList.toggle('hidden',!n);
@@ -69,7 +69,8 @@ window.WMNotificationSync = (() => {
     $n('allTeamNotificationsBtn').textContent=`All notifications${count?' · '+display(count):''}`;
     $n('communicationUnreadCount').textContent=display(count);
     for(const button of document.querySelectorAll('[data-wm-notification-entry]')){
-      button.textContent=`Notifications${count?' · '+display(count):''}`;
+      if(button.id!=='roleNotificationsBtn')button.textContent=`Notifications${count?' · '+display(count):''}`;
+      else button.title=`Notifications, ${count} unread updates`;
       button.classList.toggle('wm-notification-unread',!!count);
       button.setAttribute('aria-label',`Notifications, ${count} unread updates`);
     }
@@ -125,7 +126,18 @@ window.WMNotificationSync = (() => {
   document.addEventListener('visibilitychange',foreground);window.addEventListener('focus',foreground);window.addEventListener('online',foreground);
   setInterval(()=>{if(!document.hidden&&available())refresh();else if(owner!==current())reset();},15000);
   for(const [host,id] of [[$n('profileBtn'),'roleNotificationsBtn'],[$n('opsHubSheet')?.querySelector('.sheet-head > button'),'organizationNotificationsBtn']]){
-    if(!host)continue;const button=document.createElement('button');button.id=id;button.type='button';button.className='secondary';button.dataset.wmNotificationEntry='';button.textContent='Notifications';button.onclick=()=>openInbox();host.before(button);
+    if(!host)continue;const button=document.createElement('button');button.id=id;button.type='button';button.className='secondary';button.dataset.wmNotificationEntry='';button.textContent='Notifications';button.onclick=()=>openInbox();
+    if(id==='roleNotificationsBtn'){
+      button.className='round-btn wm-notification-bell';
+      button.innerHTML='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>';
+      button.setAttribute('aria-label','Notifications, 0 unread updates');
+      button.setAttribute('aria-haspopup','dialog');
+      button.setAttribute('aria-controls','communicationNotificationsSheet');
+      button.title='Notifications';
+      const badge=$n('teamUnreadBadge');
+      if(badge){badge.setAttribute('aria-hidden','true');button.append(badge);}
+    }
+    host.before(button);
   }
   $n('teamUnreadBadge').addEventListener('click',event=>{event.preventDefault();event.stopPropagation();void openInbox()});
   $n('refreshAllNotificationsBtn').onclick=()=>refresh();
