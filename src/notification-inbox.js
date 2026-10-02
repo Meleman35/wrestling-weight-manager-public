@@ -1,3 +1,4 @@
+/* Care notification routes v1. */
 /* One unread inbox across teams; server read state drives every device badge. */
 window.WMNotificationSync = (() => {
   let rows=[],owner='',loading=null,generation=0,badge=null,remoteCount=null,lastRemote=0,remoteBusy=false,retryTimer=null,filterTeam=null;
@@ -67,6 +68,11 @@ window.WMNotificationSync = (() => {
     const other=$n('otherTeamNotificationsBtn');other.classList.toggle('hidden',!outside||!available());other.textContent=`${outside} unread update${outside===1?'':'s'} in other teams · View`;
     $n('allTeamNotificationsBtn').textContent=`All notifications${count?' · '+display(count):''}`;
     $n('communicationUnreadCount').textContent=display(count);
+    for(const button of document.querySelectorAll('[data-wm-notification-entry]')){
+      button.textContent=`Notifications${count?' · '+display(count):''}`;
+      button.classList.toggle('wm-notification-unread',!!count);
+      button.setAttribute('aria-label',`Notifications, ${count} unread updates`);
+    }
     $n('openNotificationsBtn').setAttribute('aria-label',`All notifications, ${count} unread across your teams`);
     $n('markCommunicationNotificationsReadBtn').disabled=!visible.length;
     $n('markCommunicationNotificationsReadBtn').textContent=filterTeam?'Mark this team read':'Mark All Read';
@@ -79,7 +85,7 @@ window.WMNotificationSync = (() => {
       const b=document.createElement('button');b.className='notification-card unread';b.type='button';b.dataset.notificationId=row.id;
       const team=(availableTeams||[]).find(t=>t.id===row.team_id);
       const meta=document.createElement('small');meta.textContent=`${team?.name||'Team update'} · ${String(row.category||'update').replaceAll('_',' ')} · ${fmtDateTime(row.created_at)}`;
-      const title=document.createElement('b');title.textContent=row.title||'Team update';const body=document.createElement('p');body.textContent=row.body||'';b.append(title,body,meta);
+      const title=document.createElement('b');title.textContent=(row.read_at?'':'Unread · ')+(row.title||'Team update');const body=document.createElement('p');body.textContent=row.body||'';b.append(title,body,meta);
       b.onclick=async event=>{event.stopPropagation();try{await open(row);}catch(error){message(error.message||'Could not open this update. Please try again.',true);}};list.append(b);
     }
   }
@@ -103,6 +109,10 @@ window.WMNotificationSync = (() => {
       await activateTeam(row.team_id);
     }
     if(current()!==userId||row.team_id&&activeTeam?.id!==row.team_id)return;
+    if(row.health_update_id){
+      const opened=await window.WMAthleteHealth?.open({notificationId:row.id});
+      if(opened&&current()===userId)await mark([row]);return;
+    }
     if(window.WMJoinSync?.isNotification(row)){await WMJoinSync.openNotification(row);return;}
     if(row.category==='weigh_in'){await openWeighInNotification({...row,notification_id:row.id});return;}
     if(row.category==='sms_reply'){if(await openTextReplies())await mark([row]);return;}
@@ -114,6 +124,10 @@ window.WMNotificationSync = (() => {
   function foreground(){if(!document.hidden)refresh();}
   document.addEventListener('visibilitychange',foreground);window.addEventListener('focus',foreground);window.addEventListener('online',foreground);
   setInterval(()=>{if(!document.hidden&&available())refresh();else if(owner!==current())reset();},15000);
+  for(const [host,id] of [[$n('profileBtn'),'roleNotificationsBtn'],[$n('opsHubSheet')?.querySelector('.sheet-head > button'),'organizationNotificationsBtn']]){
+    if(!host)continue;const button=document.createElement('button');button.id=id;button.type='button';button.className='secondary';button.dataset.wmNotificationEntry='';button.textContent='Notifications';button.onclick=()=>openInbox();host.before(button);
+  }
+  $n('teamUnreadBadge').addEventListener('click',event=>{event.preventDefault();event.stopPropagation();void openInbox()});
   $n('refreshAllNotificationsBtn').onclick=()=>refresh();
   for(const id of ['allTeamNotificationsBtn','otherTeamNotificationsBtn','notificationShowAllBtn'])$n(id).onclick=()=>openInbox();
   return {refresh,render,reset,open:openInbox,markRecords:mark,markAll:()=>mark(rows.filter(r=>!filterTeam||r.team_id===filterTeam)),readChanged:()=>{generation++;loading=null;return refresh();}};
