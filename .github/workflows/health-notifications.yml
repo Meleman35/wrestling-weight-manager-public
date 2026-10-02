@@ -4,6 +4,7 @@ on:
     branches: [codex/health-update-notifications]
     paths:
       - scripts/prepare-health-notification*.py
+      - scripts/finish-health-notification-copy.py
       - supabase/health-notifications-core.sql
       - tests/health-notifications-db.mjs
       - tests/health-notifications-browser-cases.js
@@ -15,6 +16,7 @@ on:
       - src/notification-inbox.js
       - supabase/health-notifications*.sql
       - scripts/prepare-health-notification*.py
+      - scripts/finish-health-notification-copy.py
       - tests/health-notification*
       - .github/workflows/health-notifications.yml
 permissions:
@@ -36,9 +38,11 @@ jobs:
       - run: npm ci --prefix .ci --ignore-scripts --no-audit --no-fund
       - run: |
           python3 scripts/prepare-health-notifications.py
+          python3 scripts/finish-health-notification-copy.py
           python3 scripts/prepare-health-notification-tests.py
           python3 scripts/prepare-health-notification-browser.py
           python3 scripts/prepare-health-notifications.py --check
+          python3 scripts/finish-health-notification-copy.py --check
           python3 scripts/prepare-trainer-dashboard.py --check
           node --check src/athlete-health.js
           node --check src/notification-inbox.js
@@ -68,6 +72,7 @@ jobs:
             supabase/health-notifications.sql
             supabase/health-notifications-core.sql
             scripts/prepare-health-notification*.py
+            scripts/finish-health-notification-copy.py
             tests/health-notification*
   verify:
     if: github.event_name == 'pull_request'
@@ -83,7 +88,7 @@ jobs:
         with:
           node-version: '24'
       - run: npm ci --prefix .ci --ignore-scripts --no-audit --no-fund
-      - run: python3 scripts/prepare-health-notifications.py --check && python3 scripts/prepare-health-notification-tests.py --check && python3 scripts/prepare-health-notification-browser.py --check
+      - run: python3 scripts/prepare-health-notifications.py --check && python3 scripts/finish-health-notification-copy.py --check && python3 scripts/prepare-health-notification-tests.py --check && python3 scripts/prepare-health-notification-browser.py --check
       - run: node tests/health-notifications-db.mjs
       - run: .ci/node_modules/.bin/playwright install --with-deps chromium
       - run: node tests/health-notifications-browser.cjs
