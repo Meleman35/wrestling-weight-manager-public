@@ -54,5 +54,5 @@ for p in ['scripts/prepare-linked-creator-release.py', 'scripts/prepare-launch-i
     s = (root / p).read_text()
     s = s.replace("('0.20.113','0.20.114','0.20.115','0.20.116')", "('0.20.113','0.20.114','0.20.115','0.20.116','0.20.117')")
     put(p, s)
-assert any('Build v'+v in html and 'wm-shell-'+v in (root / 'sw.js').read_text() for v in ('0.20.117','0.20.118'))
+assert any('Build v'+v in html and 'wm-shell-'+v in (root / 'sw.js').read_text() for v in ('0.20.117','0.20.118','0.20.119'))
 print('PASS compact bell source/embedding and paired web version; deletion behavior unchanged')
