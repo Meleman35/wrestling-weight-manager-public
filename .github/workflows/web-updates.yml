@@ -1,0 +1,68 @@
+name: Web update status
+on:
+  push:
+    branches: [codex/web-update-status]
+    paths:
+      - src/web-updates.js
+      - scripts/prepare-web-updates.py
+      - tests/web-updates-browser.cjs
+      - .github/workflows/web-updates.yml
+  pull_request:
+    paths:
+      - index.html
+      - sw.js
+      - src/web-updates.js
+      - scripts/prepare-web-updates.py
+      - tests/web-updates-browser.cjs
+      - .github/workflows/web-updates.yml
+permissions:
+  contents: read
+concurrency:
+  group: web-updates-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      NODE_PATH: ${{ github.workspace }}/.ci/node_modules
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - run: npm ci --prefix .ci --ignore-scripts --no-audit --no-fund
+      - if: github.event_name == 'push'
+        run: python3 scripts/prepare-web-updates.py
+      - run: |
+          python3 scripts/prepare-web-updates.py --check
+          python3 scripts/prepare-deletion-availability.py --check
+          python3 scripts/prepare-notification-header.py --check
+          python3 scripts/prepare-launch-information.py --check
+          python3 scripts/prepare-linked-creator-release.py --check
+          node --check src/web-updates.js
+          git diff --exit-code -- supabase src/account-deletion-phone-test.js src/scoped-deletion-client.js src/account-deletion-device.js src/offline-workspace.js src/offline-store.js src/match-video.js
+      - run: .ci/node_modules/.bin/playwright install --with-deps chromium
+      - run: node tests/web-updates-browser.cjs && node tests/deletion-availability-browser.cjs && node tests/notification-header-browser.cjs
+      - if: github.event_name == 'push'
+        name: Commit verified generated web sources
+        run: |
+          test "$GITHUB_REF" = refs/heads/codex/web-update-status
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html sw.js scripts/prepare-notification-header.py scripts/prepare-launch-information.py scripts/prepare-linked-creator-release.py
+          if ! git diff --cached --quiet; then
+            git commit -m 'Materialize verified web update status 0.20.119'
+            git push origin HEAD:refs/heads/codex/web-update-status
+          fi
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: web-updates-${{ github.event_name }}
+          path: |
+            validation/web-updates*
+            index.html
+            sw.js
+            src/web-updates.js
