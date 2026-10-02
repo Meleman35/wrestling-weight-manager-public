@@ -23,7 +23,11 @@ for path in ['scripts/prepare-linked-creator-release.py','scripts/prepare-launch
  text=(root/path).read_text()
  if "'0.20.119'" not in text:
   assert "'0.20.118'" in text
-  text=text.replace("'0.20.118'","'0.20.118','0.20.119'")
+  if path=='scripts/prepare-deletion-availability.py':
+   old="for v in ('0.20.117','0.20.118'))"
+   assert text.count(old)==1
+   text=text.replace(old,"for v in ('0.20.117','0.20.118','0.20.119'))",1)
+  else: text=text.replace("'0.20.118'","'0.20.118','0.20.119'")
  put(path,text)
 assert 'Build v0.20.119' in html
 assert "const CACHE='wm-shell-0.20.119';" in (root/'sw.js').read_text()
