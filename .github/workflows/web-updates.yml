@@ -52,7 +52,7 @@ jobs:
           test "$GITHUB_REF" = refs/heads/codex/web-update-status
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html sw.js scripts/prepare-notification-header.py scripts/prepare-launch-information.py scripts/prepare-linked-creator-release.py
+          git add index.html sw.js scripts/prepare-notification-header.py scripts/prepare-launch-information.py scripts/prepare-linked-creator-release.py scripts/prepare-deletion-availability.py
           if ! git diff --cached --quiet; then
             git commit -m 'Materialize verified web update status 0.20.119'
             git push origin HEAD:refs/heads/codex/web-update-status

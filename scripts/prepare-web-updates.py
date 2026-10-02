@@ -19,7 +19,7 @@ else:
 html=html.replace('0.20.118','0.20.119')
 put('index.html',html)
 put('sw.js',(root/'sw.js').read_text().replace('0.20.118','0.20.119'))
-for path in ['scripts/prepare-linked-creator-release.py','scripts/prepare-launch-information.py','scripts/prepare-notification-header.py']:
+for path in ['scripts/prepare-linked-creator-release.py','scripts/prepare-launch-information.py','scripts/prepare-notification-header.py','scripts/prepare-deletion-availability.py']:
  text=(root/path).read_text()
  if "'0.20.119'" not in text:
   assert "'0.20.118'" in text
