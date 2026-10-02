@@ -41,7 +41,6 @@ if '-- LEGACY-CARE-NOTICE-GUARD:' not in s:s+=legacy
 put(p,s)
 
 p='tests/health-notifications-db.mjs';s=(root/p).read_text()
-# Provider-independent fixture for the observed old inbox; no actual user session.
 fixture="""// LEGACY-INBOX-FIXTURE: actual router body, synthetic team/weight helpers.
 await db.exec(`
  create function private.communication_user_belongs_to_team(t uuid,u uuid) returns boolean language sql stable security definer set search_path='' as $$select exists(select 1 from public.team_memberships where team_id=t and user_id=u and active) or exists(select 1 from public.organization_memberships m join public.teams t1 on t1.organization_id=m.organization_id where t1.id=t and m.user_id=u and m.role='organization_admin')$$;
@@ -66,6 +65,14 @@ s=change(s,"assert.equal((await open(first.id)).case_id,saved.case_id);", """ass
 assert.equal((await db.query('select * from public.get_communication_notifications($1,$2)',[ids.team,30])).rows[0].id,first.id);""")
 extra="""// RELEASE-PRESERVATION: isolated synthetic database, real deletion planner.
 await admin();
+// The earlier orgAdmin opened a case and therefore owns a protected care-read
+// audit entry. Create a separate recipient who has NEVER read a clinical record.
+const recipientOnly=uuid();
+await db.query("insert into auth.users(id,email,email_confirmed_at) values($1,'recipient-only@example.test',now())",[recipientOnly]);
+await db.query("insert into public.profiles(id,display_name) values($1,'Synthetic notification recipient')",[recipientOnly]);
+await db.query("insert into public.organization_memberships(organization_id,user_id,role) values($1,$2,'organization_admin')",[ids.org,recipientOnly]);
+await as(ids.trainer);await rpc('update',{case_id:sharedCase.case_id,body:'RECIPIENT-ONLY-TEST',request_id:uuid(),visibility:'participation'});
+await admin();
 const {planDeletion}=await import('../scripts/scoped-deletion-plan.mjs');
 const {relation}=await import('./helpers/scoped-deletion-db.mjs');
 const quote=x=>{if(!/^[a-z_][a-z0-9_]*$/.test(x))throw Error('Invalid fixture identifier');return '"'+x+'"'};
@@ -74,21 +81,22 @@ const reader={
  async identityMentions(table,columns,id,limit){return(await db.query('select * from '+relation(table)+' where '+columns.map(c=>quote(c)+'::text like $1').join(' or ')+' limit $2',['%'+id+'%',limit])).rows}
 };
 const preserved=JSON.stringify((await db.query('select id,case_id,author_id,visibility,body from private.health_updates order by id')).rows);
-const otherNotices=JSON.stringify((await db.query('select id,user_id,health_update_id from public.communication_notifications where user_id<>$1 order by id',[ids.orgAdmin])).rows);
-const recipientPlan=await planDeletion({scope:{actorId:ids.orgAdmin,kind:'personal',teamIds:[],organizationIds:[]},catalog:after.catalog,reader});
+const otherNotices=JSON.stringify((await db.query('select id,user_id,health_update_id from public.communication_notifications where user_id<>$1 order by id',[recipientOnly])).rows);
+const recipientPlan=await planDeletion({scope:{actorId:recipientOnly,kind:'personal',teamIds:[],organizationIds:[]},catalog:after.catalog,reader});
 assert(recipientPlan.records.some(r=>r.table==='public.communication_notifications'&&r.action==='delete'));
 assert(!recipientPlan.records.some(r=>r.table.startsWith('private.health_')));
-assert(!recipientPlan.records.some(r=>r.table==='auth.users'&&r.key.id!==ids.orgAdmin));
-assert(recipientPlan.records.filter(r=>r.table==='public.communication_notifications').every(r=>r.row.user_id===ids.orgAdmin));
-await assert.rejects(()=>planDeletion({scope:{actorId:ids.trainer,kind:'personal',teamIds:[],organizationIds:[]},catalog:after.catalog,reader}),e=>e.code==='unreviewed_dependency'&&e.details.table.startsWith('private.health_'));
+assert(!recipientPlan.records.some(r=>r.table==='auth.users'&&r.key.id!==recipientOnly));
+assert(recipientPlan.records.filter(r=>r.table==='public.communication_notifications').every(r=>r.row.user_id===recipientOnly));
+for(const actorId of [ids.trainer,ids.orgAdmin]){
+ await assert.rejects(()=>planDeletion({scope:{actorId,kind:'personal',teamIds:[],organizationIds:[]},catalog:after.catalog,reader}),e=>e.code==='unreviewed_dependency'&&e.details.table.startsWith('private.health_'));
+}
 assert.equal(JSON.stringify((await db.query('select id,case_id,author_id,visibility,body from private.health_updates order by id')).rows),preserved);
-assert.equal(JSON.stringify((await db.query('select id,user_id,health_update_id from public.communication_notifications where user_id<>$1 order by id',[ids.orgAdmin])).rows),otherNotices);
-pass('Actual deletion planner removes recipient-owned notices only; shared care records and other recipients survive; clinical author deletion still requires review');
+assert.equal(JSON.stringify((await db.query('select id,user_id,health_update_id from public.communication_notifications where user_id<>$1 order by id',[recipientOnly])).rows),otherNotices);
+pass('Actual deletion planner removes notification-only recipient data without shared care or other recipients; clinical authors AND readers still require review');
 """
 if '// RELEASE-PRESERVATION:' not in s:s=change(s,"await admin();await db.exec('alter table private.health_cases add column future_unreviewed_field text');",extra+"await admin();await db.exec('alter table private.health_cases add column future_unreviewed_field text');")
 put(p,s)
 
-# Append outside the older generators' contiguous text blocks.
 p='privacy.html';s=(root/p).read_text()
 text='<p>New care updates, participation decisions and completed private attachments create generic in-app notices for other currently authorized recipients. Notices contain no clinical note, diagnosis, photo or athlete name; opening one checks your current access and goes to the specific concern/update. The trainer chooses a private family/care update or an explicitly coach-shared participation update. Earlier private notes and attachments are not made public by a later shared update. Reading a notice is not a care decision. This release does not send health-specific lock-screen alert pushes, email or SMS. Existing device badge synchronization may include eligible unread care notices; a badge is not proof an alert was delivered. Urgent concerns require direct contact.</p>'
 if text not in s:s=change(s,'<h2>Services that handle information</h2>',text+'\n<h2>Services that handle information</h2>')
