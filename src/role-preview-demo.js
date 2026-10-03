@@ -92,6 +92,7 @@
  });
  $('demoRole').onchange=e=>setRole(e.target.value);
  $('demoReset').onclick=()=>{setRole(role);$('demoStatus').textContent='This role’s fictional example has been reset.'};
+ window.addEventListener('message',e=>{if(e.source!==parent||e.data?.type!=='wm-role-preview-back')return;if(page==='home')parent.postMessage({type:'wm-role-preview-close'},'*');else go('home')});
  setRole(role);
 })();
 // The only message leaving the sandbox requests closing its own preview. No payload data.

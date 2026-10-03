@@ -1,7 +1,7 @@
 name: Account layout
 on:
   pull_request:
-    paths: ['index.html', 'src/account-layout.js', 'tests/account-layout-browser.cjs', '.github/workflows/account-layout.yml']
+    paths: ['index.html', 'src/account-layout.js', 'src/athlete-profile-layout.js', 'src/creator-role-preview.js', 'src/creator-offers.js', 'src/role-preview-demo.js', 'tests/account-layout-browser.cjs', '.github/workflows/account-layout.yml']
 permissions:
   contents: read
 jobs:
@@ -19,4 +19,4 @@ jobs:
         if: always()
         with:
           name: account-layout-preview
-          path: validation/account-layout-phone.png
+          path: validation/*layout*phone.png

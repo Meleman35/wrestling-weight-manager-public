@@ -10,7 +10,7 @@
  const home=document.createElement('section');home.id='creatorHomePanel';home.className='hidden';home.setAttribute('aria-labelledby','creatorHomeTitle');
  home.innerHTML='<div class="brand-lockup compact"><div class="brand-mark">WM</div><div><div class="eyebrow">APP MANAGEMENT</div><h1 id="creatorHomeTitle">Creator</h1></div></div><div class="card"><p id="creatorHomeEmail" class="muted"></p><h2>Your app workspace</h2><p>Manage discounts and trial settings here. No team or organization is required.</p><button id="creatorHomeOffersBtn" type="button" class="wide">Offers &amp; Trial</button><p class="fine">Discounts and customer trials are awaiting billing setup.</p></div><div class="card creator-home-actions"><button id="creatorHomeSecurityBtn" type="button" class="wide secondary">Sign-In &amp; Security</button><button id="creatorHomeAccountBtn" type="button" class="wide secondary">My Account</button><button id="creatorHomeCheckBtn" type="button" class="wide secondary">Refresh Access</button><button id="creatorHomeSignOutBtn" type="button" class="wide secondary">Sign Out</button><p id="creatorHomeStatus" class="fine" role="status"></p></div>';
  $c('setupView').prepend(home);
- let accessMode='',generation=0,owner='',data=null,busy=false,accessGeneration=0,checking=false,lastCheck=0,homeOwner='',homeGeneration=0;
+ let returnAccount='',accessMode='',generation=0,owner='',data=null,busy=false,accessGeneration=0,checking=false,lastCheck=0,homeOwner='',homeGeneration=0;
  const identity=()=>session?.user?.id&&!managedLogin?session.user.id:'';
  const actor=()=>identity()&&!document.hidden&&!document.body.classList.contains('kiosk-locked')&&!document.querySelector('#appLockOverlay:not(.hidden)')?identity():'';
  const active=g=>g===generation&&owner&&owner===actor()&&!sheet.classList.contains('hidden')&&navigator.onLine;
@@ -41,9 +41,16 @@
   if(error){if(error.code==='42501'){close();hideAccess()}throw Error(error.message||'Unable to load Creator.')}return out;
  }
  async function load(g){data=await call('dashboard',{},g);if(!active(g))return;lastCheck=Date.now();render();status('')}
- async function open(){
+ function exit(){
+  const account=owner===actor()&&returnAccount===actor()+'|'+(activeTeam?.id||'');
+  closeSheets();if(account)openAccountSheet();
+ }
+ async function open(returnTo){
+  const target=document.activeElement;
+  if(returnTo==='accountSheet'||target?.closest('#accountSheet'))returnAccount=actor()+'|'+(activeTeam?.id||'');
+  else if(returnTo!=='preserve'&&!target?.closest('#creatorRolePreviewSheet'))returnAccount='';
   closeSheets();if(!actor()||!navigator.onLine){message('Sign in with your personal account and reconnect.',true);return}
-  owner=actor();lastActor=owner;const g=++generation;openSheet(sheet.id);status('Checking Creator access…');
+  owner=actor();lastActor=owner;const g=++generation;openSheet(sheet.id);sheet.querySelector('[data-sheet-back]').onclick=exit;status('Checking Creator access…');
   try{await load(g)}catch(e){if(active(g))status(e.message,true);else if(g===generation)message(e.message,true)}
  }
  async function save(button,operation){
@@ -85,7 +92,7 @@
  $c('moreTab').querySelector('.toolbox-title').after(more);more.onclick=open;
  $c('creatorReturnToTeam').onclick=()=>closeSheets();
  $c('creatorDashboardRolePreviewBtn').onclick=()=>window.WMCreatorRolePreview?.open();
- $c('creatorOffersBtn').onclick=open;$c('creatorClose').onclick=()=>closeSheets();$c('creatorHomeOffersBtn').onclick=open;
+ $c('creatorOffersBtn').onclick=open;$c('creatorClose').onclick=exit;$c('creatorHomeOffersBtn').onclick=open;
  $c('creatorHomeSecurityBtn').onclick=()=>{if(actor()===homeOwner)openSecuritySheet()};
  $c('creatorHomeAccountBtn').onclick=()=>{if(actor()===homeOwner)openAccountSheet()};
  $c('creatorHomeSignOutBtn').onclick=signOutCurrentPhone;

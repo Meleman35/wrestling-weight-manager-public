@@ -15,7 +15,14 @@
  function syncEntries(){entries(unlocked()&&navigator.onLine&&(!$p('creatorOffersBtn').classList.contains('hidden')||!$p('creatorHomePanel').classList.contains('hidden')))}
  function dispose(){frame?.remove();frame=null;$p('creatorRolePreviewMount').replaceChildren()}
  function close(){epoch++;owner='';checking=false;lastCheck=0;dispose();$p('creatorRolePreviewStatus').textContent='';show(sheet.id,false);recoverInteractionLayer()}
- function exit(){const target=opener,returnToDashboard=target?.id==='creatorDashboardRolePreviewBtn'&&owner===context()&&unlocked()&&navigator.onLine;closeSheets();if(returnToDashboard){void window.WMCreatorOffers?.open();return}if(target?.isConnected&&!target.classList.contains('hidden'))target.focus()}
+ function exit(toCreator=false){
+  const target=opener,valid=owner===context()&&unlocked()&&navigator.onLine;
+  const dashboard=valid&&(toCreator&&target?.id!=='creatorHomeRolePreviewBtn'||target?.id==='creatorDashboardRolePreviewBtn');
+  const account=valid&&!toCreator&&target?.id==='creatorAccountRolePreviewBtn';
+  closeSheets();if(dashboard){void window.WMCreatorOffers?.open(target?.id==='creatorAccountRolePreviewBtn'?'accountSheet':'preserve');return}if(account){openAccountSheet();return}
+  if(valid&&target?.isConnected&&!target.classList.contains('hidden'))target.focus();
+ }
+ function back(){if(frame&&current(epoch))frame.contentWindow.postMessage({type:'wm-role-preview-back'},'*');else exit();}
  async function authorize(g){
   const {data,error}=await client.rpc('creator_offers_request',{p_action:'access',p_data:{client:'creator-linked-v1'}});
   if(!current(g))return false;
@@ -25,7 +32,7 @@
  async function open(){
   if(!unlocked()||!navigator.onLine){message('Unlock your personal account and reconnect to open Creator previews.',true);return}
   opener=document.activeElement;closeSheets();owner=context();const g=++epoch;
-  openSheet(sheet.id);$p('creatorRolePreviewStatus').textContent='Checking Creator access…';$p('creatorRolePreviewClose').focus();checking=true;
+  openSheet(sheet.id);sheet.querySelector('[data-sheet-back]').onclick=back;$p('creatorRolePreviewStatus').textContent='Checking Creator access…';$p('creatorRolePreviewClose').focus();checking=true;
   try{
    if(!await authorize(g)||!current(g))return;
    if(typeof window.WMRolePreviewDocument!=='string')throw Error('preview_unavailable');
@@ -35,7 +42,7 @@
   }catch{if(current(g)){dispose();$p('creatorRolePreviewStatus').textContent='The preview could not open. Reconnect and try again.'}}
   finally{if(g===epoch)checking=false}
  }
- homeButton.onclick=open;accountButton.onclick=open;$p('creatorRolePreviewClose').onclick=exit;
+ homeButton.onclick=open;accountButton.onclick=open;$p('creatorRolePreviewClose').onclick=()=>exit(true);
  new MutationObserver(syncEntries).observe($p('creatorOffersBtn'),{attributes:true,attributeFilter:['class']});
  setInterval(()=>{
   syncEntries();
