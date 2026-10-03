@@ -7,7 +7,13 @@ const result=await p.evaluate(async()=>{const cards=Array.from({length:9},(_,i)=
 const bytes=await renderAthleteCardPDF(options),pdf=await PDFLib.PDFDocument.load(bytes);const single=await PDFLib.PDFDocument.load(await renderAthleteCardPDF({...options,cards:cards.slice(0,1),individual:true}));return {bytes:Array.from(bytes),pages:pdf.getPageCount(),size:pdf.getPage(0).getSize(),single:single.getPage(0).getSize()};});
 fs.mkdirSync(path.join(root,'validation/cards'),{recursive:true});fs.writeFileSync(path.join(root,'validation/cards/sample.pdf'),Buffer.from(result.bytes));
 execFileSync('pdftoppm',['-f','1','-singlefile','-r','180','-png',path.join(root,'validation/cards/sample.pdf'),path.join(root,'validation/cards/sample')]);
-const png=PNG.sync.read(fs.readFileSync(path.join(root,'validation/cards/sample.png')));const code=jsQR(new Uint8ClampedArray(png.data),png.width,png.height);assert.ok(code&&/^TEST-CARD-/.test(code.data),'Printed PDF QR must decode to the original credential');
+const png=PNG.sync.read(fs.readFileSync(path.join(root,'validation/cards/sample.png')));
+const positions=await p.evaluate(()=>athleteCardLayout(9));
+for(let i=0;i<8;i++){
+ const c=positions[i],scale=180/72,x=Math.floor(c.x*scale),y=Math.floor((792-c.y-c.height)*scale),w=Math.ceil(c.width*scale),h=Math.ceil(c.height*scale),data=new Uint8ClampedArray(w*h*4);
+ for(let row=0;row<h;row++)data.set(png.data.subarray(((y+row)*png.width+x)*4,((y+row)*png.width+x+w)*4),row*w*4);
+ const code=jsQR(data,w,h);assert.equal(code?.data,'TEST-CARD-'+i,'Each printed QR must preserve its athlete credential');
+}
 assert.equal(result.pages,2);assert.deepEqual(result.size,{width:612,height:792});assert.ok(Math.abs(result.single.width*25.4/72-85.6)<.001);
 await p.evaluate(()=>{actualIsStaff=true;session={user:{id:'test'}};athleteCardRows=[{athlete_id:'a',first_name:'Long athlete name',last_name:'Test'}];document.getElementById('athleteCardSelect').replaceChildren(document.createElement('option'));openSheet('athleteCardSheet');});await p.locator('#bulkAthleteCards summary').click();
 for(const width of [320,390,768]){await p.setViewportSize({width,height:900});assert.equal(await p.locator('#athleteCardSheet').evaluate(e=>e.scrollWidth<=e.clientWidth),true);}
