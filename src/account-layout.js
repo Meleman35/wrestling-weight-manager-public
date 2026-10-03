@@ -5,7 +5,7 @@
  const style=document.createElement('style');style.id='wm-account-layout-style';style.textContent=`
  #accountSheet .account-settings-group{margin:18px 0;border:1px solid var(--line,#dce3eb);border-radius:16px;padding:14px;background:#fff}
  #accountSheet .account-settings-group h3,#accountSheet .account-profile-editor>summary{font-size:16px;font-weight:750;margin:0 0 10px}
- #accountSheet .account-settings-group button.wide,#accountSheet .account-settings-group a.account-nav-row{display:flex;align-items:center;justify-content:space-between;text-align:left;width:100%;min-height:48px;margin:0;padding:13px 12px;border:0;border-bottom:1px solid #e6ebf1;border-radius:0;background:transparent;color:var(--ink,#12161b);box-shadow:none;text-decoration:none;font-size:15px;font-weight:600;line-height:1.4;gap:12px}
+ #accountSheet .account-settings-group button.wide,#accountSheet .account-settings-group a.account-nav-row{display:flex;align-items:center;justify-content:space-between;text-align:left;width:100%;min-height:48px;margin:0;padding:13px 12px;border:0;border-bottom:1px solid #e6ebf1;border-radius:0;background:transparent;color:var(--ink,#12161b);box-shadow:none!important;transform:none!important;text-decoration:none;font-size:15px;font-weight:600;line-height:1.4;gap:12px}
  #accountSheet .account-settings-group button.wide::after,#accountSheet a.account-nav-row::after{content:'›';flex-shrink:0;color:#607087;font-size:22px}
  #accountSheet .account-settings-group button.wide:hover,#accountSheet a.account-nav-row:hover{background:#eef3f8}
  #accountSheet .account-settings-group button.wide:focus-visible,#accountSheet a.account-nav-row:focus-visible,#accountSheet summary:focus-visible{outline:3px solid #396dd5;outline-offset:2px}

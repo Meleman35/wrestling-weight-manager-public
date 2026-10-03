@@ -20,6 +20,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
  await page.evaluate(()=>{show('creatorOffersBtn',true);show('editTeamBtn',true);});
  await page.waitForTimeout(50);assert.equal(await page.locator('[data-account-group="creator"]').isVisible(),true);
  assert.equal(await page.locator('#editTeamBtn').evaluate(e=>getComputedStyle(e).backgroundColor),'rgba(0, 0, 0, 0)');
+ assert.equal(await page.locator('#editTeamBtn').evaluate(e=>getComputedStyle(e).boxShadow),'none');
  await page.evaluate(()=>{show('creatorOffersBtn',false);});await page.waitForTimeout(50);
  assert.equal(await page.locator('[data-account-group="creator"]').isVisible(),false);
  for(const width of [320,390,768,1100]){
@@ -27,6 +28,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
   assert.equal(await page.locator('#accountSheet').evaluate(e=>e.scrollWidth<=e.clientWidth),true);
  }
  await page.setViewportSize({width:390,height:844});await page.locator('.account-profile-editor summary').click();
+ await page.locator('#accountSheet').evaluate(e=>{e.scrollTop=0;});
  await page.screenshot({path:path.join(root,'validation/account-layout-phone.png')});
  assert.equal(await page.locator('#signOutBtn').count(),1);
  assert.equal(await page.locator('#webUpdatesCheck').count(),1);
