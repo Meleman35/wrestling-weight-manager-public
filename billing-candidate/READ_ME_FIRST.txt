@@ -133,3 +133,12 @@ Subscription controller composition added October 3:
 - Purchase readiness still defaults off. Full native host and backend deployment
   remain required; this does not enable purchases in the installed app.
 - Four controller lifecycle checks plus ten client/presentation checks passed.
+
+Server access service candidate added:
+- Uses current actor and server-resolved team/athlete/filming permissions.
+- Evaluates verified subscription snapshots with existing expiry/refund policy.
+- Returns only requested team/athlete flags and check time; no purchaser data.
+- Four service authorization checks pass.
+- accessTransaction and resolveAccess repository ports are NOT yet implemented.
+  They must resolve canonical family coverage and coordinate deletion/revocation
+  consistently. No access endpoint has been deployed or client grant enabled.
