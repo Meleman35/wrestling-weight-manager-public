@@ -71,3 +71,12 @@ Fetch-compatible route candidate added:
 - Bounded JSON bodies, exact browser origin, and sanitized error responses.
 - It is not a deployed Edge Function and does not yet expose access/coverage APIs.
 - HTTP routing tests pass locally; production runtime wiring remains unfinished.
+
+Native HTTP adapter candidate added:
+- Team/family prepare, receipt delivery, and unpaid cancellation requests.
+- Uses one immutable account/session/generation with the latest access token.
+- Rejects stale account responses, unexpected acknowledgement keys and redirects.
+- Stops its ephemeral URLSession on logout. No local paid flag is installed.
+- Endpoint name is reserved in code only; it has not been deployed.
+- Integration must provide authoritative access refresh and destroy both store
+  and adapter on logout. No web purchase bridge or live buttons are wired yet.

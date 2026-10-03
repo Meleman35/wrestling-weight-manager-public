@@ -36,4 +36,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Type-check StoreKit component with Apple SDK
-        run: xcrun swiftc -typecheck -target "$(uname -m)-apple-macos13.0" billing-candidate/WrestlingManagerStore.swift
+        run: xcrun swiftc -typecheck -target "$(uname -m)-apple-macos13.0" billing-candidate/WrestlingManagerStore.swift billing-candidate/WrestlingManagerPurchaseHTTP.swift
+
+      - name: Execute native purchase transport checks
+        run: |
+          xcrun swiftc -target "$(uname -m)-apple-macos13.0" billing-candidate/WrestlingManagerStore.swift billing-candidate/WrestlingManagerPurchaseHTTP.swift billing-candidate/tests/PurchaseHTTPChecks.swift -o /tmp/wm-purchase-checks
+          /tmp/wm-purchase-checks
