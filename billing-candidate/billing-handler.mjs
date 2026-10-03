@@ -14,7 +14,7 @@ async function boundedJSON(request){
 export function createBillingHandler({enabled=false,auth,intents,delivery,access,coverage}){
  return async request=>{
   const origin=request.headers.get('origin');if(origin&&!origins.has(origin))return response(403,{error:'origin_forbidden'});
-  if(request.method==='OPTIONS')return new Response(null,{status:204,headers:origin?{'Access-Control-Allow-Origin':origin,'Vary':'Origin','Access-Control-Allow-Methods':'POST','Access-Control-Allow-Headers':'Authorization, Content-Type','Access-Control-Max-Age':'600'}:{}});
+  if(request.method==='OPTIONS')return new Response(null,{status:204,headers:origin?{'Access-Control-Allow-Origin':origin,'Vary':'Origin','Access-Control-Allow-Methods':'POST','Access-Control-Allow-Headers':'Authorization, Content-Type, apikey','Access-Control-Max-Age':'600'}:{}});
   if(!enabled)return response(503,{error:'billing_unavailable'},origin);
   if(request.method!=='POST')return response(405,{error:'method_not_allowed'},origin);
   try{
