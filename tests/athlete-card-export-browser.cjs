@@ -41,7 +41,7 @@ for(const change of ['sheet','session','lock']){
  });
  await p.locator('#bulkAthleteCards [data-export]').click();
  assert.equal(await p.evaluate(()=>exportCalls),1);
- await p.evaluate(kind=>{if(kind==='sheet')closeSheet('athleteCardSheet');else if(kind==='session')session={user:{id:'test'}};else document.body.classList.add('kiosk-locked');},change);
+ await p.evaluate(kind=>{if(kind==='sheet')show('athleteCardSheet',false);else if(kind==='session')session={user:{id:'test'}};else document.body.classList.add('kiosk-locked');},change);
  await p.waitForTimeout(20);
  await p.evaluate(kind=>{if(kind==='sheet')openSheet('athleteCardSheet');else if(kind==='lock')document.body.classList.remove('kiosk-locked');},change);
  await p.waitForTimeout(20);
