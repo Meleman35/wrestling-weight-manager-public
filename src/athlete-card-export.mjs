@@ -33,7 +33,7 @@ export function athleteCardLayout(count, individual = false) {
 }
 
 export async function renderAthleteCardPDF({cards, teamName, individual = false,
-  PDFLib, document, QRCode, isCurrent}) {
+  PDFLib, document, QRCode, isCurrent, loadPhoto = async () => null}) {
   const pdf = await PDFLib.PDFDocument.create();
   pdf.setTitle(String(teamName || 'Team') + ' - Athlete Cards');
   const positions = athleteCardLayout(cards.length, individual);
@@ -49,7 +49,13 @@ export async function renderAthleteCardPDF({cards, teamName, individual = false,
     ctx.fillStyle='#14253b';ctx.font='bold 43px sans-serif';
     const name=[c.first_name,c.last_name].filter(Boolean).join(' ');
     ctx.fillText(name,34,160,560);ctx.font='28px sans-serif';ctx.fillText(String(teamName||''),34,215,550);
-    ctx.font='26px sans-serif';ctx.fillText('Athlete check-in card',34,310);
+    ctx.font='26px sans-serif';ctx.fillText('Athlete check-in card',34,270);
+    const photo = c.photo_path ? await loadPhoto(c.photo_path) : null;
+    if (!isCurrent()) throw Error('The team or account changed. Start the export again.');
+    ctx.fillStyle='#edf2f8';ctx.fillRect(34,300,180,180);
+    if(photo){const size=Math.min(photo.naturalWidth,photo.naturalHeight);ctx.drawImage(photo,(photo.naturalWidth-size)/2,(photo.naturalHeight-size)/2,size,size,34,300,180,180);}
+    else {ctx.fillStyle='#153b75';ctx.font='bold 55px sans-serif';ctx.fillText([c.first_name,c.last_name].filter(Boolean).map(x=>Array.from(x)[0]).join(''),65,410,125);}
+    ctx.fillStyle='#14253b';ctx.font='26px sans-serif';
     ctx.fillText('Keep this card private.',34,540);
     ctx.fillText('NFC must be programmed separately.',34,585,590);
     const qrBox=document.createElement('div');

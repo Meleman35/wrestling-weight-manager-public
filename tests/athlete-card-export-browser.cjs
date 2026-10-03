@@ -15,6 +15,6 @@ for(let i=0;i<8;i++){
  const code=jsQR(data,w,h);assert.equal(code?.data,'TEST-CARD-'+i,'Each printed QR must preserve its athlete credential');
 }
 assert.equal(result.pages,2);assert.deepEqual(result.size,{width:612,height:792});assert.ok(Math.abs(result.single.width*25.4/72-85.6)<.001);
-await p.evaluate(()=>{actualIsStaff=true;session={user:{id:'test'}};athleteCardRows=[{athlete_id:'a',first_name:'Long athlete name',last_name:'Test'}];document.getElementById('athleteCardSelect').replaceChildren(document.createElement('option'));openSheet('athleteCardSheet');});await p.locator('#bulkAthleteCards summary').click();
+await p.evaluate(()=>{show('appLockOverlay',false);managedLogin=null;actualIsStaff=true;session={user:{id:'test'}};athleteCardRows=[{athlete_id:'a',first_name:'Long athlete name',last_name:'Test'}];document.getElementById('athleteCardSelect').replaceChildren(document.createElement('option'));openSheet('athleteCardSheet');});await p.locator('#bulkAthleteCards summary').click();
 for(const width of [320,390,768]){await p.setViewportSize({width,height:900});assert.equal(await p.locator('#athleteCardSheet').evaluate(e=>e.scrollWidth<=e.clientWidth),true);}
 await b.close();console.log('PDF page geometry, renderer and phone controls passed');})().catch(e=>{console.error(e);process.exit(1)});
