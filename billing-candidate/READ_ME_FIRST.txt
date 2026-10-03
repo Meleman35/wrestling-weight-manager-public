@@ -65,3 +65,9 @@ notification processing and production-runtime tests also remain unfinished.
 
 Isolated PostgreSQL CI passed all 64 checks (before additional cancellation/coverage
 checks). No billing schema or function was deployed to the live project.
+
+Fetch-compatible route candidate added:
+- Explicitly disabled by default; authenticated prepare/deliver/abandon commands.
+- Bounded JSON bodies, exact browser origin, and sanitized error responses.
+- It is not a deployed Edge Function and does not yet expose access/coverage APIs.
+- HTTP routing tests pass locally; production runtime wiring remains unfinished.
