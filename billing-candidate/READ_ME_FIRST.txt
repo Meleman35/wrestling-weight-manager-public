@@ -95,3 +95,10 @@ Subscription presentation candidate added:
 - Streaming, storage, SMS and extra-athlete availability explained explicitly.
 - Purchase readiness disabled by default. This model does not grant access.
 - Four presentation checks passed; web/native rendering integration remains.
+
+Reusable subscription screen candidate added:
+- Monthly/annual choices and Restore Purchases use injected native callbacks.
+- No receipt, credentials or paid access stored in the component.
+- Requests disable controls; disposed screens ignore late responses.
+- Text rendered through textContent; syntax check passed, visual QA pending.
+- Board Room video meetings belong to a future organization plan, not Team Pro.
