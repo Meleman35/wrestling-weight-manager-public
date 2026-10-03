@@ -1,0 +1,30 @@
+name: Public website verification
+on:
+  pull_request:
+    paths:
+      - welcome.html
+      - tests/public-website.cjs
+      - .github/workflows/public-website.yml
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      NODE_PATH: ${{ github.workspace }}/.ci/node_modules
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - run: npm ci --prefix .ci --ignore-scripts --no-audit --no-fund
+      - run: .ci/node_modules/.bin/playwright install --with-deps chromium
+      - run: node tests/public-website.cjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: public-website-layouts
+          path: validation/public-website-*.png
