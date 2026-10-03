@@ -62,10 +62,10 @@ const {chromium}=require('playwright');
    });
   });
   for(const width of [320,390,768]){await page.setViewportSize({width,height:900});assert.equal(await page.locator('body').evaluate(n=>n.scrollWidth<=innerWidth),true);}
-  await page.screenshot({path:path.join(root,'../validation/family-coverage-phone.png'),fullPage:true});
+  await page.screenshot({path:path.join(root,'../validation/subscription-family-coverage-phone.png'),fullPage:true});
   const boxes=page.locator('.wm-family-coverage-screen input');
-  await boxes.nth(0).check();await boxes.nth(1).check();assert.equal(await boxes.nth(1).isChecked(),false);
-  await boxes.nth(2).check();await boxes.nth(3).check();assert.equal(await boxes.nth(3).isChecked(),false);
+  await boxes.nth(0).check();await boxes.nth(1).click();assert.equal(await boxes.nth(1).isChecked(),false);
+  await boxes.nth(2).check();await boxes.nth(3).click();assert.equal(await boxes.nth(3).isChecked(),false);
   assert.equal(await page.locator('img').count(),0);
   await page.getByRole('button',{name:'Save athlete selection'}).click();
   assert.equal(await boxes.nth(0).isDisabled(),true);
