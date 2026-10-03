@@ -28,4 +28,25 @@ await p.evaluate(()=>{managedLogin=null;document.body.classList.add('kiosk-locke
 await p.locator('#bulkAthleteCards [data-export]').dispatchEvent('click');assert.equal(await p.evaluate(()=>exportCalls),0);
 await p.evaluate(()=>{document.body.classList.remove('kiosk-locked');show('appLockOverlay',true);});
 await p.locator('#bulkAthleteCards [data-export]').dispatchEvent('click');assert.equal(await p.evaluate(()=>exportCalls),0);
+await p.evaluate(()=>{show('appLockOverlay',false);});
+await p.waitForTimeout(20);
+// A completed response must not escape after closing/reopening or replacing
+// the signed-in session, even if the same user is signed in again.
+for(const change of ['sheet','session','lock']){
+ await p.evaluate(()=>{
+  window.exportCalls=0;window.sharedFiles=0;
+  navigator.canShare=()=>true;navigator.share=async()=>{window.sharedFiles++;};
+  document.querySelector('#bulkAthleteCards input').checked=true;
+  client.rpc=()=>{window.exportCalls++;return new Promise(resolve=>{window.finishCard=()=>resolve({data:{athlete_id:'a',first_name:'Test',credential_token:'TEST-PRIVATE-CARD'}});});};
+ });
+ await p.locator('#bulkAthleteCards [data-export]').click();
+ assert.equal(await p.evaluate(()=>exportCalls),1);
+ await p.evaluate(kind=>{if(kind==='sheet')closeSheet('athleteCardSheet');else if(kind==='session')session={user:{id:'test'}};else document.body.classList.add('kiosk-locked');},change);
+ await p.waitForTimeout(20);
+ await p.evaluate(kind=>{if(kind==='sheet')openSheet('athleteCardSheet');else if(kind==='lock')document.body.classList.remove('kiosk-locked');},change);
+ await p.waitForTimeout(20);
+ await p.evaluate(()=>finishCard());
+ await p.waitForFunction(()=>!document.querySelector('#bulkAthleteCards [data-export]').disabled);
+ assert.equal(await p.evaluate(()=>sharedFiles),0,'Interrupted export must not share private cards');
+}
 await b.close();console.log('PDF page geometry, renderer and phone controls passed');})().catch(e=>{console.error(e);process.exit(1)});

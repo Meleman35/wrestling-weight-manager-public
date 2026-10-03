@@ -3,15 +3,19 @@
  const sheet=document.getElementById('athleteCardSheet');
  const panel=document.createElement('details');panel.id='bulkAthleteCards';panel.className='feature-card';
  panel.innerHTML='<summary>Print team athlete cards</summary><p class="fine">Choose athletes and print at 100% actual size. NFC chips must be programmed separately.</p><button type="button" class="secondary" data-all>Select all</button><div data-list></div><label>PDF format<select data-format><option value="sheet">Letter sheets · 8 cards per page</option><option value="individual">Individual credit-card size pages</option></select></label><button type="button" class="wide" data-export>Download selected cards</button><p role="status" data-status></p>';
- sheet.append(panel);let busy=false;
+ sheet.append(panel);let busy=false,exportEpoch=0;
  const list=panel.querySelector('[data-list]'),status=panel.querySelector('[data-status]'),button=panel.querySelector('[data-export]');
- function paint(){panel.hidden=!allowed();list.replaceChildren();for(const a of athleteCardRows){const label=document.createElement('label'),box=document.createElement('input');box.type='checkbox';box.value=a.athlete_id;label.append(box,document.createTextNode(' '+[a.first_name,a.last_name].filter(Boolean).join(' ')));list.append(label);}status.textContent='';}
+ function syncVisibility(){panel.hidden=!allowed();if(!allowed()||sheet.classList.contains('hidden')){++exportEpoch;status.textContent='';}}
+ function paint(){++exportEpoch;syncVisibility();list.replaceChildren();for(const a of athleteCardRows){const label=document.createElement('label'),box=document.createElement('input');box.type='checkbox';box.value=a.athlete_id;box.disabled=busy;label.append(box,document.createTextNode(' '+[a.first_name,a.last_name].filter(Boolean).join(' ')));list.append(label);}status.textContent='';}
  new MutationObserver(paint).observe(document.getElementById('athleteCardSelect'),{childList:true});
+ const visibilityObserver=new MutationObserver(syncVisibility);
+ for(const el of [document.body,sheet,document.getElementById('appLockOverlay')].filter(Boolean))visibilityObserver.observe(el,{attributes:true,attributeFilter:['class']});
+ paint();
  panel.querySelector('[data-all]').onclick=()=>{if(!busy)list.querySelectorAll('input').forEach(x=>x.checked=true);};
  button.onclick=async()=>{
   if(busy||!allowed())return;busy=true;
-  const teamID=activeTeam?.id,userID=session?.user?.id,version=athleteCardRequestVersion;
-  const current=()=>allowed()&&activeTeam?.id===teamID&&session?.user?.id===userID&&version===athleteCardRequestVersion&&!sheet.classList.contains('hidden');
+  const teamID=activeTeam?.id,userID=session?.user?.id,version=athleteCardRequestVersion,epoch=exportEpoch,exportSession=session;
+  const current=()=>allowed()&&session===exportSession&&epoch===exportEpoch&&activeTeam?.id===teamID&&session?.user?.id===userID&&version===athleteCardRequestVersion&&!sheet.classList.contains('hidden');
   panel.querySelectorAll('button,input,select').forEach(x=>x.disabled=true);
   try{
    const cards=await collectAthleteCards({roster:athleteCardRows,selectedIDs:[...list.querySelectorAll('input:checked')].map(x=>x.value),isCurrent:current,
