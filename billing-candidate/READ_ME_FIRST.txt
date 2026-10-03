@@ -116,3 +116,11 @@ Native WebKit bridge candidate added:
   start the store updates listener after sign-in and invoke stop on logout,
   account change, page navigation or native dismantling.
 - Native host session construction and full-project/device testing remain.
+
+Native purchase client added:
+- Reply-handler client for products, purchase, restore and recovery.
+- Immutable session generation, irreversible stop and concurrent request guard.
+- Strict native metadata/outcome validation; no credentials or paid flag accepted.
+- Six lifecycle/response checks passed. Host must wire current session generation
+  and stop both client/screen and native store/transport on logout or navigation.
+- Apple SDK compilation of native bridge and browser screen QA both passed.
