@@ -24,7 +24,7 @@ struct PurchaseHTTPChecks {
         var current: WrestlingManagerPurchaseSession? = original
         let transport = MockPurchaseTransport()
         var refreshes = 0
-        let adapter = WrestlingManagerPurchaseHTTP(session: original, currentSession: { current },
+        let adapter = WrestlingManagerPurchaseHTTP(session: original, publishableKey: "synthetic-public-key", currentSession: { current },
                                                   transport: transport, refreshServerAccess: { refreshes += 1 })
         let token = UUID()
         transport.response = ["appAccountToken": token.uuidString]
@@ -35,6 +35,7 @@ struct PurchaseHTTPChecks {
         let target = data["target"] as! [String: Any]
         precondition(target["kind"] as? String == "family" && target["teamID"] == nil)
         precondition(transport.requests[0].value(forHTTPHeaderField: "Authorization") == "Bearer synthetic-token")
+        precondition(transport.requests[0].value(forHTTPHeaderField: "apikey") == "synthetic-public-key")
         transport.response = ["transactionID": "1001", "originalTransactionID": "1001"]
         let ack = try await adapter.deliver(signedTransaction: "synthetic-receipt")
         precondition(ack.transactionID == "1001")

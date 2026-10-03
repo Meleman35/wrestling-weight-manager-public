@@ -45,15 +45,17 @@ final class WrestlingManagerPurchaseURLSession: NSObject, URLSessionTaskDelegate
 final class WrestlingManagerPurchaseHTTP: WrestlingManagerPurchaseServer {
     enum AdapterError: Error { case sessionEnded, invalidResponse, signInRequired, notAuthorized, unavailable }
     private let endpoint = URL(string: "https://vfocpoyexnjsjpxhhyqr.supabase.co/functions/v1/wrestling-manager-billing")!
+    private let publishableKey: String
     private let identity: WrestlingManagerPurchaseSession
     private let currentSession: () -> WrestlingManagerPurchaseSession?
     private let refreshServerAccess: () async throws -> Void
     private let transport: any WrestlingManagerPurchaseTransport
     private var stopped = false
-    init(session: WrestlingManagerPurchaseSession,
+    init(session: WrestlingManagerPurchaseSession, publishableKey: String,
          currentSession: @escaping () -> WrestlingManagerPurchaseSession?,
          transport: any WrestlingManagerPurchaseTransport,
          refreshServerAccess: @escaping () async throws -> Void) {
+        self.publishableKey = publishableKey
         identity = session
         self.currentSession = currentSession
         self.transport = transport
@@ -69,7 +71,9 @@ final class WrestlingManagerPurchaseHTTP: WrestlingManagerPurchaseServer {
     private func request(action: String, data: [String: Any]) async throws -> [String: Any] {
         let session = try snapshot()
         var request = URLRequest(url: endpoint)
+        guard !publishableKey.isEmpty else { throw AdapterError.unavailable }
         request.httpMethod = "POST"
+        request.setValue(publishableKey, forHTTPHeaderField: "apikey")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(session.accessToken)", forHTTPHeaderField: "Authorization")
         request.httpBody = try JSONSerialization.data(withJSONObject: ["action": action, "data": data])
