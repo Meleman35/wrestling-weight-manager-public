@@ -30,7 +30,7 @@ const root=path.resolve(__dirname,'..');
  if(!(await page.locator('.account-profile-editor').evaluate(e=>e.open)))await page.locator('.account-profile-editor summary').click();
  await page.locator('#accountDisplayName').fill('Unsaved synthetic edit');
  mode='newer';await button.click();await page.waitForFunction(()=>document.getElementById('webUpdatesCard').dataset.updateState==='available');
- assert.match(await status.innerText(),/0.20.120/);assert.match(await status.innerText(),/Save unfinished work/);assert.match(await status.innerText(),/close all/);
+ assert.match(await status.innerText(),/0.20.121/);assert.match(await status.innerText(),/Save unfinished work/);assert.match(await status.innerText(),/close all/);
  for(const width of [320,390,768]){await page.setViewportSize({width,height:844});await card.scrollIntoViewIfNeeded();assert.equal(await card.evaluate(e=>e.scrollWidth<=e.clientWidth),true);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);}
  await page.setViewportSize({width:390,height:844});await card.screenshot({path:path.join(root,'validation/web-updates-phone.png')});
  assert.equal(await page.locator('#accountDisplayName').inputValue(),'Unsaved synthetic edit');
