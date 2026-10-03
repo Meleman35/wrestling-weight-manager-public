@@ -31,3 +31,40 @@ export function athleteCardLayout(count, individual = false) {
     width, height
   }));
 }
+
+export async function renderAthleteCardPDF({cards, teamName, individual = false,
+  PDFLib, document, QRCode, isCurrent}) {
+  const pdf = await PDFLib.PDFDocument.create();
+  pdf.setTitle(String(teamName || 'Team') + ' - Athlete Cards');
+  const positions = athleteCardLayout(cards.length, individual);
+  let page, pageIndex = -1;
+  for (let i=0; i<cards.length; i++) {
+    if (!isCurrent()) throw Error('The team or account changed. Start the export again.');
+    const c=cards[i], p=positions[i];
+    if (p.page !== pageIndex) { page=pdf.addPage([p.pageWidth,p.pageHeight]);pageIndex=p.page; }
+    const canvas=document.createElement('canvas');canvas.width=1011;canvas.height=638;
+    const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,1011,638);
+    ctx.fillStyle='#153b75';ctx.fillRect(0,0,1011,88);
+    ctx.fillStyle='#fff';ctx.font='bold 32px sans-serif';ctx.fillText('WRESTLING MANAGER',34,57);
+    ctx.fillStyle='#14253b';ctx.font='bold 43px sans-serif';
+    const name=[c.first_name,c.last_name].filter(Boolean).join(' ');
+    ctx.fillText(name,34,160,560);ctx.font='28px sans-serif';ctx.fillText(String(teamName||''),34,215,550);
+    ctx.font='26px sans-serif';ctx.fillText('Athlete check-in card',34,310);
+    ctx.fillText('Keep this card private.',34,540);
+    ctx.fillText('NFC must be programmed separately.',34,585,590);
+    const qrBox=document.createElement('div');
+    new QRCode(qrBox,{text:c.credential_token,width:320,height:320,correctLevel:QRCode.CorrectLevel.M});
+    const qr=qrBox.querySelector('canvas');if(!qr)throw Error('QR code could not be generated.');
+    // White quiet zone remains outside the code on all four sides.
+    ctx.imageSmoothingEnabled=false;ctx.drawImage(qr,650,170,320,320);
+    const png=await pdf.embedPng(canvas.toDataURL('image/png'));
+    if (!isCurrent()) throw Error('The team or account changed. Start the export again.');
+    page.drawImage(png,{x:p.x,y:p.y,width:p.width,height:p.height});
+    if(!individual)page.drawRectangle({x:p.x,y:p.y,width:p.width,height:p.height,
+      borderColor:PDFLib.rgb(.65,.65,.65),borderWidth:.4});
+    canvas.width=canvas.height=0;qrBox.replaceChildren();
+  }
+  const bytes=await pdf.save();
+  if(!isCurrent())throw Error('The team or account changed. Start the export again.');
+  return bytes;
+}
