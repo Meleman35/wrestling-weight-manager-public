@@ -1,0 +1,24 @@
+name: Billing candidate checks
+on:
+  pull_request:
+    paths:
+      - 'billing-candidate/**'
+      - '.github/workflows/billing-candidate.yml'
+permissions:
+  contents: read
+jobs:
+  policy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --prefix billing-candidate --ignore-scripts --no-audit --no-fund
+      - run: npm test --prefix billing-candidate
+  swift:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Type-check StoreKit component with Apple SDK
+        run: xcrun swiftc -typecheck -target "$(uname -m)-apple-macos13.0" billing-candidate/WrestlingManagerStore.swift
