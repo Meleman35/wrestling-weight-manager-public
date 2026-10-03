@@ -8,8 +8,8 @@ const {chromium}=require('playwright');
   page.on('pageerror',e=>errors.push(e.message));
   await page.route('https://billing.test/**',route=>{
    const name=new URL(route.request().url()).pathname.slice(1);
-   if(!name)return route.fulfill({contentType:'text/html',body:`<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/subscription-screen.css"><main id="target"></main><script type="module">import {mountSubscriptionScreen} from '/subscription-screen.mjs';window.mount=mountSubscriptionScreen;</script>`});
-   if(!['subscription-screen.css','subscription-screen.mjs','subscription-presentation.mjs'].includes(name))return route.abort();
+   if(!name)return route.fulfill({contentType:'text/html',body:`<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/subscription-screen.css"><main id="target"></main><script type="module">import {mountSubscriptionScreen} from '/subscription-screen.mjs';import {mountFamilyCoverageScreen} from '/family-coverage-screen.mjs';window.mount=mountSubscriptionScreen;window.mountCoverage=mountFamilyCoverageScreen;</script>`});
+   if(!['subscription-screen.css','subscription-screen.mjs','subscription-presentation.mjs','family-coverage-screen.mjs'].includes(name))return route.abort();
    return route.fulfill({contentType:name.endsWith('.css')?'text/css':'text/javascript',body:fs.readFileSync(path.join(root,name),'utf8')});
   });
   await page.goto('https://billing.test/');await page.waitForFunction(()=>typeof window.mount==='function');
@@ -49,6 +49,36 @@ const {chromium}=require('playwright');
    screenHandle=mount(document.querySelector('#target'),{...c,products:[{...c.products[0],displayPrice:'<img src=x onerror="window.injected=true">'}]});
   },config);
   assert.equal(await page.locator('img').count(),0);assert.equal(await page.evaluate(()=>injected),false);
+  await page.evaluate(()=>{
+   screenHandle.dispose();window.generation='a';window.coverageCalls=[];window.coverageRefreshes=0;
+   window.coverageHandle=mountCoverage(document.querySelector('#target'),{
+    athletes:[{athlete_id:'a',profile_id:'p-a',display_name:'<img src=x onerror="window.injected=true">'},
+     {athlete_id:'duplicate',profile_id:'p-a',display_name:'Same athlete on another team'},
+     {athlete_id:'b',profile_id:'p-b',display_name:'Second athlete'},
+     {athlete_id:'c',profile_id:'p-c',display_name:'Third athlete'}],
+    isCurrent:()=>generation==='a',
+    saveCoverage:context=>{coverageCalls.push(context.athleteIDs);window.coverageGuard=context.isCurrent;return new Promise(resolve=>window.resolveCoverage=resolve);},
+    refreshAccess:async()=>{coverageRefreshes++;}
+   });
+  });
+  const boxes=page.locator('.wm-family-coverage-screen input');
+  await boxes.nth(0).check();await boxes.nth(1).check();assert.equal(await boxes.nth(1).isChecked(),false);
+  await boxes.nth(2).check();await boxes.nth(3).check();assert.equal(await boxes.nth(3).isChecked(),false);
+  assert.equal(await page.locator('img').count(),0);
+  await page.getByRole('button',{name:'Save athlete selection'}).click();
+  assert.equal(await boxes.nth(0).isDisabled(),true);
+  assert.deepEqual(await page.evaluate(()=>coverageCalls),[['a','b']]);
+  await page.evaluate(()=>resolveCoverage({selectedCount:2}));
+  await page.getByRole('status').filter({hasText:'Subscription access checked'}).waitFor();
+  assert.equal(await page.evaluate(()=>coverageRefreshes),1);
+  await boxes.nth(0).uncheck();await boxes.nth(2).uncheck();
+  await page.getByRole('button',{name:'Save athlete selection'}).click();
+  assert.deepEqual(await page.evaluate(()=>coverageCalls.at(-1)),[]);
+  await page.evaluate(()=>{generation='b';coverageHandle.dispose();resolveCoverage({selectedCount:0});});
+  await page.waitForTimeout(20);
+  assert.equal(await page.evaluate(()=>coverageGuard()),false);
+  assert.equal(await page.evaluate(()=>coverageRefreshes),1);
+  assert.equal(await page.locator('.wm-family-coverage-screen').count(),0);
   assert.deepEqual(errors,[]);
   console.log('PASS subscription screen: responsive widths, price escaping, family scope, restore, pending, busy state and disposed account responses');
  }finally{await browser.close()}

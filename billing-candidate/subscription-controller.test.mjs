@@ -34,3 +34,19 @@ test('account changes during server refresh reject completion and expose invalid
   const screen=await openSubscriptionScreen(s.config);
   await assert.rejects(s.callbacks.restore(),/session_ended/);assert.equal(guard(),false);screen.dispose();
 });
+test('family selector shares the session guard and is disposed with purchase screen',async()=>{
+  const s=fixture();let coverageConfig,disposed=0;
+  s.config.familyCoverage={athletes:[],saveCoverage:async()=>({selectedCount:0})};
+  s.config.mountCoverage=(_,config)=>{coverageConfig=config;return {dispose:()=>disposed++};};
+  const screen=await openSubscriptionScreen(s.config);
+  assert.equal(coverageConfig.isCurrent(),true);
+  await coverageConfig.refreshAccess();assert.equal(s.refreshes,1);
+  s.generation='b';assert.equal(coverageConfig.isCurrent(),false);
+  screen.dispose();assert.equal(disposed,1);
+});
+test('invalid family selector configuration removes the partially mounted purchase screen',async()=>{
+  const s=fixture();s.config.familyCoverage={};
+  s.config.mountCoverage=()=>{throw Error('invalid_family_roster');};
+  await assert.rejects(openSubscriptionScreen(s.config),/invalid_family_roster/);
+  assert.equal(s.disposed,1);
+});
