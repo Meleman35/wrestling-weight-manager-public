@@ -102,3 +102,17 @@ Reusable subscription screen candidate added:
 - Requests disable controls; disposed screens ignore late responses.
 - Text rendered through textContent; syntax check passed, visual QA pending.
 - Board Room video meetings belong to a future organization plan, not Team Pro.
+
+Subscription browser QA passed:
+- Responsive widths 320/390/768/1100, price text escaping, family target, restore,
+  pending approval, busy controls and disposed account response isolation.
+- Styling and screenshot artifact are included in the draft CI.
+
+Native WebKit bridge candidate added:
+- Disabled by default; no web command can enable it or supply credentials.
+- Exact main-frame origin and current native session required for every request.
+- Bounded strict commands for products/purchase/restore/recovery.
+- Host must register wmPurchases as a reply handler, attach the same web view,
+  start the store updates listener after sign-in and invoke stop on logout,
+  account change, page navigation or native dismantling.
+- Native host session construction and full-project/device testing remain.
