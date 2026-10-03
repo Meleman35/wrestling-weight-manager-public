@@ -1,0 +1,29 @@
+name: Athlete card export checks
+on:
+  pull_request:
+    paths:
+      - 'src/athlete-card-export*'
+      - 'tests/athlete-card-export*'
+      - 'scripts/prepare-bulk-athlete-cards.py'
+      - '.github/workflows/athlete-card-export.yml'
+permissions:
+  contents: read
+jobs:
+  cards:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --ignore-scripts playwright@1.58.2 pngjs@7.0.0 jsqr@1.4.0
+      - run: npx playwright install --with-deps chromium
+      - run: sudo apt-get update && sudo apt-get install -y poppler-utils
+      - run: python3 scripts/prepare-bulk-athlete-cards.py
+      - run: node --test tests/athlete-card-export.test.mjs
+      - run: node tests/athlete-card-export-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: athlete-card-print-check
+          path: validation/cards/
