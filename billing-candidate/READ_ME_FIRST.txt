@@ -1,4 +1,4 @@
-Wrestling Manager billing candidate — October 2, 2026
+Wrestling Manager billing candidate — October 3, 2026
 
 STATUS: Prepared integration code. Payments are not enabled.
 Draft PR: https://github.com/Meleman35/wrestling-weight-manager-public/pull/57
@@ -23,9 +23,9 @@ Implemented
   Logout stops the adapter; a stopped instance cannot be reused.
 
 Verification
-- Latest isolated CI: 76 backend checks passed, none skipped, including disposable
+- Latest isolated CI: 108 backend checks passed, none skipped, including disposable
   PostgreSQL concurrency, rollback, cancelled reservation and role-access checks.
-- Apple SDK type checking passed for the two candidate Swift files.
+- Apple SDK type checking passed for all three candidate Swift files.
 - Native HTTP executable checks passed for scope, authentication, strict response
   handling, account changes and logout.
 - These are not valid Apple receipt tests, full-project Xcode builds or device
@@ -138,7 +138,7 @@ Server access service candidate added:
 - Uses current actor and server-resolved team/athlete/filming permissions.
 - Evaluates verified subscription snapshots with existing expiry/refund policy.
 - Returns only requested team/athlete flags and check time; no purchaser data.
-- Four service authorization checks pass.
+- Five service authorization checks pass.
 - PostgreSQL accessTransaction and resolveAccess are now implemented (see below).
   No access endpoint has been deployed or client grant enabled.
 
