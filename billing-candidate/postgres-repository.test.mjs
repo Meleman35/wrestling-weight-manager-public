@@ -1,6 +1,9 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import pg from 'pg';
 import {PostgresBillingRepository} from './postgres-repository.mjs';import {SupabaseBillingAuth} from './supabase-billing-auth.mjs';
 import {PurchaseIntentService} from './purchase-intent.mjs';import {PurchaseDeliveryService} from './purchase-delivery.mjs';import {proposedProducts} from './subscription-policy.mjs';
+import {SubscriptionAccessService} from './subscription-access.mjs';
+import {FamilyCoverageService} from './family-coverage.mjs';
+import {createBillingHandler} from './billing-handler.mjs';
 const connectionString=process.env.BILLING_TEST_DATABASE_URL;
 test('real PostgreSQL transactions, concurrency, permissions and revoked sessions',{skip:!connectionString},async t=>{
  const url=new URL(connectionString);assert.ok(['localhost','127.0.0.1','::1','[::1]'].includes(url.hostname),'Disposable localhost database required');assert.equal(url.pathname,'/billing_test');
@@ -9,7 +12,9 @@ test('real PostgreSQL transactions, concurrency, permissions and revoked session
  const user='11111111-1111-4111-8111-111111111111',session='22222222-2222-4222-8222-222222222222',team='33333333-3333-4333-8333-333333333333',other='44444444-4444-4444-8444-444444444444',athlete='55555555-5555-4555-8555-555555555555';
  try{
   await admin.query(fs.readFileSync(new URL('./tests/postgres-fixture.sql',import.meta.url),'utf8'));
+  await admin.query(fs.readFileSync(new URL('./tests/access-fixture.sql',import.meta.url),'utf8'));
   await admin.query(fs.readFileSync(new URL('./billing-storage-candidate.sql',import.meta.url),'utf8'));
+  await admin.query(fs.readFileSync(new URL('./billing-access-candidate.sql',import.meta.url),'utf8'));
   await admin.query('insert into auth.users(id,confirmed_at) values($1,now())',[user]);await admin.query('insert into auth.sessions(id,user_id) values($1,$2)',[session,user]);
   for(const id of [team,other]){await admin.query('insert into public.teams(id) values($1)',[id]);await admin.query("insert into public.team_memberships(team_id,user_id,role) values($1,$2,'head_coach')",[id,user]);}
   const projectURL='https://vfocpoyexnjsjpxhhyqr.supabase.co',auth=new SupabaseBillingAuth({projectURL,publishableKey:'synthetic',pool,fetchImpl:async()=>({ok:true,json:async()=>({id:user})})});
@@ -66,10 +71,116 @@ test('real PostgreSQL transactions, concurrency, permissions and revoked session
    await assert.rejects(admin.query('insert into wm_billing.family_coverage values($1,3,$2)',[user,team]));
    await assert.rejects(admin.query('update wm_billing.family_coverage set athlete_profile_id=$2 where user_id=$1 and slot=2',[user,athlete]));
   });
+  await t.test('database-backed access uses canonical profiles and current event permissions',async t=>{
+   const parent='88888888-8888-4888-8888-888888888888',parentSession='99999999-9999-4999-8999-999999999999';
+   const profile='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',copy='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+   const season='cccccccc-cccc-4ccc-8ccc-cccccccccccc',season2='dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+   const event='eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',event2='ffffffff-ffff-4fff-8fff-ffffffffffff';
+   await admin.query('insert into auth.users(id,confirmed_at) values($1,now());',[parent]);
+   await admin.query('insert into auth.sessions(id,user_id) values($1,$2)',[parentSession,parent]);
+   await admin.query('insert into public.athlete_profiles values($1)',[profile]);
+   await admin.query('insert into public.athletes values($1,$3),($2,$3)',[athlete,copy,profile]);
+   await admin.query('insert into private.video_pilot_control values(true,true,false)');
+   for(const [teamID,athleteID,seasonID,eventID] of [[team,athlete,season,event],[other,copy,season2,event2]]){
+    await admin.query('insert into public.seasons values($1,$2,true)',[seasonID,teamID]);
+    await admin.query('insert into public.roster_memberships values($1,$2,true)',[seasonID,athleteID]);
+    await admin.query('insert into public.team_events values($1,$2,$3)',[eventID,teamID,seasonID]);
+    await admin.query("insert into public.team_memberships(team_id,user_id,athlete_id,role) values($1,$2,$3,'parent_guardian')",[teamID,parent,athleteID]);
+    await admin.query("insert into public.athlete_guardians values($1,$2,'accepted')",[athleteID,parent]);
+    await admin.query('insert into private.video_pilot_grants values($1,$2,null,now()+interval \'1 day\')',[teamID,user]);
+    await admin.query('insert into private.video_athlete_permissions values($1,$2,$3,true)',[teamID,athleteID,parent]);
+    await admin.query('insert into private.video_event_settings values($1,$2,true)',[teamID,eventID]);
+   }
+   const parentAuth=new SupabaseBillingAuth({projectURL,publishableKey:'synthetic',pool,fetchImpl:async()=>({ok:true,json:async()=>({id:parent})})});
+   const parentContext=await parentAuth.authenticate('Bearer e30.'+Buffer.from(JSON.stringify({...claims,sub:parent,session_id:parentSession})).toString('base64url')+'.c2ln');
+   const parentRepo=new PostgresBillingRepository({pool,auth:parentAuth});
+   const familyProduct='com.damonmele.wrestlingmanager.familyvideo.monthly';
+   const familyIntent=await new PurchaseIntentService({auth:parentAuth,repository:parentRepo}).prepare(parentContext,{productID:familyProduct,target:{kind:'family'}});
+   await new PurchaseDeliveryService({auth:parentAuth,repository:parentRepo,apple:{resolve:async()=>({...evidence,productID:familyProduct,appAccountToken:familyIntent.appAccountToken,transactionID:'2001',originalTransactionID:'2001'})},config:delivery.config}).deliver(parentContext,{signedTransaction:'synthetic'});
+   const coverage=new FamilyCoverageService({auth:parentAuth,repository:parentRepo});
+   assert.deepEqual(await coverage.select(parentContext,{athleteIDs:[athlete]}),{selectedCount:1});
+   const access=new SubscriptionAccessService({auth,repository,environment:'Sandbox'});
+   const target={teamID:team,athleteID:athlete,eventID:event};
+   const bound=(await admin.query('select team_id from wm_billing.team_bindings where user_id=$1',[user])).rows[0].team_id;
+   await t.test('family selection validates canonical identity and rolls back invalid replacements',async()=>{
+    for(const athleteIDs of [[athlete,copy],[profile]])await assert.rejects(coverage.select(parentContext,{athleteIDs}));
+    assert.deepEqual((await admin.query('select athlete_profile_id,slot from wm_billing.family_coverage where user_id=$1',[parent])).rows,[{athlete_profile_id:profile,slot:1}]);
+    await assert.rejects(coverage.select(parentContext,{athleteIDs:[athlete,copy,profile]}),/invalid_request/);
+    try{await admin.query("update public.athlete_guardians set invitation_status='pending' where guardian_user_id=$1",[parent]);await assert.rejects(coverage.select(parentContext,{athleteIDs:[athlete]}),/family_coverage_forbidden/);}
+    finally{await admin.query("update public.athlete_guardians set invitation_status='accepted' where guardian_user_id=$1",[parent]);}
+    // Clearing and concurrent replacements are serialized; no partial slots survive.
+    assert.deepEqual(await coverage.select(parentContext,{athleteIDs:[]}),{selectedCount:0});
+    assert.equal((await access.read(ctx,target)).familyVideo,false);
+    const results=await Promise.all([athlete,copy].map(id=>coverage.select(parentContext,{athleteIDs:[id]})));
+    assert.deepEqual(results,[{selectedCount:1},{selectedCount:1}]);
+    assert.equal((await admin.query('select count(*)::int as n from wm_billing.family_coverage where user_id=$1',[parent])).rows[0].n,1);
+   });
+   await t.test('one selected profile covers both roster records without granting another team Team Pro',async()=>{
+    for(const [teamID,athleteID,eventID] of [[team,athlete,event],[other,copy,event2]]){
+     const result=await access.read(ctx,{teamID,athleteID,eventID});
+     assert.equal(result.familyVideo,true);assert.equal(result.teamPro,teamID===bound);
+     assert.deepEqual(Object.keys(result).sort(),['teamID','athleteID','eventID','teamPro','familyVideo','checkedAt'].sort());
+     assert.equal(JSON.stringify(result).includes(parent),false);assert.equal(JSON.stringify(result).includes(profile),false);
+    }
+   });
+   await t.test('event, consent and pilot gates remain required',async()=>{
+    assert.equal((await access.read(ctx,{teamID:team,athleteID:athlete})).familyVideo,false);
+    assert.equal((await access.read(ctx,{...target,eventID:event2})).familyVideo,false);
+    for(const [table,column] of [['video_event_settings','recording_permitted'],['video_athlete_permissions','recording_allowed'],['video_pilot_control','enabled']]){
+     try{await admin.query(`update private.${table} set ${column}=false`);assert.equal((await access.read(ctx,target)).familyVideo,false);}
+     finally{await admin.query(`update private.${table} set ${column}=true`);}
+    }
+   });
+   await t.test('an accepted guardian, current membership and selected profile are all required',async()=>{
+    try{await admin.query("update public.athlete_guardians set invitation_status='pending' where guardian_user_id=$1",[parent]);assert.equal((await access.read(ctx,target)).familyVideo,false);}
+    finally{await admin.query("update public.athlete_guardians set invitation_status='accepted' where guardian_user_id=$1",[parent]);}
+    try{await admin.query('update public.team_memberships set active=false where user_id=$1',[parent]);assert.equal((await access.read(ctx,target)).familyVideo,false);}
+    finally{await admin.query('update public.team_memberships set active=true where user_id=$1',[parent]);}
+    try{await admin.query('update wm_billing.family_coverage set athlete_profile_id=$1 where user_id=$2',[team,parent]);assert.equal((await access.read(ctx,target)).familyVideo,false);}
+    finally{await admin.query('update wm_billing.family_coverage set athlete_profile_id=$1 where user_id=$2',[profile,parent]);}
+   });
+   await t.test('subscription ownership alone does not authorize a guardian to record',async()=>{
+    const parentAccess=new SubscriptionAccessService({auth:parentAuth,repository:parentRepo,environment:'Sandbox'});
+    assert.equal((await parentAccess.read(parentContext,target)).familyVideo,false);
+   });
+   await t.test('refund, expiry, environment and deletion status are enforced from stored data',async()=>{
+    const original=(await admin.query("select snapshot from wm_billing.subscriptions where original_id='2001'")).rows[0].snapshot;
+    for(const patch of [{revokedAt:Date.now()},{expiresAt:Date.now()-1000}]){
+     try{await admin.query("update wm_billing.subscriptions set snapshot=$1 where original_id='2001'",[{...original,...patch}]);assert.equal((await access.read(ctx,target)).familyVideo,false);}
+     finally{await admin.query("update wm_billing.subscriptions set snapshot=$1 where original_id='2001'",[original]);}
+    }
+    const production=new SubscriptionAccessService({auth,repository,environment:'Production'});
+    assert.equal((await production.read(ctx,target)).familyVideo,false);assert.equal((await production.read(ctx,target)).teamPro,false);
+    try{await admin.query("insert into private.scoped_deletion_jobs(actor_id,state) values($1,'pending')",[parent]);assert.equal((await access.read(ctx,target)).familyVideo,false);}
+    finally{await admin.query('delete from private.scoped_deletion_jobs where actor_id=$1',[parent]);}
+    try{await admin.query("insert into private.scoped_deletion_jobs(actor_id,state,team_ids) values($1,'pending',array[$2::uuid])",[parent,team]);await assert.rejects(access.read(ctx,target),/access_forbidden/);}
+    finally{await admin.query('delete from private.scoped_deletion_jobs where actor_id=$1',[parent]);}
+   });
+   await t.test('HTTP access action authenticates, denies unrelated teams and exposes no billing rows',async()=>{
+    const handler=createBillingHandler({enabled:true,auth,access});
+    const request=data=>new Request('https://backend.invalid/billing',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer e30.'+Buffer.from(JSON.stringify(claims)).toString('base64url')+'.c2ln'},body:JSON.stringify({action:'access',data})});
+    let response=await handler(request(target));assert.equal(response.status,200);assert.equal((await response.json()).familyVideo,true);
+    assert.equal(response.headers.get('Cache-Control'),'no-store');
+    response=await handler(request({teamID:profile}));assert.equal(response.status,403);assert.deepEqual(await response.json(),{error:'access_not_authorized'});
+    assert.equal((await handler(request({...target,paid:true}))).status,400);
+   });
+   await t.test('access transaction holds the deletion actor lock and live session row lock',async()=>{
+    await repository.accessTransaction({userID:user},async tx=>{
+     await tx.currentActor(ctx);
+     const connection=await admin.connect();
+     try{
+      await connection.query('BEGIN');await connection.query("set local lock_timeout='100ms'");
+      assert.equal((await connection.query('select pg_try_advisory_xact_lock(hashtextextended($1,91347)) as locked',[user])).rows[0].locked,false);
+      await assert.rejects(connection.query('delete from auth.sessions where id=$1',[session]),e=>e.code==='55P03');
+     }finally{await connection.query('ROLLBACK');connection.release();}
+    });
+   });
+  });
   await t.test('deletion freeze and revoked session prevent billing writes',async()=>{
    const bound=(await admin.query('select team_id from wm_billing.team_bindings')).rows[0].team_id,request={productID,target:{kind:'team',teamID:bound}};
-   await admin.query("insert into private.scoped_deletion_jobs values($1,'pending')",[user]);await assert.rejects(intentService.prepare(ctx,request),/unauthorized/);
+   await admin.query("insert into private.scoped_deletion_jobs(actor_id,state) values($1,'pending')",[user]);await assert.rejects(intentService.prepare(ctx,request),/unauthorized/);
    await admin.query('delete from private.scoped_deletion_jobs');await admin.query('delete from auth.sessions where id=$1',[session]);await assert.rejects(intentService.prepare(ctx,request),/unauthorized/);await assert.rejects(delivery.deliver(ctx,{signedTransaction:'synthetic'}),/unauthorized/);
+   await assert.rejects(new SubscriptionAccessService({auth,repository,environment:'Sandbox'}).read(ctx,{teamID:bound}),/unauthorized/);
   });
   await t.test('public app roles cannot read billing or invoke privileged helpers',async()=>{
    for(const role of ['anon','authenticated']){

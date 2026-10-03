@@ -16,7 +16,7 @@ Implemented
   acknowledgement and rollback. Private draft schema with RLS and restricted grants.
 - Apple signature verification and canonical subscription status adapter using
   the pinned official library. Refund, expiry and grace policy checks.
-- Disabled-by-default Fetch route for prepare, deliver and abandon operations.
+- Disabled-by-default Fetch route for prepare, deliver, abandon, access and coverage.
 - Native StoreKit purchase, restore, unfinished recovery and updates listener.
 - Native HTTP adapter with public gateway key, authenticated requests, strict
   acknowledgements, blocked redirects and immutable account/session generation.
@@ -40,8 +40,8 @@ Integration order and remaining work
    production runtime compatibility for PostgreSQL and the Apple library.
 3. Configure server-only Apple credentials and official trust roots. The private
    .p8 stays out of GitHub, the web app, native app, screenshots and chat.
-4. Implement authenticated family athlete selection and authoritative access APIs;
-   resolve canonical profile IDs and current guardian/filming permissions on server.
+4. Connect the implemented family selection and access APIs to the native/web
+   host. Preserve the video pilot gate until a separate paid-video rollout is ready.
 5. Wire verified notifications and scheduled reconciliation so refunds, expirations
    and renewals update access even when the purchasing device is offline.
 6. Integrate the candidate Swift files into the working native project. Add an
@@ -139,6 +139,33 @@ Server access service candidate added:
 - Evaluates verified subscription snapshots with existing expiry/refund policy.
 - Returns only requested team/athlete flags and check time; no purchaser data.
 - Four service authorization checks pass.
-- accessTransaction and resolveAccess repository ports are NOT yet implemented.
-  They must resolve canonical family coverage and coordinate deletion/revocation
-  consistently. No access endpoint has been deployed or client grant enabled.
+- PostgreSQL accessTransaction and resolveAccess are now implemented (see below).
+  No access endpoint has been deployed or client grant enabled.
+
+Database access and family selection connected October 3:
+- Load billing-storage-candidate.sql, then billing-access-candidate.sql only into
+  a disposable database; production deletion/retention integration still blocks
+  deploying either draft. Existing deletion schema fingerprints must be updated
+  through that workflow before any production schema change.
+- POST action access accepts teamID, optional athleteID and eventID (an event
+  requires an athlete). Family Video recording access requires all three IDs.
+  It returns teamID, athleteID, eventID, teamPro, familyVideo and checkedAt only.
+- Database resolves athlete.profile_id and selected coverage profiles. Accepted
+  guardian relationships and active membership on the requested team are required.
+- Existing video_can_record is reused, including event permission, consent,
+  active roster, pilot/test gates and recorder restrictions. A subscription does
+  not turn on a non-pilot team. Personal accounts only on this access endpoint;
+  managed-device access still requires separate host/endpoint integration.
+- Permission and subscription state are read in one SQL statement. Access and
+  coverage transactions share the actor lock used by scoped_deletion_begin;
+  live user/session row locks remain held through transaction completion.
+  Target team/organization deletion and owner deletion suppress coverage.
+- POST action coverage accepts athleteIDs (0–2 roster IDs). Server resolves the
+  owner and canonical profiles, rejects duplicate profiles/unaccepted links,
+  replaces slots atomically and returns selectedCount. Clearing is supported.
+  Selecting athletes alone grants no paid access. Additional discounts are not
+  implemented. Selection UI and server endpoint deployment are still pending.
+- An access response is a current status display, not a reusable upload/recording
+  authorization. Every protected operation must check server permissions again.
+- Real PostgreSQL tests include captured app permission helper definitions and
+  synthetic teams/guardians/events; they never use live athlete or billing data.

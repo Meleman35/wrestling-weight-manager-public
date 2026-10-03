@@ -11,7 +11,7 @@ async function boundedJSON(request){
  const bytes=new Uint8Array(lengthRead);let offset=0;for(const value of chunks){bytes.set(value,offset);offset+=value.length;}
  try{return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));}catch{throw Error('invalid_request');}
 }
-export function createBillingHandler({enabled=false,auth,intents,delivery}){
+export function createBillingHandler({enabled=false,auth,intents,delivery,access,coverage}){
  return async request=>{
   const origin=request.headers.get('origin');if(origin&&!origins.has(origin))return response(403,{error:'origin_forbidden'});
   if(request.method==='OPTIONS')return new Response(null,{status:204,headers:origin?{'Access-Control-Allow-Origin':origin,'Vary':'Origin','Access-Control-Allow-Methods':'POST','Access-Control-Allow-Headers':'Authorization, Content-Type','Access-Control-Max-Age':'600'}:{}});
@@ -19,14 +19,17 @@ export function createBillingHandler({enabled=false,auth,intents,delivery}){
   if(request.method!=='POST')return response(405,{error:'method_not_allowed'},origin);
   try{
    const body=await boundedJSON(request);
-   if(!body||Object.keys(body).some(k=>!['action','data'].includes(k))||!['prepare','deliver','abandon'].includes(body.action)||!body.data||Array.isArray(body.data)||typeof body.data!=='object')throw Error('invalid_request');
+   if(!body||Object.keys(body).some(k=>!['action','data'].includes(k))||!['prepare','deliver','abandon','access','coverage'].includes(body.action)||!body.data||Array.isArray(body.data)||typeof body.data!=='object')throw Error('invalid_request');
    const context=await auth.authenticate(request.headers.get('authorization'));
-   const result=body.action==='prepare'?await intents.prepare(context,body.data):body.action==='abandon'?await intents.abandon(context,body.data):await delivery.deliver(context,body.data);
+   const result=body.action==='coverage'?await coverage.select(context,body.data):body.action==='access'?await access.read(context,body.data):body.action==='prepare'?await intents.prepare(context,body.data):body.action==='abandon'?await intents.abandon(context,body.data):await delivery.deliver(context,body.data);
    return response(200,result,origin);
   }catch(e){
    const code=e.code||e.message;
+   if(e.message==='family_coverage_forbidden')return response(403,{error:'family_coverage_not_authorized'},origin);
+   if(e.message==='invalid_coverage')return response(400,{error:'invalid_request'},origin);
    if(code==='unauthorized'||code==='session_changed')return response(401,{error:'sign_in_required'},origin);
    if(code==='body_too_large')return response(413,{error:code},origin);
+   if(code==='access_forbidden')return response(403,{error:'access_not_authorized'},origin);
    if(['invalid_request','invalid_target','invalid_content_type','unknown_product'].includes(code))return response(400,{error:'invalid_request'},origin);
    if(['team_purchase_forbidden','family_purchase_forbidden','intent_not_owned','different_owner'].includes(code))return response(403,{error:'purchase_not_authorized'},origin);
    if(['team_already_bound','purchase_already_bound'].includes(code))return response(409,{error:code},origin);

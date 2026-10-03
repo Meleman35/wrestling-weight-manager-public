@@ -9,3 +9,15 @@ test('extra actor, paid or unknown commands are rejected before authentication',
 test('oversized bodies and wrong media type fail before receipt parsing',async()=>{const {handler,calls}=fixture();assert.equal((await handler(request({action:'deliver',data:{signedTransaction:'x'.repeat(65536)}}))).status,413);assert.equal((await handler(request(undefined,{headers:{'Content-Type':'text/plain'}}))).status,400);assert.equal(calls.length,0);});
 test('ended sessions return sign-in-required without processing purchases',async()=>{const {handler,calls}=fixture({auth:{authenticate:async()=>{throw Error('unauthorized');}}});const response=await handler(request());assert.equal(response.status,401);assert.equal(calls.length,0);});
 test('database or Apple errors do not leak keys or raw receipts',async()=>{const {handler}=fixture({delivery:{deliver:async()=>{throw Error('private signing key and signed receipt');}}});const response=await handler(request({action:'deliver',data:{signedTransaction:'synthetic'}}));assert.equal(response.status,503);assert.deepEqual(await response.json(),{error:'purchase_delivery_unconfirmed'});});
+
+test('access and coverage routes receive verified contexts and sanitize selection errors',async()=>{
+ const context={};const calls=[];
+ const handler=createBillingHandler({enabled:true,auth:{authenticate:async()=>context},
+  access:{read:async(ctx,data)=>{assert.equal(ctx,context);calls.push(data);return {teamPro:false,familyVideo:false};}},
+  coverage:{select:async(ctx,data)=>{assert.equal(ctx,context);if(data.athleteIDs?.length)throw Object.assign(Error('family_coverage_forbidden'),{code:'P0001'});return {selectedCount:0};}}});
+ assert.equal((await handler(request({action:'access',data:{teamID:'synthetic'}}))).status,200);
+ assert.deepEqual(calls,[{teamID:'synthetic'}]);
+ assert.deepEqual(await (await handler(request({action:'coverage',data:{athleteIDs:[]}}))).json(),{selectedCount:0});
+ const denied=await handler(request({action:'coverage',data:{athleteIDs:['synthetic']}}));
+ assert.equal(denied.status,403);assert.deepEqual(await denied.json(),{error:'family_coverage_not_authorized'});
+});

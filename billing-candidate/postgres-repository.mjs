@@ -2,11 +2,14 @@
 // Production deployment remains blocked on deletion/retention and route wiring.
 export class PostgresBillingRepository {
  constructor({pool,auth}){this.pool=pool;this.auth=auth;}
- async withTransaction(lockKeys,callback){
+ async withTransaction(lockKeys,callback,{actorID}={}){
   const client=await this.pool.connect();let committed=false;
   try{
    await client.query('BEGIN');
    await client.query("set local lock_timeout='5s'");await client.query("set local statement_timeout='10s'");
+   // Same actor lock as private.scoped_deletion_begin. Acquire before auth row
+   // locks, so an access read cannot overlap this actor starting deletion.
+   if(actorID)await client.query('select pg_advisory_xact_lock(hashtextextended($1,91347))',[actorID]);
    // Sorting imposes a single lock order; collisions only serialize extra work.
    for(const key of [...new Set(lockKeys)].sort())await client.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[key]);
    const tx=this.port(client),result=await callback(tx);
@@ -14,12 +17,18 @@ export class PostgresBillingRepository {
   }catch(e){if(!committed)await client.query('ROLLBACK').catch(()=>{});throw e;}finally{client.release();}
  }
  intentTransaction({userID,scope},callback){return this.withTransaction(['purchaser:'+userID+':'+scope],callback);}
+ accessTransaction({userID},callback){return this.withTransaction([],callback,{actorID:userID});}
+ coverageTransaction({userID},callback){return this.withTransaction(['purchaser:'+userID+':family'],callback,{actorID:userID});}
  abandonTransaction({userID,token},callback){return this.withTransaction(['purchaser:'+userID+':team','purchaser:'+userID+':family','token:'+token.toLowerCase()],callback);}
  transaction({environment,originalTransactionID,token},callback){return this.withTransaction(['original:'+environment+':'+originalTransactionID,'token:'+token.toLowerCase()],callback);}
  port(client){
   const one=async(sql,args)=>(await client.query(sql,args)).rows[0];
   return {
    currentActor:ctx=>this.auth.currentActor(ctx,client),
+   resolveAccess:async(user,team,athlete,event)=>
+    (await one('select wm_billing.resolve_access($1,$2,$3,$4) as state',[user,team,athlete,event]))?.state??null,
+   replaceFamilyCoverage:async(user,athletes)=>
+    (await one('select wm_billing.set_family_coverage($1,$2::uuid[]) as result',[user,athletes]))?.result??null,
    canPurchaseTeam:async(user,team)=>(await one('select wm_billing.can_purchase_team($1,$2) as allowed',[user,team]))?.allowed===true,
    canPurchaseFamily:async user=>(await one('select wm_billing.can_purchase_family($1) as allowed',[user]))?.allowed===true,
    getTeamPurchaseBinding:async user=>{const row=await one('select team_id from wm_billing.team_bindings where user_id=$1',[user]);return row?{teamID:row.team_id}:null;},
