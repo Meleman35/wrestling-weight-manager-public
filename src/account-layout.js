@@ -31,7 +31,7 @@
  const labels=[['Family circle','family'],['Find Profiles','personal'],['My profile ·','personal'],['Profile chats','personal']];
  for(const node of [...sheet.children]){
   let key=Object.keys(ids).find(k=>ids[k].includes(node.id));
-  if(node.matches('[data-wm-mat-mode]')){key='tools';node.classList.add('account-nav-row');}
+  if(node.matches('[data-wm-mat-mode]')){key='tools';node.classList.add('account-nav-row');node.setAttribute('aria-label',node.textContent.trim());}
   if(!key&&node.matches('button'))key=labels.find(([text])=>node.textContent.startsWith(text))?.[1];
   if(key)groups[key].append(node);
  }
