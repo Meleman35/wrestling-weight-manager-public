@@ -1,82 +1,90 @@
-Wrestling Manager billing candidate — October 2, 2026 evening
+Wrestling Manager billing candidate — October 2, 2026
 
-This is prepared code for integration, not an installed payment release.
-Do not replace the working Xcode project or submit a new build from these files.
+STATUS: Prepared integration code. Payments are not enabled.
+Draft PR: https://github.com/Meleman35/wrestling-weight-manager-public/pull/57
+Do not replace the working Xcode project or submit a build from these files alone.
 
-Implemented and verified with 51 synthetic server/policy tests:
-- Four exact products created in App Store Connect: Team Pro annual/monthly
-  and Family Video annual/monthly.
-- Team Pro remains bound to one team per purchaser for the initial launch.
-  Original purchases and restores never silently move the team license.
-- Family Video belongs to the authenticated personal account and covers up to
-  two server-selected, currently linked athletes across teams.
-- Any separately authorized filming device may record a covered athlete.
-  Family billing never grants Team Pro or access to unrelated athlete records.
-- Server-authorized purchase intents and opaque account tokens.
-- Refund, expiry, grace, conflicting evidence, session changes and forged
-  ownership rejected. Transactions finish only after durable acknowledgement.
-- Apple signature verification and canonical status adapter with pinned library.
-- Native StoreKit purchase, restore, recovery and update-listener component.
-  Native API now takes a team or family target; the production adapter must
-  implement this updated interface. Product prices come from Apple metadata.
+Implemented
+- Four Team Pro / Family Video monthly and annual products.
+- Team Pro binding to one team per Apple purchaser for initial launch; restores
+  preserve the original team. Owned unpaid reservations can be cancelled.
+- Personal Family Video scope, up to two linked athlete profiles across teams.
+  Any separately authorized filming device may record a covered athlete.
+  Family coverage does not grant Team Pro to the whole team.
+- Supabase authentication and transactional session/user checks.
+- PostgreSQL transaction locks, unique ownership, immutable scope, durable
+  acknowledgement and rollback. Private draft schema with RLS and restricted grants.
+- Apple signature verification and canonical subscription status adapter using
+  the pinned official library. Refund, expiry and grace policy checks.
+- Disabled-by-default Fetch route for prepare, deliver and abandon operations.
+- Native StoreKit purchase, restore, unfinished recovery and updates listener.
+- Native HTTP adapter with public gateway key, authenticated requests, strict
+  acknowledgements, blocked redirects and immutable account/session generation.
+  Logout stops the adapter; a stopped instance cannot be reused.
 
-The repository/auth ports are explicit contracts, not production implementations.
-The intent repository must lock purchaser+subscription group, check current team
-purchase authority or family eligibility, and enforce the one-team binding across
-pending intents and historical purchases. The delivery repository must lock both
-original subscription and intent token, enforce unique ownership, and return only
-once commit succeeds. Do not interpret unit test in-memory storage as a database.
+Verification
+- Latest isolated CI: 76 backend checks passed, none skipped, including disposable
+  PostgreSQL concurrency, rollback, cancelled reservation and role-access checks.
+- Apple SDK type checking passed for the two candidate Swift files.
+- Native HTTP executable checks passed for scope, authentication, strict response
+  handling, account changes and logout.
+- These are not valid Apple receipt tests, full-project Xcode builds or device
+  sandbox tests. No live billing database, endpoint or paid entitlement deployed.
 
-Family coverage inputs must come from current authenticated server relationship
-queries and separately verified filming permissions. The base plan supports two
-unique linked athletes. Third-athlete and 4–8 discounts are requested, but their
-amounts/products are still undecided and are not activated in this candidate.
+Integration order and remaining work
+1. Resolve account deletion / financial retention behavior and coordinate billing
+   transactions with deletion freeze and the deletion catalog. Do not activate the
+   draft schema before this is complete.
+2. Generate a migration through the existing Supabase workflow. Provision a private
+   backend identity with only the intended wm_billing_runtime grants; validate
+   production runtime compatibility for PostgreSQL and the Apple library.
+3. Configure server-only Apple credentials and official trust roots. The private
+   .p8 stays out of GitHub, the web app, native app, screenshots and chat.
+4. Implement authenticated family athlete selection and authoritative access APIs;
+   resolve canonical profile IDs and current guardian/filming permissions on server.
+5. Wire verified notifications and scheduled reconciliation so refunds, expirations
+   and renewals update access even when the purchasing device is offline.
+6. Integrate the candidate Swift files into the working native project. Add an
+   origin-checked, main-frame-only web bridge and authenticated session lifecycle.
+   Plan screens must use Apple product metadata and server-authoritative access.
+7. Run full Xcode compilation, local StoreKit and device sandbox checks: purchase,
+   cancellation, pending approval, restart/network recovery, restore, account
+   switch/logout, monthly/annual changes, refund and expiry.
+8. Complete App Store Connect paid agreements, tax, banking and review metadata.
+   Submit first subscriptions with the app version and subscription group.
 
-Still required before payments can be enabled:
-1. Production storage/auth adapters, financial retention/deletion integration,
-   verified Apple notifications and scheduled expiry reconciliation.
-2. Apple server credentials and official root certificates configured privately.
-3. A guarded native/web purchase bridge and plan UI with authenticated lifecycle.
-4. Compilation against Apple SDK, then StoreKit configuration and device sandbox
-   purchase, pending, cancellation, restoration and recovery tests.
-5. App Store Connect banking/tax/agreement completion and required review metadata.
+Known product limits
+- Third-athlete and athletes 4–8 discounts are requested but prices and additional
+  products are undecided. They are not active in this candidate.
+- Live streaming, hosted image/video limits and SMS service are not ready for sale
+  as unlimited benefits. Final plan text must describe actual available coverage.
+- Do not infer a paid flag from purchase success, local receipts or an HTTP ack.
+  Refresh access from the authoritative server after delivery.
 
-Local verification: npm test in this folder (51 tests pass). The library smoke
-check rejects a forged signed transaction; no valid Apple purchase was tested.
-No database schema, live paid access, billing endpoint or TestFlight build changed.
+Configuration inventory (public identifiers only)
+Apple In-App Purchase key ID: 79R244P822
+Apple issuer ID: b5931be7-ac93-4ab3-9b1a-15e1dd26a549
+Private signing key: downloaded on owner's Mac; not configured on server yet.
+Apple numeric app ID: still needs confirmation for production verification.
+Bundle ID: confirm from the working Xcode target and App Store Connect; do not
+infer it from a product ID prefix.
+Endpoint reserved in native code:
+https://vfocpoyexnjsjpxhhyqr.supabase.co/functions/v1/wrestling-manager-billing
+This endpoint has not been deployed. Publishable gateway key is public app
+configuration; service-role credentials and Apple private keys are server only.
 
-The existing working native app and archives remain the integration source. This
-folder is a candidate to merge into that project after its ports are implemented.
+Product catalog
+com.damonmele.wrestlingmanager.teampro.annual — $269.99/year
+com.damonmele.wrestlingmanager.teampro.monthly — $75/month
+com.damonmele.wrestlingmanager.familyvideo.annual — $99.99/year
+com.damonmele.wrestlingmanager.familyvideo.monthly — $14.99/month
+Actual localized purchase prices must come from StoreKit, not this checklist.
 
-Backend work added October 2 evening:
-- Supabase token authentication mints an internal context only after verifying the
-  exact token with Auth, then checks session/user status inside the DB transaction.
-- PostgreSQL repository uses transaction-scoped original/token/purchaser locks,
-  unique constraints, immutable bindings, and commit-before-acknowledgement.
-- Private draft schema enables RLS and denies app roles direct billing access.
-- Isolated PostgreSQL CI tests use synthetic fixtures, never the live database.
-- 57 local tests pass; the real PostgreSQL suite runs only in disposable CI.
+Local checks
+npm ci --ignore-scripts
+npm test
+Real database checks require BILLING_TEST_DATABASE_URL pointing to the disposable
+localhost billing_test database. Never point that suite at live project data.
 
-This is still a draft SQL schema, not a generated/deployed Supabase migration.
-Financial retention/deletion catalog integration remains a deployment blocker.
-Pending unpaid team selections can be cancelled through an authenticated operation;
-paid original bindings and other accounts remain protected. HTTP routing, family coverage selection, Apple keys,
-notification processing and production-runtime tests also remain unfinished.
-
-Isolated PostgreSQL CI passed all 64 checks (before additional cancellation/coverage
-checks). No billing schema or function was deployed to the live project.
-
-Fetch-compatible route candidate added:
-- Explicitly disabled by default; authenticated prepare/deliver/abandon commands.
-- Bounded JSON bodies, exact browser origin, and sanitized error responses.
-- It is not a deployed Edge Function and does not yet expose access/coverage APIs.
-- HTTP routing tests pass locally; production runtime wiring remains unfinished.
-
-Native HTTP adapter candidate added:
-- Team/family prepare, receipt delivery, and unpaid cancellation requests.
-- Uses one immutable account/session/generation with the latest access token.
-- Rejects stale account responses, unexpected acknowledgement keys and redirects.
-- Stops its ephemeral URLSession on logout. No local paid flag is installed.
-- Endpoint name is reserved in code only; it has not been deployed.
-- Integration must provide authoritative access refresh and destroy both store
-  and adapter on logout. No web purchase bridge or live buttons are wired yet.
+Working web UI release 0.20.120 and installed native build 1.0 (8) remain the
+baseline. This candidate is a separate draft, not a replacement release.
