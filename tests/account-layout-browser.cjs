@@ -39,7 +39,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
  await page.locator('#creatorOffersSheet [data-sheet-back]').click();assert.equal(await page.locator('#accountSheet').isVisible(),true);
  await page.locator('#creatorAccountRolePreviewBtn').click();await page.locator('#creatorRolePreviewFrame').waitFor();
  const demo=page.frameLocator('#creatorRolePreviewFrame');await demo.locator('[data-demo-page="profile"]').click();
- await page.locator('#creatorRolePreviewSheet [data-sheet-back]').click();await demo.locator('[data-demo-action="profile"]').waitFor();
+ await page.locator('#creatorRolePreviewSheet [data-sheet-back]').click();await demo.locator('[data-demo-page="home"][aria-pressed="true"]').waitFor();
  assert.equal(await page.locator('#creatorRolePreviewSheet').isVisible(),true);
  await page.locator('#creatorRolePreviewClose').click();await page.locator('#creatorDashboardRolePreviewBtn').waitFor({state:'visible'});
  assert.equal(await page.locator('#creatorRolePreviewFrame').count(),0);
