@@ -47,3 +47,19 @@ No database schema, live paid access, billing endpoint or TestFlight build chang
 
 The existing working native app and archives remain the integration source. This
 folder is a candidate to merge into that project after its ports are implemented.
+
+Backend work added October 2 evening:
+- Supabase token authentication mints an internal context only after verifying the
+  exact token with Auth, then checks session/user status inside the DB transaction.
+- PostgreSQL repository uses transaction-scoped original/token/purchaser locks,
+  unique constraints, immutable bindings, and commit-before-acknowledgement.
+- Private draft schema enables RLS and denies app roles direct billing access.
+- Isolated PostgreSQL CI tests use synthetic fixtures, never the live database.
+- 57 local tests pass; the real PostgreSQL suite runs only in disposable CI.
+
+This is still a draft SQL schema, not a generated/deployed Supabase migration.
+Financial retention/deletion catalog integration remains a deployment blocker.
+Pending team selection reservations need an authenticated cancellation/release
+operation before purchase controls are enabled; a cancelled purchase must not
+permanently reserve a team. HTTP routing, family coverage selection, Apple keys,
+notification processing and production-runtime tests also remain unfinished.
