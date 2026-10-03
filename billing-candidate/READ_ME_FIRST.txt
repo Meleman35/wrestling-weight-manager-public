@@ -88,3 +88,10 @@ localhost billing_test database. Never point that suite at live project data.
 
 Working web UI release 0.20.120 and installed native build 1.0 (8) remain the
 baseline. This candidate is a separate draft, not a replacement release.
+
+Subscription presentation candidate added:
+- Localized StoreKit prices only; no invented price fallback.
+- Team selection required, family target has no team, restore cannot rebind.
+- Streaming, storage, SMS and extra-athlete availability explained explicitly.
+- Purchase readiness disabled by default. This model does not grant access.
+- Four presentation checks passed; web/native rendering integration remains.
