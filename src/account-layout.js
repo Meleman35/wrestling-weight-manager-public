@@ -38,7 +38,8 @@
  const anchor=sheet.querySelector('.wm-info-links')||document.getElementById('signOutBtn');
  for(const group of Object.values(groups))sheet.insertBefore(group,anchor);
  function sync(){
-  editor.hidden=!!profile&&(profile.hidden||profile.classList.contains('hidden'));
+  const hideEditor=!!profile&&(profile.hidden||profile.classList.contains('hidden'));
+  if(editor.hidden!==hideEditor)editor.hidden=hideEditor;
   for(const group of Object.values(groups)){
    const empty=[...group.children].slice(1).every(n=>n.hidden||n.classList.contains('hidden')||n.style.display==='none');
    if(group.hidden!==empty)group.hidden=empty;
