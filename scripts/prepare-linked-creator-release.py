@@ -24,7 +24,12 @@ s=replace_once(s,"show('creatorReturnToTeam',data.home_mode==='team'||accessMode
 s=replace_once(s,"$c('creatorReturnToTeam').onclick=()=>closeSheets();", "$c('creatorReturnToTeam').onclick=()=>closeSheets();\n $c('creatorDashboardRolePreviewBtn').onclick=()=>window.WMCreatorRolePreview?.open();")
 put('src/creator-offers.js',s)
 p=(root/'src/creator-role-preview.js').read_text()
-p=replace_once(p,"function exit(){const target=opener;closeSheets();if(target?.isConnected&&!target.classList.contains('hidden'))target.focus()}","function exit(){const target=opener,returnToDashboard=target?.id==='creatorDashboardRolePreviewBtn'&&owner===context()&&unlocked()&&navigator.onLine;closeSheets();if(returnToDashboard){void window.WMCreatorOffers?.open();return}if(target?.isConnected&&!target.classList.contains('hidden'))target.focus()}")
+if 'function exit(toCreator=false)' in p:
+ assert "owner===context()&&unlocked()&&navigator.onLine" in p
+ assert "function back()" in p and "wm-role-preview-back" in p
+ assert "'accountSheet':'preserve'" in p
+else:
+ p=replace_once(p,"function exit(){const target=opener;closeSheets();if(target?.isConnected&&!target.classList.contains('hidden'))target.focus()}","function exit(){const target=opener,returnToDashboard=target?.id==='creatorDashboardRolePreviewBtn'&&owner===context()&&unlocked()&&navigator.onLine;closeSheets();if(returnToDashboard){void window.WMCreatorOffers?.open();return}if(target?.isConnected&&!target.classList.contains('hidden'))target.focus()}")
 put('src/creator-role-preview.js',p)
 # The generated test keeps every original linked-workspace assertion and adds real
 # dashboard -> sandbox -> dashboard clicks without copying a session into the demo.
@@ -54,6 +59,7 @@ for script in ['patch-creator-offers.py','patch-creator-role-preview.py']:
  subprocess.run([sys.executable,str(root/'scripts'/script)]+(['--check'] if check else []),check=True,cwd=root)
 for path in ['index.html','sw.js']:
  s=(root/path).read_text()
- assert any(v in s for v in ('0.20.113','0.20.114','0.20.115','0.20.116','0.20.117','0.20.118','0.20.119')),'Unexpected release version: '+path
+ assert any(v in s for v in ('0.20.113','0.20.114','0.20.115','0.20.116','0.20.117','0.20.118','0.20.120')),'Unexpected release version: '+path
  put(path,s.replace('0.20.113','0.20.114').replace('Creator role previews with fictional, isolated account views.','Shared Creator dashboard with personal-login access and fictional role previews.'))
 print('PASS Linked Creator release embeds previews and keeps web/service-worker version paired')
+
