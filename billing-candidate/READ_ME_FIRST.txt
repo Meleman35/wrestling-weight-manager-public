@@ -124,3 +124,12 @@ Native purchase client added:
 - Six lifecycle/response checks passed. Host must wire current session generation
   and stop both client/screen and native store/transport on logout or navigation.
 - Apple SDK compilation of native bridge and browser screen QA both passed.
+
+Subscription controller composition added October 3:
+- Loads validated native product metadata and mounts the existing screen.
+- Requests authoritative access refresh after delivered purchase/restore/recovery.
+- Supplies a session invalidation guard; the host must check it before committing
+  any async access response. Disposal stops the client and removes the screen.
+- Purchase readiness still defaults off. Full native host and backend deployment
+  remain required; this does not enable purchases in the installed app.
+- Four controller lifecycle checks plus ten client/presentation checks passed.
