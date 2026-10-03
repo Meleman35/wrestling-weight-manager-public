@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.119: Trainer-directed care updates and in-app notification destinations. -->
+<!-- Wrestling Manager v0.20.120: Organized account and athlete profiles with Creator demo return navigation. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -2377,7 +2377,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.119</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.120</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -17554,7 +17554,7 @@ window.WMRolePreviewDocument="\u003c!doctype html>\u003chtml lang=\"en\">\u003ch
 /* Public web-version status only. Never activates a worker or reloads user work. */
 window.WMWebUpdates=(()=>{
  'use strict';
- const CURRENT='0.20.119',LIMIT=65536;
+ const CURRENT='0.20.120',LIMIT=65536;
  const sheet=document.getElementById('accountSheet');
  if(!sheet)return Object.freeze({check:async()=>{}});
  const card=document.createElement('section');card.id='webUpdatesCard';card.className='feature-card';
@@ -17678,7 +17678,7 @@ window.WMWebUpdates=(()=>{
   const title=document.createElement('h3');title.textContent='Athlete tools';quick.append(title);
   const rows=document.createElement('div');rows.className='profile-tools';quick.append(rows);
   const first=document.getElementById('profileAthleteGoalsBtn');first.before(quick);
-  for(const id of ['profileAthleteGoalsBtn','profileAttendanceBtn','profileAthleteCardBtn','profileWeightTrendBtn'])rows.append(document.getElementById(id));
+  for(const id of ['profileAthleteGoalsBtn','profileAttendanceBtn','profileStatisticsBtn','profileAthleteCardBtn','profileWeightTrendBtn'])rows.append(document.getElementById(id));
   function wrap(start,end,label){
    const children=[...editor.children],a=children.indexOf(start),b=children.indexOf(end);if(a<0||b<=a)return;
    const section=document.createElement('section');section.className='athlete-profile-section';

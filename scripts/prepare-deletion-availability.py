@@ -82,7 +82,7 @@ s=once(s,"fixture.preflight.enabled=false;return WMDeletionPhoneTest.refresh();}
 put(path,s)
 path='scripts/prepare-notification-header.py'
 s=(root/path).read_text()
-s=once(s,"assert 'Build v0.20.117' in html and 'wm-shell-0.20.117' in (root / 'sw.js').read_text()", "assert any('Build v'+v in html and 'wm-shell-'+v in (root / 'sw.js').read_text() for v in ('0.20.117','0.20.118','0.20.119'))")
+s=once(s,"assert 'Build v0.20.117' in html and 'wm-shell-0.20.117' in (root / 'sw.js').read_text()", "assert any('Build v'+v in html and 'wm-shell-'+v in (root / 'sw.js').read_text() for v in ('0.20.117','0.20.118','0.20.120'))")
 put(path,s)
 for path in ['index.html','sw.js','scripts/prepare-launch-information.py','scripts/prepare-linked-creator-release.py']:
     s=(root/path).read_text()

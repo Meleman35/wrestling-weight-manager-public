@@ -19,7 +19,7 @@
   const title=document.createElement('h3');title.textContent='Athlete tools';quick.append(title);
   const rows=document.createElement('div');rows.className='profile-tools';quick.append(rows);
   const first=document.getElementById('profileAthleteGoalsBtn');first.before(quick);
-  for(const id of ['profileAthleteGoalsBtn','profileAttendanceBtn','profileAthleteCardBtn','profileWeightTrendBtn'])rows.append(document.getElementById(id));
+  for(const id of ['profileAthleteGoalsBtn','profileAttendanceBtn','profileStatisticsBtn','profileAthleteCardBtn','profileWeightTrendBtn'])rows.append(document.getElementById(id));
   function wrap(start,end,label){
    const children=[...editor.children],a=children.indexOf(start),b=children.indexOf(end);if(a<0||b<=a)return;
    const section=document.createElement('section');section.className='athlete-profile-section';

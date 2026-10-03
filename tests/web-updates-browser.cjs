@@ -15,7 +15,7 @@ const root=path.resolve(__dirname,'..');
   if(new URL(req.url()).pathname==='/sw.js'){
    requests.push({url:req.url(),headers:await req.allHeaders()});const selected=mode;
    if(selected==='hold'||selected==='timeout')await new Promise(resolve=>{release=resolve;});
-   try{return await route.fulfill({status:selected==='error'?503:200,contentType:'text/javascript',body:selected==='malformed'?"private backend text":`const CACHE='wm-shell-${selected==='newer'?'0.20.120':selected==='major'?'1.0.0':selected==='older'?'0.20.99':'0.20.119'}';`});}catch{return;}
+   try{return await route.fulfill({status:selected==='error'?503:200,contentType:'text/javascript',body:selected==='malformed'?"private backend text":`const CACHE='wm-shell-${selected==='newer'?'0.20.121':selected==='major'?'1.0.0':selected==='older'?'0.20.99':'0.20.120'}';`});}catch{return;}
   }
   if(req.url().includes('supabase'))return route.fulfill({contentType:'text/javascript',body:''});
   return route.abort();
