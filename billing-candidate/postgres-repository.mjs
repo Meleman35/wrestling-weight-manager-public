@@ -14,6 +14,7 @@ export class PostgresBillingRepository {
   }catch(e){if(!committed)await client.query('ROLLBACK').catch(()=>{});throw e;}finally{client.release();}
  }
  intentTransaction({userID,scope},callback){return this.withTransaction(['purchaser:'+userID+':'+scope],callback);}
+ abandonTransaction({userID,token},callback){return this.withTransaction(['purchaser:'+userID+':team','purchaser:'+userID+':family','token:'+token.toLowerCase()],callback);}
  transaction({environment,originalTransactionID,token},callback){return this.withTransaction(['original:'+environment+':'+originalTransactionID,'token:'+token.toLowerCase()],callback);}
  port(client){
   const one=async(sql,args)=>(await client.query(sql,args)).rows[0];
@@ -37,7 +38,9 @@ export class PostgresBillingRepository {
     if(!row)throw Error('binding_mismatch');
    },
    bindIntent:async(token,original)=>{const row=await one('update wm_billing.intents set bound_original_id=$2 where token=$1 and (bound_original_id is null or bound_original_id=$2) returning token',[token,original]);if(!row)throw Error('intent_already_bound');},
-   recordDelivery:async(environment,transaction,original)=>{const row=await one('insert into wm_billing.deliveries(environment,transaction_id,original_id) values($1,$2,$3) on conflict(environment,transaction_id) do update set last_seen=now() where wm_billing.deliveries.original_id=excluded.original_id returning transaction_id',[environment,transaction,original]);if(!row)throw Error('delivery_binding_conflict');}
+   recordDelivery:async(environment,transaction,original)=>{const row=await one('insert into wm_billing.deliveries(environment,transaction_id,original_id) values($1,$2,$3) on conflict(environment,transaction_id) do update set last_seen=now() where wm_billing.deliveries.original_id=excluded.original_id returning transaction_id',[environment,transaction,original]);if(!row)throw Error('delivery_binding_conflict');},
+   cancelIntent:async token=>{const row=await one('update wm_billing.intents set cancelled=true where token=$1 and bound_original_id is null returning token',[token]);if(!row)throw Error('purchase_already_bound');},
+   releaseUnusedTeamBinding:async user=>client.query("delete from wm_billing.team_bindings b where b.user_id=$1 and not exists(select 1 from wm_billing.intents i where i.user_id=b.user_id and i.scope='team' and (not i.cancelled or i.bound_original_id is not null)) and not exists(select 1 from wm_billing.subscriptions s where s.user_id=b.user_id and s.scope='team')",[user])
   };
  }
 }

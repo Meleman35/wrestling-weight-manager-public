@@ -50,6 +50,7 @@ alter table wm_billing.family_coverage enable row level security;
 revoke all on all tables in schema wm_billing from public;
 grant usage on schema wm_billing to wm_billing_runtime;
 grant select,insert,update on all tables in schema wm_billing to wm_billing_runtime;
+grant delete on wm_billing.team_bindings to wm_billing_runtime;
 create policy backend on wm_billing.team_bindings to wm_billing_runtime using(true) with check(true);
 create policy backend on wm_billing.intents to wm_billing_runtime using(true) with check(true);
 create policy backend on wm_billing.subscriptions to wm_billing_runtime using(true) with check(true);

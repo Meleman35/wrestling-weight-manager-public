@@ -8,6 +8,7 @@ protocol WrestlingManagerPurchaseServer: AnyObject {
     // Implementation must use the current authenticated server session.
     // The server validates team authority and binds this opaque token durably.
     func preparePurchase(productID: String, target: WrestlingManagerPurchaseTarget) async throws -> UUID
+    func abandonPurchase(token: UUID) async throws
     // Return only after Apple evidence is verified, ownership checked and the
     // transaction durably processed. Acknowledgement does not itself grant UI access.
     func deliver(signedTransaction: String) async throws -> WrestlingManagerPurchaseAck
@@ -123,6 +124,10 @@ final class WrestlingManagerStore {
         case .pending:
             return .pending
         case .userCancelled:
+            // Cancel only an unbound intent. The server cannot release a paid
+            // original purchase or another account's team reservation.
+            try? await server.abandonPurchase(token: token)
+            try requireSession()
             return .cancelled
         @unknown default:
             throw StoreError.unknownResult

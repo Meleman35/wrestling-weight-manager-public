@@ -29,4 +29,17 @@ export class PurchaseIntentService {
    return {appAccountToken:token};
   });
  }
+ async abandon(authContext,request){
+  if(!request||Object.keys(request).some(k=>k!=='appAccountToken')||!uuid(request.appAccountToken))throw Error('invalid_request');
+  const initial=await this.auth.currentActor(authContext);if(!allowedActor(initial))throw Error('unauthorized');
+  return this.repository.abandonTransaction({userID:initial.userID,token:request.appAccountToken},async tx=>{
+   const actor=await tx.currentActor(authContext);if(!allowedActor(actor)||actor.userID!==initial.userID)throw Error('unauthorized');
+   const intent=await tx.getIntent(request.appAccountToken);
+   if(!intent||intent.userID!==actor.userID)throw Error('intent_not_owned');
+   if(intent.boundOriginalTransactionID)throw Error('purchase_already_bound');
+   await tx.cancelIntent(intent.token);
+   if(intent.teamID)await tx.releaseUnusedTeamBinding(actor.userID);
+   return {cancelled:true};
+  });
+ }
 }

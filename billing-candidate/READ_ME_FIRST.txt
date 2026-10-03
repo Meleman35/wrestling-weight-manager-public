@@ -59,7 +59,9 @@ Backend work added October 2 evening:
 
 This is still a draft SQL schema, not a generated/deployed Supabase migration.
 Financial retention/deletion catalog integration remains a deployment blocker.
-Pending team selection reservations need an authenticated cancellation/release
-operation before purchase controls are enabled; a cancelled purchase must not
-permanently reserve a team. HTTP routing, family coverage selection, Apple keys,
+Pending unpaid team selections can be cancelled through an authenticated operation;
+paid original bindings and other accounts remain protected. HTTP routing, family coverage selection, Apple keys,
 notification processing and production-runtime tests also remain unfinished.
+
+Isolated PostgreSQL CI passed all 64 checks (before additional cancellation/coverage
+checks). No billing schema or function was deployed to the live project.

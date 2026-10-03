@@ -47,6 +47,25 @@ test('real PostgreSQL transactions, concurrency, permissions and revoked session
    await admin.query("insert into public.athlete_guardians values($1,$2,'pending')",[athlete,user]);await assert.rejects(intentService.prepare(ctx,request),/family_purchase_forbidden/);
    await admin.query("update public.athlete_guardians set invitation_status='accepted'");await intentService.prepare(ctx,request);
   });
+  await t.test('cancelled unpaid intent releases selection but a paid binding cannot be erased',async()=>{
+   await assert.rejects(intentService.abandon(ctx,{appAccountToken:token}),/purchase_already_bound/);
+   const user2='66666666-6666-4666-8666-666666666666',session2='77777777-7777-4777-8777-777777777777';
+   await admin.query('insert into auth.users(id,confirmed_at) values($1,now())',[user2]);await admin.query('insert into auth.sessions(id,user_id) values($1,$2)',[session2,user2]);
+   for(const id of [team,other])await admin.query("insert into public.team_memberships(team_id,user_id,role) values($1,$2,'head_coach')",[id,user2]);
+   const auth2=new SupabaseBillingAuth({projectURL,publishableKey:'synthetic',pool,fetchImpl:async()=>({ok:true,json:async()=>({id:user2})})});
+   const claims2={...claims,sub:user2,session_id:session2};const ctx2=await auth2.authenticate('Bearer e30.'+Buffer.from(JSON.stringify(claims2)).toString('base64url')+'.c2ln');
+   const repo2=new PostgresBillingRepository({pool,auth:auth2}),service2=new PurchaseIntentService({auth:auth2,repository:repo2});
+   const first=await service2.prepare(ctx2,{productID,target:{kind:'team',teamID:team}});
+   await assert.rejects(intentService.abandon(ctx,{appAccountToken:first.appAccountToken}),/intent_not_owned/);
+   await service2.abandon(ctx2,first);assert.equal((await admin.query('select count(*)::int as n from wm_billing.team_bindings where user_id=$1',[user2])).rows[0].n,0);
+   await service2.prepare(ctx2,{productID,target:{kind:'team',teamID:other}});
+   assert.equal((await admin.query('select team_id from wm_billing.team_bindings where user_id=$1',[user2])).rows[0].team_id,other);
+  });
+  await t.test('base family coverage allows two unique profile slots only',async()=>{
+   await admin.query('insert into wm_billing.family_coverage values($1,1,$2),($1,2,$3)',[user,athlete,other]);
+   await assert.rejects(admin.query('insert into wm_billing.family_coverage values($1,3,$2)',[user,team]));
+   await assert.rejects(admin.query('update wm_billing.family_coverage set athlete_profile_id=$2 where user_id=$1 and slot=2',[user,athlete]));
+  });
   await t.test('deletion freeze and revoked session prevent billing writes',async()=>{
    const bound=(await admin.query('select team_id from wm_billing.team_bindings')).rows[0].team_id,request={productID,target:{kind:'team',teamID:bound}};
    await admin.query("insert into private.scoped_deletion_jobs values($1,'pending')",[user]);await assert.rejects(intentService.prepare(ctx,request),/unauthorized/);
