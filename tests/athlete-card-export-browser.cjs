@@ -20,9 +20,9 @@ assert.equal(result.photoLoads,2);
 const first=positions[0],photoX=Math.floor((first.x+first.width*100/1011)*2.5),photoY=Math.floor((792-first.y-first.height+first.height*380/638)*2.5),pixel=(photoY*png.width+photoX)*4;
 assert.ok(png.data[pixel]>240&&png.data[pixel+1]<20&&png.data[pixel+2]<20,'Approved photo must appear in the PDF');
 assert.equal(result.pages,2);assert.deepEqual(result.size,{width:612,height:792});assert.ok(Math.abs(result.single.width*25.4/72-85.6)<.001);
-await p.evaluate(()=>{show('appLockOverlay',false);managedLogin=null;actualIsStaff=true;session={user:{id:'test'}};athleteCardRows=[{athlete_id:'a',first_name:'Long athlete name',last_name:'Test'}];document.getElementById('athleteCardSelect').replaceChildren(document.createElement('option'));openSheet('athleteCardSheet');});await p.locator('#bulkAthleteCards summary').click();
+await p.evaluate(()=>{show('appLockOverlay',false);managedLogin=null;actualIsStaff=true;session={user:{id:'test'}};athleteCardRows=[{athlete_id:'a',first_name:'Long athlete name',last_name:'Test'}];document.getElementById('athleteCardSelect').replaceChildren(document.createElement('option'));openSheet('athleteCardSheet');window.originalCardTestRPC=client.rpc.bind(client);});await p.locator('#bulkAthleteCards summary').click();
 for(const width of [320,390,768]){await p.setViewportSize({width,height:900});assert.equal(await p.locator('#athleteCardSheet').evaluate(e=>e.scrollWidth<=e.clientWidth),true);}
-await p.evaluate(()=>{window.exportCalls=0;client.rpc=async()=>{window.exportCalls++;throw Error('Must not request cards');};document.querySelector('#bulkAthleteCards input').checked=true;managedLogin={id:'managed-test'};});
+await p.evaluate(()=>{window.exportCalls=0;client.rpc=async(name,args)=>{if(name!=='get_athlete_scan_card')return window.originalCardTestRPC(name,args);window.exportCalls++;throw Error('Must not request cards');};document.querySelector('#bulkAthleteCards input').checked=true;managedLogin={id:'managed-test'};});
 await p.locator('#bulkAthleteCards [data-export]').click();assert.equal(await p.evaluate(()=>exportCalls),0);
 await p.evaluate(()=>{managedLogin=null;document.body.classList.add('kiosk-locked');});
 await p.locator('#bulkAthleteCards [data-export]').dispatchEvent('click');assert.equal(await p.evaluate(()=>exportCalls),0);
@@ -37,7 +37,7 @@ for(const change of ['sheet','session','lock']){
   window.exportCalls=0;window.sharedFiles=0;
   navigator.canShare=()=>true;navigator.share=async()=>{window.sharedFiles++;};
   document.querySelector('#bulkAthleteCards input').checked=true;
-  client.rpc=()=>{window.exportCalls++;return new Promise(resolve=>{window.finishCard=()=>resolve({data:{athlete_id:'a',first_name:'Test',credential_token:'TEST-PRIVATE-CARD'}});});};
+  client.rpc=(name,args)=>{if(name!=='get_athlete_scan_card')return window.originalCardTestRPC(name,args);window.exportCalls++;return new Promise(resolve=>{window.finishCard=()=>resolve({data:{athlete_id:'a',first_name:'Test',credential_token:'TEST-PRIVATE-CARD'}});});};
  });
  await p.locator('#bulkAthleteCards [data-export]').click();
  assert.equal(await p.evaluate(()=>exportCalls),1);
@@ -53,7 +53,7 @@ for(const change of ['sheet','session','lock']){
 await p.evaluate(()=>{
  window.sharedFiles=0;window.shareHadActivation=false;window.exportCalls=0;
  navigator.canShare=()=>true;navigator.share=async()=>{window.shareHadActivation=navigator.userActivation.isActive;window.sharedFiles++;};
- client.rpc=async()=>{window.exportCalls++;return {data:{athlete_id:'a',first_name:'Test',last_name:'Athlete',credential_token:'TEST-PRINT-A'}};};
+ client.rpc=async(name,args)=>{if(name!=='get_athlete_scan_card')return window.originalCardTestRPC(name,args);window.exportCalls++;return {data:{athlete_id:'a',first_name:'Test',last_name:'Athlete',credential_token:'TEST-PRINT-A'}};};
  document.querySelector('#bulkAthleteCards input').checked=true;
 });
 await p.locator('#bulkAthleteCards [data-export]').click();
