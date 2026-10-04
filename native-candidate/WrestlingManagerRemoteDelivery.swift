@@ -1,4 +1,5 @@
 import Foundation
+import CryptoKit
 
 struct WrestlingManagerRemoteDeliveryRecord: Sendable {
     let payload: Data
@@ -49,7 +50,7 @@ actor WrestlingManagerRemoteDelivery {
         let photo = try object(uploaded)
         guard photo["status"] as? String == "uploaded", photo["evidenceId"] as? String == evidenceID,
               let digest = photo["digest"] as? String, digest.count == 64,
-              digest.allSatisfy({ "0123456789abcdef".contains($0) }),
+              digest == SHA256.hash(data: record.jpeg).map({ String(format: "%02x", $0) }).joined(),
               (photo["byteCount"] as? NSNumber)?.intValue == record.jpeg.count else { throw Failure.unconfirmedPhoto }
         try await transport.authorize(record.payload); try check()
         let receipt = try await transport.submit(record.payload); try check()

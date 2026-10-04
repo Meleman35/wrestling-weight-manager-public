@@ -118,7 +118,7 @@ project's referenced root `Wrestling-Manager-Info.plist`.
 
 `WrestlingManagerRemoteDelivery.swift` joins an injected authenticated transport to
 `WrestlingManagerRemoteDeliveryStore.swift` and the protected outbox. It validates
-photo acknowledgement identity/size/digest format before submit, validates server
+photo acknowledgement identity/size and exact SHA256 digest before submit, validates server
 receipt identity/time/status, and persists the receipt before returning success.
 The worker checks live authorization between stages, excludes concurrent delivery,
 and blocks late callbacks after locking. Retried delivery uses unchanged payload
@@ -130,3 +130,16 @@ HTTP endpoints and current-session transport wiring remain to be implemented.
 Native delivery tests use an actor-backed fixture to exercise failed submit,
 failed receipt persistence, wrong evidence/receipt, exact retry bytes and revoked
 access. They do not exercise actual network endpoints or device Keychain.
+
+
+### HTTP service composition
+
+`remote-weighins-http.mjs` provides bounded authenticated POST handlers for photo
+upload, submission, report and private photo reads. Photo requests carry a capture
+payload and canonical base64 JPEG; photo binding is allowlisted from that payload.
+Trusted authentication and explicit rate-limit allowance run before body parsing.
+Limits apply to actual streamed bytes, not just Content-Length. Foreign browser
+origins are denied; configured app origins receive narrow CORS. Responses are
+no-store and internal provider exceptions are not returned to clients. Missing
+production auth/storage/database/rate-limit adapters are not replaced with mocks.
+This composition is not a deployed Supabase function.

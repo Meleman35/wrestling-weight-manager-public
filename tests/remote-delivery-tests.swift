@@ -1,11 +1,12 @@
 import Foundation
+import CryptoKit
 
 enum TestFailure: Error { case offline, denied, disk }
 actor DeliveryFixture: WrestlingManagerRemoteDeliveryStore {
     let id = UUID()
     let evidence = UUID().uuidString
     var receipt: Data?
-    var payload: Data { get throws { try JSONSerialization.data(withJSONObject: ["submissionId": id.uuidString, "evidenceId": evidence]) } }
+    var payload: Data { get throws { try JSONSerialization.data(withJSONObject: ["submissionId": id.uuidString, "evidenceId": evidence], options: [.sortedKeys]) } }
     var authorizationCount = 0
     var uploads = 0
     var submits = 0
@@ -38,7 +39,7 @@ actor DeliveryFixture: WrestlingManagerRemoteDeliveryStore {
     func upload(_ data: Data, _ jpeg: Data) throws -> Data {
         uploads += 1; deliveredPayloads.append(data)
         return try JSONSerialization.data(withJSONObject: ["evidenceId": badPhoto ? "other" : evidence,
-            "status": "uploaded", "digest": String(repeating: "a", count: 64), "byteCount": jpeg.count])
+            "status": "uploaded", "digest": SHA256.hash(data: jpeg).map { String(format: "%02x", $0) }.joined(), "byteCount": jpeg.count])
     }
     func submit(_ data: Data) throws -> Data {
         submits += 1; deliveredPayloads.append(data)
@@ -59,7 +60,7 @@ actor DeliveryFixture: WrestlingManagerRemoteDeliveryStore {
             uploadPhoto: { try await fixture.upload($0, $1) }, submit: { try await fixture.submit($0) }))
     }
     static func main() async throws {
-        let fixture = DeliveryFixture(), worker = delivery(fixture), id = await fixture.id
+        let fixture = DeliveryFixture(), worker = delivery(fixture), id = fixture.id
         await fixture.set("submit", true)
         await rejects { _ = try await worker.deliver(id) }
         let failed = await fixture.isAccepted(); precondition(!failed)
@@ -78,7 +79,7 @@ actor DeliveryFixture: WrestlingManagerRemoteDeliveryStore {
         await worker.lock()
         await rejects { _ = try await worker.deliver(id) }
         for field in ["photo", "receipt"] {
-            let f = DeliveryFixture(), w = delivery(f), i = await f.id
+            let f = DeliveryFixture(), w = delivery(f), i = f.id
             await f.set(field, true)
             await rejects { _ = try await w.deliver(i) }
             let accepted = await f.isAccepted(); precondition(!accepted)
