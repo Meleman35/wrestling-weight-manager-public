@@ -197,8 +197,29 @@ Subscription notification receiver candidate added:
   notifications preserve first observation and immutable original/token binding.
 - Seven HTTP checks passed; disposable PostgreSQL checks confirm immutable retries,
   environment/binding conflicts and anon/authenticated denial.
-- Transaction-bearing notifications only. Apple TEST, summary and consumption
-  notifications still require distinct handling; do not configure server URLs yet.
+- Verified Apple TEST notifications are now handled without granting access.
+  Summary and consumption notifications still require distinct handling; do not
+  configure server URLs until runtime deployment and Apple test delivery pass.
 - Inbox schema remains a draft: retention/deletion catalog and runtime privileges
   must be integrated. Worker leasing, canonical recheck and entitlement application
   are not yet wired. This receiver alone does not change paid access.
+
+Notification reconciliation worker and Apple configuration added:
+- Refreshes canonical Apple status before applying a known original/token binding.
+- Existing-subscription policy is shared with purchase delivery; no fake user session
+  is constructed. Notification processing never creates a purchaser/team binding.
+- Private SQL leasing supports exclusive claims, expired leases and retry delay.
+- Worker commits subscription snapshot and inbox completion in one transaction;
+  failed/expired leases roll back. Old active evidence cannot overwrite a newer refund.
+- Uses existing deletion actor lock and personal-account/tombstone controls.
+  Unavailable owners stay pending for retry; no paid grant is introduced.
+- 44 focused policy/Apple/HTTP/worker/config checks pass locally. Disposable
+  PostgreSQL worker checks cover refund atomicity, duplicate/stale status, exclusive
+  and expired lease, deletion freeze/retry and client denial. Full CI also runs
+  the existing billing suite and Apple SDK/native/browser checks.
+- Confirmed identity fixed in apple-server-config.mjs; server secret required:
+  APPLE_IAP_PRIVATE_KEY (original multiline contents of owner's In-App Purchase .p8).
+  Private key must be added in Supabase Edge Function Secrets, never in chat/GitHub.
+- Runtime deployment, dedicated DB identity, financial retention/deletion catalog,
+  verified Apple trust roots, authenticated scheduler and real sandbox/device tests
+  remain required. No live endpoint or migration was deployed in this step.

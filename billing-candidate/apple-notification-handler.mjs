@@ -31,7 +31,9 @@ export function createAppleNotificationHandler({enabled=false,apple,persistVerif
    if(await allowRequest(request)!==true)return reply(429,'retry_later');
    const signedPayload=await readPayload(request);
    const verified=await apple.notificationTransaction(signedPayload);
-   if(!uuid(verified?.notificationID)||!verified.evidence)throw Error('invalid_verifier_result');
+   if(!uuid(verified?.notificationID))throw Error('invalid_verifier_result');
+   if(verified.kind==='test')return reply(200);
+   if(!verified.evidence)throw Error('invalid_verifier_result');
    const ack=await persistVerified(verified);
    if(ack?.notificationID!==verified.notificationID||!['stored','duplicate'].includes(ack.status))throw Error('not_durable');
    return reply(200);

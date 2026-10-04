@@ -86,15 +86,38 @@ export class AppleEvidenceAdapter {
     };
   }
 
+  async refresh(evidence) {
+    if (!numericID(evidence?.originalTransactionID) || !uuid(evidence?.appAccountToken) ||
+        evidence.environment !== this.environment || evidence.bundleID !== this.bundleID)
+      fail('invalid_refresh_binding');
+    const response = await this.api.getAllSubscriptionStatuses(evidence.originalTransactionID);
+    if (response.bundleId !== this.bundleID || response.environment !== this.environment ||
+        !Array.isArray(response.data)) fail('invalid_status_response');
+    const matches = response.data.flatMap(g => g.lastTransactions ?? [])
+      .filter(t => t.originalTransactionId === evidence.originalTransactionID);
+    if (matches.length !== 1 || !matches[0].signedTransactionInfo) fail('ambiguous_subscription_status');
+    // resolve performs signature checks and another fresh canonical query. The
+    // first response locates a transaction; it is never itself evidence.
+    const current = await this.resolve(matches[0].signedTransactionInfo);
+    if (current.originalTransactionID !== evidence.originalTransactionID ||
+        current.appAccountToken.toLowerCase() !== evidence.appAccountToken.toLowerCase())
+      fail('inconsistent_subscription_evidence');
+    return current;
+  }
+
   async notificationTransaction(signedPayload) {
     if (typeof signedPayload !== 'string' || signedPayload.length > 131072 ||
         signedPayload.split('.').length !== 3) fail('invalid_notification');
     const decoded = await this.verifier.verifyAndDecodeNotification(signedPayload);
     if (!uuid(decoded.notificationUUID) || decoded.data?.bundleId !== this.bundleID ||
-        decoded.data?.environment !== this.environment || !decoded.data?.signedTransactionInfo)
+        decoded.data?.environment !== this.environment)
       fail('notification_requires_separate_handling');
-    // Test/summary/consumption request notification types need distinct routes.
+    // TEST is verified but has no purchase transaction and grants no access.
+    if (decoded.notificationType === 'TEST') return {notificationID: decoded.notificationUUID, kind:'test'};
+    if (decoded.notificationType === 'CONSUMPTION_REQUEST' || !decoded.data?.signedTransactionInfo)
+      fail('notification_requires_separate_handling');
     return {notificationID: decoded.notificationUUID,
       evidence: await this.resolve(decoded.data.signedTransactionInfo)};
   }
 }
+

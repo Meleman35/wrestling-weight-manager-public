@@ -70,3 +70,17 @@ test('invalid notification signature and missing transaction payload rejected',a
   const g=fixture();g.verifier.verifyAndDecodeNotification=async()=>({notificationUUID:token});
   await assert.rejects(g.adapter.notificationTransaction('notification.jws.signature'));assert.equal(g.calls(),0);
 });
+test('verified Apple TEST is acknowledged without transaction lookup',async()=>{
+ const f=fixture();f.verifier.verifyAndDecodeNotification=async()=>({notificationUUID:token,notificationType:'TEST',data:{bundleId:bundleID,environment:'Sandbox'}});
+ assert.deepEqual(await f.adapter.notificationTransaction('notification.jws.signature'),{notificationID:token,kind:'test'});assert.equal(f.calls(),0);
+});
+test('TEST for a different app or environment still fails',async()=>{
+ for(const data of [{bundleId:'other',environment:'Sandbox'},{bundleId:bundleID,environment:'Production'}]){
+ const f=fixture();f.verifier.verifyAndDecodeNotification=async()=>({notificationUUID:token,notificationType:'TEST',data});await assert.rejects(f.adapter.notificationTransaction('notification.jws.signature'));assert.equal(f.calls(),0);}
+});
+test('worker refresh verifies current status and immutable original/token binding',async()=>{
+ const f=fixture();const e=await f.adapter.resolve('submitted.jws.signature');f.item.status=5;
+ assert.equal((await f.adapter.refresh(e)).status,5);
+ const g=fixture();g.current.appAccountToken='55555555-5555-4555-8555-555555555555';
+ await assert.rejects(g.adapter.refresh(e));
+});

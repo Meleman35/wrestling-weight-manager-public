@@ -8,6 +8,8 @@ create table wm_billing.notification_inbox (
  evidence jsonb not null check(jsonb_typeof(evidence)='object'),
  received_at timestamptz not null default clock_timestamp(),
  state text not null default 'pending' check(state in ('pending','processing','completed')),
+ lease_token uuid, lease_until timestamptz,
+ next_attempt_at timestamptz not null default clock_timestamp(), attempts integer not null default 0,
  primary key(environment,notification_id)
 );
 create index billing_notification_pending on wm_billing.notification_inbox(received_at)

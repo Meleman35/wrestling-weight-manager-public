@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {reconcileSubscription as reconcile, hasTeamSubscriptionAccess as access, proposedProducts} from './subscription-policy.mjs';
+import {reconcileSubscription as reconcile, reconcileKnownSubscription, hasTeamSubscriptionAccess as access, proposedProducts} from './subscription-policy.mjs';
 
 const userID = '11111111-1111-4111-8111-111111111111';
 const otherID = '22222222-2222-4222-8222-222222222222';
@@ -81,3 +81,8 @@ test('repeated evidence produces the same effective subscription',()=>{
   const b=base();const first=reconcile(b);b.existing=first.subscription;
   assert.deepEqual(reconcile(b).subscription,first.subscription);
 });
+
+
+test('notification updates a known binding without a fabricated user session',()=>{const b=base();const existing=reconcile(b).subscription;const evidence={...b.evidence,status:5,revokedAt:now-500,snapshotSignedAt:now};const result=reconcileKnownSubscription({existing,evidence,config:b.config,now});assert.equal(result.subscription.userID,userID);assert.equal(result.subscription.teamID,teamID);assert.equal(access(result.subscription,{teamID,environment:'Sandbox',now}),false);});
+test('notification cannot create an ownership binding',()=>{const b=base();assert.throws(()=>reconcileKnownSubscription(b),/missing_existing_binding/);});
+test('old notification cannot overwrite a newer refund',()=>{const b=base();const existing={...reconcile(b).subscription,status:5,revokedAt:now-500,snapshotSignedAt:now};assert.equal(reconcileKnownSubscription({...b,existing}).changed,false);});

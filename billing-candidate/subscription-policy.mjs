@@ -26,6 +26,17 @@ export function reconcileSubscription({actor, evidence, intent, existing, config
   if (!actor || !uuid(actor.userID) || actor.liveSession !== true ||
       actor.confirmed !== true || actor.deleted === true || actor.banned === true ||
       actor.managedTeamLogin === true || actor.deletionFrozen === true) reject('unauthorized');
+  return reconcileEvidence({ownerID:actor.userID,evidence,intent,existing,config,now});
+}
+
+// Notifications update an already established immutable binding only. They
+// never invent a signed-in actor or bind a new purchaser/team.
+export function reconcileKnownSubscription({evidence,existing,config,now}) {
+  if (!existing || !uuid(existing.userID)) reject('missing_existing_binding');
+  if (!time(now)) reject('invalid_clock');
+  return reconcileEvidence({ownerID:existing.userID,evidence,existing,config,now});
+}
+function reconcileEvidence({ownerID,evidence,intent,existing,config,now}) {
   if (!config || !['Sandbox', 'Production'].includes(config.environment) ||
       typeof config.bundleID !== 'string' || !config.products) reject('invalid_configuration');
   // A property called "verified" in client input is never evidence. The adapter
@@ -46,12 +57,12 @@ export function reconcileSubscription({actor, evidence, intent, existing, config
   if (existing) {
     if (existing.environment !== e.environment || existing.originalTransactionID !== e.originalTransactionID)
       reject('binding_mismatch');
-    if (existing.userID !== actor.userID) reject('different_owner');
+    if (existing.userID !== ownerID) reject('different_owner');
     if (existing.appAccountToken.toLowerCase() !== e.appAccountToken.toLowerCase())
       reject('token_mismatch');
     if (scopeFor(existing.plan)!==scope) reject('scope_mismatch');
     if (scope==='team' ? !uuid(existing.teamID) || existing.familyOwnerID != null :
-        existing.teamID != null || existing.familyOwnerID !== actor.userID) reject('invalid_binding');
+        existing.teamID != null || existing.familyOwnerID !== ownerID) reject('invalid_binding');
     binding = {userID: existing.userID, teamID: existing.teamID,
       ...(scope==='family'?{familyOwnerID:existing.familyOwnerID}:{}), appAccountToken: existing.appAccountToken};
     // Delayed snapshots cannot overwrite a newer authoritative observation.
@@ -64,9 +75,9 @@ export function reconcileSubscription({actor, evidence, intent, existing, config
          e.productID !== existing.productID || (e.revokedAt ?? null) !== existing.revokedAt ||
          (e.graceExpiresAt ?? null) !== existing.graceExpiresAt)) reject('conflicting_snapshot');
   } else {
-    if (!intent || intent.userID !== actor.userID ||
+    if (!intent || intent.userID !== ownerID ||
         (scope==='team' ? !uuid(intent.teamID) || intent.familyOwnerID != null :
-          intent.teamID != null || intent.familyOwnerID !== actor.userID) ||
+          intent.teamID != null || intent.familyOwnerID !== ownerID) ||
         !uuid(intent.token) || intent.token.toLowerCase() !== e.appAccountToken.toLowerCase() ||
         intent.productID !== (e.purchasedProductID ?? e.productID) || intent.authorized !== true || intent.cancelled === true)
       reject('missing_authorized_intent');
@@ -119,3 +130,4 @@ export function hasFamilyVideoAccess(subscription, {athleteID, familyOwnerID,
   if (subscription.status===4) return time(subscription.graceExpiresAt)&&subscription.graceExpiresAt>now;
   return false;
 }
+
