@@ -270,3 +270,17 @@ device. The reporting screen now displays this policy. Native reporting session
 exposes `pendingCaptures()` so the unlocked screen can sweep its scoped outbox
 without requiring a network call. Production coordinator hookup and privacy-page
 publication remain part of deployment, rather than an already-live claim.
+
+### Physical build acceptance and canonical roster integration
+Damon reported checks passed on the v2 Xcode/iPad test project after the five
+Main Actor warnings were corrected. Remote capture was dormant during this
+regression check; this does not establish end-to-end remote acceptance.
+`createCanonicalRemoteRosterResolver` now maps remote club/athlete UUID pairs to
+real public teams/athletes through active roster memberships and active seasons,
+requiring the same organization. It retrieves names only, rejects incomplete or
+foreign mappings, and is intended to be injected after remote authorization.
+A disposable PostgreSQL test verifies revoked season/roster and foreign-organization
+denial. Program ownership/enrollment, consent, deletion catalog, verified purchase
+coverage and capture proof remain runtime integration work. Network/tournament
+commercial coverage still needs an approved model; no team price was extended
+to unlimited multi-club administration.
