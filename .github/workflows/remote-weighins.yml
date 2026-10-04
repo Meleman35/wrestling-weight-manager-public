@@ -1,0 +1,135 @@
+name: Remote weigh-in foundation
+on:
+  pull_request:
+    paths:
+      - native-candidate/WrestlingManagerRemote*.swift
+      - native-device-check/**
+      - tests/remote-retention-tests.swift
+      - src/remote-weighins-policy.mjs
+      - src/remote-weighins-retention.mjs
+      - tests/remote-weighins-policy.mjs
+      - tests/remote-weighins-retention.mjs
+      - tests/remote-capture-tests.swift
+      - tests/remote-scale-stream-tests.swift
+      - tests/remote-session-tests.swift
+      - tests/remote-device-ui-tests.swift
+      - tests/remote-nfc-protocol-tests.swift
+      - tests/remote-weighins-reweigh.mjs
+      - scripts/test-remote-device-ui.sh
+      - tests/remote-delivery-tests.swift
+      - scripts/prepare-native-remote-scale.py
+      - src/remote-athlete-memberships-postgres.mjs
+      - supabase/drafts/athlete-membership-identifiers.sql
+      - tests/remote-weighins-memberships-db.mjs
+      - docs/remote-weighins-exports.md
+      - src/remote-athlete-memberships.mjs
+      - src/remote-athlete-memberships-screen.mjs
+      - src/remote-weighins-export.mjs
+      - src/remote-weighins-xlsx.mjs
+      - src/remote-weighins-trial-postgres.mjs
+      - src/remote-weighins-coverage-postgres.mjs
+      - tests/remote-weighins-trial-db.mjs
+      - supabase/drafts/remote-director-trials.sql
+      - src/remote-weighins-trial.mjs
+      - tests/remote-weighins-export.mjs
+      - tests/remote-weighins-trial.mjs
+      - src/remote-weighins.mjs
+      - src/remote-weighins-service.mjs
+      - src/remote-weighins-coverage.mjs
+      - src/remote-weighins-roster-postgres.mjs
+      - tests/remote-weighins-coverage.mjs
+      - tests/remote-weighins-roster-postgres.mjs
+      - src/remote-weighins-photos.mjs
+      - src/remote-weighins-jpeg.mjs
+      - tests/remote-weighins-jpeg.mjs
+      - .ci/**
+      - src/remote-weighins-outbox.mjs
+      - src/remote-weighins-http.mjs
+      - src/remote-weighins-postgres.mjs
+      - src/remote-weighins-report-postgres.mjs
+      - tests/remote-weighins-report-db.mjs
+      - src/remote-weighins-evidence-postgres.mjs
+      - src/remote-weighins-screen.mjs
+      - src/remote-weighins-app.mjs
+      - src/remote-weighins-client.mjs
+      - tests/remote-weighins-client.mjs
+      - tests/remote-weighins.mjs
+      - tests/remote-weighins-service.mjs
+      - tests/remote-weighins-photos.mjs
+      - tests/remote-weighins-outbox.mjs
+      - tests/remote-weighins-http.mjs
+      - tests/remote-weighins-postgres.mjs
+      - tests/remote-reporting-screen-browser.mjs
+      - scripts/prepare-remote-reporting-screen.py
+      - tests/remote-weighins-db.mjs
+      - supabase/drafts/remote-weighins.sql
+      - previews/remote-weighins.html
+      - docs/remote-camera-setup.md
+      - docs/remote-tournament-export-compatibility.md
+      - docs/remote-weighins-time-locks.md
+      - docs/remote-director-trial.md
+      - docs/remote-weighins.md
+      - .github/workflows/remote-weighins.yml
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      NODE_PATH: ${{ github.workspace }}/.ci/node_modules
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - run: npm ci --prefix .ci --ignore-scripts --no-audit --no-fund
+      - run: node --check src/remote-weighins.mjs
+      - run: node --test tests/remote-weighins*.mjs
+      - run: npx --prefix .ci playwright install --with-deps chromium
+      - run: node tests/remote-reporting-screen-browser.mjs
+
+  native-typecheck:
+    runs-on: macos-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Typecheck protected iOS queue
+        run: |
+          sdk_path="$(xcrun --sdk iphonesimulator --show-sdk-path)"
+          xcrun swiftc -typecheck -sdk "$sdk_path" -target arm64-apple-ios17.0-simulator -swift-version 5 -default-isolation MainActor -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-upcoming-feature InferIsolatedConformances -warnings-as-errors native-candidate/WrestlingManagerRemote*.swift
+          xcrun swiftc -typecheck -D DEBUG -sdk "$sdk_path" -target arm64-apple-ios17.0-simulator -swift-version 5 -default-isolation MainActor -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-upcoming-feature InferIsolatedConformances -warnings-as-errors native-candidate/WrestlingManagerRemote*.swift
+      - name: Exercise native capture transitions
+        run: |
+          swiftc native-candidate/WrestlingManagerRemoteCapture.swift native-candidate/WrestlingManagerRemoteReadiness.swift tests/remote-capture-tests.swift -o /tmp/remote-capture-tests
+          /tmp/remote-capture-tests
+      - name: Exercise Bluetooth stream through native capture
+        run: |
+          swiftc native-device-check/AmericanScaleKit/Sources/AmericanScaleKit/AmericanScaleProtocol.swift native-device-check/AmericanScaleKit/Sources/AmericanScaleKit/AmericanScaleReadCycle.swift native-candidate/WrestlingManagerRemoteCapture.swift native-candidate/WrestlingManagerRemoteReadiness.swift tests/remote-scale-stream-tests.swift -o /tmp/remote-scale-stream-tests
+          /tmp/remote-scale-stream-tests
+      - name: Exercise consecutive athlete capture sessions
+        run: |
+          swiftc native-candidate/WrestlingManagerRemoteCapture.swift native-candidate/WrestlingManagerRemoteReadiness.swift tests/remote-session-tests.swift -o /tmp/remote-session-tests
+          /tmp/remote-session-tests
+      - name: Exercise native upload and receipt recovery
+        run: |
+          swiftc native-candidate/WrestlingManagerRemoteDelivery.swift tests/remote-delivery-tests.swift -o /tmp/remote-delivery-tests
+          /tmp/remote-delivery-tests
+      - name: Exercise native retention calculation
+        run: |
+          swiftc native-candidate/WrestlingManagerRemoteRetention.swift tests/remote-retention-tests.swift -o /tmp/remote-retention-tests
+          /tmp/remote-retention-tests
+      - name: Test American Scale protocol and discovery
+        run: swift test --package-path native-device-check/AmericanScaleKit
+      - name: Exercise existing NFC card decoder
+        run: |
+          swiftc native-device-check/NFC/WrestlingManagerACRProtocol.swift tests/remote-nfc-protocol-tests.swift -o /tmp/remote-nfc-tests
+          /tmp/remote-nfc-tests
+      - name: Build separate camera and scale test app
+        run: xcodebuild -project native-device-check/RemoteScaleCheck.xcodeproj -scheme RemoteScaleCheck -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath /tmp/remote-scale-check CODE_SIGNING_ALLOWED=NO build -quiet
+      - name: Exercise iPad camera presentation and consecutive captures
+        run: bash scripts/test-remote-device-ui.sh

@@ -1,0 +1,31 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createRemoteReportingHandler} from '../src/remote-weighins-http.mjs';
+function fixture(extra={}){const calls=[];const handler=createRemoteReportingHandler({authenticate:async r=>r.headers.get('authorization')==='Bearer valid'?{trusted:true}:null,allowRequest:async()=>true,authorizeCapture:async()=>true,allowedOrigins:['https://theteammanager.app'],photos:{upload:async(s,r)=>{calls.push({s,r});return {evidenceId:r.evidenceId,status:'uploaded'};},read:async()=>({bytes:new Uint8Array([255,216,255,217])})},reporting:{receipt:async()=>null,context:async()=>({scopes:[]}),evidenceForSubmission:async()=>'e',submit:async(s,r)=>{calls.push({s,r});return {status:'submitted',submissionId:r.submissionId};},report:async()=>({rows:[]})},...extra});return {handler,calls};}
+const req=(action,body,extra={})=>new Request('https://example.test/functions/v1/remote-weighins/'+action,{method:'POST',headers:{Authorization:'Bearer valid','Content-Type':'application/json',...extra},body:JSON.stringify(body)});
+test('HTTP photo binds allowed metadata, bytes and trusted session',async()=>{const {handler,calls}=fixture();const r=await handler(req('photo',{payload:{evidenceId:'e',captureId:'capture',programId:'network',athleteId:'a',admin:true},jpegBase64:'/9j/2Q=='}));assert.equal(r.status,200);assert.equal(calls[0].s.trusted,true);assert.equal(calls[0].r.binding.admin,undefined);assert.deepEqual([...calls[0].r.jpeg],[255,216,255,217]);assert.match(r.headers.get('cache-control'),/no-store/);});
+test('HTTP denies missing auth and foreign browser origin before provider calls',async()=>{const {handler,calls}=fixture();assert.equal((await handler(req('submit',{}, {Authorization:''}))).status,401);assert.equal((await handler(req('submit',{}, {Origin:'https://evil.test'}))).status,403);assert.equal(calls.length,0);});
+test('HTTP validates encoding, content type and actual streamed body size',async()=>{const {handler,calls}=fixture();for(const encoded of ['not base64','/9j/2R==',''])assert.equal((await handler(req('photo',{payload:{},jpegBase64:encoded}))).status,400);assert.equal((await handler(req('submit',{}, {'Content-Type':'text/plain'}))).status,400);assert.equal((await handler(req('submit',{value:'x'.repeat(12000)}))).status,400);assert.equal(calls.length,0);});
+test('HTTP read stays authenticated/no-store and routes only known POST endpoints',async()=>{const {handler}=fixture();const r=await handler(req('photo-read',{submissionId:'s'}));assert.equal(r.headers.get('content-type'),'image/jpeg');assert.deepEqual([...new Uint8Array(await r.arrayBuffer())],[255,216,255,217]);assert.equal((await handler(req('unknown',{}))).status,404);assert.equal((await handler(new Request('https://example.test/functions/v1/remote-weighins/submit'))).status,405);const cors=await handler(req('report',{}, {Origin:'https://theteammanager.app'}));assert.equal(cors.headers.get('access-control-allow-origin'),'https://theteammanager.app');});
+test('HTTP hides provider errors and requires an explicit rate-limit allowance',async()=>{const deps={authenticate:async()=>({}),allowRequest:async()=>true,authorizeCapture:async()=>true,photos:{upload:async()=>{throw Error('SECRET INTERNAL PATH');},read:async()=>({})},reporting:{receipt:async()=>null,context:async()=>({scopes:[]}),evidenceForSubmission:async()=>'e',submit:async()=>{throw Error('SECRET INTERNAL PATH');},report:async()=>({})}};const h=createRemoteReportingHandler(deps);const r=await h(req('submit',{}));assert.equal(r.status,403);assert.doesNotMatch(await r.text(),/SECRET/);const blocked=createRemoteReportingHandler({...deps,allowRequest:async()=>false});assert.equal((await blocked(req('submit',{}))).status,429);});
+
+test('HTTP capture authorization requires explicit trusted approval',async()=>{const {handler}=fixture();assert.deepEqual(await (await handler(req('authorize',{}))).json(),{authorized:true});});
+test('trial/profile routes require configured trusted services and do not accept client authority',async()=>{
+ const disabled=fixture().handler;assert.equal((await disabled(req('trial-activate',{}))).status,404);assert.equal((await disabled(req('membership-update',{}))).status,404);
+ const calls=[];const {handler}=fixture({trials:{activate:async(session,input)=>{assert.equal(session.trusted,true);calls.push(input);return {tournamentsUsed:1,autoCharge:false};}},memberships:{get:async()=>({usawId:'00123',aauNumber:''}),update:async(session,input)=>{assert.equal(session.trusted,true);calls.push(input);return input.memberships;}}});
+ assert.equal((await handler(req('trial-activate',{organizationId:'org',programId:'event',admin:true}))).status,200);assert.deepEqual(calls[0],{organizationId:'org',programId:'event'});
+ assert.equal((await handler(req('membership-update',{athleteId:'a',memberships:{usawId:'00123'},owner:true}))).status,200);assert.deepEqual(calls[1],{athleteId:'a',memberships:{usawId:'00123'}});
+ assert.equal((await handler(req('membership-read',{athleteId:'a'},{Authorization:''}))).status,401);
+ const denied=fixture({trials:{activate:async()=>{throw Error('SECRET PERMISSION STATE');}}}).handler;const r=await denied(req('trial-activate',{}));assert.equal(r.status,403);assert.doesNotMatch(await r.text(),/SECRET/);
+});
+
+ test('browser preflight permits the exact reporting client headers without authentication',async()=>{
+ const {handler,calls}=fixture();
+ const r=await handler(new Request('https://example.test/functions/v1/remote-weighins/context',{method:'OPTIONS',headers:{Origin:'https://theteammanager.app','Access-Control-Request-Method':'POST','Access-Control-Request-Headers':'apikey,authorization,content-type'}}));
+ assert.equal(r.status,204);
+ const allowed=r.headers.get('access-control-allow-headers').toLowerCase().split(',').map(x=>x.trim());
+ for(const header of ['apikey','authorization','content-type'])assert.ok(allowed.includes(header));
+ assert.equal(calls.length,0);
+ const denied=await handler(new Request('https://example.test/functions/v1/remote-weighins/context',{method:'OPTIONS',headers:{Origin:'https://evil.test'}}));
+ assert.equal(denied.status,403);assert.equal(denied.headers.get('access-control-allow-origin'),null);
+});
