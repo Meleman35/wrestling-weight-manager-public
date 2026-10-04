@@ -12,12 +12,29 @@ create table remote_reporting.windows (
  id text primary key, program_id text not null references remote_reporting.programs(id),
  event_id text, opens_at timestamptz not null, closes_at timestamptz not null,
  time_zone text not null, sync_grace_ms bigint not null default 0 check(sync_grace_ms between 0 and 604800000),
- active boolean not null default false, event_date date,
+ active boolean not null default false, event_date date, locked_at timestamptz,
  unique(program_id,id), check(opens_at<closes_at),
  check(event_id is null or (event_date is not null
   and opens_at=((event_date-1)::timestamp at time zone time_zone)
   and closes_at=((event_date+1)::timestamp at time zone time_zone)))
 );
+-- Activating a window locks its schedule permanently, even after later disable
+-- or ten-day evidence cleanup. New dates require a new window, not a silent edit.
+create function remote_reporting.lock_window_schedule() returns trigger
+language plpgsql security invoker set search_path='' as $$
+begin
+ if TG_OP='UPDATE' and OLD.locked_at is not null then
+  if row(NEW.id,NEW.program_id,NEW.event_id,NEW.opens_at,NEW.closes_at,NEW.time_zone,NEW.event_date,NEW.sync_grace_ms)
+   is distinct from row(OLD.id,OLD.program_id,OLD.event_id,OLD.opens_at,OLD.closes_at,OLD.time_zone,OLD.event_date,OLD.sync_grace_ms)
+   then raise exception 'Activated reporting schedule is locked';end if;
+  NEW.locked_at:=OLD.locked_at;
+ elsif NEW.active then NEW.locked_at:=clock_timestamp();
+ else NEW.locked_at:=null;end if;
+ return NEW;
+end$$;
+revoke all on function remote_reporting.lock_window_schedule() from public,anon,authenticated;
+create trigger remote_lock_window_schedule before insert or update on remote_reporting.windows
+for each row execute function remote_reporting.lock_window_schedule();
 create table remote_reporting.club_enrollments (
  program_id text not null references remote_reporting.programs(id), club_id text not null,
  active boolean not null default false, primary key(program_id,club_id)
@@ -55,6 +72,14 @@ create table remote_reporting.submissions (
 create index remote_submission_report on remote_reporting.submissions(program_id,window_id,club_id,athlete_id);
 create index remote_assignment_user on remote_reporting.assignments(user_id,program_id);
 create index remote_evidence_expiry on remote_reporting.evidence(expires_at);
+create function remote_reporting.lock_accepted_submission() returns trigger
+language plpgsql security invoker set search_path='' as $$
+begin
+ raise exception 'Accepted weigh-in and timestamps are immutable';
+end$$;
+revoke all on function remote_reporting.lock_accepted_submission() from public,anon,authenticated;
+create trigger remote_lock_accepted_submission before update on remote_reporting.submissions
+for each row execute function remote_reporting.lock_accepted_submission();
 do $$declare t text;begin
  foreach t in array array['programs','windows','club_enrollments','assignments','roster','evidence','submissions'] loop
  execute format('alter table remote_reporting.%I enable row level security',t);
@@ -83,6 +108,11 @@ end$$;
 revoke all on function remote_reporting.lock_personal_access(uuid) from public,anon,authenticated;
 -- Invoker, restricted schema. Server must supply validated Auth session separately
 -- from native generation. SQL rechecks the active session at acceptance.
+create function remote_reporting.program_coverage_until(p_program text) returns timestamptz
+language sql security invoker set search_path='' as $$
+ select covered_until from remote_reporting.programs where id=p_program and active and not coverage_revoked and covered_until>clock_timestamp()
+$$;
+revoke all on function remote_reporting.program_coverage_until(text) from public,anon,authenticated;
 create function remote_reporting.accept(p_user uuid,p_session uuid,p_record jsonb,p_hash text) returns jsonb
 language plpgsql security invoker set search_path='' as $$
 declare p remote_reporting.programs%rowtype; w remote_reporting.windows%rowtype;
@@ -94,7 +124,7 @@ begin
  -- Locks serialize acceptance for a program and keep mutable authorization rows
  -- stable until commit. Provision/revocation adapters must use normal row locks.
  select * into p from remote_reporting.programs where id=p_record->>'programId' for update;
- if not found or not p.active or p.coverage_revoked or p.covered_until is null or p.covered_until<=clock_timestamp() then raise exception 'Coverage unavailable';end if;
+ if not found or not p.active or coalesce(remote_reporting.program_coverage_until(p.id)>clock_timestamp(),false)=false then raise exception 'Coverage unavailable';end if;
  perform 1 from auth.users u join auth.sessions s on s.user_id=u.id
  where u.id=p_user and s.id=p_session and u.email_confirmed_at is not null and u.deleted_at is null
  and (u.banned_until is null or u.banned_until<=clock_timestamp()) and (s.not_after is null or s.not_after>clock_timestamp()) for share of u,s;

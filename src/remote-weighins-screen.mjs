@@ -22,12 +22,13 @@ export function mountRemoteReportingScreen({root,scope,windows,api,isCurrent,doc
  const workbookButton=node('button','Download Excel with photos');workbookButton.type='button';
  filters.append(windowSelect,statusSelect,refresh,capture,exportButton,workbookButton);
  const message=node('p');message.setAttribute('role','status');message.setAttribute('aria-live','polite');
- const counts=node('p'),table=node('table'),head=node('thead'),header=node('tr'),rows=node('tbody');
+ const deadline=node('p'),counts=node('p'),table=node('table'),head=node('thead'),header=node('tr'),rows=node('tbody');
+ deadline.setAttribute('aria-label','Allotted weigh-in period');
  for(const label of ['Athlete','Club','USAW ID','AAU number','Status','Weight','Captured','Received','Photo'])header.append(node('th',label));head.append(header);table.append(head,rows);
  const wrap=node('div');wrap.style.overflowX='auto';wrap.append(table);
  const more=node('button','Load more');more.type='button';more.hidden=true;
  const photoBox=node('div');photoBox.setAttribute('aria-label','Private verification photo');
- section.append(title,description,retention,filters,message,counts,wrap,more,photoBox);root.replaceChildren(section);
+ section.append(title,description,retention,filters,deadline,message,counts,wrap,more,photoBox);root.replaceChildren(section);
  const query=offset=>({programId:scope.programId,windowId:windowSelect.value,clubId:scope.clubId??null,status:statusSelect.value||null,offset,limit:100});
  const fmt=(value,timeZone)=>new Intl.DateTimeFormat('en-US',{timeZone,month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'}).format(new Date(value));
  async function showPhoto(submissionId){
@@ -54,6 +55,7 @@ export function mountRemoteReportingScreen({root,scope,windows,api,isCurrent,doc
     const cell=node('td');if(row.submission){const button=node('button','View photo');button.type='button';button.onclick=()=>showPhoto(row.submission.submissionId);cell.append(button);}tr.append(cell);rows.append(tr);
    }
    selected=windows.find(w=>w.id===request.windowId);nextOffset=report.nextOffset;more.hidden=nextOffset===null;
+   deadline.textContent=selected?.opensAt&&selected?.closesAt?`Allotted weigh-in period: ${fmt(selected.opensAt,report.timeZone)} until ${fmt(selected.closesAt,report.timeZone)}. New captures must finish before the closing time. Capture timestamps are locked; later uploads keep the original time.`:'';
    counts.textContent=`Expected: ${report.counts.expected} · Submitted: ${report.counts.submitted} · Late: ${report.counts.late} · Missing: ${report.counts.missing}`;
    title.textContent=report.classification||'Remote weigh-ins';message.textContent=`${rows.querySelectorAll('[data-athlete-row]').length} of ${report.total} athletes shown. Times: ${report.timeZone}. Pending device uploads are not counted as submitted.`;
   }catch{if(current(t)){rows.replaceChildren();counts.textContent='';more.hidden=true;nextOffset=null;message.textContent='Reports could not be loaded. Check your access and retry.';}}

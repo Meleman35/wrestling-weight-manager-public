@@ -17,7 +17,7 @@ async function boundedJson(request,max) {
  catch{throw new BadRequest();}
 }
 const bindingKeys=['captureId','programId','windowId','clubId','athleteId','operatorId','generation','weight','unit','capturedAt','photoCapturedAt','method'];
-export function createRemoteReportingHandler({authenticate,allowRequest,authorizeCapture,photos,reporting,basePath='/functions/v1/remote-weighins',allowedOrigins=[]}) {
+export function createRemoteReportingHandler({authenticate,allowRequest,authorizeCapture,photos,reporting,trials=null,memberships=null,basePath='/functions/v1/remote-weighins',allowedOrigins=[]}) {
  if(![authenticate,allowRequest,authorizeCapture,photos?.upload,photos?.read,reporting?.submit,reporting?.report,reporting?.evidenceForSubmission,reporting?.context,reporting?.receipt].every(f=>typeof f==='function'))throw Error('Trusted HTTP dependencies required');
  const respond=(status,body,extra={})=>new Response(JSON.stringify(body),{status,headers:{...headers,...extra}});
  return async request=>{
@@ -26,7 +26,8 @@ export function createRemoteReportingHandler({authenticate,allowRequest,authoriz
   const cors=origin?{'Access-Control-Allow-Origin':origin,'Vary':'Origin'}:{};
   const path=new URL(request.url).pathname;
   const action=path.startsWith(basePath+'/')?path.slice(basePath.length+1):'';
-  if(!['receipt','context','authorize','photo','submit','report','photo-read'].includes(action))return respond(404,{error:'Unavailable'},cors);
+  const extraActions=[...(typeof trials?.activate==='function'?['trial-activate']:[]),...(typeof memberships?.get==='function'&&typeof memberships?.update==='function'?['membership-read','membership-update']:[])];
+  if(!['receipt','context','authorize','photo','submit','report','photo-read',...extraActions].includes(action))return respond(404,{error:'Unavailable'},cors);
   if(request.method==='OPTIONS'&&origin)return new Response(null,{status:204,headers:{...headers,...cors,'Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Allow-Headers':'Authorization, Content-Type, apikey'}});
   if(request.method!=='POST')return respond(405,{error:'POST required'},{...cors,Allow:'POST'});
   let session;
@@ -35,6 +36,9 @@ export function createRemoteReportingHandler({authenticate,allowRequest,authoriz
   try{
    if(await allowRequest(session,action)!==true)return respond(429,{error:'Try again later'},cors);
    const body=await boundedJson(request,action==='photo'?7*1024*1024:12000);
+   if(action==='trial-activate')return respond(200,await trials.activate(session,{organizationId:body.organizationId,programId:body.programId}),cors);
+   if(action==='membership-read')return respond(200,await memberships.get(session,body.athleteId),cors);
+   if(action==='membership-update')return respond(200,await memberships.update(session,{athleteId:body.athleteId,memberships:body.memberships}),cors);
    if(action==='receipt')return respond(200,{receipt:await reporting.receipt(session,body)},cors);
    if(action==='context')return respond(200,await reporting.context(session),cors);
    if(action==='authorize'){

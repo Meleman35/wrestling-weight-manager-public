@@ -64,6 +64,25 @@ import Foundation
         fails { try changed.snapshot(token: second, normalizedJPEG: jpeg, capturedAt: clock, noticeAccepted: true) }
         changed.close()
         fails { try changed.scaleReading(token: second, pounds: 140, observedAt: clock, connected: true) }
-        print("Native capture checks passed: freshness, stability, camera token, movement, consent, disconnect, scope, retries and lock.")
+        // Closing time is exclusive for both scale samples and camera capture.
+        clock = scope.opensAt.addingTimeInterval(-0.1)
+        let boundary = try WrestlingManagerRemoteCapture(scope: scope, now: { clock })
+        fails { _ = try boundary.scan(athleteID: "athlete-a", method: "qr") }
+        clock = start.addingTimeInterval(58)
+        let boundaryToken = try boundary.scan(athleteID: "athlete-a", method: "qr")
+        for offset in [58.1, 58.6, 59.1] {
+            clock = start.addingTimeInterval(offset)
+            try boundary.scaleReading(token: boundaryToken, pounds: 125, observedAt: clock, connected: true)
+        }
+        clock = start.addingTimeInterval(59.9)
+        try boundary.snapshot(token: boundaryToken, normalizedJPEG: jpeg, capturedAt: clock, noticeAccepted: true)
+        clock = scope.closesAt
+        fails { try boundary.snapshot(token: boundaryToken, normalizedJPEG: jpeg, capturedAt: clock, noticeAccepted: true) }
+        let withinWindow = try boundary.freeze(token: boundaryToken)
+        clock = start.addingTimeInterval(120)
+        let boundaryRetry = try boundary.freeze(token: boundaryToken)
+        precondition(boundaryRetry.payload == withinWindow.payload)
+        boundary.close()
+        print("Native capture checks passed: freshness, stability, camera token, deadline boundaries, movement, consent, disconnect, scope, retries and lock.")
     }
 }

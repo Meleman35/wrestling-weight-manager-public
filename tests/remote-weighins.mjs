@@ -40,6 +40,12 @@ test('account disposal rejects late acceptance and hides athlete',async()=>{
 test('report window requires named timezone; upper deadline is exclusive',()=>{
  assert.throws(()=>validateWindow({...window,timeZone:''}),/timezone/);const f=fixture();f.tick(7*86400000);assert.throws(()=>f.c.scan('a','qr'),/closed/);
 });
+test('scale reading and snapshot stop at the exact window deadline',()=>{
+ const f=fixture();f.tick(7*86400000-1010);const token=f.c.scan('a','qr');f.tick(10);
+ assert.throws(()=>f.c.reading(token,{value:120,unit:'lb',settled:true,source:'scale',observedAt:f.time()}),/closed/);
+ const g=fixture();g.tick(7*86400000-1010);const t=g.c.scan('a','nfc');g.tick(1);g.c.reading(t,{value:120,unit:'lb',settled:true,source:'scale',observedAt:g.time()});g.tick(9);
+ assert.throws(()=>g.c.snapshot(t,{evidenceId:'photo',capturedAt:g.time(),source:'camera',noticeAccepted:true}),/closed/);
+});
 test('director summary includes missing roster; isolates program, club and accepted receipts',()=>{
  const expected=[{clubId:'club',athleteId:'a',clubName:'Club',athleteName:'A'},{clubId:'club',athleteId:'b',athleteName:'B'},{clubId:'other',athleteId:'c',athleteName:'C'}];
  const record={programId:window.programId,windowId:window.id,clubId:'club',athleteId:'a',status:'submitted',submissionId:'s',receiptId:'r',weight:120,unit:'lb',capturedAt:new Date(start+1000).toISOString(),receivedAt:window.closesAt};

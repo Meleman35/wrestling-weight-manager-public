@@ -74,7 +74,10 @@ await db.query('insert into private.team_logins values($1)',[user]);
 await assert.rejects(service.context('trusted'),/personal/);
 await db.exec('delete from private.team_logins');
 // Real SQL cleanup: expiry hides weights before the scheduled physical purge.
+// Test-only clock simulation; the production trigger rejects edits to captures.
+await db.exec('alter table remote_reporting.submissions disable trigger remote_lock_accepted_submission');
 await db.query("update remote_reporting.submissions set record=jsonb_set(record,'{capturedAt}',to_jsonb((now()-interval '11 days')::text)) where evidence_id=$1",[capture.evidenceId]);
+await db.exec('alter table remote_reporting.submissions enable trigger remote_lock_accepted_submission');
 await db.query("update remote_reporting.evidence set expires_at=now()-interval '1 second' where id=$1",[capture.evidenceId]);
 assert.equal(await adapters.store.findSubmission(capture.submissionId),null);
 assert.equal(await adapters.store.receipt(capture.submissionId),null);

@@ -12,11 +12,17 @@ signup. No automatic charge without an authorized subscription. Participating
 clubs retain their independent team coverage requirements. Weight and photo
 retention remains exactly 240 hours from capture.
 
-Implementation status: tested server policy candidate; not deployed. Before
-activation, wire canonical organization ownership and tournament/program mapping
-to a private persistent trial record. Use one permanent record per organization,
-including expired/revoked records, and serialize activation using an organization
-row lock or equivalent transaction. Never initialize from a client-supplied null
-state, delete the record when a director leaves, or rely on an in-memory store.
-Atomic submission authorization must check current trial/event coverage alongside
-paid coverage. Production database integration and checkout are still pending.
+Implementation status: database-tested candidate; not deployed. A private organization
+trial record and event slots now serialize activation under the canonical organization
+row lock. Same-event retries across directors/programs consume one slot. The fifth
+event, revoked trial and expired trial are denied. Trial coverage uses the shared SQL
+predicate for reporting preflight, private evidence reservation/confirmation and atomic
+submission acceptance; revocation also blocks direct SQL retries. The optional HTTP
+activation route is only available with a trusted trial service configured.
+
+Before deployment, populate server-owned canonical program/organization mappings,
+wire live organization authorization (including the existing actor-deletion lock),
+and integrate these tables into scoped deletion and its schema fingerprint. Team
+billing still has independent coverage requirements; atomic team entitlement checks,
+verified paid network billing and checkout remain pending. Never initialize trial state
+from a client, delete it when a director leaves, or reset expired/revoked records.

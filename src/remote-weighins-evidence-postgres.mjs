@@ -14,8 +14,9 @@ export function createRemotePostgresEvidenceStore({db,session,getActor,verifyCap
  async function lockScope(tx,actor,b){
   if(!['captureId','programId','windowId','clubId','athleteId','operatorId','generation'].every(k=>safe(b[k]))||!['qr','nfc'].includes(b.method)||b.unit!=='lb'||!Number.isFinite(b.weight)||b.weight<=0||b.weight>800)deny('Invalid evidence binding');
   await tx.query('select remote_reporting.lock_personal_access($1::uuid)',[actor.userId]);
-  const program=(await tx.query(`select * from remote_reporting.programs where id=$1 and active and not coverage_revoked and covered_until>clock_timestamp() for update`,[b.programId])).rows[0];
+  const program=(await tx.query(`select * from remote_reporting.programs where id=$1 and active for update`,[b.programId])).rows[0];
   if(!program)deny('Coverage unavailable');
+  if((await tx.query('select coalesce(remote_reporting.program_coverage_until($1)>clock_timestamp(),false) as covered',[b.programId])).rows[0]?.covered!==true)deny('Coverage unavailable');
   const live=(await tx.query(`select u.id from auth.users u join auth.sessions s on s.user_id=u.id where u.id=$1::uuid and s.id=$2::uuid
    and u.email_confirmed_at is not null and u.deleted_at is null and (u.banned_until is null or u.banned_until<=clock_timestamp())
    and (s.not_after is null or s.not_after>clock_timestamp()) for share of u,s`,[actor.userId,actor.sessionId])).rows;

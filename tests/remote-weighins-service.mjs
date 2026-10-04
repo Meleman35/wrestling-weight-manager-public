@@ -44,3 +44,10 @@ test('capture eligibility preflight requires current operator generation and ros
  await assert.rejects(f.service.authorizeCapture('token',{...f.input,generation:'old'}),/session changed/);
  f.roster[0].remoteConsent=false;await assert.rejects(f.service.authorizeCapture('token',f.input),/consent/);
 });
+test('live capture authorization closes at deadline while a frozen in-window upload keeps its timestamps',async()=>{
+ const f=fixture();const live=Object.fromEntries(['programId','windowId','clubId','athleteId','operatorId','generation'].map(k=>[k,f.input[k]]));
+ assert.equal(await f.service.authorizeCapture('token',live),true);f.tick(86400000-2000);
+ await assert.rejects(f.service.authorizeCapture('token',live),/period is closed/);
+ assert.equal(await f.service.authorizeCapture('token',f.input),true);
+ const late={...f.input,capturedAt:f.window.closesAt,photoCapturedAt:f.window.closesAt};await assert.rejects(f.service.authorizeCapture('token',late),/allotted/);
+});

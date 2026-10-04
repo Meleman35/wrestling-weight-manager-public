@@ -19,6 +19,10 @@ on:
       - src/remote-athlete-memberships-screen.mjs
       - src/remote-weighins-export.mjs
       - src/remote-weighins-xlsx.mjs
+      - src/remote-weighins-trial-postgres.mjs
+      - src/remote-weighins-coverage-postgres.mjs
+      - tests/remote-weighins-trial-db.mjs
+      - supabase/drafts/remote-director-trials.sql
       - src/remote-weighins-trial.mjs
       - tests/remote-weighins-export.mjs
       - tests/remote-weighins-trial.mjs
@@ -46,6 +50,8 @@ on:
       - tests/remote-weighins-db.mjs
       - supabase/drafts/remote-weighins.sql
       - previews/remote-weighins.html
+      - docs/remote-weighins-time-locks.md
+      - docs/remote-director-trial.md
       - docs/remote-weighins.md
       - .github/workflows/remote-weighins.yml
 permissions:

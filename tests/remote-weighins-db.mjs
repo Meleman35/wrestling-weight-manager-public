@@ -32,6 +32,10 @@ await db.query("insert into private.scoped_deletion_jobs values($1,'queued',true
 await assert.rejects(accept(),/Personal account unavailable/);
 await db.exec('delete from private.scoped_deletion_jobs');
 const original=(await accept()).rows[0].receipt;
+await assert.rejects(db.exec("update remote_reporting.submissions set received_at=received_at+interval '1 second'"),/immutable/);
+await assert.rejects(db.exec("update remote_reporting.submissions set record=jsonb_set(record,'{weight}','121'::jsonb)"),/immutable/);
+for(const change of ["closes_at=closes_at+interval '1 day'","opens_at=opens_at-interval '1 day'","time_zone='UTC'","sync_grace_ms=0"]){await assert.rejects(db.exec('update remote_reporting.windows set '+change),/schedule is locked/);}
+await db.exec('update remote_reporting.windows set active=false');await assert.rejects(db.exec("update remote_reporting.windows set closes_at=closes_at+interval '1 day'"),/schedule is locked/);await db.exec('update remote_reporting.windows set active=true');
 await db.query("insert into private.scoped_deletion_jobs values(null,'completed',true,now(),encode(sha256(convert_to($1::text,'UTF8')),'hex'))",[user]);
 await assert.rejects(accept(),/Personal account unavailable/);
 await db.exec('delete from private.scoped_deletion_jobs');
@@ -43,9 +47,26 @@ await db.exec('update remote_reporting.assignments set active=false');await asse
 await db.exec('update remote_reporting.roster set remote_consent=false');await assert.rejects(accept(),/consent/);await db.exec('update remote_reporting.roster set remote_consent=true');
 await db.exec('update remote_reporting.programs set coverage_revoked=true');await assert.rejects(accept(),/Coverage/);await db.exec('update remote_reporting.programs set coverage_revoked=false');
 await db.exec('update auth.sessions set not_after=now()-interval \'1 second\'');await assert.rejects(accept(),/Session/);await db.exec('update auth.sessions set not_after=null');
-await db.exec("update remote_reporting.windows set opens_at=now()-interval '3 days',closes_at=now()-interval '2 days'");assert.deepEqual((await accept()).rows[0].receipt,original);await assert.rejects(accept({...record,submissionId:'new'}),/deadline/);
-await db.exec("update remote_reporting.windows set closes_at=now()+interval '1 hour'");await assert.rejects(accept({...record,submissionId:'new',evidenceId:'unverified'}),/Evidence/);
+await db.exec("alter table remote_reporting.windows disable trigger remote_lock_window_schedule;update remote_reporting.windows set opens_at=now()-interval '3 days',closes_at=now()-interval '2 days';alter table remote_reporting.windows enable trigger remote_lock_window_schedule");assert.deepEqual((await accept()).rows[0].receipt,original);await assert.rejects(accept({...record,submissionId:'new'}),/deadline/);
+await db.exec("alter table remote_reporting.windows disable trigger remote_lock_window_schedule;update remote_reporting.windows set closes_at=now()+interval '1 hour';alter table remote_reporting.windows enable trigger remote_lock_window_schedule");await assert.rejects(accept({...record,submissionId:'new',evidenceId:'unverified'}),/Evidence/);
 await assert.rejects(accept({...record,submissionId:'new'}),/unique constraint/);
+// Trial coverage uses the same SQL predicate as paid program coverage, including
+// direct acceptance (not merely the HTTP preflight).
+await db.exec('create table public.organizations(id uuid primary key)');
+await db.exec(await readFile('supabase/drafts/remote-director-trials.sql','utf8'));
+const organization=randomUUID();await db.query('insert into public.organizations values($1)',[organization]);
+await db.exec("insert into remote_reporting.programs values('trial-program','tournament','trial-event',true,null,true)");
+await db.query("insert into private.remote_program_organizations values('trial-program',$1)",[organization]);
+// Derive both timestamps from a single clock value, avoiding boundary drift.
+await db.query("insert into private.remote_director_trials select $1,t,((t at time zone 'UTC')+interval '1 month') at time zone 'UTC',false from(select date_trunc('milliseconds',clock_timestamp()) as t) x",[organization]);
+await db.query("insert into private.remote_trial_tournaments values($1,'trial-event',1)",[organization]);
+await db.exec("insert into remote_reporting.windows values('trial-window','trial-program','trial-event',(current_date-1)::timestamp at time zone 'UTC',(current_date+1)::timestamp at time zone 'UTC','UTC',86400000,true,current_date);insert into remote_reporting.club_enrollments values('trial-program','club',true);insert into remote_reporting.roster values('trial-program','trial-window','club','athlete',true,true)");
+await db.query("insert into remote_reporting.assignments values('trial-program',$1,'club','operator',true)",[user]);
+const trialBinding={...binding,captureId:'trial-capture',programId:'trial-program',windowId:'trial-window'};
+const trialRecord={...trialBinding,submissionId:'trial-submission',evidenceId:'trial-evidence',kind:'tournament',eventId:'trial-event',evidenceDigest:'trial-digest'};
+await db.query("insert into remote_reporting.evidence values('trial-evidence','trial-program',$1,'trial/private','trial-digest',true,now()+interval '1 day',true,true,'camera',1000)",[trialBinding]);
+assert.equal((await accept(trialRecord)).rows[0].receipt.status,'submitted');
+await db.exec('update private.remote_director_trials set revoked=true');await assert.rejects(accept(trialRecord),/Coverage/);
 for(const role of ['anon','authenticated']){await db.exec(`set role ${role}`);await assert.rejects(db.query('select * from remote_reporting.submissions'),/permission denied/);await assert.rejects(accept(),/permission denied/);await db.exec('reset role');}
 const rls=await db.query("select count(*)::int n from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='remote_reporting' and c.relkind='r' and c.relrowsecurity");assert.equal(rls.rows[0].n,7);
 await db.close();console.log('PostgreSQL draft: receipt retry, conflicts, session/operator/consent/coverage revocation, deadlines, evidence, uniqueness, client denial and seven RLS tables passed.');

@@ -18,14 +18,14 @@ export function createRemotePostgresAdapters({db,verifyPersonalSession,resolveRo
   sessions.set(actor,session);return actor;
  }
  async function getProgram(id){
-  const result=await db.query(`select p.*,p.active and not p.coverage_revoked and p.covered_until>clock_timestamp() as covered,
+  const result=await db.query(`select p.*,remote_reporting.program_coverage_until(p.id)>clock_timestamp() as covered,
     coalesce((select array_agg(c.club_id order by c.club_id) from remote_reporting.club_enrollments c where c.program_id=p.id and c.active),'{}') as club_ids
     from remote_reporting.programs p where p.id=$1`,[id]);
   const p=result.rows[0];return p?{id:p.id,kind:p.kind,eventId:p.event_id,active:p.active,covered:p.covered===true,clubIds:p.club_ids}:null;
  }
  async function getWindow(id){
   const r=(await db.query('select * from remote_reporting.windows where id=$1',[id])).rows[0];
-  return r?{id:r.id,programId:r.program_id,eventId:r.event_id,opensAt:iso(r.opens_at),closesAt:iso(r.closes_at),timeZone:r.time_zone,eventDate:r.event_date,syncGraceMs:Number(r.sync_grace_ms),active:r.active}:null;
+  return r?{id:r.id,programId:r.program_id,eventId:r.event_id,opensAt:iso(r.opens_at),closesAt:iso(r.closes_at),timeZone:r.time_zone,eventDate:r.event_date,lockedAt:iso(r.locked_at),syncGraceMs:Number(r.sync_grace_ms),active:r.active}:null;
  }
  async function getWindows(programId){
   const rows=(await db.query('select id from remote_reporting.windows where program_id=$1 and active order by closes_at desc,id limit 100',[programId])).rows;

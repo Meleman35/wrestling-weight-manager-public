@@ -44,6 +44,7 @@ export function createRemoteCapture({context, window, now = Date.now, uuid = () 
       validToken(token); if (busy || pending.payload) fail('Submission is frozen');
       if (source !== 'scale' || settled !== true || unit !== 'lb' || !Number.isFinite(value) || value <= 0 || value > 800) fail('A fresh settled scale reading in pounds is required');
       if (!Number.isFinite(observedAt) || observedAt <= pending.started) fail('Reading predates this scan');
+      if (!inWindow(observedAt)) fail('Reporting window is closed');
       fresh(observedAt); pending.weight = {value, unit, observedAt}; pending.photo = null;
     },
     snapshot(token, {evidenceId, capturedAt, source, noticeAccepted}) {
@@ -51,6 +52,7 @@ export function createRemoteCapture({context, window, now = Date.now, uuid = () 
       if (!pending.weight) fail('Capture a settled reading first');
       fresh(pending.weight.observedAt);
       if (!id(evidenceId) || source !== 'camera' || noticeAccepted !== true || !Number.isFinite(capturedAt) || capturedAt < pending.weight.observedAt) fail('A new camera snapshot and notice acceptance are required');
+      if (!inWindow(capturedAt)) fail('Reporting window is closed');
       fresh(capturedAt); pending.photo = {evidenceId, capturedAt};
     },
     discard() { requireActive(); if (busy) fail('Submission in progress'); pending = null; },

@@ -43,13 +43,13 @@ export function createRemoteReportingService({getActor, getProgram, getWindow, g
         if(program.kind==='tournament'&&!validId(program.eventId))continue;
         const windows=await getWindows(programId);
         const periods=[];
-        for(const candidate of windows){const w=await period(program,candidate.id);periods.push({id:w.id,programId:w.programId,timeZone:w.timeZone,opensAt:w.opensAt,closesAt:w.closesAt,label:`${w.id} · ${w.timeZone}`});}
+        for(const candidate of windows){const w=await period(program,candidate.id);periods.push({id:w.id,programId:w.programId,timeZone:w.timeZone,opensAt:w.opensAt,closesAt:w.closesAt,lockedAt:w.lockedAt??null,label:`${w.id} · ${w.timeZone}`});}
         const grants=actor.reportingGrants.filter(g=>g.programId===programId&&g.active===true),clubs=new Map();
         if(grants.some(g=>g.role==='director'))scopes.push({programId,clubId:null,canCapture:false,label:`${programId} · All clubs`,windows:periods});
         for(const g of grants){if(['operator','club_reader'].includes(g.role)&&program.clubIds.includes(g.clubId))clubs.set(g.clubId,(clubs.get(g.clubId)||false)||g.role==='operator');}
         for(const [clubId,assignedCapture] of clubs){let canCapture=false;if(assignedCapture){try{canCapture=await coverageGate.capture({programId,clubId})===true;}catch{}}scopes.push({programId,clubId,canCapture,label:`${programId} · ${clubId}`,windows:periods});}
       }
-      return {scopes};
+      return {scopes,serverTime:new Date(now()).toISOString()};
     },
     // Eligibility preflight only; photo provenance still requires trusted capture proof.
     async authorizeCapture(session,input) {
@@ -57,6 +57,11 @@ export function createRemoteReportingService({getActor, getProgram, getWindow, g
       const {actor,program}=await authority(session,input.programId,'submit',input.clubId);
       if(input.operatorId!==actor.userId||input.generation!==actor.generation)deny('Operator session changed');
       const window=await period(program,input.windowId);
+      const serverTime=now(),opens=timestamp(window.opensAt),closes=timestamp(window.closesAt);
+      if(input.capturedAt!==undefined||input.photoCapturedAt!==undefined){
+        const captured=timestamp(input.capturedAt),photo=timestamp(input.photoCapturedAt);
+        if(captured<opens||captured>=closes||photo<captured||photo>=closes||photo-captured>30000||photo>serverTime||captured+240*3600000<=serverTime)deny('Capture outside allotted reporting period');
+      }else if(serverTime<opens||serverTime>=closes)deny('Allotted reporting period is closed');
       const roster=await getRoster(program.id,window.id,input.clubId);
       if(!roster.some(r=>r.clubId===input.clubId&&r.athleteId===input.athleteId&&r.active===true&&r.remoteConsent===true))deny('Roster consent unavailable');
       return true;
