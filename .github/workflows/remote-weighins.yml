@@ -2,6 +2,7 @@ name: Remote weigh-in foundation
 on:
   pull_request:
     paths:
+      - native-candidate/WrestlingManagerRemoteOutbox.swift
       - src/remote-weighins.mjs
       - src/remote-weighins-service.mjs
       - src/remote-weighins-photos.mjs
@@ -33,3 +34,15 @@ jobs:
       - run: npm ci --prefix .ci --ignore-scripts --no-audit --no-fund
       - run: node --check src/remote-weighins.mjs
       - run: node --test tests/remote-weighins*.mjs
+
+  native-typecheck:
+    runs-on: macos-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Typecheck protected iOS queue
+        run: |
+          sdk_path="$(xcrun --sdk iphonesimulator --show-sdk-path)"
+          xcrun swiftc -typecheck -sdk "$sdk_path" -target arm64-apple-ios17.0-simulator native-candidate/WrestlingManagerRemoteOutbox.swift
