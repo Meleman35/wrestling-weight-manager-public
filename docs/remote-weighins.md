@@ -83,7 +83,7 @@ New native candidates:
 - `WrestlingManagerRemoteCapture.swift`: native scan-bound evidence state, bounded
   stable BLE sample run, movement/disconnect invalidation, 30-second freshness,
   photo notice, immutable envelope matching the service contract.
-- `WrestlingManagerRemotePhoto.swift`: camera-only UIKit presenter; front camera
+- `WrestlingManagerRemotePhoto.swift`: camera-only AVFoundation presenter; exposure-time timestamps; front camera
   preference; decode/render/re-encode to strip original metadata, orient correctly
   and cap dimensions at 1280 pixels. No photo-library selection.
 - `WrestlingManagerRemoteCaptureHost.swift`: joins the state, camera and protected
