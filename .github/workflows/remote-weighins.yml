@@ -34,6 +34,9 @@ on:
       - tests/remote-weighins-coverage.mjs
       - tests/remote-weighins-roster-postgres.mjs
       - src/remote-weighins-photos.mjs
+      - src/remote-weighins-jpeg.mjs
+      - tests/remote-weighins-jpeg.mjs
+      - .ci/**
       - src/remote-weighins-outbox.mjs
       - src/remote-weighins-http.mjs
       - src/remote-weighins-postgres.mjs

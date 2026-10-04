@@ -1,5 +1,10 @@
 # Remote weekly weigh-ins — draft foundation
 
+Current readiness and remaining integration are summarized in
+[remote-weighins-launch-status.md](remote-weighins-launch-status.md).
+The sections below also preserve earlier implementation milestones; their
+historical test counts and unfinished-component notes describe those milestones.
+
 This branch adds an isolated capture state machine and director-report preview. It does not modify index.html, change ordinary kiosk behavior, deploy a backend, grant access or activate billing. Serve the repository locally and open previews/remote-weighins.html for fictional club/status filters and CSV export. Never provide real records to the preview.
 
 ## Capture contract

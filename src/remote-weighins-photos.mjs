@@ -4,8 +4,8 @@ const BUCKET='remote-weighin-evidence';
 const deny=message=>{throw Error(message);};
 const keyPattern=/^[a-zA-Z0-9_-]{1,160}$/;
 const safe=value=>typeof value==='string'&&keyPattern.test(value);
-export function createRemotePhotoProvider({supabase,authorize,verifyCapture,evidenceStore,now=Date.now}) {
- if (!supabase?.storage||![authorize,verifyCapture,evidenceStore?.find,evidenceStore?.reserve,evidenceStore?.confirm,evidenceStore?.revoke].every(x=>typeof x==='function'))deny('Private photo dependencies required');
+export function createRemotePhotoProvider({supabase,authorize,verifyCapture,normalizeJPEG,evidenceStore,now=Date.now}) {
+ if (!supabase?.storage||![authorize,verifyCapture,normalizeJPEG,evidenceStore?.find,evidenceStore?.reserve,evidenceStore?.confirm,evidenceStore?.revoke].every(x=>typeof x==='function'))deny('Private photo dependencies required');
  const bucket=supabase.storage.from(BUCKET);
  return Object.freeze({
   async upload(session,{evidenceId,binding,jpeg}) {
@@ -13,6 +13,9 @@ export function createRemotePhotoProvider({supabase,authorize,verifyCapture,evid
    // Uploaded JPEG is bound to trusted capture/session evidence, not an assertion
    // that a client field source:camera makes a picture authentic.
    await authorize(session,binding,'upload');await verifyCapture(session,binding);
+   jpeg=await normalizeJPEG(jpeg);
+   if(!(jpeg instanceof Uint8Array)||jpeg.length<4||jpeg.length>5*1024*1024||jpeg[0]!==255||jpeg[1]!==216||jpeg.at(-2)!==255||jpeg.at(-1)!==217)deny('Bounded normalized JPEG required');
+   await authorize(session,binding,'upload');
    const digest=createHash('sha256').update(jpeg).digest('hex');
    const path=`${binding.programId}/${binding.captureId}/${evidenceId}.jpg`;
    const reservation=await evidenceStore.reserve({evidenceId,binding,path,digest,byteCount:jpeg.length});

@@ -73,7 +73,7 @@ worker=(ROOT/'sw.js').read_text().replace('0.20.114','0.20.115')
 p='scripts/prepare-linked-creator-release.py'
 release=(ROOT/p).read_text()
 release=replace_once(release,"assert '0.20.113' in s or '0.20.114' in s,'Unexpected release version: '+path",
-                    "assert any(v in s for v in ('0.20.113','0.20.114','0.20.115','0.20.116','0.20.117','0.20.118','0.20.120')),'Unexpected release version: '+path")
+                    "assert any(v in s for v in ('0.20.113','0.20.114','0.20.115','0.20.116','0.20.117','0.20.118','0.20.120','0.20.121')),'Unexpected release version: '+path")
 for path,text in [('privacy.html',privacy),('support.html',support),('index.html',index),('sw.js',worker),(p,release)]:write(path,text)
 print('PASS Paired v0.20.115 beta support/privacy pages and in-app templates; published privacy detail preserved; no authorization changes')
 
