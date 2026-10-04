@@ -21,8 +21,8 @@ import UIKit
     }
     private func allViews(_ view: UIView) -> [UIView] { [view] + view.subviews.flatMap { allViews($0) } }
     private var views: [UIView] {
-        UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
-            .flatMap(\.windows).flatMap { allViews($0) }
+        let sceneWindows = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.flatMap(\.windows)
+        return ([window].compactMap { $0 } + sceneWindows).flatMap { allViews($0) }
     }
     private func button(_ text: String) -> UIButton? {
         views.compactMap { $0 as? UIButton }.first { $0.currentTitle == text && $0.window != nil }
@@ -51,6 +51,7 @@ import UIKit
     private func run() async {
         do {
             try await tap("Check / recheck camera setup")
+            await pause(0.6) // Allow the real animated camera presentation to finish.
             try await tap("Take setup test photo")
             try await tap("Full athlete and scale are visible")
             try await tap("Start continuous test")
