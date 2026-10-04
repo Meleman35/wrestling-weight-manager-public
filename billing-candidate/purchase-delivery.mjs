@@ -20,7 +20,7 @@ export class PurchaseDeliveryService {
     if(initial.userID!==current.userID)throw Error('session_changed');
     // Locks must cover both immutable original binding and token intent. Unique
     // database constraints remain mandatory; an in-process mutex is insufficient.
-    return this.repository.transaction({environment:evidence.environment,
+    return this.repository.transaction({userID:initial.userID,environment:evidence.environment,
       originalTransactionID:evidence.originalTransactionID, token:evidence.appAccountToken},async tx=>{
       const actor=await tx.currentActor(authContext);
       this.requireActor(actor);

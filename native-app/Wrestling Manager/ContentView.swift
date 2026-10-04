@@ -564,6 +564,9 @@ struct WrestlingManagerWebView: UIViewRepresentable {
         context.coordinator.scaleConnected = scaleConnected
         context.coordinator.webView = webView
         context.coordinator.purchaseHost = WrestlingManagerPurchaseHost(webView: webView)
+        let activation = WrestlingManagerPurchaseActivation(webView: webView, host: context.coordinator.purchaseHost!)
+        context.coordinator.purchaseActivation = activation
+        controller.addScriptMessageHandler(activation, contentWorld: .page, name: "wmPurchaseActivation")
         context.coordinator.installCameraBackgroundObserver()
         if let url = URL(string: "https://theteammanager.app/?nativeBuild=0.20.31&nativeRevision=20") {
             var request = URLRequest(
@@ -599,6 +602,9 @@ struct WrestlingManagerWebView: UIViewRepresentable {
         coordinator.videoPilotBridge.detach()
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "wmAccountDeletion")
         coordinator.deletionBridge.detach()
+        webView.configuration.userContentController.removeScriptMessageHandler(forName: "wmPurchaseActivation", contentWorld: .page)
+        coordinator.purchaseActivation?.detach()
+        coordinator.purchaseActivation = nil
         coordinator.purchaseHost?.detach()
         coordinator.purchaseHost = nil
         coordinator.removeCameraBackgroundObserver()
@@ -632,6 +638,7 @@ struct WrestlingManagerWebView: UIViewRepresentable {
         let notificationBridge = WrestlingManagerNotificationBridge.shared
         weak var webView: WKWebView?
         var purchaseHost: WrestlingManagerPurchaseHost?
+        var purchaseActivation: WrestlingManagerPurchaseActivation?
         private var isSharingOfficialPDF = false
         var latestNativeScaleWeight: Double?
         var scaleBatteryPercent: Double?
@@ -655,7 +662,7 @@ struct WrestlingManagerWebView: UIViewRepresentable {
         }
         func removeCameraBackgroundObserver() { NotificationCenter.default.removeObserver(self) }
         @objc private func appEnteredBackground() {
-            purchaseHost?.stop()
+            purchaseActivation?.stop()
             videoPilotBridge.enteredBackground()
             credentialScannerBridge.cancelForBackground()
             biometricLoginBridge.cancel()
@@ -664,7 +671,7 @@ struct WrestlingManagerWebView: UIViewRepresentable {
         }
         // MARK: - Native Bluetooth -> web kiosk bridge
         func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
-            purchaseHost?.stop()
+            purchaseActivation?.stop()
             deletionBridge.pageChanged()
             videoPilotBridge.reset()
             pageReady = false
@@ -674,7 +681,7 @@ struct WrestlingManagerWebView: UIViewRepresentable {
             travelBridge.cancel()
         }
         func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
-            purchaseHost?.stop()
+            purchaseActivation?.stop()
             deletionBridge.pageChanged()
             nfcBridge.cancel()
             pinRecoveryBridge.cancel()
@@ -766,7 +773,7 @@ struct WrestlingManagerWebView: UIViewRepresentable {
                       let webView, isWrestlingManagerPage(webView.url),
                       let body = message.body as? [String: Any],
                       body["command"] as? String == "open" else { return }
-                purchaseHost?.stop()
+                purchaseActivation?.stop()
                 videoPilotBridge.reset()
                 offlineMatOpen.wrappedValue = true
                 return
@@ -863,7 +870,7 @@ struct WrestlingManagerWebView: UIViewRepresentable {
             guard message.name == "kioskState" else { return }
             if let body = message.body as? [String: Any],
                let locked = body["locked"] as? Bool {
-                if locked { purchaseHost?.stop(); videoPilotBridge.reset() }
+                if locked { purchaseActivation?.stop(); videoPilotBridge.reset() }
                 kioskLocked.wrappedValue = locked
                 nfcBridge.sendStatus()
             }

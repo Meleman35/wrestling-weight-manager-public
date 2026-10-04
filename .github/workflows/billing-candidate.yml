@@ -36,7 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Type-check StoreKit component with Apple SDK
-        run: xcrun swiftc -typecheck -target "$(uname -m)-apple-macos13.0" billing-candidate/WrestlingManagerStore.swift billing-candidate/WrestlingManagerPurchaseHTTP.swift billing-candidate/WrestlingManagerPurchaseBridge.swift billing-candidate/WrestlingManagerPurchaseHost.swift billing-candidate/WrestlingManagerPurchaseAuthentication.swift billing-candidate/WrestlingManagerPurchasePageSession.swift
+        run: xcrun swiftc -typecheck -target "$(uname -m)-apple-macos13.0" billing-candidate/WrestlingManagerStore.swift billing-candidate/WrestlingManagerPurchaseHTTP.swift billing-candidate/WrestlingManagerPurchaseBridge.swift billing-candidate/WrestlingManagerPurchaseHost.swift billing-candidate/WrestlingManagerPurchaseAuthentication.swift billing-candidate/WrestlingManagerPurchasePageSession.swift billing-candidate/WrestlingManagerPurchaseActivation.swift
 
       - name: Execute native purchase transport checks
         run: |
@@ -57,6 +57,7 @@ jobs:
       - run: npm install --no-save playwright@1.58.2
       - run: npx playwright install --with-deps chromium
       - run: node billing-candidate/tests/subscription-screen-browser.cjs
+      - run: node billing-candidate/tests/subscription-app-browser.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

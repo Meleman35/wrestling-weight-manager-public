@@ -893,6 +893,8 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
 
 </style>
 <style id="schedule087Style">.duration-choices{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.duration-choices button{padding:10px 4px;min-height:44px;white-space:normal;overflow-wrap:anywhere;font-size:13px}.duration-choices button.selected{background:var(--team-primary,#163a67);color:var(--team-primary-text,#fff)}.location-finder{margin:14px 0}.location-finder summary{font-weight:800;cursor:pointer;padding:10px 0}.location-result{display:block;width:100%;text-align:left;margin:6px 0;white-space:normal;overflow-wrap:anywhere}.location-result small{display:block;font-weight:400;margin-top:4px}</style>
+<link rel="stylesheet" href="./billing-candidate/subscription-screen.css">
+<style>#subscriptionPlansContent{padding:16px}.wm-plan-choices{display:flex;gap:12px;margin-bottom:16px}.wm-plan-choices button{min-height:44px}.wm-family-coverage-screen label{display:block;padding:12px 0}</style>
 </head>
 <body>
   <div id="message"></div>
@@ -1352,7 +1354,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
             <button class="menu-row disabled" data-layout-key="files"><span>📁</span><div><b>Files & Photos</b><small>Team documents and albums</small></div><i>›</i></button>
           </div></section>
           <section class="toolbox-group"><div class="toolbox-group-head"><span>🧰</span><div><b>Program</b><small>Organization, admin and app settings</small></div></div><div class="menu-card">
-            <button id="organizationHubBtn" class="menu-row" data-layout-key="organization_hub"><span>🏛️</span><div><b>Board Room</b><small>Meetings, votes, clubs, programs and leadership</small></div><i>›</i></button>
+            <button id="remoteReportingBtn" class="menu-row" hidden type="button"><span>⚖️</span><div><b>Remote weigh-ins</b><small>Club and tournament reporting</small></div><i>›</i></button><button id="subscriptionPlansBtn" class="menu-row" hidden type="button"><span>☆</span><div><b>Plans &amp; purchases</b><small>Team Pro and Family Video</small></div><i>›</i></button><button id="organizationHubBtn" class="menu-row" data-layout-key="organization_hub"><span>🏛️</span><div><b>Board Room</b><small>Meetings, votes, clubs, programs and leadership</small></div><i>›</i></button>
             <button id="staffAccessBtn" class="menu-row admin-only" data-layout-key="staff_access"><span>🪪</span><div><b>Edit Team Leaders</b><small>Assign coaches, team leaders, volunteers and administrators</small></div><i>›</i></button>
             <button id="feedbackBtn" class="menu-row" data-layout-key="feedback"><span>💬</span><div><b>Feedback</b><small>Share ideas, problems and what you like</small></div><i>›</i></button>
             <button id="accountBtn" class="menu-row" data-layout-key="account"><span>⚙️</span><div><b>Account & Team</b><small>Profile, team and sign out</small></div><i>›</i></button>
@@ -1371,6 +1373,9 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
   </section>
 
   <div id="sheetBackdrop" class="backdrop hidden"></div>
+<section id="subscriptionPlansSheet" class="sheet ops-sheet hidden" aria-modal="true" role="dialog" aria-labelledby="subscriptionPlansTitle"><div class="sheet-handle"></div><div class="sheet-head"><h2 id="subscriptionPlansTitle">Plans &amp; purchases</h2><button class="icon-close" data-close-sheet aria-label="Close">×</button></div><div id="subscriptionPlansContent"></div></section>
+<section id="remoteReportingSheet" class="sheet ops-sheet hidden" aria-modal="true" role="dialog" aria-labelledby="remoteReportingTitle">
+<div class="sheet-handle"></div><div class="sheet-head"><h2 id="remoteReportingTitle">Remote weigh-ins</h2><button class="icon-close" data-close-sheet aria-label="Close">×</button></div><div id="remoteReportingContent"></div></section>
 <section id="opsHubSheet" class="sheet ops-sheet hidden" aria-modal="true" role="dialog" aria-labelledby="opsHubTitle">
  <div class="sheet-handle"></div><div class="sheet-head"><div><div class="eyebrow">ORGANIZATION</div><h2 id="opsHubTitle">Board Room</h2></div><button class="icon-close" data-close-sheet aria-label="Close">×</button></div>
  <div class="ops-toolbar"><label>Organization<select id="opsOrg"></select></label><label>Division<select id="opsDivision"><option value="">All divisions</option></select></label></div>
@@ -3228,6 +3233,8 @@ async function renderAppLockIdentity(){
   }
 }
 function lockApp(){
+  window.WMSubscriptionPlans?.close();
+  window.WMRemoteReporting?.close();
   window.WMDeletionPhoneTest?.reset();
   if(!session||!securityState.appLockEnabled)return;
   window.WMOfficialSheets?.close(true);
@@ -3759,6 +3766,8 @@ function openSheet(id){
   requestAnimationFrame(()=>{if(panel)panel.scrollTop=0;});
 }
 function closeSheets(){
+  window.WMSubscriptionPlans?.close();
+  window.WMRemoteReporting?.close();
   window.WMSheetNavigation?.reset();
   window.WMTournaments?.reset();
   window.WMReactions?.reset();
@@ -11034,6 +11043,8 @@ client.auth.onAuthStateChange((event,nextSession)=>{
  setTimeout(()=>handleAuthViewChange(event,nextSession).catch(e=>message(e.message,true)),0);
 });
 async function handleAuthViewChange(event,nextSession){
+  if(event!=='TOKEN_REFRESHED'&&event!=='INITIAL_SESSION')window.WMSubscriptionPlans?.close();
+  if(event!=='TOKEN_REFRESHED'&&event!=='INITIAL_SESSION')window.WMRemoteReporting?.close();
   if(session?.user?.id!==nextSession?.user?.id){window.WMScheduleBadges.reset();scheduleRows=[];setNavBadge('schedule',0,'unseen schedule changes');++communicationThreadOpenSequence;window.WMChatDrafts?.reset();window.WMMatch?.close();window.WMMatchVideo?.reset();window.WMStatistics?.reset();window.WMAthleteMerge?.reset();show('teamRecorderView',false);window.WMVideoPilot?.reset();window.WMTournaments?.reset();show('tournamentSheet',false);window.WMNotificationSync?.reset();window.WMReactions?.reset();finishTileEditing(false);tileEditUser=null;pendingUiLayout=null;window.WMKioskScan?.reset();window.WMGoals?.reset();window.WMProfiles?.reset();window.WMFamily?.reset();resetAthleteCard();nativeCameraScanContext=null;weightCardPhotoCache.clear();}
   if(session?.user?.id!==nextSession?.user?.id&&(myWeightCheckMode==='teammate'||myWeightCheckMode==='test'||myWeightCheckMode==='staff'||!$('weightTestAthleteSheet').classList.contains('hidden')||!$('teammateWeightCheckSheet').classList.contains('hidden')||!$('weightPinSheet').classList.contains('hidden')))closeSheets();
   session=nextSession||null;
@@ -17850,6 +17861,28 @@ async function renderAthleteCardPDF({cards, teamName, individual = false,
  };
 })();
 
+</script>
+<script type="module">
+import {installRemoteReportingApp} from './src/remote-weighins-app.mjs';
+window.WMRemoteReporting=installRemoteReportingApp({
+  enabled:false, // Turn on with the reviewed service deployment, not independently.
+  button:document.getElementById('remoteReportingBtn'),root:document.getElementById('remoteReportingContent'),
+  beforeOpen:()=>closeSheets(),show:()=>openSheet('remoteReportingSheet'),hide:()=>show('remoteReportingSheet',false),
+  getSession:async()=>{const {data,error}=await client.auth.getSession();if(error)throw error;return data.session},
+  unlocked:()=>!securityState.appLockEnabled||securityUnlockedThisLaunch,
+  personal:()=>!!session?.user?.id&&!managedLogin,publishableKey:SUPABASE_KEY
+});
+</script>
+<script type="module">
+import {installSubscriptionApp} from './billing-candidate/subscription-app.mjs';
+window.WMSubscriptionPlans=installSubscriptionApp({
+ button:document.getElementById('subscriptionPlansBtn'),root:document.getElementById('subscriptionPlansContent'),
+ beforeOpen:()=>closeSheets(),show:()=>openSheet('subscriptionPlansSheet'),hide:()=>show('subscriptionPlansSheet',false),
+ getSession:()=>session,getTeam:()=>activeTeam,
+ unlocked:()=>!document.body.classList.contains('kiosk-locked')&&!document.querySelector('#appLockOverlay:not(.hidden)'),
+ personal:()=>!!session?.user?.id&&!managedLogin&&!teamProfileChoice&&!teamProfileSelecting&&!teamLoginSigningOut,
+ publishableKey:SUPABASE_KEY
+});
 </script>
 </body>
 </html>

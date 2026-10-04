@@ -84,3 +84,36 @@ begin
 end $$;
 revoke all on function wm_billing.set_family_coverage(uuid,uuid[]) from public;
 grant execute on function wm_billing.set_family_coverage(uuid,uuid[]) to wm_billing_runtime;
+
+-- Only accepted, currently active guardian/roster relationships are selectable.
+-- One row per canonical profile prevents two team copies consuming two slots.
+create function wm_billing.family_coverage_options(p_user uuid)
+returns jsonb language plpgsql security definer set search_path='' as $$
+declare result jsonb;
+begin
+ if auth.uid() is distinct from p_user or p_user is null or not private.board_personal(p_user)
+  or private.board_minor(p_user) or not private.scoped_deletion_access_ok()
+  or exists(select 1 from private.scoped_deletion_jobs where actor_id=p_user and state not in ('cancelled','completed')) then
+  raise exception 'family_coverage_forbidden';
+ end if;
+ with candidates as (
+  select distinct on (a.profile_id) a.id,a.profile_id,
+   left(trim(concat_ws(' ',to_jsonb(a)->>'first_name',to_jsonb(a)->>'last_name')),240) as display_name,
+   exists(select 1 from wm_billing.family_coverage c where c.user_id=p_user and c.athlete_profile_id=a.profile_id) as selected
+  from public.athletes a where a.profile_id is not null and exists(
+   select 1 from public.athlete_guardians g join public.team_memberships m
+    on m.user_id=g.guardian_user_id and m.athlete_id=g.athlete_id and m.role='parent_guardian' and m.active
+   join public.roster_memberships r on r.athlete_id=a.id and r.active
+   join public.seasons s on s.id=r.season_id and s.team_id=m.team_id and s.active
+   join public.teams t on t.id=m.team_id
+   where g.athlete_id=a.id and g.guardian_user_id=p_user and g.invitation_status='accepted'
+    and not exists(select 1 from private.scoped_deletion_jobs j where j.state not in ('cancelled','completed')
+     and (t.id=any(j.team_ids) or t.organization_id=any(j.organization_ids))))
+  order by a.profile_id,a.id limit 1001
+ ) select coalesce(jsonb_agg(jsonb_build_object('athlete_id',id,'profile_id',profile_id,
+  'display_name',display_name,'selected',selected) order by display_name,id),'[]'::jsonb) into result from candidates;
+ if jsonb_array_length(result)>1000 then raise exception 'family_coverage_forbidden';end if;
+ return result;
+end $$;
+revoke all on function wm_billing.family_coverage_options(uuid) from public;
+grant execute on function wm_billing.family_coverage_options(uuid) to wm_billing_runtime;

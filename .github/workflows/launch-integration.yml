@@ -8,6 +8,7 @@ on:
       - 'src/launch-*.mjs'
       - 'tests/launch-*'
       - 'scripts/check-launch-*'
+      - 'scripts/test-launch-*'
       - '.github/workflows/launch-integration.yml'
 permissions:
   contents: read
@@ -25,3 +26,5 @@ jobs:
         run: xcodebuild -project 'native-app/Wrestling Manager Xcode App.xcodeproj' -scheme 'Wrestling Manager' -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath /tmp/wm-launch-debug CODE_SIGNING_ALLOWED=NO build -quiet
       - name: Build complete main app in Release
         run: xcodebuild -project 'native-app/Wrestling Manager Xcode App.xcodeproj' -scheme 'Wrestling Manager' -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath /tmp/wm-launch-release CODE_SIGNING_ALLOWED=NO build -quiet
+      - name: Exercise production capture host in iPad simulator
+        run: bash scripts/test-launch-capture-host.sh

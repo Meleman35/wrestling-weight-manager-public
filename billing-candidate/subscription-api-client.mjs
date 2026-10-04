@@ -56,6 +56,15 @@ export function createSubscriptionAPIClient({currentSession, sessionGeneration,
     } finally { clearTimeout(timeout); pending.delete(controller); }
   }
   return Object.freeze({
+    async coverageOptions({isCurrent} = {}) {
+      const result = await request('coverage-options', {}, isCurrent);
+      if (!result || Object.keys(result).length !== 1 || !Array.isArray(result.athletes) || result.athletes.length > 1000 ||
+          result.athletes.some(a => !a || Object.keys(a).length !== 4 || !uuid(a.athlete_id) || !uuid(a.profile_id) ||
+            typeof a.display_name !== 'string' || a.display_name.length > 240 || typeof a.selected !== 'boolean') ||
+          new Set(result.athletes.map(a => a.profile_id)).size !== result.athletes.length || result.athletes.filter(a=>a.selected).length > 2)
+        throw Error('billing_unconfirmed');
+      return result;
+    },
     async saveCoverage({athleteIDs, isCurrent} = {}) {
       if (!Array.isArray(athleteIDs) || athleteIDs.length > 2 || !athleteIDs.every(uuid) ||
           new Set(athleteIDs.map(x=>x.toLowerCase())).size !== athleteIDs.length) throw Error('invalid_coverage');

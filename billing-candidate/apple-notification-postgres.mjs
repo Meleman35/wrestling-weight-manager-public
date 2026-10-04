@@ -38,12 +38,7 @@ export function createAppleNotificationPostgres({db,environment}){
    if(!row)throw Error('Lease unavailable');
    const existing=(await tx.query('select snapshot from wm_billing.subscriptions where environment=$1 and original_id=$2 for update',key)).rows[0]?.snapshot;
    if(!existing||existing.userID!==initial.userID)throw Error('Binding changed');
-   const owner=(await tx.query(`select u.id from auth.users u where u.id=$1::uuid
-    and u.deleted_at is null and (u.banned_until is null or u.banned_until<=clock_timestamp())
-    and private.board_personal(u.id) and not exists(select 1 from private.scoped_deletion_jobs j
-      where (j.actor_id=u.id and j.state not in ('cancelled','completed')) or
-       (j.personal and j.sealed_at is not null and j.subject_hash=encode(sha256(convert_to(u.id::text,'UTF8')),'hex')))
-    for share`,[existing.userID])).rows[0];
+   const owner=(await tx.query('select wm_billing.notification_owner_available($1::uuid) as allowed',[existing.userID])).rows[0]?.allowed === true;
    // Frozen/banned owners may become available again; retain the job for retry.
    if(!owner)throw Error('Owner unavailable');
    const decision=reconcileKnownSubscription({existing,evidence,config,now});

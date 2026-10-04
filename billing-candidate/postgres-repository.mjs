@@ -16,17 +16,18 @@ export class PostgresBillingRepository {
    await client.query('COMMIT');committed=true;return result;
   }catch(e){if(!committed)await client.query('ROLLBACK').catch(()=>{});throw e;}finally{client.release();}
  }
- intentTransaction({userID,scope},callback){return this.withTransaction(['purchaser:'+userID+':'+scope],callback);}
+ intentTransaction({userID,scope},callback){return this.withTransaction(['purchaser:'+userID+':'+scope],callback,{actorID:userID});}
  accessTransaction({userID},callback){return this.withTransaction([],callback,{actorID:userID});}
  coverageTransaction({userID},callback){return this.withTransaction(['purchaser:'+userID+':family'],callback,{actorID:userID});}
- abandonTransaction({userID,token},callback){return this.withTransaction(['purchaser:'+userID+':team','purchaser:'+userID+':family','token:'+token.toLowerCase()],callback);}
- transaction({environment,originalTransactionID,token},callback){return this.withTransaction(['original:'+environment+':'+originalTransactionID,'token:'+token.toLowerCase()],callback);}
+ abandonTransaction({userID,token},callback){return this.withTransaction(['purchaser:'+userID+':team','purchaser:'+userID+':family','token:'+token.toLowerCase()],callback,{actorID:userID});}
+ transaction({environment,originalTransactionID,token,userID},callback){return this.withTransaction(['original:'+environment+':'+originalTransactionID,'token:'+token.toLowerCase()],callback,{actorID:userID});}
  port(client){
   const one=async(sql,args)=>(await client.query(sql,args)).rows[0];
   return {
    currentActor:ctx=>this.auth.currentActor(ctx,client),
    resolveAccess:async(user,team,athlete,event)=>
     (await one('select wm_billing.resolve_access($1,$2,$3,$4) as state',[user,team,athlete,event]))?.state??null,
+   familyCoverageOptions:async user=>(await one('select wm_billing.family_coverage_options($1) as options',[user]))?.options??null,
    replaceFamilyCoverage:async(user,athletes)=>
     (await one('select wm_billing.set_family_coverage($1,$2::uuid[]) as result',[user,athletes]))?.result??null,
    canPurchaseTeam:async(user,team)=>(await one('select wm_billing.can_purchase_team($1,$2) as allowed',[user,team]))?.allowed===true,

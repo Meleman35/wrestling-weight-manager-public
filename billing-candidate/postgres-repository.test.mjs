@@ -102,6 +102,17 @@ test('real PostgreSQL transactions, concurrency, permissions and revoked session
    const access=new SubscriptionAccessService({auth,repository,environment:'Sandbox'});
    const target={teamID:team,athleteID:athlete,eventID:event};
    const bound=(await admin.query('select team_id from wm_billing.team_bindings where user_id=$1',[user])).rows[0].team_id;
+   await t.test('family choices are canonical, selected, and disappear after guardian revocation',async()=>{
+    const options=await coverage.options(parentContext,{});
+    assert.equal(options.athletes.length,1);assert.equal(options.athletes[0].profile_id,profile);assert.equal(options.athletes[0].selected,true);
+    assert.ok([athlete,copy].includes(options.athletes[0].athlete_id));
+    assert.deepEqual(Object.keys(options.athletes[0]).sort(),['athlete_id','display_name','profile_id','selected']);
+    await assert.rejects(coverage.options(parentContext,{userID:user}),/invalid_request/);
+    try{
+     await admin.query("update public.athlete_guardians set invitation_status='pending' where guardian_user_id=$1",[parent]);
+     assert.deepEqual(await coverage.options(parentContext,{}),{athletes:[]});
+    }finally{await admin.query("update public.athlete_guardians set invitation_status='accepted' where guardian_user_id=$1",[parent]);}
+   });
    await t.test('family selection validates canonical identity and rolls back invalid replacements',async()=>{
     for(const athleteIDs of [[athlete,copy],[profile]])await assert.rejects(coverage.select(parentContext,{athleteIDs}));
     assert.deepEqual((await admin.query('select athlete_profile_id,slot from wm_billing.family_coverage where user_id=$1',[parent])).rows,[{athlete_profile_id:profile,slot:1}]);
@@ -174,6 +185,21 @@ test('real PostgreSQL transactions, concurrency, permissions and revoked session
       await assert.rejects(connection.query('delete from auth.sessions where id=$1',[session]),e=>e.code==='55P03');
      }finally{await connection.query('ROLLBACK');connection.release();}
     });
+   });
+  });
+  await t.test('every billing write holds the same actor lock as deletion intake',async()=>{
+   const choices=[
+    callback=>repository.intentTransaction({userID:user,scope:'team'},callback),
+    callback=>repository.abandonTransaction({userID:user,token},callback),
+    callback=>repository.transaction({userID:user,environment:'Sandbox',originalTransactionID:'1001',token},callback)
+   ];
+   for(const transact of choices)await transact(async tx=>{
+    await tx.currentActor(ctx);
+    const connection=await admin.connect();
+    try{
+     await connection.query('BEGIN');
+     assert.equal((await connection.query('select pg_try_advisory_xact_lock(hashtextextended($1,91347)) as locked',[user])).rows[0].locked,false);
+    }finally{await connection.query('ROLLBACK');connection.release();}
    });
   });
   await t.test('deletion freeze and revoked session prevent billing writes',async()=>{
