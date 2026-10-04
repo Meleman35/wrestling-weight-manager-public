@@ -36,12 +36,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Type-check StoreKit component with Apple SDK
-        run: xcrun swiftc -typecheck -target "$(uname -m)-apple-macos13.0" billing-candidate/WrestlingManagerStore.swift billing-candidate/WrestlingManagerPurchaseHTTP.swift billing-candidate/WrestlingManagerPurchaseBridge.swift billing-candidate/WrestlingManagerPurchaseHost.swift
+        run: xcrun swiftc -typecheck -target "$(uname -m)-apple-macos13.0" billing-candidate/WrestlingManagerStore.swift billing-candidate/WrestlingManagerPurchaseHTTP.swift billing-candidate/WrestlingManagerPurchaseBridge.swift billing-candidate/WrestlingManagerPurchaseHost.swift billing-candidate/WrestlingManagerPurchaseAuthentication.swift billing-candidate/WrestlingManagerPurchasePageSession.swift
 
       - name: Execute native purchase transport checks
         run: |
           xcrun swiftc -target "$(uname -m)-apple-macos13.0" billing-candidate/WrestlingManagerStore.swift billing-candidate/WrestlingManagerPurchaseHTTP.swift billing-candidate/tests/PurchaseHTTPChecks.swift -o /tmp/wm-purchase-checks
           /tmp/wm-purchase-checks
+      - name: Execute native purchase authentication checks
+        run: |
+          xcrun swiftc -target "$(uname -m)-apple-macos13.0" billing-candidate/WrestlingManagerStore.swift billing-candidate/WrestlingManagerPurchaseHTTP.swift billing-candidate/WrestlingManagerPurchaseAuthentication.swift billing-candidate/tests/PurchaseAuthenticationChecks.swift -o /tmp/wm-purchase-auth-checks
+          /tmp/wm-purchase-auth-checks
 
   browser:
     runs-on: ubuntu-latest

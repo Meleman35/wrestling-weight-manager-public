@@ -49,17 +49,20 @@ final class WrestlingManagerPurchaseHTTP: WrestlingManagerPurchaseServer {
     private let identity: WrestlingManagerPurchaseSession
     private let currentSession: () -> WrestlingManagerPurchaseSession?
     private let refreshServerAccess: () async throws -> Void
+    private let revalidateSession: () async throws -> Void
     private let transport: any WrestlingManagerPurchaseTransport
     private var stopped = false
     init(session: WrestlingManagerPurchaseSession, publishableKey: String,
          currentSession: @escaping () -> WrestlingManagerPurchaseSession?,
          transport: any WrestlingManagerPurchaseTransport,
-         refreshServerAccess: @escaping () async throws -> Void) {
+         refreshServerAccess: @escaping () async throws -> Void,
+         revalidateSession: @escaping () async throws -> Void = {}) {
         self.publishableKey = publishableKey
         identity = session
         self.currentSession = currentSession
         self.transport = transport
         self.refreshServerAccess = refreshServerAccess
+        self.revalidateSession = revalidateSession
     }
     func stop() { stopped = true; transport.stop() }
     private func snapshot() throws -> WrestlingManagerPurchaseSession {
@@ -69,6 +72,7 @@ final class WrestlingManagerPurchaseHTTP: WrestlingManagerPurchaseServer {
         return current
     }
     private func request(action: String, data: [String: Any]) async throws -> [String: Any] {
+        try await revalidateSession()
         let session = try snapshot()
         var request = URLRequest(url: endpoint)
         guard !publishableKey.isEmpty else { throw AdapterError.unavailable }
@@ -78,6 +82,7 @@ final class WrestlingManagerPurchaseHTTP: WrestlingManagerPurchaseServer {
         request.setValue("Bearer \(session.accessToken)", forHTTPHeaderField: "Authorization")
         request.httpBody = try JSONSerialization.data(withJSONObject: ["action": action, "data": data])
         let (body, response) = try await transport.send(request)
+        try await revalidateSession()
         _ = try snapshot()
         guard response.url == endpoint, body.count <= 65536,
               response.value(forHTTPHeaderField: "Content-Type")?.lowercased().hasPrefix("application/json") == true else {
@@ -123,9 +128,11 @@ final class WrestlingManagerPurchaseHTTP: WrestlingManagerPurchaseServer {
         return WrestlingManagerPurchaseAck(transactionID: transactionID, originalTransactionID: original)
     }
     func refreshAccess() async throws {
+        try await revalidateSession()
         _ = try snapshot()
         // Integration must reload authoritative server access; no local paid flag.
         try await refreshServerAccess()
+        try await revalidateSession()
         _ = try snapshot()
     }
 }

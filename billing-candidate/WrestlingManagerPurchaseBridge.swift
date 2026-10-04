@@ -10,17 +10,20 @@ final class WrestlingManagerPurchaseBridge: NSObject, WKScriptMessageHandlerWith
     private let store: WrestlingManagerStore
     private let currentSession: () -> Bool
     private let stopTransport: () -> Void
+    private let revalidateSession: () async throws -> Void
     private weak var webView: WKWebView?
     private var enabled: Bool
     private var stopped = false
     private var busy = false
 
     init(store: WrestlingManagerStore, enabled: Bool = false,
-         currentSession: @escaping () -> Bool, stopTransport: @escaping () -> Void) {
+         currentSession: @escaping () -> Bool, stopTransport: @escaping () -> Void,
+         revalidateSession: @escaping () async throws -> Void = {}) {
         self.store = store
         self.enabled = enabled
         self.currentSession = currentSession
         self.stopTransport = stopTransport
+        self.revalidateSession = revalidateSession
     }
 
     func attach(to webView: WKWebView) { self.webView = webView }
@@ -92,6 +95,8 @@ final class WrestlingManagerPurchaseBridge: NSObject, WKScriptMessageHandlerWith
         Task { [self] in
             defer { busy = false }
             do {
+                try await revalidateSession()
+                guard authorized(message) else { replyHandler(nil, "Purchase session ended."); return }
                 let response: [String: Any]
                 switch command {
                 case "products":
@@ -105,6 +110,7 @@ final class WrestlingManagerPurchaseBridge: NSObject, WKScriptMessageHandlerWith
                 case "restore": response = ["outcome": Self.name(try await store.restore())]
                 default: response = ["outcome": Self.name(try await store.recover())]
                 }
+                try await revalidateSession()
                 guard authorized(message) else { replyHandler(nil, "Purchase session ended."); return }
                 replyHandler(response, nil)
             } catch {
