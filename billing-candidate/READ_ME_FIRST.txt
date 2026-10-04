@@ -65,9 +65,9 @@ Configuration inventory (public identifiers only)
 Apple In-App Purchase key ID: 79R244P822
 Apple issuer ID: b5931be7-ac93-4ab3-9b1a-15e1dd26a549
 Private signing key: downloaded on owner's Mac; not configured on server yet.
-Apple numeric app ID: still needs confirmation for production verification.
+Apple numeric app ID: 6815511370 confirmed from App Store Connect screenshot October 3, 2026.
 Bundle ID: com.damonmele.wrestlingmanager confirmed from both configurations
-of the uploaded working Xcode project. Confirm the same value in App Store Connect.
+of the uploaded working Xcode project. The same value is confirmed in App Store Connect.
 Endpoint reserved in native code:
 https://vfocpoyexnjsjpxhhyqr.supabase.co/functions/v1/wrestling-manager-billing
 This endpoint has not been deployed. Publishable gateway key is public app
@@ -176,3 +176,15 @@ Launch payment status updated October 3, 2026:
 - Family prices above reflect the owner's October 3 revision; change the matching
   App Store Connect prices before submission. StoreKit localized metadata remains
   authoritative in the purchase screen. SMS allowance has not been defined.
+
+App Store Information screenshots verified October 3, 2026:
+- App name The Wrestling Manager; Apple ID 6815511370.
+- Bundle ID com.damonmele.wrestlingmanager matches the uploaded Xcode project.
+- Version 1.0 is Prepare for Submission.
+- Category fields, subtitle, content-rights declaration and age ratings are unset.
+- Production and sandbox App Store Server Notification URLs are unset.
+- Configure notification URLs only after the signed V2 receiver is deployed/tested.
+- Screenshots of the encryption/medical documentation sections alone do not
+  establish a completed declaration or any requirement to upload documents.
+- Supplied Wrestling-Manager-Info(2).plist parses successfully; the project-referenced
+  filename is Wrestling-Manager-Info.plist. Usage descriptions come from build settings.
