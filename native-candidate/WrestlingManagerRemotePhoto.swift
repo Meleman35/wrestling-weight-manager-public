@@ -51,6 +51,7 @@ final class WrestlingManagerRemotePhoto {
 @MainActor final class WrestlingManagerRemoteSetupReview: UIViewController {
     enum Decision { case confirmed, retake, cancelled }
     private let picture = UIImageView()
+    private let layout = UIStackView()
     private var completion: ((Decision) -> Void)?
     init(jpeg: Data, completion: @escaping (Decision) -> Void) {
         self.completion = completion; super.init(nibName: nil, bundle: nil)
@@ -71,14 +72,37 @@ final class WrestlingManagerRemotePhoto {
         retake.addTarget(self, action: #selector(retakeSetup), for: .touchUpInside)
         let cancel = UIButton(type: .system); cancel.setTitle("Cancel setup", for: .normal)
         cancel.addTarget(self, action: #selector(cancelSetup), for: .touchUpInside)
-        let stack = UIStackView(arrangedSubviews: [title,picture,note,confirm,retake,cancel]); stack.axis = .vertical; stack.spacing = 12
-        stack.translatesAutoresizingMaskIntoConstraints = false; view.addSubview(stack)
+        for button in [confirm,retake,cancel] {
+            button.titleLabel?.numberOfLines = 0; button.titleLabel?.textAlignment = .center
+            button.titleLabel?.font = .preferredFont(forTextStyle: .body)
+            button.titleLabel?.adjustsFontForContentSizeCategory = true
+            button.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
+        }
+        // Keep the photo visible on landscape phones and at larger text sizes.
+        // Instructions/buttons scroll independently instead of collapsing it.
+        let panel = UIScrollView(); panel.alwaysBounceVertical = true
+        let stack = UIStackView(arrangedSubviews: [title,note,confirm,retake,cancel]); stack.axis = .vertical; stack.spacing = 12
+        stack.translatesAutoresizingMaskIntoConstraints = false; panel.addSubview(stack)
+        layout.addArrangedSubview(picture); layout.addArrangedSubview(panel)
+        layout.axis = .vertical; layout.distribution = .fillEqually; layout.spacing = 12
+        layout.translatesAutoresizingMaskIntoConstraints = false; view.addSubview(layout)
         picture.setContentHuggingPriority(.defaultLow, for: .vertical)
         picture.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
-        NSLayoutConstraint.activate([stack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
-            stack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
-            stack.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
-            stack.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16)])
+        picture.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        picture.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        NSLayoutConstraint.activate([layout.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
+            layout.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+            layout.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
+            layout.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
+            stack.topAnchor.constraint(equalTo: panel.contentLayoutGuide.topAnchor),
+            stack.bottomAnchor.constraint(equalTo: panel.contentLayoutGuide.bottomAnchor),
+            stack.leadingAnchor.constraint(equalTo: panel.contentLayoutGuide.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: panel.contentLayoutGuide.trailingAnchor),
+            stack.widthAnchor.constraint(equalTo: panel.frameLayoutGuide.widthAnchor)])
+    }
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        layout.axis = view.bounds.width > view.bounds.height ? .horizontal : .vertical
     }
     private func finish(_ decision: Decision) {
         guard let callback = completion else { return }; completion = nil; picture.image = nil

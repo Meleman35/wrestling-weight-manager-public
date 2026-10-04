@@ -4,7 +4,7 @@ import {collectRemoteExport} from './remote-weighins-export.mjs';
 import {remoteReviewWorkbook} from './remote-weighins-xlsx.mjs';
 export function mountRemoteReportingScreen({root,scope,windows,api,isCurrent,document=root?.ownerDocument}) {
  if(!root||!document||!Array.isArray(windows)||![api?.report,api?.photo,isCurrent].every(f=>typeof f==='function')||!scope?.programId)throw Error('Authorized reporting screen dependencies required');
- let active=true,epoch=0,nextOffset=null,selected=null,objectURL=null,photoEpoch=0;
+ let active=true,epoch=0,nextOffset=null,selected=null,revision=null,objectURL=null,photoEpoch=0;
  const current=t=>active&&t===epoch&&isCurrent(scope)===true;
  const node=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=String(text);return n;};
  const closePhoto=()=>{photoEpoch++;if(objectURL){URL.revokeObjectURL(objectURL);objectURL=null;}photoBox.replaceChildren();};
@@ -30,7 +30,7 @@ export function mountRemoteReportingScreen({root,scope,windows,api,isCurrent,doc
  const more=node('button','Load more');more.type='button';more.hidden=true;
  const photoBox=node('div');photoBox.setAttribute('aria-label','Private verification photo');
  section.append(title,description,retention,setupNotice,filters,deadline,message,counts,wrap,more,photoBox);root.replaceChildren(section);
- const query=offset=>({programId:scope.programId,windowId:windowSelect.value,clubId:scope.clubId??null,status:statusSelect.value||null,offset,limit:100});
+ const query=offset=>({programId:scope.programId,windowId:windowSelect.value,clubId:scope.clubId??null,status:statusSelect.value||null,offset,limit:100,revision:offset?revision:null});
  const fmt=(value,timeZone)=>new Intl.DateTimeFormat('en-US',{timeZone,month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'}).format(new Date(value));
  async function showPhoto(submissionId){
   const t=epoch;closePhoto();const photoTicket=photoEpoch;message.textContent='Opening private verification photo…';
@@ -43,9 +43,10 @@ export function mountRemoteReportingScreen({root,scope,windows,api,isCurrent,doc
   if(!active||!isCurrent(scope)){close();return;}
   const offset=append?nextOffset:0;if(offset===null)return;
   const t=++epoch;closePhoto();message.textContent='Loading accepted reports…';refresh.disabled=true;more.disabled=true;capture.disabled=true;
-  if(!append){rows.replaceChildren();counts.textContent='';nextOffset=null;more.hidden=true;}
+  if(!append){rows.replaceChildren();counts.textContent='';nextOffset=null;revision=null;more.hidden=true;}
   try{const request=query(offset),report=await api.report(request);if(!current(t))return;
-   if(report.programId!==scope.programId||report.windowId!==request.windowId||!Array.isArray(report.rows))throw Error('Report scope changed');
+   if(report.programId!==scope.programId||report.windowId!==request.windowId||!Array.isArray(report.rows)||typeof report.revision!=='string'||!/^[a-f0-9]{64}$/.test(report.revision)||(append&&report.revision!==revision))throw Error('Report scope changed');
+   revision=report.revision;
    for(const row of report.rows){
     if(scope.clubId&&row.clubId!==scope.clubId)throw Error('Report club changed');
     const prior=rows.lastElementChild;
@@ -66,6 +67,7 @@ export function mountRemoteReportingScreen({root,scope,windows,api,isCurrent,doc
  const download=async withPhotos=>{const t=epoch;exportButton.disabled=true;workbookButton.disabled=true;message.textContent='Preparing all matching athletes for export…';let url;
   try{const result=await collectRemoteExport({api,query:query(0),isCurrent:()=>current(t)});if(!current(t))return;
    const blob=withPhotos?await remoteReviewWorkbook({rows:result.rows,api,isCurrent:()=>current(t)}):new Blob(['\ufeff',result.csv],{type:'text/csv;charset=utf-8'});if(!current(t))return;
+   await result.validate();if(!current(t))return;
    url=URL.createObjectURL(blob);const link=node('a');link.href=url;link.download=withPhotos?'remote-weighins.xlsx':'remote-weighins.csv';section.append(link);link.click();link.remove();message.textContent='Spreadsheet downloaded. Keep your copy for your records. Online weights and photos expire 10 days after capture; your saved spreadsheet remains available.';
   }catch{if(current(t))message.textContent='Export failed. Refresh and retry, or export one club at a time.';}finally{if(url)URL.revokeObjectURL(url);exportButton.disabled=false;workbookButton.disabled=false;}
  };

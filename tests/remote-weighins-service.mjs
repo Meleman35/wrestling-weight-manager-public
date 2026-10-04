@@ -14,7 +14,7 @@ function fixture(kind='network',coverageGate={read:async()=>true,capture:async()
  // Test-only serialized in-memory storage; never a production persistence adapter.
  const store={atomicAccept:async args=>{const existing=records.get(args.record.submissionId);if(existing){if(existing.hash!==args.payloadHash)throw Error('Idempotency conflict');return existing.receipt;}if(!args.newAcceptanceAllowed)throw Error('Sync deadline elapsed');for(const entry of records.values())if(entry.record.athleteId===args.record.athleteId&&entry.record.clubId===args.record.clubId&&entry.record.windowId===args.record.windowId)throw Error('Current submission conflict');const receipt={submissionId:args.record.submissionId,receiptId:'r-'+args.record.submissionId,status:'submitted',receivedAt:args.receivedAt};records.set(args.record.submissionId,{record:args.record,receipt,hash:args.payloadHash});return receipt;},list:async q=>[...records.values()].map(e=>({...e.record,...e.receipt})).filter(r=>r.programId===q.programId&&r.windowId===q.windowId&&(!q.clubId||r.clubId===q.clubId))};
  const service=createRemoteReportingService({coverageGate,getActor:async()=>actor,getProgram:async()=>program,getWindow:async()=>window,getRoster:async()=>roster,getEvidence:async()=>evidence,store,now:()=>time});
- return {service,actor,program,window,roster,input,evidence,records,tick:ms=>time+=ms};
+ return {service,actor,program,window,roster,input,evidence,records,store,tick:ms=>time+=ms};
 }
 test('trusted operator capture accepted once under concurrent retries',async()=>{const f=fixture();const [a,b]=await Promise.all([f.service.submit('token',f.input),f.service.submit('token',f.input)]);assert.deepEqual(a,b);assert.equal(f.records.size,1);});
 test('receipt retry after sync deadline; new submission rejected',async()=>{const f=fixture();const r=await f.service.submit('token',f.input);f.tick(3*86400000);assert.deepEqual(await f.service.submit('token',f.input),r);f.records.clear();await assert.rejects(f.service.submit('token',f.input),/deadline/);});
@@ -50,4 +50,17 @@ test('live capture authorization closes at deadline while a frozen in-window upl
  await assert.rejects(f.service.authorizeCapture('token',live),/period is closed/);
  assert.equal(await f.service.authorizeCapture('token',f.input),true);
  const late={...f.input,capturedAt:f.window.closesAt,photoCapturedAt:f.window.closesAt};await assert.rejects(f.service.authorizeCapture('token',late),/allotted/);
+});
+
+test('report revision changes on same-count name, membership and submission changes',async()=>{
+ const f=fixture(),q={programId:'program',windowId:'week',limit:1};
+ const first=await f.service.report('token',q);assert.match(first.revision,/^[a-f0-9]{64}$/);
+ assert.equal((await f.service.report('token',{...q,offset:1,revision:first.revision})).revision,first.revision);
+ f.roster[1].athleteName='Renamed';await assert.rejects(f.service.report('token',{...q,offset:1,revision:first.revision}),/Report changed/);
+ const renamed=await f.service.report('token',q);f.roster[0].usawId='0000123';await assert.rejects(f.service.report('token',{...q,revision:renamed.revision}),/Report changed/);
+ const membership=await f.service.report('token',q);await f.service.submit('token',f.input);await assert.rejects(f.service.report('token',{...q,revision:membership.revision}),/Report changed/);
+});
+test('report rechecks authority after slow storage read',async()=>{
+ const f=fixture();f.store.list=async()=>{f.actor.reportingGrants=[];return [];};
+ await assert.rejects(f.service.report('token',{programId:'program',windowId:'week'}),/assignment/);
 });

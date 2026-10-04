@@ -55,7 +55,11 @@ final class WrestlingManagerRemoteCapture {
     private var active = true
     private var pending: Pending?
     var captureToken: UUID? { pending?.token }
-    var settledWeight: Double? { pending?.reading?.weight }
+    var settledWeight: Double? {
+        guard let row = pending, let reading = row.reading,
+              fresh(reading.at), hasRecentPacket(row, at: now()) else { return nil }
+        return reading.weight
+    }
 
     init(scope: Scope, now: @escaping () -> Date = Date.init) throws {
         guard scope.opensAt < scope.closesAt,
@@ -70,6 +74,12 @@ final class WrestlingManagerRemoteCapture {
     }
     private func inWindow(_ date: Date) -> Bool { date >= scope.opensAt && date < scope.closesAt }
     private func fresh(_ date: Date) -> Bool { let age = now().timeIntervalSince(date); return age >= 0 && age <= 30 }
+    private func hasRecentPacket(_ row: Pending, at date: Date) -> Bool {
+        guard let last = row.samples.last else { return false }
+        // Camera processing can finish after another BLE packet arrives. Use
+        // absolute distance at exposure and separately require a live packet now.
+        return abs(date.timeIntervalSince(last.at)) <= 1.5
+    }
 
     /// Call only after a QR/NFC credential has resolved to an authorized roster athlete.
     @discardableResult func scan(athleteID: String, method: String) throws -> UUID {
@@ -120,7 +130,8 @@ final class WrestlingManagerRemoteCapture {
     /// The photo adapter decodes and re-encodes camera output; no gallery selection.
     func snapshot(token: UUID, normalizedJPEG: Data, capturedAt: Date, noticeAccepted: Bool) throws {
         var row = try require(token); guard row.frozen == nil else { throw Failure.frozen }
-        guard let reading = row.reading, fresh(reading.at) else { throw Failure.unsettled }
+        guard let reading = row.reading, fresh(reading.at),
+              hasRecentPacket(row, at: now()), hasRecentPacket(row, at: capturedAt) else { throw Failure.unsettled }
         guard noticeAccepted, !normalizedJPEG.isEmpty, normalizedJPEG.count <= 5 * 1024 * 1024,
               normalizedJPEG.starts(with: [0xff, 0xd8]), normalizedJPEG.suffix(2).elementsEqual([0xff, 0xd9]),
               capturedAt >= reading.at, fresh(capturedAt), inWindow(capturedAt) else { throw Failure.invalidPhoto }

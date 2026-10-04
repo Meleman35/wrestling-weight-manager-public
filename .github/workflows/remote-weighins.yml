@@ -36,9 +36,13 @@ on:
       - src/remote-weighins-outbox.mjs
       - src/remote-weighins-http.mjs
       - src/remote-weighins-postgres.mjs
+      - src/remote-weighins-report-postgres.mjs
+      - tests/remote-weighins-report-db.mjs
       - src/remote-weighins-evidence-postgres.mjs
       - src/remote-weighins-screen.mjs
       - src/remote-weighins-app.mjs
+      - src/remote-weighins-client.mjs
+      - tests/remote-weighins-client.mjs
       - tests/remote-weighins.mjs
       - tests/remote-weighins-service.mjs
       - tests/remote-weighins-photos.mjs

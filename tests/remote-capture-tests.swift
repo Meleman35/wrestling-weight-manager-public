@@ -64,6 +64,25 @@ import Foundation
         fails { try changed.snapshot(token: second, normalizedJPEG: jpeg, capturedAt: clock, noticeAccepted: true) }
         changed.close()
         fails { try changed.scaleReading(token: second, pounds: 140, observedAt: clock, connected: true) }
+        // A silent radio cannot leave a usable scale value for the 30s photo window.
+        clock = start
+        let silent = try WrestlingManagerRemoteCapture(scope: scope, now: { clock })
+        let silentToken = try silent.scan(athleteID: "athlete-a", method: "nfc")
+        for offset in [0.1, 0.6, 1.1] {
+            clock = start.addingTimeInterval(offset)
+            try silent.scaleReading(token: silentToken, pounds: 125, observedAt: clock, connected: true)
+        }
+        clock = start.addingTimeInterval(2.61)
+        precondition(silent.settledWeight == nil)
+        fails { try silent.snapshot(token: silentToken, normalizedJPEG: jpeg, capturedAt: clock, noticeAccepted: true) }
+        for offset in [2.7, 3.2, 3.7] {
+            clock = start.addingTimeInterval(offset)
+            try silent.scaleReading(token: silentToken, pounds: 125, observedAt: clock, connected: true)
+        }
+        precondition(silent.settledWeight == 125)
+        try silent.snapshot(token: silentToken, normalizedJPEG: jpeg, capturedAt: clock, noticeAccepted: true)
+        _ = try silent.freeze(token: silentToken)
+        silent.close()
         // Closing time is exclusive for both scale samples and camera capture.
         clock = scope.opensAt.addingTimeInterval(-0.1)
         let boundary = try WrestlingManagerRemoteCapture(scope: scope, now: { clock })
