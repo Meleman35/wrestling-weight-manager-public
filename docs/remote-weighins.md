@@ -210,3 +210,20 @@ normalized to the same UTC millisecond representation in accept and lookup
 responses. This intentionally projects PostgreSQL's finer timestamp precision;
 the original full precision remains stored in the database. Native recovery tests
 confirm this path does not upload or resubmit an already accepted capture.
+
+
+`remote-weighins-evidence-postgres.mjs` adds request-scoped evidence reservation
+and confirmation transactions. The transactions lock live coverage, Auth session,
+operator assignment, club enrollment, capture window and athlete consent before
+writing verification metadata. Binding equality uses JSONB, including immutable
+object path/digest/size; revoked evidence cannot be reactivated by retry. The draft
+evidence table now carries explicit `revoked`, and acceptance rejects it. Capture
+proof validation and retention expiry calculation are mandatory trusted injected
+policies, with no production duration assumed.
+
+The combined PGlite/HTTP/photo integration test runs actual draft SQL plus both
+PostgreSQL adapters and the service/handler, using a fake private object bucket.
+It uploads evidence, accepts/retrieves a receipt, reads a photo by submission,
+retries JSONB-ordered bindings, denies revoked evidence and rejects confirmation
+when assignment is revoked during upload. This verifies composition, not live
+Supabase storage or complete device provenance/retention/deletion integration.

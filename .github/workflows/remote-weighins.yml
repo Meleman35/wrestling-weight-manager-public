@@ -12,6 +12,7 @@ on:
       - src/remote-weighins-outbox.mjs
       - src/remote-weighins-http.mjs
       - src/remote-weighins-postgres.mjs
+      - src/remote-weighins-evidence-postgres.mjs
       - src/remote-weighins-screen.mjs
       - src/remote-weighins-app.mjs
       - tests/remote-weighins.mjs

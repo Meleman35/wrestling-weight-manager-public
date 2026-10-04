@@ -16,7 +16,7 @@ export function createRemotePhotoProvider({supabase,authorize,verifyCapture,evid
    const digest=createHash('sha256').update(jpeg).digest('hex');
    const path=`${binding.programId}/${binding.captureId}/${evidenceId}.jpg`;
    const reservation=await evidenceStore.reserve({evidenceId,binding,path,digest,byteCount:jpeg.length});
-   if(reservation.path!==path||reservation.digest!==digest||JSON.stringify(reservation.binding)!==JSON.stringify(binding))deny('Photo retry conflict');
+   if(reservation.path!==path||reservation.digest!==digest||!reservation.binding||Object.keys(reservation.binding).length!==Object.keys(binding).length||Object.keys(binding).some(k=>reservation.binding[k]!==binding[k]))deny('Photo retry conflict');
    if(!reservation.confirmed){
     const result=await bucket.upload(path,jpeg,{contentType:'image/jpeg',upsert:false,cacheControl:'0'});
     if(result.error){

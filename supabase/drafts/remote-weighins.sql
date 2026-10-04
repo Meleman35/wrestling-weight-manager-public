@@ -36,7 +36,8 @@ create table remote_reporting.evidence (
  private_object_key text not null unique, digest text not null,
  verified boolean not null default false, expires_at timestamptz not null,
  notice_accepted boolean not null default false, settled boolean not null default false,
- source text not null check(source='camera'), byte_count bigint not null check(byte_count between 1 and 5242880)
+ source text not null check(source='camera'), byte_count bigint not null check(byte_count between 1 and 5242880),
+ revoked boolean not null default false
 );
 create table remote_reporting.submissions (
  submission_id text primary key, program_id text not null, window_id text not null,
@@ -92,7 +93,7 @@ begin
  if p_record->>'method' is null or p_record->>'method' not in ('qr','nfc') or p_record->>'unit' is distinct from 'lb' or p_record->>'weight' is null or (p_record->>'weight')::numeric not between 0.01 and 800 then raise exception 'Invalid scale reading';end if;
  select * into e from remote_reporting.evidence where id=p_record->>'evidenceId' and program_id=p.id for share;
  expected_binding:=p_record-array['submissionId','evidenceId','eventId','kind','evidenceDigest'];
- if not found or not e.verified or not e.notice_accepted or not e.settled or e.expires_at<=accepted_at or e.digest is distinct from p_record->>'evidenceDigest' or e.binding<>expected_binding then raise exception 'Evidence unavailable';end if;
+ if not found or not e.verified or e.revoked or not e.notice_accepted or not e.settled or e.expires_at<=accepted_at or e.digest is distinct from p_record->>'evidenceDigest' or e.binding<>expected_binding then raise exception 'Evidence unavailable';end if;
  insert into remote_reporting.submissions(submission_id,program_id,window_id,club_id,athlete_id,operator_id,evidence_id,record,payload_hash,received_at)
  values(p_record->>'submissionId',p.id,w.id,p_record->>'clubId',p_record->>'athleteId',p_user,e.id,p_record,p_hash,accepted_at) returning * into prior;
  return jsonb_build_object('submissionId',prior.submission_id,'receiptId',prior.receipt_id,'status','submitted','receivedAt',prior.received_at);

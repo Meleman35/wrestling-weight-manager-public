@@ -42,7 +42,7 @@ export function createRemotePostgresAdapters({db,verifyPersonalSession,resolveRo
  }
  async function getEvidence(id){
   const e=(await db.query(`select *,expires_at>clock_timestamp() as unexpired from remote_reporting.evidence where id=$1`,[id])).rows[0];
-  return e?{id:e.id,binding:e.binding,digest:e.digest,verified:e.verified&&e.unexpired,private:true,noticeAccepted:e.notice_accepted,settled:e.settled,source:e.source}:null;
+  return e?{id:e.id,binding:e.binding,digest:e.digest,verified:e.verified&&!e.revoked&&e.unexpired,private:true,noticeAccepted:e.notice_accepted,settled:e.settled,source:e.source}:null;
  }
  const store={
   async receipt(submissionId){
