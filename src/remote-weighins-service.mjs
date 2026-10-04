@@ -6,13 +6,15 @@ const deny = message => { throw new Error(message); };
 const validId = value => typeof value === 'string' && /^[A-Za-z0-9_-]{1,160}$/.test(value);
 const timestamp = value => { const ms = Date.parse(value); if (!Number.isFinite(ms)) deny('Invalid timestamp'); return ms; };
 const same = (a,b) => a && typeof a === 'object' && Object.keys(a).length === Object.keys(b).length && Object.keys(b).every(k=>a[k]===b[k]);
-export function createRemoteReportingService({getActor, getProgram, getWindow, getWindows, getRoster, getEvidence, store, now=Date.now}) {
-  if (![getActor,getProgram,getWindow,getRoster,getEvidence,store?.atomicAccept,store?.list].every(x=>typeof x==='function')) deny('Trusted reporting adapters required');
+export function createRemoteReportingService({getActor, getProgram, getWindow, getWindows, getRoster, getEvidence, store, coverageGate, now=Date.now}) {
+  if (![getActor,getProgram,getWindow,getRoster,getEvidence,store?.atomicAccept,store?.list,coverageGate?.read,coverageGate?.capture].every(x=>typeof x==='function')) deny('Trusted reporting adapters required');
   async function authority(session, programId, action, clubId=null) {
     const actor=await getActor(session), program=await getProgram(programId);
     if (!actor?.userId || actor.sessionActive!==true || actor.confirmed!==true || actor.personal!==true || actor.locked===true || actor.deleted===true) deny('Active personal session required');
     if (!program || program.id!==programId || program.active!==true || !['network','tournament'].includes(program.kind)) deny('Reporting program unavailable');
     if (program.covered!==true) deny('Qualifying reporting coverage required');
+    if(await coverageGate.read({programId})!==true)deny('Separate network coverage required');
+    if (action==='submit'&&await coverageGate.capture({programId,clubId})!==true)deny('Participating team coverage required');
     if (program.kind==='tournament' && !validId(program.eventId)) deny('Tournament event required');
     const grants=actor.reportingGrants?.filter(g=>g.programId===programId && g.active===true)||[];
     if (action==='submit') {
@@ -36,6 +38,7 @@ export function createRemoteReportingService({getActor, getProgram, getWindow, g
       for(const programId of programs){
         const program=await getProgram(programId);
         if(!program?.active||program.covered!==true||!['network','tournament'].includes(program.kind))continue;
+        try{if(await coverageGate.read({programId})!==true)continue;}catch{continue;}
         if(program.kind==='tournament'&&!validId(program.eventId))continue;
         const windows=await getWindows(programId);
         const periods=[];
@@ -43,9 +46,19 @@ export function createRemoteReportingService({getActor, getProgram, getWindow, g
         const grants=actor.reportingGrants.filter(g=>g.programId===programId&&g.active===true),clubs=new Map();
         if(grants.some(g=>g.role==='director'))scopes.push({programId,clubId:null,canCapture:false,label:`${programId} · All clubs`,windows:periods});
         for(const g of grants){if(['operator','club_reader'].includes(g.role)&&program.clubIds.includes(g.clubId))clubs.set(g.clubId,(clubs.get(g.clubId)||false)||g.role==='operator');}
-        for(const [clubId,canCapture] of clubs)scopes.push({programId,clubId,canCapture,label:`${programId} · ${clubId}`,windows:periods});
+        for(const [clubId,assignedCapture] of clubs){let canCapture=false;if(assignedCapture){try{canCapture=await coverageGate.capture({programId,clubId})===true;}catch{}}scopes.push({programId,clubId,canCapture,label:`${programId} · ${clubId}`,windows:periods});}
       }
       return {scopes};
+    },
+    // Eligibility preflight only; photo provenance still requires trusted capture proof.
+    async authorizeCapture(session,input) {
+      if(!input||!['programId','windowId','clubId','athleteId','operatorId','generation'].every(k=>validId(input[k])))deny('Invalid capture scope');
+      const {actor,program}=await authority(session,input.programId,'submit',input.clubId);
+      if(input.operatorId!==actor.userId||input.generation!==actor.generation)deny('Operator session changed');
+      const window=await period(program,input.windowId);
+      const roster=await getRoster(program.id,window.id,input.clubId);
+      if(!roster.some(r=>r.clubId===input.clubId&&r.athleteId===input.athleteId&&r.active===true&&r.remoteConsent===true))deny('Roster consent unavailable');
+      return true;
     },
     async submit(session,input) {
       if (!input || !['submissionId','captureId','programId','windowId','clubId','athleteId','operatorId','generation','evidenceId'].every(k=>validId(input[k]))) deny('Invalid submission identity');

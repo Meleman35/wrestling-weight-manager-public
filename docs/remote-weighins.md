@@ -284,3 +284,19 @@ denial. Program ownership/enrollment, consent, deletion catalog, verified purcha
 coverage and capture proof remain runtime integration work. Network/tournament
 commercial coverage still needs an approved model; no team price was extended
 to unlimited multi-club administration.
+
+### Approved network subscription structure
+Damon approved a separate network director subscription while participating clubs
+retain their team plans. No network/tournament price or Apple product identifier
+has been approved. `createRemoteCoverageGate` reads separate trusted private
+network and team entitlements plus current program/club enrollment. A team or
+Family Video purchase cannot establish network coverage, and a network purchase
+cannot replace participating team coverage for capture. Network readers can review
+previously accepted, unexpired reports when a participating club's team coverage
+ends; no new club capture is permitted then. The reporting service now requires
+this gate for reads, writes, contexts and its eligibility preflight. That preflight
+checks the current operator generation and roster consent, but does not claim
+to verify camera/BLE provenance. Production billing readers and transaction-time
+coverage checks still need wiring; mandatory callbacks are not live products.
+Physical iPad v2 regression passed; the next remote test must use the deployed
+authenticated backend and actual capture coordinator.

@@ -2,7 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {createRemoteReportingService} from '../src/remote-weighins-service.mjs';
 const start=Date.parse('2026-10-05T06:00:00Z');
-function fixture(kind='network') {
+function fixture(kind='network',coverageGate={read:async()=>true,capture:async()=>true}) {
  const actor={userId:'coach',generation:'session-1',sessionActive:true,confirmed:true,personal:true,reportingGrants:[{programId:'program',role:'operator',clubId:'club',active:true},{programId:'program',role:'director',active:true}]};
  const program={id:'program',kind,eventId:kind==='tournament'?'event':null,active:true,covered:true,clubIds:['club','other']};
  const window={id:'week',programId:'program',eventId:program.eventId,active:true,timeZone:'America/Denver',opensAt:new Date(start).toISOString(),closesAt:new Date(start+86400000).toISOString(),syncGraceMs:86400000};
@@ -13,7 +13,7 @@ function fixture(kind='network') {
  let time=start+2000;const records=new Map();
  // Test-only serialized in-memory storage; never a production persistence adapter.
  const store={atomicAccept:async args=>{const existing=records.get(args.record.submissionId);if(existing){if(existing.hash!==args.payloadHash)throw Error('Idempotency conflict');return existing.receipt;}if(!args.newAcceptanceAllowed)throw Error('Sync deadline elapsed');for(const entry of records.values())if(entry.record.athleteId===args.record.athleteId&&entry.record.clubId===args.record.clubId&&entry.record.windowId===args.record.windowId)throw Error('Current submission conflict');const receipt={submissionId:args.record.submissionId,receiptId:'r-'+args.record.submissionId,status:'submitted',receivedAt:args.receivedAt};records.set(args.record.submissionId,{record:args.record,receipt,hash:args.payloadHash});return receipt;},list:async q=>[...records.values()].map(e=>({...e.record,...e.receipt})).filter(r=>r.programId===q.programId&&r.windowId===q.windowId&&(!q.clubId||r.clubId===q.clubId))};
- const service=createRemoteReportingService({getActor:async()=>actor,getProgram:async()=>program,getWindow:async()=>window,getRoster:async()=>roster,getEvidence:async()=>evidence,store,now:()=>time});
+ const service=createRemoteReportingService({coverageGate,getActor:async()=>actor,getProgram:async()=>program,getWindow:async()=>window,getRoster:async()=>roster,getEvidence:async()=>evidence,store,now:()=>time});
  return {service,actor,program,window,roster,input,evidence,records,tick:ms=>time+=ms};
 }
 test('trusted operator capture accepted once under concurrent retries',async()=>{const f=fixture();const [a,b]=await Promise.all([f.service.submit('token',f.input),f.service.submit('token',f.input)]);assert.deepEqual(a,b);assert.equal(f.records.size,1);});
@@ -29,3 +29,18 @@ test('account switch and cross-program window rejected',async()=>{const f=fixtur
 test('tournament records bind event and never claim official weigh-in',async()=>{const f=fixture('tournament');await f.service.submit('token',f.input);const result=await f.service.report('token',{programId:'program',windowId:'week'});assert.equal(result.eventId,'event');assert.equal(result.classification,'Remote tournament check-in');f.window.eventId='other-event';await assert.rejects(f.service.submit('token',f.input),/belong/);});
 test('club reader cannot access network totals, other club or private fields',async()=>{const f=fixture();await f.service.submit('token',f.input);f.actor.reportingGrants=[{programId:'program',role:'club_reader',clubId:'club',active:true}];await assert.rejects(f.service.report('token',{programId:'program',windowId:'week'}),/assignment/);await assert.rejects(f.service.report('token',{programId:'program',windowId:'week',clubId:'other'}),/assignment/);const r=await f.service.report('token',{programId:'program',windowId:'week',clubId:'club'});assert.equal(r.counts.expected,1);assert.doesNotMatch(JSON.stringify(r),/SECRET|evidenceId|generation|operatorId/);});
 test('nationwide report paginates stably and counts missing clubs',async()=>{const f=fixture();for(let i=0;i<5000;i++)f.roster.push({clubId:'club-'+String(i).padStart(4,'0'),athleteId:'a',active:true,remoteConsent:true});const q={programId:'program',windowId:'week',limit:500};const a=await f.service.report('token',q),b=await f.service.report('token',{...q,offset:a.nextOffset});assert.equal(a.total,5002);assert.equal(a.counts.missing,5002);assert.equal(a.rows.length,500);assert.notDeepEqual(a.rows[499],b.rows[0]);await assert.rejects(f.service.report('token',{...q,limit:501}),/query/);});
+
+test('independent coverage denial blocks writes while network-only read remains allowed',async()=>{
+ const f=fixture('network',{read:async()=>true,capture:async()=>false});
+ await assert.rejects(f.service.submit('token',f.input),/team coverage/);
+ await assert.rejects(f.service.authorizeCapture('token',f.input),/team coverage/);
+ assert.equal((await f.service.report('token',{programId:'program',windowId:'week'})).counts.expected,2);
+ const g=fixture('network',{read:async()=>false,capture:async()=>true});
+ await assert.rejects(g.service.report('token',{programId:'program',windowId:'week'}),/network coverage/);
+ assert.equal(f.records.size,0);
+});
+test('capture eligibility preflight requires current operator generation and roster consent',async()=>{
+ const f=fixture();assert.equal(await f.service.authorizeCapture('token',f.input),true);
+ await assert.rejects(f.service.authorizeCapture('token',{...f.input,generation:'old'}),/session changed/);
+ f.roster[0].remoteConsent=false;await assert.rejects(f.service.authorizeCapture('token',f.input),/consent/);
+});

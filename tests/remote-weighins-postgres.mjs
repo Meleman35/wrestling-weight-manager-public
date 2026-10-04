@@ -30,7 +30,7 @@ await db.query("insert into remote_reporting.assignments values('program',$1,'cl
 const binding={captureId:'capture',programId:'program',windowId:'week',clubId:'club',athleteId:'athlete',operatorId:user,generation:'generation',weight:120,unit:'lb',capturedAt:new Date(Date.now()-10000).toISOString(),photoCapturedAt:new Date(Date.now()-9000).toISOString(),method:'nfc'};
 await db.query("insert into remote_reporting.evidence values('evidence','program',$1,'private/object',$2,true,now()+interval '2 days',true,true,'camera',1000)",[binding,'a'.repeat(64)]);
 const adapters=createRemotePostgresAdapters({db,verifyPersonalSession:async token=>{assert.equal(token,'trusted');return {userId:user,sessionId:session,generation:'generation',personal:true,locked,deleted:false};},resolveRosterNames:async rows=>rows.map(r=>({...r,clubName:r.clubId,athleteName:r.athleteId}))});
-const service=createRemoteReportingService(adapters),payload={submissionId:'submission',evidenceId:'evidence',...binding};
+const service=createRemoteReportingService({...adapters,coverageGate:{read:async()=>true,capture:async()=>true}}),payload={submissionId:'submission',evidenceId:'evidence',...binding};
 const context=await service.context('trusted');assert.equal(context.scopes.length,1);assert.equal(context.scopes[0].canCapture,true);assert.equal(context.scopes[0].windows[0].id,'week');
 const first=await service.submit('trusted',payload);assert.equal(first.status,'submitted');assert.deepEqual(await service.receipt('trusted',payload),first);await assert.rejects(service.receipt('trusted',{...payload,weight:121}),/Idempotency/);assert.deepEqual(await service.submit('trusted',payload),first);
 assert.equal(await service.evidenceForSubmission('trusted',{submissionId:'submission'}),'evidence');
@@ -48,7 +48,7 @@ const evidenceStore=createRemotePostgresEvidenceStore({db,session:'trusted',getA
 const photos=createRemotePhotoProvider({supabase:{storage:{from:()=>bucket}},authorize:async()=>{await adapters.getActor('trusted');},verifyCapture,evidenceStore});
 await db.exec("insert into remote_reporting.roster values('program','week','club','http-athlete',true,true)");
 const capture={...binding,captureId:'http-capture',athleteId:'http-athlete',submissionId:'http-submission',evidenceId:'http-evidence'};
-const handler=createRemoteReportingHandler({authenticate:async()=> 'trusted',allowRequest:async()=>true,authorizeCapture:async()=>true,photos,reporting:service});
+const handler=createRemoteReportingHandler({authenticate:async()=> 'trusted',allowRequest:async()=>true,authorizeCapture:service.authorizeCapture,photos,reporting:service});
 const request=(action,body)=>new Request('https://example.test/functions/v1/remote-weighins/'+action,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
 const photoResponse=await handler(request('photo',{payload:capture,jpegBase64:'/9j/2Q=='}));assert.equal(photoResponse.status,200);assert.equal((await photoResponse.json()).status,'uploaded');
 assert.equal((await evidenceStore.find(capture.evidenceId)).expiresAt,remoteExpiresAt(capture));
