@@ -388,3 +388,10 @@ comes from the same whole attempt. A higher weight never replaces a lower valid
 one. Original receipts remain retryable, including out-of-order delivery. Each
 attempt/photo keeps its own original 240-hour expiry; reweighing does not extend
 old records. The private draft schema is tested locally, not deployed.
+
+Build 6 also defaults to a clearly labeled simulated NFC scan button. The user
+chooses one of three fictional athletes and taps before stepping on; the real
+scale, stability check and camera still run. Repeating the same selection tests
+lowest-valid-result replacement without a physical NFC reader. Real-reader and
+automatic modes remain selectable. The simulator gate executes the five-attempt
+flow with both the card adapter and the manual scan button.

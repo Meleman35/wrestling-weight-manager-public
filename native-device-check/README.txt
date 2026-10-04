@@ -13,15 +13,27 @@ INSTALL
    existing developer team and the separate .remotescalecheck bundle identifier.
 3. Product > Run (Debug). Confirm Build 6 on the home screen.
 
-TEST A CONTINUOUS SESSION WITHOUT NFC
-1. Connect the American Scale, tap Done, and open camera & scale check.
+TEST THE SCAN BUTTON FIRST (NO NFC READER NEEDED)
+1. Connect the American Scale. Keep Athlete identification set to
+   "Tap to simulate NFC" (the default).
+2. Open camera & scale check, check framing once, and start the session.
+3. Choose Athlete 1, 2 or 3 and tap "Simulate NFC scan". Then step on.
+4. Stable weight triggers the picture immediately. Wait for the step-off prompt,
+   then step off fully. The scan button becomes ready for the next athlete.
+5. Choose the same athlete for a repeat. A lower valid weight replaces their
+   result and matching photo; a higher/equal result keeps the earlier lower one.
+This simulates identification only. The scale and camera are still real.
+
+TEST A CONTINUOUS SESSION WITHOUT SCANS
+1. Connect the American Scale, choose "No scan (automatic)" under Athlete
+   identification, then open camera & scale check.
 2. Check camera setup once. Use an adult in athletic clothing; confirm the
    whole person, both feet and scale are visible. Keep the camera/scale fixed.
 3. Tap Start continuous test. Step on and hold still. The camera shows settling
    progress and takes the photo AS SOON AS THE WEIGHT IS STABLE.
    There is no additional countdown.
 4. Wait for "Photo complete — step off the scale." Step off fully.
-5. With NFC mode OFF, after one fresh empty-scale response the camera opens for Test athlete 2
+5. In automatic mode, after one fresh empty-scale response the camera opens for Test athlete 2
    automatically. Step on again. No Done tap or setup repeat is needed.
 6. Repeat a third time. Each attempt has a new fictional athlete/capture ID.
 
@@ -32,8 +44,8 @@ elapsed seconds and settling progress shown at the top. Hold still through
 "Taking photo" until the success message appears.
 
 TEST NFC CARDS AND REWEIGHS
-1. Connect the American Scale and your GoToTags / ACS NFC reader on the home
-   screen, then enable "Use NFC cards for this test".
+1. Connect the American Scale, choose "NFC reader" under Athlete identification,
+   then connect your GoToTags / ACS NFC reader on the home screen.
 2. Use an existing programmed Wrestling Manager athlete card. This test reads
    only; it never writes a card or looks up a real athlete profile.
 3. Check framing once and start. Remove any card left on the reader, then tap

@@ -13,10 +13,11 @@ struct WrestlingManagerRemoteDeviceCheck: UIViewControllerRepresentable {
     let scaleReadStatus: () -> String
     var readAthleteCard: ((@escaping (Result<String, Error>) -> Void) -> Void)? = nil
     var cancelCardRead: (() -> Void)? = nil
+    var simulateNFCScans = false
     func makeUIViewController(context: Context) -> WrestlingManagerRemoteDeviceCheckController {
         let controller = WrestlingManagerRemoteDeviceCheckController(onClose: removeScaleObserver,
             isScaleConnected: isScaleConnected, setScaleReadingEnabled: setScaleReadingEnabled, scaleReadStatus: scaleReadStatus,
-            readAthleteCard: readAthleteCard, cancelCardRead: cancelCardRead)
+            readAthleteCard: readAthleteCard, cancelCardRead: cancelCardRead, simulateNFCScans: simulateNFCScans)
         installScaleObserver { [weak controller] pounds, at in controller?.receive(pounds: pounds, at: at) }
         return controller
     }
@@ -35,6 +36,11 @@ final class WrestlingManagerRemoteDeviceCheckController: UIViewController {
     private let scaleReadStatus: () -> String
     private let readAthleteCard: ((@escaping (Result<String, Error>) -> Void) -> Void)?
     private let cancelCardRead: (() -> Void)?
+    private let simulateNFCScans: Bool
+    private var usesCards: Bool { simulateNFCScans || readAthleteCard != nil }
+    private let simulatedAthlete = UISegmentedControl(items: ["Athlete 1", "Athlete 2", "Athlete 3"])
+    private let simulatedScan = UIButton(type: .system)
+    private var simulatedCardReply: ((Result<String, Error>) -> Void)?
     private var awaitingCard = false
     private var cardAthletes: [String: Int] = [:]
     private var currentAthlete = 1
@@ -67,7 +73,9 @@ final class WrestlingManagerRemoteDeviceCheckController: UIViewController {
     private var sessionTimer: Task<Void, Never>?
     init(onClose: @escaping () -> Void, isScaleConnected: @escaping () -> Bool,
          setScaleReadingEnabled: @escaping (Bool) -> Void, scaleReadStatus: @escaping () -> String,
-         readAthleteCard: ((@escaping (Result<String, Error>) -> Void) -> Void)? = nil, cancelCardRead: (() -> Void)? = nil) {
+         readAthleteCard: ((@escaping (Result<String, Error>) -> Void) -> Void)? = nil, cancelCardRead: (() -> Void)? = nil,
+         simulateNFCScans: Bool = false) {
+        self.simulateNFCScans = simulateNFCScans
         self.readAthleteCard = readAthleteCard; self.cancelCardRead = cancelCardRead
         self.onClose = onClose; self.isScaleConnected = isScaleConnected
         self.setScaleReadingEnabled = setScaleReadingEnabled; self.scaleReadStatus = scaleReadStatus
@@ -90,12 +98,18 @@ final class WrestlingManagerRemoteDeviceCheckController: UIViewController {
         clear.addTarget(self, action: #selector(clearTest), for: .touchUpInside)
         pause.setTitle("End test session — keep setup", for: .normal)
         pause.addTarget(self, action: #selector(endSession), for: .touchUpInside)
-        for button in [setup,weigh,pause,clear] {
+        simulatedAthlete.selectedSegmentIndex = 0
+        simulatedAthlete.accessibilityIdentifier = "simulated-athlete"
+        simulatedAthlete.isHidden = !simulateNFCScans
+        simulatedScan.isHidden = !simulateNFCScans
+        simulatedScan.setTitle("Simulate NFC scan", for: .normal)
+        simulatedScan.addTarget(self, action: #selector(simulateScan), for: .touchUpInside)
+        for button in [setup,weigh,pause,clear,simulatedScan] {
             button.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
             button.titleLabel?.numberOfLines = 0; button.titleLabel?.adjustsFontForContentSizeCategory = true
         }
         let scroll = UIScrollView(); scroll.translatesAutoresizingMaskIntoConstraints = false; view.addSubview(scroll)
-        let stack = UIStackView(arrangedSubviews: [title,note,setup,weigh,pause,clear,status,picture]); stack.axis = .vertical; stack.spacing = 12
+        let stack = UIStackView(arrangedSubviews: [title,note,setup,weigh,pause,clear,simulatedAthlete,simulatedScan,status,picture]); stack.axis = .vertical; stack.spacing = 12
         stack.translatesAutoresizingMaskIntoConstraints = false; scroll.addSubview(stack)
         NSLayoutConstraint.activate([scroll.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             scroll.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
@@ -107,10 +121,13 @@ final class WrestlingManagerRemoteDeviceCheckController: UIViewController {
             stack.widthAnchor.constraint(equalTo: scroll.frameLayoutGuide.widthAnchor, constant: -32)])
         observer = NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification,
             object: nil, queue: .main) { [weak self] _ in Task { @MainActor [weak self] in self?.clearTest() } }
+        controls()
     }
     private func controls() {
         setup.isEnabled = active && !busy; weigh.isEnabled = active && !busy && setupConfirmed
         pause.isEnabled = active && sessionRunning
+        simulatedScan.isEnabled = active && sessionRunning && awaitingCard
+        simulatedAthlete.isEnabled = simulatedScan.isEnabled
     }
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
@@ -143,6 +160,7 @@ final class WrestlingManagerRemoteDeviceCheckController: UIViewController {
         guard isScaleConnected() else { status.text = "Reconnect the scale, then start the test again."; return }
         sessionRunning = true; busy = true; completedCount = 0; lastResult = ""
         cardAthletes.removeAll(); selectedResults.removeAll(); awaitingCard = false
+        if simulateNFCScans { cardAthletes = ["simulated-card-1": 1, "simulated-card-2": 2, "simulated-card-3": 3] }
         picture.image = nil; closesAt = Date().addingTimeInterval(300)
         setScaleReadingEnabled(true); controls()
         startSessionTimer()
@@ -167,10 +185,13 @@ final class WrestlingManagerRemoteDeviceCheckController: UIViewController {
     private func prepareNextAttempt() {
         guard active, sessionRunning else { return }
         awaitingScaleClear = false; scaleClear.reset(); advanceScheduled = false
-        guard let readAthleteCard else { currentAthlete = completedCount + 1; beginAttempt(); return }
+        guard usesCards else { currentAthlete = completedCount + 1; beginAttempt(); return }
         operation = UUID(); let ticket = operation; awaitingCard = true
-        status.text = "Tap NFC card for the next athlete.\nRemove the previous card before tapping again.\nTap the same card again to test a repeat weigh-in. The lowest valid result and its matching photo stay selected for that card."
-        readAthleteCard { [weak self] result in
+        status.text = simulateNFCScans
+            ? "Ready for simulated NFC scan.\nChoose a test athlete above, tap Simulate NFC scan, then step on. Choose the same athlete for a repeat weigh-in. No reader or real athlete card is used."
+            : "Tap NFC card for the next athlete.\nRemove the previous card before tapping again.\nTap the same card again to test a repeat weigh-in. The lowest valid result and its matching photo stay selected for that card."
+        controls()
+        let completion: (Result<String, Error>) -> Void = { [weak self] result in
             guard let self, self.active, self.sessionRunning, self.awaitingCard, self.operation == ticket else { return }
             switch result {
             case .success(let card):
@@ -197,6 +218,13 @@ final class WrestlingManagerRemoteDeviceCheckController: UIViewController {
                 }
             }
         }
+        if simulateNFCScans { simulatedCardReply = completion }
+        else { readAthleteCard?(completion) }
+    }
+    @objc private func simulateScan() {
+        guard simulateNFCScans, active, sessionRunning, awaitingCard, let reply = simulatedCardReply else { return }
+        simulatedCardReply = nil
+        reply(.success("simulated-card-\(simulatedAthlete.selectedSegmentIndex + 1)"))
     }
     private func beginAttempt() {
         guard active, sessionRunning, setupConfirmed, isScaleConnected(), let closesAt, Date() < closesAt else { return }
@@ -209,7 +237,7 @@ final class WrestlingManagerRemoteDeviceCheckController: UIViewController {
             let model = try WrestlingManagerRemoteCapture(scope: .init(accountID: UUID(), clubID: UUID(),
                 generation: "device-check", programID: "fictional-device-check", windowID: "five-minute-test",
                 opensAt: now.addingTimeInterval(-5), closesAt: closesAt))
-            let token = try model.scan(athleteID: "fictional-adult-test-\(currentAthlete)", method: readAthleteCard == nil ? "qr" : "nfc")
+            let token = try model.scan(athleteID: "fictional-adult-test-\(currentAthlete)", method: usesCards ? "nfc" : "qr")
             capture = model; busy = true; controls()
             status.text = "Test athlete \(currentAthlete): step on and hold still."
             photos.take(token: token, from: self, readyToCapture: { [weak self] in
@@ -226,7 +254,7 @@ final class WrestlingManagerRemoteDeviceCheckController: UIViewController {
                     self.completedCount += 1
                     let candidate = SelectedResult(weight: envelope.weight, capturedAt: envelope.capturedAt,
                         photoAt: envelope.photoCapturedAt, jpeg: jpeg)
-                    if self.readAthleteCard == nil { self.selectedResults.removeAll() }
+                    if !self.usesCards { self.selectedResults.removeAll() }
                     let previous = self.selectedResults[self.currentAthlete]
                     let selected = previous.map { $0.weight <= candidate.weight ? $0 : candidate } ?? candidate
                     let bytes = self.selectedResults.filter { $0.key != self.currentAthlete }.values.reduce(0) { $0 + $1.jpeg.count } + selected.jpeg.count
@@ -236,7 +264,7 @@ final class WrestlingManagerRemoteDeviceCheckController: UIViewController {
                     self.selectedResults[self.currentAthlete] = selected
                     self.picture.image = UIImage(data: selected.jpeg)
                     self.lastResult = String(format: "Test %d complete: %.1f lb\n", self.completedCount, selected.weight)
-                        + (self.readAthleteCard == nil ? "" : String(format: "Local test card %d • latest attempt %.1f lb\nLowest valid result selected with its matching photo.\n", self.currentAthlete, candidate.weight))
+                        + (!self.usesCards ? "" : String(format: "Local test athlete %d • latest attempt %.1f lb\nLowest valid result selected with its matching photo.\n", self.currentAthlete, candidate.weight))
                         + "Captured: \(selected.capturedAt)\nPhoto: \(selected.photoAt)"
                     model.close(); self.capture = nil
                     self.awaitingScaleClear = true; self.scaleClear.begin(after: Date())
@@ -316,7 +344,7 @@ final class WrestlingManagerRemoteDeviceCheckController: UIViewController {
         stopSession(message: "Session ended. Camera setup is retained; start again when ready.")
     }
     private func stopSession(message: String) {
-        operation = UUID(); awaitingCard = false; cancelCardRead?(); sessionRunning = false; awaitingScaleClear = false; advanceScheduled = false
+        operation = UUID(); awaitingCard = false; simulatedCardReply = nil; cancelCardRead?(); sessionRunning = false; awaitingScaleClear = false; advanceScheduled = false
         scaleClear.reset(); capture?.close(); capture = nil; busy = false
         sessionTimer?.cancel(); sessionTimer = nil; setScaleReadingEnabled(false)
         photos.cancel(); status.text = message; controls()

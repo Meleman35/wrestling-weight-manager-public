@@ -44,18 +44,26 @@ PY
 xcrun simctl boot "$test_device" || true
 xcrun simctl bootstatus "$test_device" -b
 xcrun simctl install "$test_device" "$test_app"
-xcrun simctl launch "$test_device" app.remote-session.ui-tests
 test_container="$(xcrun simctl get_app_container "$test_device" app.remote-session.ui-tests data)"
-for attempt in $(seq 1 60); do
-  if [ -f "$test_container/Documents/result.txt" ]; then
-    cat "$test_container/Documents/result.txt"
-    python3 - "$test_container/Documents/result.txt" <<'PY'
+for simulated in 0 1; do
+  rm -f "$test_container/Documents/result.txt"
+  SIMCTL_CHILD_REMOTE_NFC_SIMULATION="$simulated" xcrun simctl launch "$test_device" app.remote-session.ui-tests
+  test_finished=0
+  for attempt in $(seq 1 60); do
+    if [ -f "$test_container/Documents/result.txt" ]; then
+      cat "$test_container/Documents/result.txt"
+      python3 - "$test_container/Documents/result.txt" <<'CHECK'
 import sys
 assert open(sys.argv[1]).read().startswith('PASS:'), 'Device UI regression failed'
-PY
-    exit 0
+CHECK
+      test_finished=1
+      break
+    fi
+    sleep 1
+  done
+  if [ "$test_finished" -ne 1 ]; then
+    echo 'Timed out waiting for device UI regression results'
+    exit 1
   fi
-  sleep 1
+  xcrun simctl terminate "$test_device" app.remote-session.ui-tests
 done
-echo 'Timed out waiting for device UI regression results'
-exit 1

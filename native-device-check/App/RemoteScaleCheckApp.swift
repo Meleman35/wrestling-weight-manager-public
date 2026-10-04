@@ -8,13 +8,18 @@ struct RemoteScaleCheckApp: App {
 
 @MainActor
 private struct RemoteScaleCheckHome: View {
+    private enum ScanMode: String, CaseIterable {
+        case simulated = "Tap to simulate NFC"
+        case reader = "NFC reader"
+        case automatic = "No scan (automatic)"
+    }
     @StateObject private var scale = AmericanScaleClient()
     @State private var showScale = false
     @State private var showCheck = false
     @StateObject private var nfc = WrestlingManagerBluetoothNFC()
     @Environment(\.scenePhase) private var scenePhase
     @State private var showReader = false
-    @State private var useNFC = false
+    @State private var scanMode: ScanMode = .simulated
     @State private var cardReader: WrestlingManagerRemoteCardReader?
     #if DEBUG
     private func readCard(_ completion: @escaping (Result<String, Error>) -> Void) {
@@ -38,19 +43,25 @@ private struct RemoteScaleCheckHome: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
+            ScrollView(.vertical, showsIndicators: true) {
             VStack(alignment: .leading, spacing: 24) {
                 Text("Camera + American Scale").font(.largeTitle.bold())
                 Text("Device check • Build 6").font(.caption)
                 Text("Separate development test. Your Wrestling Manager app and athlete records are not used.")
                 Text("1. Connect the scale.\n2. Check the camera framing.\n3. Start the continuous test. Step off after each photo to prepare the next test.")
                 Button("Connect American Scale") { showScale = true }.buttonStyle(.borderedProminent)
-                Button("Connect NFC reader") { showReader = true }.buttonStyle(.bordered)
-                Toggle("Use NFC cards for this test", isOn: $useNFC)
-                Text(nfc.available ? "NFC reader connected" : "Connect your NFC reader to test athlete cards.").font(.caption)
+                Picker("Athlete identification", selection: $scanMode) {
+                    ForEach(ScanMode.allCases, id: \.self) { mode in Text(mode.rawValue).tag(mode) }
+                }.pickerStyle(.menu)
+                if scanMode == .reader {
+                    Button("Connect NFC reader") { showReader = true }.buttonStyle(.bordered)
+                    Text(nfc.available ? "NFC reader connected" : "Connect your NFC reader to test athlete cards.").font(.caption)
+                } else if scanMode == .simulated {
+                    Text("No NFC reader needed. Choose a test athlete and tap Simulate NFC scan before stepping on.").font(.caption)
+                }
                 #if DEBUG
                 Button("Open camera & scale check") { showCheck = true }
-                    .buttonStyle(.borderedProminent).disabled(scale.connectionState != .ready || (useNFC && !nfc.available))
+                    .buttonStyle(.borderedProminent).disabled(scale.connectionState != .ready || (scanMode == .reader && !nfc.available))
                 #else
                 Text("Use a Debug build for this development test.")
                 #endif
@@ -74,8 +85,9 @@ private struct RemoteScaleCheckHome: View {
                             isScaleConnected: { scale.connectionState == .ready },
                             setScaleReadingEnabled: { scale.setRemoteWeightReadingEnabled($0) },
                             scaleReadStatus: { scale.connectionState == .ready ? scale.remoteReadStatus : scale.lastError ?? "Scale disconnected." },
-                            readAthleteCard: useNFC ? readCard : nil,
-                            cancelCardRead: { cardReader?.cancel() })
+                            readAthleteCard: scanMode == .reader ? readCard : nil,
+                            cancelCardRead: { cardReader?.cancel() },
+                            simulateNFCScans: scanMode == .simulated)
                         .navigationTitle("Local device check")
                         .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Done") { showCheck = false } } }
                     }.interactiveDismissDisabled()

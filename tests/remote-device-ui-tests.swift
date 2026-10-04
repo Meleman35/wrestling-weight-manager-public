@@ -13,6 +13,7 @@ import UIKit
     static var installs = 0
     static var cardPresent = true
     static var cardReply: ((Result<String, Error>) -> Void)?
+    static let simulated = ProcessInfo.processInfo.environment["REMOTE_NFC_SIMULATION"] == "1"
     static let cardReader = WrestlingManagerRemoteCardReader(isAvailable: { true },
         isCardPresent: { cardPresent }, startRead: { cardReply = $0 }, cancelRead: { cardReply = nil })
 
@@ -52,6 +53,25 @@ import UIKit
         let at = Date()
         for weight in weights { Self.receive?(weight, at) }
     }
+    private func identify(_ athlete: Int) async throws {
+        if Self.simulated {
+            guard let selector = views.compactMap({ $0 as? UISegmentedControl }).first(where: { $0.accessibilityIdentifier == "simulated-athlete" }) else {
+                throw TestFailure(message: "Simulated athlete selector missing")
+            }
+            selector.selectedSegmentIndex = athlete - 1
+            try await tap("Simulate NFC scan")
+            // A duplicate tap while weighing must never start another attempt.
+            button("Simulate NFC scan")?.sendActions(for: .touchUpInside)
+        } else {
+            await pause(0.25)
+            guard Self.cardReply == nil else { throw TestFailure(message: "Card left on reader was accepted again") }
+            Self.cardPresent = false
+            try await wait("Reader did not rearm after card removal") { Self.cardReply != nil }
+            let reply = Self.cardReply; Self.cardReply = nil; Self.cardPresent = true
+            reply?(.success("test-card-\(athlete)"))
+            reply?(.success("stale-duplicate"))
+        }
+    }
     private func run() async {
         do {
             try await tap("Check / recheck camera setup")
@@ -62,14 +82,14 @@ import UIKit
             let cases: [(Int, Double, Double)] = [(1,121,121),(2,122,122),(3,123,123),(1,120,120),(1,124,120)]
             for (index, item) in cases.enumerated() {
                 let attempt = index + 1, athlete = item.0, weight = item.1
-                try await wait("Next NFC scan did not open") { self.label("Tap NFC card for the next athlete.") }
-                await pause(0.25)
-                guard Self.cardReply == nil else { throw TestFailure(message: "Card left on reader was accepted again") }
-                Self.cardPresent = false
-                try await wait("Reader did not rearm after card removal") { Self.cardReply != nil }
-                let reply = Self.cardReply; Self.cardReply = nil; Self.cardPresent = true
-                reply?(.success("test-card-\(athlete)"))
-                reply?(.success("stale-duplicate")) // Late duplicate callback must not change the selected athlete.
+                try await wait("Next NFC scan did not open") {
+                    self.label(Self.simulated ? "Ready for simulated NFC scan." : "Tap NFC card for the next athlete.")
+                }
+                if attempt == 1 {
+                    packet([weight]); await pause(0.6); packet([weight]); await pause(0.6); packet([weight])
+                    guard !label("Test 1 complete:") else { throw TestFailure(message: "Captured before athlete identification") }
+                }
+                try await identify(athlete)
                 try await wait("Camera did not open for athlete \(athlete)") {
                     self.label("Test athlete \(athlete) •")
                 }
@@ -100,14 +120,12 @@ import UIKit
             try await tap("End test session — keep setup")
             guard !Self.reading else { throw TestFailure(message: "Reader remained enabled after end") }
             try await tap("Start continuous test")
-            Self.cardPresent = false
-            try await wait("Retained setup did not rearm reader") { Self.cardReply != nil }
-            let reply = Self.cardReply; Self.cardReply = nil; Self.cardPresent = true; reply?(.success("test-card-1"))
+            try await identify(1)
             try await wait("Retained setup did not reopen camera") { self.label("Test athlete 1 •") }
             Self.connected = false
             try await wait("Disconnect did not stop session") { self.label("Reconnect before starting again.") }
             guard !Self.reading else { throw TestFailure(message: "Reader remained enabled after disconnect") }
-            finish("PASS: five immediate NFC captures, lower reweigh retained, higher reweigh ignored, card-removal gating, one-zero handoff, stale callback rejection, retained setup and disconnect.")
+            finish("PASS: \(Self.simulated ? "scan button" : "NFC adapter") — five immediate captures, lower reweigh retained, higher reweigh ignored, scan gating, one-zero handoff, duplicate rejection, retained setup and disconnect.")
         } catch {
             let labels = views.compactMap { ($0 as? UILabel)?.text }.joined(separator: " | ")
             finish("FAIL: \(error)\n\(labels)")
@@ -135,7 +153,8 @@ import UIKit
                             setScaleReadingEnabled: { RemoteDeviceUITests.reading = $0 },
                             scaleReadStatus: { "Simulated BLE transport" },
                             readAthleteCard: { RemoteDeviceUITests.cardReader.read($0) },
-                            cancelCardRead: { RemoteDeviceUITests.cardReader.cancel() })
+                            cancelCardRead: { RemoteDeviceUITests.cardReader.cancel() },
+                            simulateNFCScans: RemoteDeviceUITests.simulated)
                             .navigationTitle("Local device check")
                     }.interactiveDismissDisabled()
                 }
