@@ -1,0 +1,69 @@
+/* Server-only service contract. Not a deployed API. Every dependency below must
+ * use trusted server data; atomicAccept must enforce database transactions. */
+import {createHash} from 'node:crypto';
+import {validateWindow, summarizeWindow, reportCsv} from './remote-weighins.mjs';
+const deny = message => { throw new Error(message); };
+const validId = value => typeof value === 'string' && /^[A-Za-z0-9_-]{1,160}$/.test(value);
+const timestamp = value => { const ms = Date.parse(value); if (!Number.isFinite(ms)) deny('Invalid timestamp'); return ms; };
+const same = (a,b) => a && typeof a === 'object' && Object.keys(a).length === Object.keys(b).length && Object.keys(b).every(k=>a[k]===b[k]);
+export function createRemoteReportingService({getActor, getProgram, getWindow, getRoster, getEvidence, store, now=Date.now}) {
+  if (![getActor,getProgram,getWindow,getRoster,getEvidence,store?.atomicAccept,store?.list].every(x=>typeof x==='function')) deny('Trusted reporting adapters required');
+  async function authority(session, programId, action, clubId=null) {
+    const actor=await getActor(session), program=await getProgram(programId);
+    if (!actor?.userId || actor.sessionActive!==true || actor.confirmed!==true || actor.personal!==true || actor.locked===true || actor.deleted===true) deny('Active personal session required');
+    if (!program || program.id!==programId || program.active!==true || !['network','tournament'].includes(program.kind)) deny('Reporting program unavailable');
+    if (program.covered!==true) deny('Qualifying reporting coverage required');
+    if (program.kind==='tournament' && !validId(program.eventId)) deny('Tournament event required');
+    const grants=actor.reportingGrants?.filter(g=>g.programId===programId && g.active===true)||[];
+    if (action==='submit') {
+      if (!program.clubIds?.includes(clubId) || !grants.some(g=>g.role==='operator' && g.clubId===clubId)) deny('Club operator assignment required');
+    } else if (!grants.some(g=>g.role==='director' || (g.role==='club_reader' && g.clubId===clubId))) deny('Reporting read assignment required');
+    return {actor,program};
+  }
+  async function period(program, windowId) {
+    const window=validateWindow(await getWindow(windowId));
+    if (window.programId!==program.id || window.active!==true || (program.kind==='tournament' && window.eventId!==program.eventId)) deny('Reporting window does not belong to this program');
+    if (!Number.isFinite(window.syncGraceMs) || window.syncGraceMs<0 || window.syncGraceMs>7*86400000) deny('Bounded sync grace required');
+    return window;
+  }
+  return Object.freeze({
+    async submit(session,input) {
+      if (!input || !['submissionId','captureId','programId','windowId','clubId','athleteId','operatorId','generation','evidenceId'].every(k=>validId(input[k]))) deny('Invalid submission identity');
+      if (!['qr','nfc'].includes(input.method) || input.unit!=='lb' || !Number.isFinite(input.weight) || input.weight<=0 || input.weight>800) deny('Invalid scale capture');
+      const {actor,program}=await authority(session,input.programId,'submit',input.clubId);
+      if (input.operatorId!==actor.userId || input.generation!==actor.generation) deny('Operator session changed');
+      const window=await period(program,input.windowId);
+      const roster=await getRoster(program.id,window.id);
+      if (!roster.some(r=>r.clubId===input.clubId && r.athleteId===input.athleteId && r.active===true && r.remoteConsent===true)) deny('Athlete is not enrolled with remote consent');
+      const captured=timestamp(input.capturedAt),photo=timestamp(input.photoCapturedAt),received=now();
+      if (captured<timestamp(window.opensAt) || photo>=timestamp(window.closesAt) || photo<captured || photo-captured>30000 || captured>received || photo>received) deny('Capture outside reporting window');
+      // Evidence service must verify immutable capture metadata, account ownership,
+      // notice/consent, upload digest, native provenance and settled scale binding.
+      const evidence=await getEvidence(input.evidenceId);
+      const binding={captureId:input.captureId,programId:program.id,windowId:window.id,clubId:input.clubId,athleteId:input.athleteId,operatorId:actor.userId,generation:actor.generation,weight:input.weight,unit:input.unit,capturedAt:input.capturedAt,photoCapturedAt:input.photoCapturedAt,method:input.method};
+      if (!evidence || evidence.verified!==true || evidence.private!==true || evidence.noticeAccepted!==true || evidence.source!=='camera' || evidence.settled!==true || !validId(evidence.digest) || !same(evidence.binding,binding)) deny('Verified private capture evidence required');
+      const canonical={submissionId:input.submissionId,evidenceId:input.evidenceId,...binding,eventId:program.kind==='tournament'?program.eventId:null,kind:program.kind,evidenceDigest:evidence.digest};
+      const payloadHash=createHash('sha256').update(JSON.stringify(canonical)).digest('hex');
+      // The transaction must first return an identical prior receipt, even after
+      // syncGrace expires; reject changed payloads and concurrent current records.
+      // New acceptance after the grace deadline must be rejected inside the same
+      // transaction. Revocation/coverage/session predicates must be rechecked there.
+      return store.atomicAccept({actor,program,window,record:canonical,payloadHash,receivedAt:new Date(received).toISOString(),newAcceptanceAllowed:received<=timestamp(window.closesAt)+window.syncGraceMs});
+    },
+    async report(session,{programId,windowId,clubId=null,status=null,offset=0,limit=100,format='json'}) {
+      if (!validId(programId)||!validId(windowId)||(clubId!==null&&!validId(clubId))||!Number.isInteger(offset)||offset<0||!Number.isInteger(limit)||limit<1||limit>500||!['json','csv'].includes(format)||!(status===null||['submitted','late','missing'].includes(status))) deny('Invalid report query');
+      const {program}=await authority(session,programId,'read',clubId),window=await period(program,windowId);
+      // Narrow query at storage/roster boundary; do not retrieve other clubs for a
+      // club_reader then hide them only in the browser.
+      const expected=(await getRoster(program.id,window.id,clubId)).filter(r=>r.active===true && r.remoteConsent===true && (!clubId||r.clubId===clubId));
+      const submissions=await store.list({programId,windowId,clubId});
+      const result=summarizeWindow({window,expected,submissions,clubId,status});
+      const rows=result.rows.sort((a,b)=>`${a.clubId}:${a.athleteId}`.localeCompare(`${b.clubId}:${b.athleteId}`));
+      const page=rows.slice(offset,offset+limit),nextOffset=offset+page.length<rows.length?offset+page.length:null;
+      // Explicit allowlist: never return evidence IDs, photo links, raw evidence,
+      // account/session identifiers, arbitrary roster columns or medical records.
+      const projected=page.map(r=>({clubId:r.clubId,athleteId:r.athleteId,clubName:r.clubName,athleteName:r.athleteName,status:r.status,submission:r.submission?{submissionId:r.submission.submissionId,receiptId:r.submission.receiptId,weight:r.submission.weight,unit:r.submission.unit,capturedAt:r.submission.capturedAt,receivedAt:r.submission.receivedAt}:null}));
+      return {programId,windowId,kind:program.kind,eventId:program.kind==='tournament'?program.eventId:null,classification:program.kind==='tournament'?'Remote tournament check-in':'Remote club report',timeZone:window.timeZone,counts:result.counts,total:rows.length,nextOffset,rows:projected,...(format==='csv'?{csv:reportCsv(projected)}:{})};
+    }
+  });
+}
