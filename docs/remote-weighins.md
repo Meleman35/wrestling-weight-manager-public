@@ -259,3 +259,14 @@ files when accessed or enumerated. The native installer includes the shared date
 policy, and CI checks it with the Apple SDK and a native date-policy executable.
 Closed or locked devices cannot run cleanup until the app can access its protected
 files again; scheduled server cleanup and backup handling remain deployment work.
+
+### Approved offline cleanup decision
+Damon approved the recommended offline policy: access expires exactly 240 hours
+after capture; expired encrypted copies on offline or locked devices are removed
+when the app next opens unlocked and accesses the protected outbox. Server
+physical cleanup runs separately and retries failed object removals. This preserves
+offline capture without promising instantaneous physical erasure on a powered-off
+device. The reporting screen now displays this policy. Native reporting session
+exposes `pendingCaptures()` so the unlocked screen can sweep its scoped outbox
+without requiring a network call. Production coordinator hookup and privacy-page
+publication remain part of deployment, rather than an already-live claim.

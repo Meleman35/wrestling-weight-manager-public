@@ -39,6 +39,14 @@ final class WrestlingManagerRemoteReportingSession {
         let worker = WrestlingManagerRemoteDelivery(store: outbox, transport: transport)
         delivery = worker; return worker
     }
+    /// Call when an unlocked reporting screen opens, including without connectivity.
+    /// Enumeration removes expired protected files before returning pending IDs.
+    func pendingCaptures() async throws -> [UUID] {
+        guard active else { throw Failure.closed }
+        let ids = try await outbox.pending()
+        guard active else { throw Failure.closed }
+        return ids
+    }
     /// Called by retry UI/background sync while this personal session is unlocked.
     /// Return means receipt was saved, not merely photo upload completed.
     func deliver(_ submissionID: UUID) async throws -> Data {

@@ -8,6 +8,7 @@ export function mountRemoteReportingScreen({root,scope,windows,api,isCurrent,doc
  const closePhoto=()=>{photoEpoch++;if(objectURL){URL.revokeObjectURL(objectURL);objectURL=null;}photoBox.replaceChildren();};
  const section=node('section');section.className='remote-reporting-screen';
  const title=node('h2','Remote weigh-ins'),description=node('p','Review accepted club reports. Captured time and server receipt time are shown separately.');
+ const retention=node('p','Remote weights and verification photos are available for 10 days after capture. Expired encrypted copies on offline or locked devices are deleted when the app next opens unlocked.');
  const filters=node('div');filters.className='ops-actions';
  const windowSelect=node('select');windowSelect.setAttribute('aria-label','Reporting window');
  for(const w of windows){if(w.programId!==scope.programId)throw Error('Reporting window scope mismatch');const option=node('option',w.label||w.id);option.value=w.id;windowSelect.append(option);}
@@ -22,7 +23,7 @@ export function mountRemoteReportingScreen({root,scope,windows,api,isCurrent,doc
  const wrap=node('div');wrap.style.overflowX='auto';wrap.append(table);
  const more=node('button','Load more');more.type='button';more.hidden=true;
  const photoBox=node('div');photoBox.setAttribute('aria-label','Private verification photo');
- section.append(title,description,filters,message,counts,wrap,more,photoBox);root.replaceChildren(section);
+ section.append(title,description,retention,filters,message,counts,wrap,more,photoBox);root.replaceChildren(section);
  const query=offset=>({programId:scope.programId,windowId:windowSelect.value,clubId:scope.clubId??null,status:statusSelect.value||null,offset,limit:100});
  const fmt=(value,timeZone)=>new Intl.DateTimeFormat('en-US',{timeZone,month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'}).format(new Date(value));
  async function showPhoto(submissionId){
