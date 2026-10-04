@@ -43,7 +43,8 @@ def main():
 ''')
     repo = Path(__file__).resolve().parents[1]
     names = ['WrestlingManagerRemoteCapture.swift', 'WrestlingManagerRemotePhoto.swift',
-             'WrestlingManagerRemoteCaptureHost.swift', 'WrestlingManagerRemoteOutbox.swift']
+             'WrestlingManagerRemoteCaptureHost.swift', 'WrestlingManagerRemoteOutbox.swift',
+             'WrestlingManagerRemoteDelivery.swift', 'WrestlingManagerRemoteDeliveryStore.swift']
     changes = {scale: source.encode()}
     for name in names:
         target = app / name

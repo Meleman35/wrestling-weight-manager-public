@@ -112,3 +112,21 @@ attempt racing a completed save. Local save failures expose `retrySave()` withou
 regenerating submission IDs or evidence. Full uploaded-app Xcode building is
 separate from the candidate SDK typecheck; the supplied pieces do not include the
 project's referenced root `Wrestling-Manager-Info.plist`.
+
+
+### Native queue delivery
+
+`WrestlingManagerRemoteDelivery.swift` joins an injected authenticated transport to
+`WrestlingManagerRemoteDeliveryStore.swift` and the protected outbox. It validates
+photo acknowledgement identity/size/digest format before submit, validates server
+receipt identity/time/status, and persists the receipt before returning success.
+The worker checks live authorization between stages, excludes concurrent delivery,
+and blocks late callbacks after locking. Retried delivery uses unchanged payload
+and image data. Ambiguous acceptance and disk errors retain both; the server's
+idempotent accept operation must return the original receipt. A previously stored
+receipt also requires current authority before returning to the UI. Upload/read
+HTTP endpoints and current-session transport wiring remain to be implemented.
+
+Native delivery tests use an actor-backed fixture to exercise failed submit,
+failed receipt persistence, wrong evidence/receipt, exact retry bytes and revoked
+access. They do not exercise actual network endpoints or device Keychain.
