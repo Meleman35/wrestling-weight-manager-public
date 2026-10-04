@@ -188,3 +188,17 @@ App Store Information screenshots verified October 3, 2026:
   establish a completed declaration or any requirement to upload documents.
 - Supplied Wrestling-Manager-Info(2).plist parses successfully; the project-referenced
   filename is Wrestling-Manager-Info.plist. Usage descriptions come from build settings.
+
+Subscription notification receiver candidate added:
+- Bounded server-only POST accepts signedPayload only, with explicit rate limiter.
+- Uses AppleEvidenceAdapter.notificationTransaction for signature verification and
+  canonical subscription status. No app-user JWT is expected on this Apple route.
+- Durable private inbox acknowledgement required before HTTP 200; duplicate
+  notifications preserve first observation and immutable original/token binding.
+- Seven HTTP checks passed; disposable PostgreSQL checks confirm immutable retries,
+  environment/binding conflicts and anon/authenticated denial.
+- Transaction-bearing notifications only. Apple TEST, summary and consumption
+  notifications still require distinct handling; do not configure server URLs yet.
+- Inbox schema remains a draft: retention/deletion catalog and runtime privileges
+  must be integrated. Worker leasing, canonical recheck and entitlement application
+  are not yet wired. This receiver alone does not change paid access.
