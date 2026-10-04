@@ -32,3 +32,14 @@ Only one current submission is accepted per club/athlete/window. The reducer rej
 node --test tests/remote-weighins.mjs
 
 Tests cover stale participants, camera callbacks, source restrictions, evidence expiry, exact retry envelopes, pending acknowledgments, account disposal, reporting boundaries, missing roster, program/club isolation, conflicts and formula-safe CSV. These are local contract tests, not production authorization/device acceptance.
+
+
+## Nationwide and tournament service contract
+
+src/remote-weighins-service.mjs is a server-only dependency-injected service, not a deployed API. It requires trusted live-session, program, window, roster, evidence and transactional store adapters. It never accepts role/coverage assertions from the submission. Programs distinguish network and tournament; tournament windows/captures bind an explicit event ID and reports say Remote tournament check-in, never official certification. Each weekly/event roster is explicitly enrolled with remote consent.
+
+Operators submit only for their assigned program/club. Directors read assigned programs; club readers query only their own club and do not receive network-wide totals. Report projection excludes photo/evidence references, operator/session IDs and arbitrary roster/medical columns. Pages are bounded to 500 rows; the 5,002-athlete synthetic test checks ordering/page boundaries and missing totals. The current adapter loads a complete authorized period to aggregate; production needs indexed, server-paginated roster/receipt queries, a bounded snapshot/revision cursor for exports, and capacity/load acceptance. This test is not a production performance result.
+
+Capture evidence must come from an immutable private evidence service that verifies session/athlete/reading/photo provenance, consent and digest. The service contract rejects client-only camera flags as verification. No implemented evidence provider is supplied yet. New submissions are admitted only within a bounded explicit sync grace (maximum seven days); identical previously accepted retries return their original receipt after that deadline. Actual PostgreSQL atomicAccept must enforce this transactionally, recheck current access/session/coverage and prevent concurrent current captures. The test store is serialized in-memory only; no database concurrency acceptance is claimed.
+
+22 isolated Node tests now cover both capture and reporting service contracts. Production activation remains blocked on the documented private adapters, durable outbox, retention/deletion compatibility and native/device acceptance. No pricing, customer scope or tournament rules are silently created.

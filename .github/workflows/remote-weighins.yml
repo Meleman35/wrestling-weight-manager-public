@@ -3,7 +3,9 @@ on:
   pull_request:
     paths:
       - src/remote-weighins.mjs
+      - src/remote-weighins-service.mjs
       - tests/remote-weighins.mjs
+      - tests/remote-weighins-service.mjs
       - previews/remote-weighins.html
       - docs/remote-weighins.md
       - .github/workflows/remote-weighins.yml
@@ -21,4 +23,4 @@ jobs:
         with:
           node-version: '24'
       - run: node --check src/remote-weighins.mjs
-      - run: node --test tests/remote-weighins.mjs
+      - run: node --test tests/remote-weighins*.mjs
