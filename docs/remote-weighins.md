@@ -166,3 +166,36 @@ lock/logout/navigation/club-change/deletion hooks. It also closes owned resource
 when released. `authorizeActivation` must enforce current program/window/club and
 operator coverage at activation, not merely return a client-side flag. Current
 wrapper registration and real production adapters still remain.
+
+
+### Database and in-app reporting composition
+
+`remote-weighins-postgres.mjs` now supplies real parameterized query adapters for
+the draft schema: verified Auth session/assignments, active coverage/windows,
+consented roster, evidence, atomic SQL receipt acceptance and scoped reports.
+The trusted personal-session verifier and canonical roster-name resolver are
+mandatory production dependencies. PGlite integration runs this adapter and the
+reporting service together, including exact receipt retry and revoked access.
+The read path still uses whole scoped roster/submission arrays; indexed SQL
+pagination and consistent report snapshots are not implemented yet.
+
+The reporting service provides an authorized context of granted programs/clubs
+and windows. Photo reads resolve a submission to evidence only on the server,
+checking program read authority and current athlete consent; evidence IDs stay
+out of report responses.
+
+`remote-weighins-screen.mjs` and `remote-weighins-app.mjs` add the real component
+and browser HTTP adapter for the in-app More screen: program/club and window
+selection, status filter, pagination, accepted totals, capture/receipt timezones
+and private photo review. Text uses DOM textContent; photos use revocable local
+blob URLs. The app adapter closes on visibility/account/lock changes, rejects
+managed accounts and stale callbacks, and enables native capture only when an
+actual host activation adapter is supplied.
+
+`prepare-remote-reporting-screen.py` was exercised on a copy of the repository's
+index.html. It adds the More entry and sheet, explicit close/auth/lock hooks and
+module registration behind an `enabled:false` deployment gate. It validates
+source anchors and backs up the input. Production index is not changed by this
+PR; flip the gate only together with the reviewed production backend deployment.
+This integration script needs current main source when applied, preserving other
+work. Browser CI tests use fictional scoped responses, not real accounts.

@@ -6,7 +6,7 @@ const deny = message => { throw new Error(message); };
 const validId = value => typeof value === 'string' && /^[A-Za-z0-9_-]{1,160}$/.test(value);
 const timestamp = value => { const ms = Date.parse(value); if (!Number.isFinite(ms)) deny('Invalid timestamp'); return ms; };
 const same = (a,b) => a && typeof a === 'object' && Object.keys(a).length === Object.keys(b).length && Object.keys(b).every(k=>a[k]===b[k]);
-export function createRemoteReportingService({getActor, getProgram, getWindow, getRoster, getEvidence, store, now=Date.now}) {
+export function createRemoteReportingService({getActor, getProgram, getWindow, getWindows, getRoster, getEvidence, store, now=Date.now}) {
   if (![getActor,getProgram,getWindow,getRoster,getEvidence,store?.atomicAccept,store?.list].every(x=>typeof x==='function')) deny('Trusted reporting adapters required');
   async function authority(session, programId, action, clubId=null) {
     const actor=await getActor(session), program=await getProgram(programId);
@@ -27,6 +27,26 @@ export function createRemoteReportingService({getActor, getProgram, getWindow, g
     return window;
   }
   return Object.freeze({
+    async context(session) {
+      if(typeof getWindows!=='function')deny('Reporting context unavailable');
+      const actor=await getActor(session);
+      if(!actor?.userId||actor.sessionActive!==true||actor.confirmed!==true||actor.personal!==true||actor.locked===true||actor.deleted===true)deny('Active personal session required');
+      const scopes=[];
+      const programs=[...new Set((actor.reportingGrants||[]).filter(g=>g.active===true).map(g=>g.programId))];
+      for(const programId of programs){
+        const program=await getProgram(programId);
+        if(!program?.active||program.covered!==true||!['network','tournament'].includes(program.kind))continue;
+        if(program.kind==='tournament'&&!validId(program.eventId))continue;
+        const windows=await getWindows(programId);
+        const periods=[];
+        for(const candidate of windows){const w=await period(program,candidate.id);periods.push({id:w.id,programId:w.programId,timeZone:w.timeZone,opensAt:w.opensAt,closesAt:w.closesAt,label:`${w.id} · ${w.timeZone}`});}
+        const grants=actor.reportingGrants.filter(g=>g.programId===programId&&g.active===true),clubs=new Map();
+        if(grants.some(g=>g.role==='director'))scopes.push({programId,clubId:null,canCapture:false,label:`${programId} · All clubs`,windows:periods});
+        for(const g of grants){if(['operator','club_reader'].includes(g.role)&&program.clubIds.includes(g.clubId))clubs.set(g.clubId,(clubs.get(g.clubId)||false)||g.role==='operator');}
+        for(const [clubId,canCapture] of clubs)scopes.push({programId,clubId,canCapture,label:`${programId} · ${clubId}`,windows:periods});
+      }
+      return {scopes};
+    },
     async submit(session,input) {
       if (!input || !['submissionId','captureId','programId','windowId','clubId','athleteId','operatorId','generation','evidenceId'].every(k=>validId(input[k]))) deny('Invalid submission identity');
       if (!['qr','nfc'].includes(input.method) || input.unit!=='lb' || !Number.isFinite(input.weight) || input.weight<=0 || input.weight>800) deny('Invalid scale capture');
@@ -49,6 +69,15 @@ export function createRemoteReportingService({getActor, getProgram, getWindow, g
       // New acceptance after the grace deadline must be rejected inside the same
       // transaction. Revocation/coverage/session predicates must be rechecked there.
       return store.atomicAccept({actor,program,window,record:canonical,payloadHash,receivedAt:new Date(received).toISOString(),newAcceptanceAllowed:received<=timestamp(window.closesAt)+window.syncGraceMs});
+    },
+    async evidenceForSubmission(session,{submissionId}) {
+      if(!validId(submissionId)||typeof store.findSubmission!=='function')deny('Photo unavailable');
+      const record=await store.findSubmission(submissionId);if(!record)deny('Photo unavailable');
+      const {program}=await authority(session,record.programId,'read',record.clubId);
+      const window=await period(program,record.windowId);
+      const roster=await getRoster(program.id,window.id,record.clubId);
+      if(!roster.some(r=>r.clubId===record.clubId&&r.athleteId===record.athleteId&&r.active===true&&r.remoteConsent===true))deny('Photo unavailable');
+      return record.evidenceId;
     },
     async report(session,{programId,windowId,clubId=null,status=null,offset=0,limit=100,format='json'}) {
       if (!validId(programId)||!validId(windowId)||(clubId!==null&&!validId(clubId))||!Number.isInteger(offset)||offset<0||!Number.isInteger(limit)||limit<1||limit>500||!['json','csv'].includes(format)||!(status===null||['submitted','late','missing'].includes(status))) deny('Invalid report query');

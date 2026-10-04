@@ -11,11 +11,17 @@ on:
       - src/remote-weighins-photos.mjs
       - src/remote-weighins-outbox.mjs
       - src/remote-weighins-http.mjs
+      - src/remote-weighins-postgres.mjs
+      - src/remote-weighins-screen.mjs
+      - src/remote-weighins-app.mjs
       - tests/remote-weighins.mjs
       - tests/remote-weighins-service.mjs
       - tests/remote-weighins-photos.mjs
       - tests/remote-weighins-outbox.mjs
       - tests/remote-weighins-http.mjs
+      - tests/remote-weighins-postgres.mjs
+      - tests/remote-reporting-screen-browser.mjs
+      - scripts/prepare-remote-reporting-screen.py
       - tests/remote-weighins-db.mjs
       - supabase/drafts/remote-weighins.sql
       - previews/remote-weighins.html
@@ -39,6 +45,8 @@ jobs:
       - run: npm ci --prefix .ci --ignore-scripts --no-audit --no-fund
       - run: node --check src/remote-weighins.mjs
       - run: node --test tests/remote-weighins*.mjs
+      - run: npx --prefix .ci playwright install --with-deps chromium
+      - run: node tests/remote-reporting-screen-browser.mjs
 
   native-typecheck:
     runs-on: macos-latest
