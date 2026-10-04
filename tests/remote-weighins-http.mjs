@@ -10,3 +10,14 @@ test('HTTP read stays authenticated/no-store and routes only known POST endpoint
 test('HTTP hides provider errors and requires an explicit rate-limit allowance',async()=>{const deps={authenticate:async()=>({}),allowRequest:async()=>true,authorizeCapture:async()=>true,photos:{upload:async()=>{throw Error('SECRET INTERNAL PATH');},read:async()=>({})},reporting:{receipt:async()=>null,context:async()=>({scopes:[]}),evidenceForSubmission:async()=>'e',submit:async()=>{throw Error('SECRET INTERNAL PATH');},report:async()=>({})}};const h=createRemoteReportingHandler(deps);const r=await h(req('submit',{}));assert.equal(r.status,403);assert.doesNotMatch(await r.text(),/SECRET/);const blocked=createRemoteReportingHandler({...deps,allowRequest:async()=>false});assert.equal((await blocked(req('submit',{}))).status,429);});
 
 test('HTTP capture authorization requires explicit trusted approval',async()=>{const {handler}=fixture();assert.deepEqual(await (await handler(req('authorize',{}))).json(),{authorized:true});});
+
+ test('browser preflight permits the exact reporting client headers without authentication',async()=>{
+ const {handler,calls}=fixture();
+ const r=await handler(new Request('https://example.test/functions/v1/remote-weighins/context',{method:'OPTIONS',headers:{Origin:'https://theteammanager.app','Access-Control-Request-Method':'POST','Access-Control-Request-Headers':'apikey,authorization,content-type'}}));
+ assert.equal(r.status,204);
+ const allowed=r.headers.get('access-control-allow-headers').toLowerCase().split(',').map(x=>x.trim());
+ for(const header of ['apikey','authorization','content-type'])assert.ok(allowed.includes(header));
+ assert.equal(calls.length,0);
+ const denied=await handler(new Request('https://example.test/functions/v1/remote-weighins/context',{method:'OPTIONS',headers:{Origin:'https://evil.test'}}));
+ assert.equal(denied.status,403);assert.equal(denied.headers.get('access-control-allow-origin'),null);
+});

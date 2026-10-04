@@ -1,5 +1,6 @@
 // Server-only HTTP composition. No endpoint is deployed by importing this module.
 // authenticate and allowRequest must use trusted server session/rate-limit state.
+import {Buffer} from 'node:buffer';
 const headers={'Cache-Control':'no-store, private','X-Content-Type-Options':'nosniff','Content-Type':'application/json'};
 class BadRequest extends Error {}
 const object=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
@@ -26,7 +27,7 @@ export function createRemoteReportingHandler({authenticate,allowRequest,authoriz
   const path=new URL(request.url).pathname;
   const action=path.startsWith(basePath+'/')?path.slice(basePath.length+1):'';
   if(!['receipt','context','authorize','photo','submit','report','photo-read'].includes(action))return respond(404,{error:'Unavailable'},cors);
-  if(request.method==='OPTIONS'&&origin)return new Response(null,{status:204,headers:{...headers,...cors,'Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Allow-Headers':'Authorization, Content-Type'}});
+  if(request.method==='OPTIONS'&&origin)return new Response(null,{status:204,headers:{...headers,...cors,'Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Allow-Headers':'Authorization, Content-Type, apikey'}});
   if(request.method!=='POST')return respond(405,{error:'POST required'},{...cors,Allow:'POST'});
   let session;
   try{session=await authenticate(request);}catch{return respond(401,{error:'Sign in required'},cors);}
