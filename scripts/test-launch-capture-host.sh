@@ -24,7 +24,15 @@ cat > "$test_app/Info.plist" <<'PLIST'
 <key>UISupportedInterfaceOrientations</key><array><string>UIInterfaceOrientationPortrait</string></array>
 </dict></plist>
 PLIST
-codesign --force --sign - "$test_app"
+cat > "$test_root/Entitlements.plist" <<'ENTITLEMENTS'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>application-identifier</key><string>TESTLAUNCH.app.launch-capture-host.ui-tests</string>
+<key>keychain-access-groups</key><array><string>TESTLAUNCH.app.launch-capture-host.ui-tests</string></array>
+</dict></plist>
+ENTITLEMENTS
+codesign --force --sign - --entitlements "$test_root/Entitlements.plist" "$test_app"
 xcrun simctl list devices available --json > "$test_root/devices.json"
 test_device="$(python3 - "$test_root/devices.json" <<'PY'
 import json,sys

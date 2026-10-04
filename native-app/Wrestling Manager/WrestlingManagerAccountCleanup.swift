@@ -19,8 +19,10 @@ enum WrestlingManagerAccountCleanup {
                                          biometric: WrestlingManagerBiometricLoginBridge,
                                          recovery: WrestlingManagerPINRecoveryBridge) throws -> PartialResult {
         let account = try WrestlingManagerAccountCleanupPolicy.account(accountID)
+        guard let remoteAccount = UUID(uuidString: account) else { throw WrestlingManagerRemoteOutbox.Failure.wrongScope }
         return try video.withQuiescentAccountCleanup { root in
             recovery.cancel()
+            try WrestlingManagerRemoteOutbox.removeForAccountDeletion(remoteAccount)
             let media = try WrestlingManagerAccountVideoCleanup(root: root)
                 .removeReviewed(accountID: account, recordingIDs: approvedRecordingIDs)
             let login = try biometric.removeForAccountCleanup(account)

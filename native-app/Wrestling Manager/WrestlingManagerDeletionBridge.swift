@@ -109,6 +109,8 @@ final class WrestlingManagerDeletionBridge: NSObject, WKScriptMessageHandler {
     private func prepareLocal(_ request: Request) async throws -> [String] {
         guard request.personal else { return [] }
         checkpoint = .deviceFiles
+        guard let remoteAccount = UUID(uuidString: request.actorId) else { throw fault("The account could not be verified.") }
+        _ = try WrestlingManagerRemoteOutbox.reviewAccountDeletion(remoteAccount)
         let support = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
         checkpoint = .legacyFiles
         try WrestlingManagerDeletionLegacyGuard.check(support: support, temporary: FileManager.default.temporaryDirectory)
@@ -257,7 +259,7 @@ final class WrestlingManagerDeletionBridge: NSObject, WKScriptMessageHandler {
             throw fault("Close the open native screen and try account deletion again.")
         }
         let detail = request.personal
-            ? "Delete \(email)? After the server confirms deletion, this app will remove its saved sign-in, profile PIN and \(recordings) local recording(s). Copies exported to Photos or Files remain outside the app. Other people's accounts stay intact."
+            ? "Delete \(email)? After the server confirms deletion, this app will remove its saved sign-in, profile PIN and \(recordings) local recording(s), plus this account’s queued remote weigh-in photos and weights. Copies exported to Photos or Files remain outside the app. Other people's accounts stay intact."
             : "Delete the selected \(request.teamIds.count) team(s) and \(request.organizationIds.count) organization(s)? Personal accounts and locally saved recordings remain."
         let accepted: Bool = await withCheckedContinuation { continuation in
             let alert = UIAlertController(title: "Confirm account deletion", message: detail, preferredStyle: .alert)

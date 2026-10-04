@@ -53,8 +53,11 @@ export async function createBillingRuntime({pool,publishableKey,readSecret,envir
  const worker=createAppleNotificationWorker({apple,...createAppleNotificationPostgres({db,environment}),config});
  const headers={'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'};
  return Object.freeze({billing,notification,async reconcile(request){
-  if(request.method!=='POST'||request.headers.has('origin')||await authorizeWorker(request)!==true)
-   return new Response(JSON.stringify({error:'not_authorized'}),{status:403,headers});
+  let authorized=false;
+  if(request.method==='POST'&&!request.headers.has('origin')){
+   try {authorized=await authorizeWorker(request)===true;}catch{authorized=false;}
+  }
+  if(!authorized)return new Response(JSON.stringify({error:'not_authorized'}),{status:403,headers});
   // One bounded leased unit per invocation; a scheduler can drain the backlog.
   try {return new Response(JSON.stringify(await worker()),{status:200,headers});}
   catch{return new Response(JSON.stringify({error:'reconciliation_unconfirmed'}),{status:503,headers});}

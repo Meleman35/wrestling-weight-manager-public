@@ -60,11 +60,30 @@ import UIKit
                 try await wait("Fresh zero did not enable next scan") { host.readyForNextScan }
                 guard advances == index + 1 else { throw Failure(message:"Duplicate or missed next-scan callback") }
             }
+            // Verified personal deletion removes only this account's encrypted
+            // photos/weights and makes stale queue instances permanently unusable.
+            let otherAccount = UUID(), otherQueue = try WrestlingManagerRemoteOutbox(accountID:otherAccount,clubID:club)
+            let ids = try await queue.pending()
+            guard let first = ids.first else { throw Failure(message:"Missing saved capture") }
+            let original = try await queue.capture(first), otherID = UUID()
+            let otherCapture = WrestlingManagerRemoteOutbox.Capture(submissionID:otherID,accountID:otherAccount,clubID:club,
+                payload:original.payload,jpeg:original.jpeg,receipt:nil)
+            try await otherQueue.save(otherCapture)
+            guard try WrestlingManagerRemoteOutbox.reviewAccountDeletion(account) == 2 else { throw Failure(message:"Deletion inventory mismatch") }
+            try WrestlingManagerRemoteOutbox.removeForAccountDeletion(account)
+            guard try WrestlingManagerRemoteOutbox.reviewAccountDeletion(account) == 0,
+                  try await otherQueue.capture(otherID) == otherCapture else { throw Failure(message:"Other account queue was changed") }
+            do { try await queue.save(original);throw Failure(message:"Deleted account resurrected queued capture") }
+            catch is WrestlingManagerRemoteOutbox.Failure { }
+            do { _ = try WrestlingManagerRemoteOutbox(accountID:account,clubID:club);throw Failure(message:"Deleted account reopened queue") }
+            catch is WrestlingManagerRemoteOutbox.Failure { }
+            try WrestlingManagerRemoteOutbox.removeForAccountDeletion(account) // idempotent recovery
+            try WrestlingManagerRemoteOutbox.removeForAccountDeletion(otherAccount)
             authorized = false
             do { _ = try await host.scan(athleteID:"other",method:"nfc");throw Failure(message:"Revoked operator accepted") }
             catch let error as Failure { if error.message != "Authorization revoked" { throw error } }
             host.close();guard !host.readyForNextScan else { throw Failure(message:"Closed session remained ready") }
-            finish("PASS: production host camera opens before stable weight; one scan authorization; automatic photo; two encrypted queued captures; fresh-zero next scan; duplicate and revoked operator rejected")
+            finish("PASS: production host camera opens before stable weight; one scan authorization; automatic photo; two encrypted queued captures; fresh-zero next scan; duplicate and revoked operator rejected; account queue cleanup isolates other accounts and prevents resurrection")
         } catch { finish("FAIL: \(error)") }
     }
     private func finish(_ message:String) {
