@@ -199,3 +199,14 @@ source anchors and backs up the input. Production index is not changed by this
 PR; flip the gate only together with the reviewed production backend deployment.
 This integration script needs current main source when applied, preserving other
 work. Browser CI tests use fictional scoped responses, not real accounts.
+
+
+Receipt recovery is now an explicit authenticated route: compare the exact frozen
+capture fields to the accepted database record and require the current operator,
+program/club/window and athlete consent before returning its receipt. Native
+delivery checks this route before photo upload, allowing a lost acceptance reply
+to recover without needing the verification image again. Receipt times are
+normalized to the same UTC millisecond representation in accept and lookup
+responses. This intentionally projects PostgreSQL's finer timestamp precision;
+the original full precision remains stored in the database. Native recovery tests
+confirm this path does not upload or resubmit an already accepted capture.

@@ -69,7 +69,15 @@ actor WrestlingManagerRemoteHTTP {
             guard let result = try JSONSerialization.jsonObject(with: data) as? [String: Any],
                   result["authorized"] as? Bool == true else { throw Failure.unavailable }
         }, uploadPhoto: { [self] payload, jpeg in try await send(action: "photo", payload: payload, jpeg: jpeg) },
-           submit: { [self] payload in try await send(action: "submit", payload: payload) })
+           submit: { [self] payload in try await send(action: "submit", payload: payload) },
+           findReceipt: { [self] payload in
+               let data = try await send(action: "receipt", payload: payload)
+               guard let result = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                     result.keys.contains("receipt") else { throw Failure.invalidResponse }
+               if result["receipt"] is NSNull { return nil }
+               guard let receipt = result["receipt"] as? [String: Any] else { throw Failure.invalidResponse }
+               return try JSONSerialization.data(withJSONObject: receipt, options: [.sortedKeys])
+           })
     }
     func stop() { active = false; session.invalidateAndCancel() }
 }

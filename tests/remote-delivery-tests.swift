@@ -78,6 +78,17 @@ actor DeliveryFixture: WrestlingManagerRemoteDeliveryStore {
         await rejects { _ = try await worker.deliver(id) }
         await worker.lock()
         await rejects { _ = try await worker.deliver(id) }
+        let recoveredFixture = DeliveryFixture()
+        let recoveredID = recoveredFixture.id
+        let acceptedReceipt = try await recoveredFixture.submit(Data())
+        let recovery = WrestlingManagerRemoteDelivery(store: recoveredFixture, transport: .init(
+            authorize: { try await recoveredFixture.authorize($0) },
+            uploadPhoto: { try await recoveredFixture.upload($0, $1) },
+            submit: { try await recoveredFixture.submit($0) },
+            findReceipt: { _ in acceptedReceipt }))
+        let recovered = try await recovery.deliver(recoveredID)
+        let recoveredCounts = await recoveredFixture.counts()
+        precondition(recovered == acceptedReceipt && recoveredCounts.0 == 0 && recoveredCounts.1 == 1)
         for field in ["photo", "receipt"] {
             let f = DeliveryFixture(), w = delivery(f), i = f.id
             await f.set(field, true)

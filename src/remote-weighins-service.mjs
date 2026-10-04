@@ -70,6 +70,18 @@ export function createRemoteReportingService({getActor, getProgram, getWindow, g
       // transaction. Revocation/coverage/session predicates must be rechecked there.
       return store.atomicAccept({actor,program,window,record:canonical,payloadHash,receivedAt:new Date(received).toISOString(),newAcceptanceAllowed:received<=timestamp(window.closesAt)+window.syncGraceMs});
     },
+    async receipt(session,input) {
+      if(!input||!['submissionId','programId','windowId','clubId','operatorId','generation'].every(k=>validId(input[k]))||typeof store.findSubmission!=='function'||typeof store.receipt!=='function')deny('Receipt unavailable');
+      const {actor,program}=await authority(session,input.programId,'submit',input.clubId);
+      if(input.operatorId!==actor.userId||input.generation!==actor.generation)deny('Operator session changed');
+      const window=await period(program,input.windowId);
+      const roster=await getRoster(program.id,window.id,input.clubId);
+      if(!roster.some(r=>r.clubId===input.clubId&&r.athleteId===input.athleteId&&r.active===true&&r.remoteConsent===true))deny('Roster consent unavailable');
+      const record=await store.findSubmission(input.submissionId);if(!record)return null;
+      const keys=['submissionId','evidenceId','captureId','programId','windowId','clubId','athleteId','operatorId','generation','weight','unit','capturedAt','photoCapturedAt','method'];
+      if(!keys.every(k=>input[k]===record[k]))deny('Idempotency conflict');
+      return store.receipt(input.submissionId);
+    },
     async evidenceForSubmission(session,{submissionId}) {
       if(!validId(submissionId)||typeof store.findSubmission!=='function')deny('Photo unavailable');
       const record=await store.findSubmission(submissionId);if(!record)deny('Photo unavailable');

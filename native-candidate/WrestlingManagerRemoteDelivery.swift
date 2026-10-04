@@ -19,6 +19,13 @@ actor WrestlingManagerRemoteDelivery {
         let authorize: @Sendable (Data) async throws -> Void
         let uploadPhoto: @Sendable (Data, Data) async throws -> Data
         let submit: @Sendable (Data) async throws -> Data
+        let findReceipt: (@Sendable (Data) async throws -> Data?)?
+        init(authorize: @escaping @Sendable (Data) async throws -> Void,
+             uploadPhoto: @escaping @Sendable (Data, Data) async throws -> Data,
+             submit: @escaping @Sendable (Data) async throws -> Data,
+             findReceipt: (@Sendable (Data) async throws -> Data?)? = nil) {
+            self.authorize = authorize; self.uploadPhoto = uploadPhoto; self.submit = submit; self.findReceipt = findReceipt
+        }
     }
     enum Failure: Error { case locked, busy, invalidCapture, unconfirmedPhoto, unconfirmedReceipt }
     private let store: any WrestlingManagerRemoteDeliveryStore
@@ -46,6 +53,13 @@ actor WrestlingManagerRemoteDelivery {
         try await transport.authorize(record.payload); try check()
         // Even an accepted local receipt is hidden from a revoked/locked caller.
         if let receipt = record.receipt { try validateReceipt(receipt, id: id); return receipt }
+        if let lookup = transport.findReceipt, let receipt = try await lookup(record.payload) {
+            try check(); try validateReceipt(receipt, id: id)
+            try await transport.authorize(record.payload); try check()
+            try await store.confirmDelivery(id, receipt: receipt); try check()
+            return receipt
+        }
+        try check()
         let uploaded = try await transport.uploadPhoto(record.payload, record.jpeg); try check()
         let photo = try object(uploaded)
         guard photo["status"] as? String == "uploaded", photo["evidenceId"] as? String == evidenceID,

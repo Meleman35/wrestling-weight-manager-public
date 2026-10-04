@@ -45,6 +45,10 @@ export function createRemotePostgresAdapters({db,verifyPersonalSession,resolveRo
   return e?{id:e.id,binding:e.binding,digest:e.digest,verified:e.verified&&e.unexpired,private:true,noticeAccepted:e.notice_accepted,settled:e.settled,source:e.source}:null;
  }
  const store={
+  async receipt(submissionId){
+   const r=(await db.query('select submission_id,receipt_id,received_at from remote_reporting.submissions where submission_id=$1',[submissionId])).rows[0];
+   return r?{submissionId:r.submission_id,receiptId:r.receipt_id,status:'submitted',receivedAt:iso(r.received_at)}:null;
+  },
   async findSubmission(submissionId){
    const r=(await db.query('select record from remote_reporting.submissions where submission_id=$1',[submissionId])).rows[0];return r?.record??null;
   },
@@ -54,7 +58,8 @@ export function createRemotePostgresAdapters({db,verifyPersonalSession,resolveRo
    if(live.userId!==actor.userId||live.sessionId!==actor.sessionId||live.generation!==actor.generation)fail('Operator session changed');
    // accept owns transaction locks, deadlines and retry/conflict semantics.
    const result=await db.query('select remote_reporting.accept($1::uuid,$2::uuid,$3::jsonb,$4::text) as receipt',[live.userId,live.sessionId,JSON.stringify(record),payloadHash]);
-   return result.rows[0].receipt;
+   const receipt=result.rows[0].receipt;
+   return {submissionId:receipt.submissionId,receiptId:receipt.receiptId,status:receipt.status,receivedAt:iso(receipt.receivedAt)};
   },
   async list({programId,windowId,clubId=null}){
    const rows=(await db.query(`select record,receipt_id,received_at from remote_reporting.submissions

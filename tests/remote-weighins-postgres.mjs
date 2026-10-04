@@ -23,7 +23,7 @@ await db.query("insert into remote_reporting.evidence values('evidence','program
 const adapters=createRemotePostgresAdapters({db,verifyPersonalSession:async token=>{assert.equal(token,'trusted');return {userId:user,sessionId:session,generation:'generation',personal:true,locked,deleted:false};},resolveRosterNames:async rows=>rows.map(r=>({...r,clubName:r.clubId,athleteName:r.athleteId}))});
 const service=createRemoteReportingService(adapters),payload={submissionId:'submission',evidenceId:'evidence',...binding};
 const context=await service.context('trusted');assert.equal(context.scopes.length,1);assert.equal(context.scopes[0].canCapture,true);assert.equal(context.scopes[0].windows[0].id,'week');
-const first=await service.submit('trusted',payload);assert.equal(first.status,'submitted');assert.deepEqual(await service.submit('trusted',payload),first);
+const first=await service.submit('trusted',payload);assert.equal(first.status,'submitted');assert.deepEqual(await service.receipt('trusted',payload),first);await assert.rejects(service.receipt('trusted',{...payload,weight:121}),/Idempotency/);assert.deepEqual(await service.submit('trusted',payload),first);
 assert.equal(await service.evidenceForSubmission('trusted',{submissionId:'submission'}),'evidence');
 await db.exec('update remote_reporting.roster set remote_consent=false');await assert.rejects(service.evidenceForSubmission('trusted',{submissionId:'submission'}),/Photo unavailable/);await db.exec('update remote_reporting.roster set remote_consent=true');
 let report=await service.report('trusted',{programId:'program',windowId:'week',clubId:'club'});assert.equal(report.counts.expected,1);assert.equal(report.rows[0].submission.weight,120);assert.equal(report.rows[0].submission.evidenceId,undefined);
