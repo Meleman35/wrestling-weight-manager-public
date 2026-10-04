@@ -50,6 +50,8 @@ on:
       - tests/remote-weighins-db.mjs
       - supabase/drafts/remote-weighins.sql
       - previews/remote-weighins.html
+      - docs/remote-camera-setup.md
+      - docs/remote-tournament-export-compatibility.md
       - docs/remote-weighins-time-locks.md
       - docs/remote-director-trial.md
       - docs/remote-weighins.md

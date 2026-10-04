@@ -122,7 +122,7 @@ export function createRemoteReportingService({getActor, getProgram, getWindow, g
       const page=rows.slice(offset,offset+limit),nextOffset=offset+page.length<rows.length?offset+page.length:null;
       // Explicit allowlist: never return evidence IDs, photo links, raw evidence,
       // account/session identifiers, arbitrary roster columns or medical records.
-      const projected=page.map(r=>({clubId:r.clubId,athleteId:r.athleteId,clubName:r.clubName,athleteName:r.athleteName,...normalizeMemberships(r),status:r.status,submission:r.submission?{submissionId:r.submission.submissionId,receiptId:r.submission.receiptId,weight:r.submission.weight,unit:r.submission.unit,capturedAt:r.submission.capturedAt,receivedAt:r.submission.receivedAt}:null}));
+      const projected=page.map(r=>({clubId:r.clubId,athleteId:r.athleteId,clubName:r.clubName,athleteName:r.athleteName,firstName:typeof r.firstName==='string'?r.firstName:'',lastName:typeof r.lastName==='string'?r.lastName:'',...normalizeMemberships(r),status:r.status,submission:r.submission?{submissionId:r.submission.submissionId,receiptId:r.submission.receiptId,weight:r.submission.weight,unit:r.submission.unit,capturedAt:r.submission.capturedAt,receivedAt:r.submission.receivedAt}:null}));
       return {programId,windowId,kind:program.kind,eventId:program.kind==='tournament'?program.eventId:null,classification:program.kind==='tournament'?'Remote tournament check-in':'Remote club report',timeZone:window.timeZone,counts:result.counts,total:rows.length,nextOffset,rows:projected,...(format==='csv'?{csv:reportCsv(projected)}:{})};
     }
   });

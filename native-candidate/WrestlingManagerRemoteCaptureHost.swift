@@ -13,6 +13,9 @@ final class WrestlingManagerRemoteCaptureHost {
     private var backgroundObserver: NSObjectProtocol?
     private var photoInProgress = false
     private var saveInProgress = false
+    private var setupInProgress = false
+    private var setupConfirmed = false
+    private var setupReview: WrestlingManagerRemoteSetupReview?
 
     init(scope: WrestlingManagerRemoteCapture.Scope, outbox: WrestlingManagerRemoteOutbox? = nil,
          authorize: @escaping () async throws -> Void) throws {
@@ -24,11 +27,42 @@ final class WrestlingManagerRemoteCaptureHost {
                 Task { @MainActor [weak self] in self?.close() }
             }
     }
+    /// Test framing before scanning. Test images stay in memory and never enter
+    /// the evidence queue. Re-run after moving the camera, scale or device.
+    func prepareCamera(from presenter: UIViewController,
+                       completion: @escaping (Result<Void, Error>) -> Void) async {
+        guard active, !setupInProgress, !photoInProgress, !saveInProgress,
+              capture.captureToken == nil else { completion(.failure(Failure.closed)); return }
+        setupConfirmed = false; setupInProgress = true
+        do { try await authorize() } catch { setupInProgress = false; completion(.failure(error)); return }
+        guard active else { setupInProgress = false; completion(.failure(Failure.closed)); return }
+        photos.take(token: UUID(), from: presenter, setup: true) { [weak self, weak presenter] _, result in
+            guard let self else { return }
+            guard self.active, let presenter else { self.setupInProgress = false; completion(.failure(Failure.closed)); return }
+            do {
+                let (jpeg, _) = try result.get()
+                let review = WrestlingManagerRemoteSetupReview(jpeg: jpeg) { [weak self, weak presenter] decision in
+                    guard let self else { return }
+                    self.setupReview = nil; self.setupInProgress = false
+                    guard self.active else { completion(.failure(Failure.closed)); return }
+                    switch decision {
+                    case .confirmed: self.setupConfirmed = true; completion(.success(()))
+                    case .cancelled: completion(.failure(WrestlingManagerRemotePhoto.Failure.cancelled))
+                    case .retake:
+                        guard let presenter else { completion(.failure(Failure.closed)); return }
+                        Task { @MainActor [weak self] in await self?.prepareCamera(from: presenter, completion: completion) }
+                    }
+                }
+                self.setupReview = review; presenter.present(review, animated: false)
+            } catch { self.setupInProgress = false; completion(.failure(error)) }
+        }
+    }
+    func invalidateCameraSetup() { setupConfirmed = false }
     /// Existing scanner/NFC adapter resolves credentials against the authorized roster first.
     func scan(athleteID: String, method: String) async throws -> UUID {
-        guard active, !photoInProgress, !saveInProgress else { throw Failure.closed }
+        guard active, setupConfirmed, !setupInProgress, !photoInProgress, !saveInProgress else { throw Failure.unauthorized }
         try await authorize()
-        guard active, !photoInProgress, !saveInProgress else { throw Failure.closed }
+        guard active, setupConfirmed, !setupInProgress, !photoInProgress, !saveInProgress else { throw Failure.closed }
         return try capture.scan(athleteID: athleteID, method: method)
     }
     /// Called once per real incoming BLE weight packet, stamped at native receipt.
@@ -42,9 +76,9 @@ final class WrestlingManagerRemoteCaptureHost {
     /// Completion means durably queued, never server accepted.
     func takeSnapshot(from presenter: UIViewController, noticeAccepted: Bool,
                       completion: @escaping (Result<UUID, Error>) -> Void) async {
-        guard active, !photoInProgress, !saveInProgress, noticeAccepted else { completion(.failure(Failure.unauthorized)); return }
+        guard active, setupConfirmed, !setupInProgress, !photoInProgress, !saveInProgress, noticeAccepted else { completion(.failure(Failure.unauthorized)); return }
         do { try await authorize() } catch { completion(.failure(error)); return }
-        guard active, !photoInProgress, !saveInProgress, let token = capture.captureToken, capture.settledWeight != nil else {
+        guard active, setupConfirmed, !setupInProgress, !photoInProgress, !saveInProgress, let token = capture.captureToken, capture.settledWeight != nil else {
             completion(.failure(Failure.noReading)); return
         }
         photoInProgress = true
@@ -90,7 +124,7 @@ final class WrestlingManagerRemoteCaptureHost {
     /// Lock/logout/account change/navigation must also call this, in addition to automatic background cancellation.
     func close() {
         guard active else { return }; active = false
-        capture.close(); photos.cancel()
+        setupConfirmed = false; capture.close(); photos.cancel(); setupReview?.cancel(); setupReview = nil
         if let observer = backgroundObserver { NotificationCenter.default.removeObserver(observer); backgroundObserver = nil }
         Task { await outbox.lock() }
     }

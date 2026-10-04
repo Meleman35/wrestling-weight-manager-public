@@ -10,7 +10,8 @@ export function createCanonicalRemoteRosterResolver({db}) {
    select distinct "clubId"::uuid as team_id,"athleteId"::uuid as athlete_id
    from jsonb_to_recordset($1::jsonb) as r("clubId" text,"athleteId" text)
   ) select t.id::text as "clubId",a.id::text as "athleteId",t.name as "clubName",
-   trim(concat_ws(' ',a.first_name,a.last_name)) as "athleteName"
+   trim(concat_ws(' ',a.first_name,a.last_name)) as "athleteName",
+   a.first_name as "firstName",a.last_name as "lastName"
   from requested r join public.teams t on t.id=r.team_id
   join public.athletes a on a.id=r.athlete_id and a.organization_id=t.organization_id
   where exists(select 1 from public.roster_memberships m join public.seasons s on s.id=m.season_id

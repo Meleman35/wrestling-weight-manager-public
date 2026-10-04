@@ -13,7 +13,9 @@ test('canonical names require same-organization athlete and active team season/r
  await db.query('insert into seasons values($1,$2,true)',[season,team]);
  await db.query('insert into roster_memberships values($1,$2,true)',[season,athlete]);
  const resolve=createCanonicalRemoteRosterResolver({db}),pair={clubId:team,athleteId:athlete};
- assert.deepEqual(await resolve([pair,pair]),[{...pair,clubName:'Club',athleteName:'Test Athlete'}]);
+ assert.deepEqual(await resolve([pair,pair]),[{...pair,clubName:'Club',athleteName:'Test Athlete',firstName:'Test',lastName:'Athlete'}]);
+ await db.query('update athletes set first_name=$1,last_name=$2 where id=$3',['María José','De La Cruz',athlete]);
+ const compound=(await resolve([pair]))[0];assert.equal(compound.firstName,'María José');assert.equal(compound.lastName,'De La Cruz');
  for(const table of ['seasons','roster_memberships']){await db.exec(`update ${table} set active=false`);await assert.rejects(resolve([pair]),/unavailable/);await db.exec(`update ${table} set active=true`);}
  await db.query('update athletes set organization_id=$1',[season]);await assert.rejects(resolve([pair]),/unavailable/);
  await assert.rejects(resolve([{...pair,clubId:'forged'}]),/Canonical/);

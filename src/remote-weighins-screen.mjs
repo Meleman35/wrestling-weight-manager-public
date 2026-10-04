@@ -11,6 +11,7 @@ export function mountRemoteReportingScreen({root,scope,windows,api,isCurrent,doc
  const section=node('section');section.className='remote-reporting-screen';
  const title=node('h2','Remote weigh-ins'),description=node('p','Review accepted club reports. Captured time and server receipt time are shown separately.');
  const retention=node('p','After weigh-ins, download a copy for your records. Online weights and verification photos are deleted 10 days after capture. Your downloaded spreadsheet remains available after the online copy expires.');
+ const setupNotice=node('p','Camera setup: place the scale on a firm, level floor and secure the device far enough away to show the athlete’s face, singlet, both feet and scale. Take a setup test photo before starting. Use a private area with nobody else in frame; recheck after moving the device or scale.');setupNotice.hidden=scope.canCapture!==true;
  const filters=node('div');filters.className='ops-actions';
  const windowSelect=node('select');windowSelect.setAttribute('aria-label','Reporting window');
  for(const w of windows){if(w.programId!==scope.programId)throw Error('Reporting window scope mismatch');const option=node('option',w.label||w.id);option.value=w.id;windowSelect.append(option);}
@@ -28,7 +29,7 @@ export function mountRemoteReportingScreen({root,scope,windows,api,isCurrent,doc
  const wrap=node('div');wrap.style.overflowX='auto';wrap.append(table);
  const more=node('button','Load more');more.type='button';more.hidden=true;
  const photoBox=node('div');photoBox.setAttribute('aria-label','Private verification photo');
- section.append(title,description,retention,filters,deadline,message,counts,wrap,more,photoBox);root.replaceChildren(section);
+ section.append(title,description,retention,setupNotice,filters,deadline,message,counts,wrap,more,photoBox);root.replaceChildren(section);
  const query=offset=>({programId:scope.programId,windowId:windowSelect.value,clubId:scope.clubId??null,status:statusSelect.value||null,offset,limit:100});
  const fmt=(value,timeZone)=>new Intl.DateTimeFormat('en-US',{timeZone,month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'}).format(new Date(value));
  async function showPhoto(submissionId){

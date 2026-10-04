@@ -9,13 +9,13 @@ final class WrestlingManagerRemotePhoto {
     private var completion: ((UUID, Result<(Data, Date), Error>) -> Void)?
     private var token: UUID?
 
-    func take(token: UUID, from presenter: UIViewController,
+    func take(token: UUID, from presenter: UIViewController, setup: Bool = false,
               completion: @escaping (UUID, Result<(Data, Date), Error>) -> Void) {
         guard camera == nil else { completion(token, .failure(Failure.busy)); return }
         guard presenter.viewIfLoaded?.window != nil, presenter.presentedViewController == nil else {
             completion(token, .failure(Failure.unavailable)); return
         }
-        let controller = RemoteSnapshotController()
+        let controller = RemoteSnapshotController(setup: setup)
         self.token = token; self.completion = completion; camera = controller
         controller.modalPresentationStyle = .fullScreen
         controller.onFinish = { [weak self, weak controller] result in
@@ -43,9 +43,51 @@ final class WrestlingManagerRemotePhoto {
         guard let camera, let token else { return }
         let callback = completion
         self.camera = nil; self.token = nil; completion = nil
-        camera.stop(); camera.dismiss(animated: false)
-        callback?(token, result)
+        camera.stop(); camera.dismiss(animated: false) { callback?(token, result) }
     }
+}
+
+/// Local-only test photo review. No upload, album write, athlete binding or queue.
+@MainActor final class WrestlingManagerRemoteSetupReview: UIViewController {
+    enum Decision { case confirmed, retake, cancelled }
+    private let picture = UIImageView()
+    private var completion: ((Decision) -> Void)?
+    init(jpeg: Data, completion: @escaping (Decision) -> Void) {
+        self.completion = completion; super.init(nibName: nil, bundle: nil)
+        picture.image = UIImage(data: jpeg); modalPresentationStyle = .fullScreen
+    }
+    required init?(coder: NSCoder) { fatalError("Use init(jpeg:completion:)") }
+    override func viewDidLoad() {
+        super.viewDidLoad(); view.backgroundColor = .systemBackground
+        let title = UILabel(); title.text = "Check the complete weigh-in view"; title.font = .preferredFont(forTextStyle: .headline)
+        title.numberOfLines = 0; title.textAlignment = .center
+        let note = UILabel(); note.text = "Confirm the athlete’s face, singlet, both feet and scale are visible. Keep other athletes out of the frame. This test photo will be discarded. Recheck setup after moving the device or scale."
+        note.font = .preferredFont(forTextStyle: .body); note.numberOfLines = 0
+        for label in [title,note] { label.adjustsFontForContentSizeCategory = true }
+        picture.contentMode = .scaleAspectFit; picture.accessibilityLabel = "Temporary camera setup test photo"
+        let confirm = UIButton(type: .system); confirm.setTitle("Full athlete and scale are visible", for: .normal)
+        confirm.addTarget(self, action: #selector(confirmSetup), for: .touchUpInside); confirm.isEnabled = picture.image != nil
+        let retake = UIButton(type: .system); retake.setTitle("Adjust camera and retake", for: .normal)
+        retake.addTarget(self, action: #selector(retakeSetup), for: .touchUpInside)
+        let cancel = UIButton(type: .system); cancel.setTitle("Cancel setup", for: .normal)
+        cancel.addTarget(self, action: #selector(cancelSetup), for: .touchUpInside)
+        let stack = UIStackView(arrangedSubviews: [title,picture,note,confirm,retake,cancel]); stack.axis = .vertical; stack.spacing = 12
+        stack.translatesAutoresizingMaskIntoConstraints = false; view.addSubview(stack)
+        picture.setContentHuggingPriority(.defaultLow, for: .vertical)
+        picture.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
+        NSLayoutConstraint.activate([stack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
+            stack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+            stack.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
+            stack.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16)])
+    }
+    private func finish(_ decision: Decision) {
+        guard let callback = completion else { return }; completion = nil; picture.image = nil
+        dismiss(animated: false) { callback(decision) }
+    }
+    @objc private func confirmSetup() { finish(.confirmed) }
+    @objc private func retakeSetup() { finish(.retake) }
+    @objc private func cancelSetup() { cancel() }
+    func cancel() { finish(.cancelled) }
 }
 
 // Mutable AVFoundation capture state is confined to a serial queue.
@@ -122,9 +164,14 @@ nonisolated private final class RemoteSnapshotCamera: NSObject, @unchecked Senda
     var onFinish: ((Result<(Data, Date), Error>) -> Void)?
     private var finished = false
     private let shutter = UIButton(type: .system)
+    private let setup: Bool
+    private let previewView = UIView()
+    private let guide = CAShapeLayer()
+    init(setup: Bool) { self.setup = setup; super.init(nibName: nil, bundle: nil) }
+    required init?(coder: NSCoder) { fatalError("Use init(setup:)") }
     private var preview: AVCaptureVideoPreviewLayer?
     private lazy var capture = RemoteSnapshotCamera(onReady: { [weak self] in
-        guard let self, !self.finished else { return }; self.shutter.isEnabled = true
+        guard let self, !self.finished else { return }; self.shutter.isEnabled = true; self.view.setNeedsLayout()
     }, onResult: { [weak self] data, at in
         guard let self, !self.finished else { return }
         self.finished = true
@@ -133,16 +180,35 @@ nonisolated private final class RemoteSnapshotCamera: NSObject, @unchecked Senda
     })
     override func viewDidLoad() {
         super.viewDidLoad(); view.backgroundColor = .black
-        let layer = AVCaptureVideoPreviewLayer(session: capture.session); layer.videoGravity = .resizeAspectFill
-        view.layer.addSublayer(layer); preview = layer
+        previewView.translatesAutoresizingMaskIntoConstraints = false; view.addSubview(previewView)
+        // Show the complete camera frame; a fill crop can conceal the athlete's
+        // head or feet even when the captured JPEG includes a different area.
+        let layer = AVCaptureVideoPreviewLayer(session: capture.session); layer.videoGravity = .resizeAspect
+        previewView.layer.addSublayer(layer); preview = layer
+        guide.fillColor = UIColor.clear.cgColor; guide.strokeColor = UIColor.white.withAlphaComponent(0.8).cgColor
+        guide.lineWidth = 2; guide.lineDashPattern = [8, 6]; previewView.layer.addSublayer(guide)
+        let instructions = UILabel(); instructions.textColor = .white; instructions.numberOfLines = 0
+        instructions.font = .preferredFont(forTextStyle: .subheadline); instructions.adjustsFontForContentSizeCategory = true
+        instructions.textAlignment = .center; instructions.translatesAutoresizingMaskIntoConstraints = false
+        instructions.text = setup
+            ? "Camera & scale setup\nShow the athlete’s face, singlet, both feet and the scale. Use a private area with nobody else in frame."
+            : "Keep the athlete’s face, singlet, both feet and scale in view. Stand still for the verification photo."
+        view.addSubview(instructions)
         let cancel = UIButton(type: .system); cancel.setTitle("Cancel", for: .normal)
         cancel.addTarget(self, action: #selector(cancelPhoto), for: .touchUpInside)
-        shutter.setTitle("Take weigh-in photo", for: .normal); shutter.isEnabled = false
+        shutter.setTitle(setup ? "Take setup test photo" : "Take weigh-in photo", for: .normal); shutter.isEnabled = false
         shutter.addTarget(self, action: #selector(takePhoto), for: .touchUpInside)
         let controls = UIStackView(arrangedSubviews: [cancel, shutter]); controls.axis = .horizontal
         controls.distribution = .fillEqually; controls.backgroundColor = .black; controls.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(controls)
-        NSLayoutConstraint.activate([controls.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+        NSLayoutConstraint.activate([instructions.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
+            instructions.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
+            instructions.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
+            previewView.topAnchor.constraint(equalTo: instructions.bottomAnchor, constant: 12),
+            previewView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            previewView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+            previewView.bottomAnchor.constraint(equalTo: controls.topAnchor, constant: -8),
+            controls.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             controls.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             controls.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor), controls.heightAnchor.constraint(equalToConstant: 64)])
         switch AVCaptureDevice.authorizationStatus(for: .video) {
@@ -166,9 +232,13 @@ nonisolated private final class RemoteSnapshotCamera: NSObject, @unchecked Senda
         }
     }
     override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews(); preview?.frame = view.bounds
+        super.viewDidLayoutSubviews(); preview?.frame = previewView.bounds
         if let connection = preview?.connection, connection.isVideoRotationAngleSupported(rotation) {
             connection.videoRotationAngle = rotation
+        }
+        if let preview {
+            let frame = preview.layerRectConverted(fromMetadataOutputRect: CGRect(x: 0, y: 0, width: 1, height: 1))
+            guide.frame = previewView.bounds; guide.path = UIBezierPath(roundedRect: frame.insetBy(dx: 12, dy: 12), cornerRadius: 14).cgPath
         }
     }
     @objc private func takePhoto() { guard !finished else { return }; shutter.isEnabled = false; capture.shoot(angle: rotation) }

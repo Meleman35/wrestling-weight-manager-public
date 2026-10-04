@@ -106,5 +106,5 @@ export function summarizeWindow({window, expected, submissions, clubId = null, s
 }
 export function reportCsv(rows) {
   const cell = value => '"' + String(value ?? '').replace(/^(?:\s*[=+@\-]|[\t\r\n])/, "'$&").replaceAll('"','""') + '"';
-  return [['Club','Athlete','USAW ID','AAU membership number','Status','Scale weight (lb)','Captured at','Received at','Verification submission ID','Expires at'], ...rows.map(r => [r.clubName,r.athleteName,r.usawId,r.aauNumber,r.status,r.submission?.weight,r.submission?.capturedAt,r.submission?.receivedAt,r.submission?.submissionId,r.submission?new Date(Date.parse(r.submission.capturedAt)+240*3600000).toISOString():''])].map(row => row.map(cell).join(',')).join('\r\n');
+  return [['Club','Athlete','First name','Last name','USAW ID','AAU membership number','Status','Scale weight (lb)','Captured at','Received at','Verification submission ID','Expires at'], ...rows.map(r => [r.clubName,r.athleteName,r.firstName,r.lastName,r.usawId,r.aauNumber,r.status,r.submission?.weight,r.submission?.capturedAt,r.submission?.receivedAt,r.submission?.submissionId,r.submission?new Date(Date.parse(r.submission.capturedAt)+240*3600000).toISOString():''])].map(row => row.map(cell).join(',')).join('\r\n');
 }

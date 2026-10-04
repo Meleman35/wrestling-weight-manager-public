@@ -42,7 +42,7 @@ export function createRemotePostgresAdapters({db,verifyPersonalSession,resolveRo
   if(!Array.isArray(memberships))fail('Canonical roster memberships required');
   const membershipMap=new Map();
   for(const m of memberships){const key=JSON.stringify([m.clubId,m.athleteId]);if(!map.has(key)||membershipMap.has(key))fail('Membership scope mismatch');membershipMap.set(key,m);}
-  return rows.map(r=>{const key=JSON.stringify([r.clubId,r.athleteId]),n=map.get(key),m=membershipMap.get(key);if(!n||typeof n.clubName!=='string'||typeof n.athleteName!=='string')fail('Canonical roster names required');return {...r,clubName:n.clubName,athleteName:n.athleteName,usawId:m?.usawId??'',aauNumber:m?.aauNumber??''};});
+  return rows.map(r=>{const key=JSON.stringify([r.clubId,r.athleteId]),n=map.get(key),m=membershipMap.get(key);if(!n||typeof n.clubName!=='string'||typeof n.athleteName!=='string')fail('Canonical roster names required');return {...r,clubName:n.clubName,athleteName:n.athleteName,firstName:typeof n.firstName==='string'?n.firstName:'',lastName:typeof n.lastName==='string'?n.lastName:'',usawId:m?.usawId??'',aauNumber:m?.aauNumber??''};});
  }
  async function getEvidence(id){
   const e=(await db.query(`select *,expires_at>clock_timestamp() as unexpired from remote_reporting.evidence where id=$1`,[id])).rows[0];

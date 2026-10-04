@@ -3,7 +3,7 @@ shows the scale weight and provides authenticated access to its verification
 snapshot. USA Wrestling ID and AAU athlete membership number are separate text
 fields. Entered numbers are unverified identifiers, not evidence of eligibility.
 
-CSV downloads include all matching pages, club, name, both membership numbers,
+CSV downloads include all matching pages, club, full/first/last name, both membership numbers,
 status, weight, capture/receipt times, verification submission ID and expiry.
 CSV cannot embed pictures; use Excel for visual review. The Excel workbook embeds
 authenticated JPEG snapshots alongside the athlete, club and scale weight and
@@ -13,6 +13,8 @@ Photo workbooks are bounded to 50 MB of JPEGs; larger reports should be exported
 by club. A failed or inaccessible photo aborts the workbook rather than silently
 dropping verification evidence. Generic CSV is not a promised USA Bracketing or
 TrackWrestling import format; vendor field mapping still needs a sample template.
+Both are intended targets; see remote-tournament-export-compatibility.md for
+verified roster-import guidance and the remaining existing-entry weight-update test.
 
 After-weigh-in warning: "Download a copy for your records. Online weights and
 verification photos are deleted 10 days after capture. Your downloaded
