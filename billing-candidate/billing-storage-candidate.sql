@@ -77,7 +77,11 @@ begin
 end $$;
 create function wm_billing.can_purchase_team(p_user uuid,p_team uuid)
 returns boolean language sql security definer set search_path='' as $$
- select auth.uid()=p_user and private.board_personal(p_user) and not private.board_minor(p_user) and public.is_team_admin(p_team)
+ select auth.uid()=p_user and private.board_personal(p_user) and not private.board_minor(p_user)
+  and private.scoped_deletion_access_ok() and public.is_team_admin(p_team)
+  and exists(select 1 from public.teams t where t.id=p_team and not exists(
+   select 1 from private.scoped_deletion_jobs j where j.state not in ('cancelled','completed')
+    and (j.actor_id=p_user or t.id=any(j.team_ids) or t.organization_id=any(j.organization_ids))))
 $$;
 create function wm_billing.can_purchase_family(p_user uuid)
 returns boolean language sql security definer set search_path='' as $$

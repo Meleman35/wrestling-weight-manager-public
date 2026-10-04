@@ -22,6 +22,14 @@ test('real PostgreSQL transactions, concurrency, permissions and revoked session
   const ctx=await auth.authenticate('Bearer e30.'+Buffer.from(JSON.stringify(claims)).toString('base64url')+'.c2ln');
   const repository=new PostgresBillingRepository({pool,auth}),intentService=new PurchaseIntentService({auth,repository});
   const productID='com.damonmele.wrestlingmanager.teampro.annual';let token;
+  await t.test('a deleting team cannot start a purchase through another administrator',async()=>{
+   const deletionActor='aaaaaaaa-1111-4111-8111-111111111111';
+   try {
+    await admin.query("insert into private.scoped_deletion_jobs(actor_id,state,team_ids) values($1,'pending',array[$2::uuid])",[deletionActor,team]);
+    await assert.rejects(intentService.prepare(ctx,{productID,target:{kind:'team',teamID:team}}),/team_purchase_forbidden/);
+    assert.equal((await admin.query('select count(*)::int as n from wm_billing.intents')).rows[0].n,0);
+   } finally { await admin.query('delete from private.scoped_deletion_jobs where actor_id=$1',[deletionActor]); }
+  });
   await t.test('concurrent team choices persist exactly one team binding',async()=>{
    const r=await Promise.allSettled([team,other].map(teamID=>intentService.prepare(ctx,{productID,target:{kind:'team',teamID}})));
    assert.equal(r.filter(x=>x.status==='fulfilled').length,1);assert.equal(r.filter(x=>x.status==='rejected').length,1);
@@ -102,6 +110,21 @@ test('real PostgreSQL transactions, concurrency, permissions and revoked session
    const access=new SubscriptionAccessService({auth,repository,environment:'Sandbox'});
    const target={teamID:team,athleteID:athlete,eventID:event};
    const bound=(await admin.query('select team_id from wm_billing.team_bindings where user_id=$1',[user])).rows[0].team_id;
+   await t.test('another member cannot receive Team Pro through an unavailable purchaser',async()=>{
+    const viewer=new SubscriptionAccessService({auth:parentAuth,repository:parentRepo,environment:'Sandbox'});
+    assert.equal((await viewer.read(parentContext,{teamID:bound})).teamPro,true);
+    for(const column of ['deleted_at','banned_until']) {
+     try {
+      await admin.query(`update auth.users set ${column}=now()+interval '1 day' where id=$1`,[user]);
+      assert.equal((await viewer.read(parentContext,{teamID:bound})).teamPro,false);
+     } finally { await admin.query(`update auth.users set ${column}=null where id=$1`,[user]); }
+    }
+    try {
+     await admin.query("insert into private.scoped_deletion_jobs(actor_id,state) values($1,'pending')",[user]);
+     assert.equal((await viewer.read(parentContext,{teamID:bound})).teamPro,false);
+    } finally { await admin.query('delete from private.scoped_deletion_jobs where actor_id=$1',[user]); }
+    assert.equal((await viewer.read(parentContext,{teamID:bound})).teamPro,true);
+   });
    await t.test('family choices are canonical, selected, and disappear after guardian revocation',async()=>{
     const options=await coverage.options(parentContext,{});
     assert.equal(options.athletes.length,1);assert.equal(options.athletes[0].profile_id,profile);assert.equal(options.athletes[0].selected,true);

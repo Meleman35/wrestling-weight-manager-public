@@ -19,8 +19,8 @@ export function privateBillingPool(pool){
  return {async connect(){
   const connection=await pool.connect();
   try {
-   const role=(await connection.query("select current_user as role,rolsuper,rolbypassrls from pg_roles where rolname=current_user")).rows[0];
-   if(!role||role.role!=='wm_billing_runtime'||role.rolsuper||role.rolbypassrls)throw Error('Private billing identity required');
+   const role=(await connection.query("select current_user as role,r.rolsuper,r.rolbypassrls,session_user as login,l.rolsuper as login_super,l.rolbypassrls as login_bypass,l.rolcanlogin as can_login from pg_roles r join pg_roles l on l.rolname=session_user where r.rolname=current_user")).rows[0];
+   if(!role||role.role!=='wm_billing_runtime'||role.rolsuper||role.rolbypassrls||role.login_super!==false||role.login_bypass!==false||role.can_login!==true||['postgres','service_role','anon','authenticated'].includes(role.login))throw Error('Private billing identity required');
    return connection;
   }catch(error){connection.release(true);throw error;}
  }};

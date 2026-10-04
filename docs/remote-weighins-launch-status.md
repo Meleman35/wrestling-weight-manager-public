@@ -1,6 +1,6 @@
 # Remote weigh-in launch status — October 4, 2026
 
-Remote weigh-ins remain a development candidate in PR #60. No remote endpoint,
+The combined launch candidate is now in PR #62 (`codex/launch-integration-20261004`), incorporating the earlier PR #60 remote work. No remote endpoint,
 private bucket, scheduled purge or paid director product was activated overnight.
 The existing Wrestling Manager app stays usable. Team athlete card PDF export
 was separately published in web version 0.20.121 through PR #61.
@@ -37,28 +37,30 @@ codec change requires an explicit retry compatibility plan, not silent replaceme
 Pixel processing does not establish identity, clothing, scale or capture-time
 authenticity. Those still require trusted provenance and authorized human review.
 
-## Ready for physical testing
+## Device testing and main-app integration
 
-Open `native-device-check/RemoteScaleCheck.xcodeproj`, select the separate
-RemoteScaleCheck scheme and run on the team iPad or iPhone. This app does not
-replace Wrestling Manager. It numbers fictional adult test athletes in a continuous session, with no sign-in,
-HTTP, upload, payment or saved photographs. Images clear on close/background.
+The owner confirmed the isolated Build 7 scan → step on → weight/photo → step off
+flow on October 4. Do not request another isolated scale test. Its tested scale
+package is copied into the original main app under `native-app/`, retaining the
+original bundle ID, signing team and app features. The combined app is version
+1.0 (9). Full Debug and Release simulator builds have passed.
 
-Physical testing on October 4 confirmed a Build 3 automatic weight/photo capture
-and a disconnect timeout. Build 4 failed to advance after one capture while the
-screen showed 0.0 lb. Build 5 removes the extra shutter countdown, advances on
-one fresh empty-scale response and retries camera presentation after dismissal.
-It includes an iPad simulator regression for three captures inside the real
-SwiftUI sheet, single-zero handoff, mixed-response rejection and retained setup.
-Only camera hardware and BLE are simulated; physical Build 5 reset is now confirmed; Build 6 transport/NFC acceptance remains pending.
-The production host signals its coordinator for the next authorized scan only
-after durable save and scale clear.
+The production capture host now opens the camera immediately after one authorized
+scan and waits for stable BLE evidence with the camera already ready. Durable
+queue completion and fresh scale-clear advance the session without another setup.
+The automated production-host test also exercises real encrypted queue storage
+and personal-account cleanup. Check PR #62's current result before handing over;
+compilation alone does not establish the test result.
 
-Check portrait/landscape framing; setup cancel/retake; immediate capture after
-stable weight; stepping off before stability; disconnecting the scale; and
-backgrounding during capture. Use an adult in appropriate athletic clothing.
-No athlete pictures need to be sent back. This does not test production QR/NFC
-resolution, authenticated server receipts or offline delivery.
+Account deletion now inventories queued remote photos/weights during local
+preflight, removes only the deleted account's files after verified server
+completion, and prevents stale queue instances from writing them back. This does
+not deploy the server-side remote deletion/retention integration.
+
+The single future physical acceptance round, including the remaining prerequisites,
+is in `docs/launch-acceptance-batch.md`. The main app still loads the live website;
+a local build does not deploy the candidate site or remote endpoint. Reporting
+remains hidden until authorized live capture and receipt integration is ready.
 
 ## Remaining launch integration
 

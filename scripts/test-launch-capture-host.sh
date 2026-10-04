@@ -1,38 +1,13 @@
 #!/bin/bash
 set -euo pipefail
 test_root="$(mktemp -d /tmp/remote-session-ui.XXXXXX)"
-test_app="$test_root/RemoteSessionUITests.app"
-mkdir -p "$test_app"
-sdk_path="$(xcrun --sdk iphonesimulator --show-sdk-path)"
-xcrun swiftc -D DEBUG -D REMOTE_SCALE_UI_TESTS -sdk "$sdk_path" \
-  -target arm64-apple-ios17.6-simulator -swift-version 5 -warnings-as-errors \
-  native-candidate/WrestlingManagerRemote*.swift \
-  tests/launch-capture-host-ui.swift -o "$test_app/RemoteSessionUITests"
-cat > "$test_app/Info.plist" <<'PLIST'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0"><dict>
-<key>CFBundleIdentifier</key><string>app.launch-capture-host.ui-tests</string>
-<key>CFBundleExecutable</key><string>RemoteSessionUITests</string>
-<key>CFBundleName</key><string>Remote Session UI Tests</string>
-<key>CFBundlePackageType</key><string>APPL</string>
-<key>CFBundleVersion</key><string>1</string>
-<key>CFBundleShortVersionString</key><string>1.0</string>
-<key>MinimumOSVersion</key><string>17.6</string>
-<key>UIDeviceFamily</key><array><integer>1</integer><integer>2</integer></array>
-<key>UILaunchScreen</key><dict/>
-<key>UISupportedInterfaceOrientations</key><array><string>UIInterfaceOrientationPortrait</string></array>
-</dict></plist>
-PLIST
-cat > "$test_root/Entitlements.plist" <<'ENTITLEMENTS'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0"><dict>
-<key>application-identifier</key><string>TESTLAUNCH.app.launch-capture-host.ui-tests</string>
-<key>keychain-access-groups</key><array><string>TESTLAUNCH.app.launch-capture-host.ui-tests</string></array>
-</dict></plist>
-ENTITLEMENTS
-codesign --force --sign - --entitlements "$test_root/Entitlements.plist" "$test_app"
+# Xcode emits the simulator's embedded entitlements as well as its signature.
+# Keep the real Keychain-backed queue in this test; never substitute a memory key.
+python3 scripts/prepare-launch-capture-test.py "$test_root"
+xcodebuild -project "$test_root/LaunchCaptureHost.xcodeproj" -target RemoteSessionUITests \
+  -configuration Debug -sdk iphonesimulator -arch arm64 \
+  SYMROOT="$test_root/build" CODE_SIGN_IDENTITY=- CODE_SIGNING_ALLOWED=YES build -quiet
+test_app="$test_root/build/Debug-iphonesimulator/RemoteSessionUITests.app"
 xcrun simctl list devices available --json > "$test_root/devices.json"
 test_device="$(python3 - "$test_root/devices.json" <<'PY'
 import json,sys
@@ -51,7 +26,11 @@ xcrun simctl install "$test_device" "$test_app"
 test_container="$(xcrun simctl get_app_container "$test_device" app.launch-capture-host.ui-tests data)"
 for simulated in 0; do
   rm -f "$test_container/Documents/result.txt"
-  SIMCTL_CHILD_REMOTE_NFC_SIMULATION="$simulated" xcrun simctl launch "$test_device" app.launch-capture-host.ui-tests
+  if ! xcrun simctl launch "$test_device" app.launch-capture-host.ui-tests; then
+    xcrun simctl spawn "$test_device" log show --last 2m --style compact \
+      --predicate 'process == "runningboardd" OR process == "amfid"' | tail -80
+    exit 1
+  fi
   test_finished=0
   for attempt in $(seq 1 60); do
     if [ -f "$test_container/Documents/result.txt" ]; then

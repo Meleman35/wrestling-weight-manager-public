@@ -5,11 +5,11 @@ import {privateBillingPool,billingDatabase,createBillingRuntime} from './billing
 
 test('all three Apple PKI trust anchors are intact, CA roots and self-signed',()=>assert.equal(appleTrustRoots().length,3));
 test('server pool rejects privileged or unrelated database identities before any billing operation',async()=>{
- for(const row of [{role:'postgres',rolsuper:true,rolbypassrls:true},{role:'service_role',rolsuper:false,rolbypassrls:true},{role:'authenticated',rolsuper:false,rolbypassrls:false},{role:'wm_billing_runtime',rolsuper:false,rolbypassrls:true}]){
+ for(const row of [{role:'postgres',rolsuper:true,rolbypassrls:true},{role:'service_role',rolsuper:false,rolbypassrls:true},{role:'authenticated',rolsuper:false,rolbypassrls:false},{role:'wm_billing_runtime',rolsuper:false,rolbypassrls:true},{role:'wm_billing_runtime',rolsuper:false,rolbypassrls:false,login:'postgres',login_super:true,login_bypass:true,can_login:true}]){
   let released=false;const connection={query:async()=>({rows:[row]}),release:destroy=>{released=destroy;}};
   await assert.rejects(privateBillingPool({connect:async()=>connection}).connect(),/identity/);assert.equal(released,true);
  }
- const connection={query:async()=>({rows:[{role:'wm_billing_runtime',rolsuper:false,rolbypassrls:false}]}),release(){}};
+ const connection={query:async()=>({rows:[{role:'wm_billing_runtime',rolsuper:false,rolbypassrls:false,login:'wm_billing_service',login_super:false,login_bypass:false,can_login:true}]}),release(){}};
  assert.equal(await privateBillingPool({connect:async()=>connection}).connect(),connection);
 });
 test('runtime transaction commits before returning and rolls back on failure',async()=>{

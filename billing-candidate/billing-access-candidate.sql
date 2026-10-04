@@ -42,8 +42,14 @@ returns jsonb language sql stable security definer set search_path='' as $$
  else jsonb_build_object('teamAuthorized',true,
   'athleteAuthorized',athlete_ok or record_ok,'recorderAuthorized',record_ok,
   'athleteProfileID',(select profile_id from target),
-  'teamSubscriptions',coalesce((select jsonb_agg(snapshot) from wm_billing.subscriptions
-   where scope='team' and team_id=p_team),'[]'::jsonb),
+  'teamSubscriptions',coalesce((select jsonb_agg(s.snapshot) from wm_billing.subscriptions s
+   join auth.users u on u.id=s.user_id where s.scope='team' and s.team_id=p_team
+    and u.confirmed_at is not null and not coalesce(u.is_anonymous,false) and u.deleted_at is null
+    and (u.banned_until is null or u.banned_until<=now()) and private.board_personal(u.id)
+    and not exists(select 1 from private.scoped_deletion_jobs j
+     where (j.actor_id=u.id and j.state not in ('cancelled','completed')) or
+      (j.personal and j.sealed_at is not null and
+       j.subject_hash=encode(sha256(convert_to(u.id::text,'UTF8')),'hex')))),'[]'::jsonb),
   'familyCoverage',case when athlete_ok or record_ok then coalesce((select jsonb_agg(jsonb_build_object(
    'subscription',snapshot,'familyOwnerID',family_owner_id,'linkedProfileIDs',profiles)) from coverage),'[]'::jsonb)
    else '[]'::jsonb end) end from permission

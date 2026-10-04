@@ -8,6 +8,7 @@ on:
       - 'src/launch-*.mjs'
       - 'tests/launch-*'
       - 'scripts/check-launch-*'
+      - 'scripts/prepare-launch-*'
       - 'scripts/test-launch-*'
       - '.github/workflows/launch-integration.yml'
 permissions:

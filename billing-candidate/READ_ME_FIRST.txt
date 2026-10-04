@@ -1,3 +1,19 @@
+Current combined candidate — October 4, 2026
+
+PR #62: https://github.com/Meleman35/wrestling-weight-manager-public/pull/62
+This includes the original main native app in native-app/, Plans & purchases,
+server-verified native activation, canonical family selection, notification/runtime
+composition, and billing/deletion actor locks. Full main-app Debug/Release builds
+and the billing database/browser/native checks have passed on integration checkpoints.
+Consult current PR checks for the latest exact commit. The private Apple key,
+server deletion/retention integration and live deployment remain outstanding.
+Payments are not enabled. See docs/launch-acceptance-batch.md for the one combined
+acceptance round after those prerequisites are ready.
+
+The notes below are historical component checkpoints, not the current integration
+status. Earlier "not wired" statements may be superseded by PR #62; deployment and
+physical sandbox results must never be inferred from component checks.
+
 Wrestling Manager billing candidate — October 3, 2026
 
 STATUS: Prepared integration code. Payments are not enabled.

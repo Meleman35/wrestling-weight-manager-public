@@ -22,6 +22,10 @@ assert project.count('CURRENT_PROJECT_VERSION = 9;') == 2
 assert project.count('productName = AmericanScaleKit;') == 1
 scheme = (app / 'Wrestling Manager Xcode App.xcodeproj/xcshareddata/xcschemes/Wrestling Manager.xcscheme').read_text()
 assert 'StoreKitConfigurationFileReference' not in scheme, 'Normal Run must use Apple sandbox, not local StoreKit simulation'
+privacy = plistlib.loads((sources / 'PrivacyInfo.xcprivacy').read_bytes())
+reasons = {entry['NSPrivacyAccessedAPIType']: entry['NSPrivacyAccessedAPITypeReasons']
+           for entry in privacy['NSPrivacyAccessedAPITypes']}
+assert 'C617.1' in reasons.get('NSPrivacyAccessedAPICategoryFileTimestamp', []), 'App-container file metadata needs its declared API reason'
 for source in app.rglob('*'):
     assert 'xcuserdata' not in source.parts and '.build' not in source.parts
     if source.suffix in {'.swift', '.plist', '.xcprivacy', '.entitlements'}:
