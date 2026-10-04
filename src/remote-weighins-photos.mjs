@@ -43,6 +43,8 @@ export function createRemotePhotoProvider({supabase,authorize,verifyCapture,evid
    const bytes=new Uint8Array(await result.data.arrayBuffer());
    if(bytes.length!==record.byteCount||createHash('sha256').update(bytes).digest('hex')!==record.digest)deny('Photo integrity failed');
    await authorize(session,record.binding,'read');
+   const current=await evidenceStore.find(evidenceId);
+   if(!current?.confirmed||current.revoked||!Number.isFinite(Date.parse(current.expiresAt))||Date.parse(current.expiresAt)<=now()||current.path!==record.path||current.digest!==record.digest)deny('Photo unavailable');
    // Serve via authenticated no-store response; never return a public/signed URL.
    return {bytes,contentType:'image/jpeg',headers:{'Cache-Control':'no-store, private','X-Content-Type-Options':'nosniff'}};
   },
