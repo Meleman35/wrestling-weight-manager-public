@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.120: Organized account and athlete profiles with Creator demo return navigation. -->
+<!-- Wrestling Manager v0.20.121: Bulk athlete card PDF export with protected preparation and direct-tap sharing. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -2377,7 +2377,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.120</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.121</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -17554,7 +17554,7 @@ window.WMRolePreviewDocument="\u003c!doctype html>\u003chtml lang=\"en\">\u003ch
 /* Public web-version status only. Never activates a worker or reloads user work. */
 window.WMWebUpdates=(()=>{
  'use strict';
- const CURRENT='0.20.120',LIMIT=65536;
+ const CURRENT='0.20.121',LIMIT=65536;
  const sheet=document.getElementById('accountSheet');
  if(!sheet)return Object.freeze({check:async()=>{}});
  const card=document.createElement('section');card.id='webUpdatesCard';card.className='feature-card';
@@ -17708,6 +17708,146 @@ window.WMWebUpdates=(()=>{
   for(const {section,rows} of Object.values(sections))if(rows.children.length)actions.append(section);
  }
  new MutationObserver(organize).observe(body,{childList:true});organize();
+})();
+
+</script>
+<script id="wm-bulk-athlete-cards">
+// Uses the existing authorized card loader. Never rotates a credential.
+async function collectAthleteCards({roster, selectedIDs, loadCard, isCurrent, onProgress = () => {}}) {
+  if (!Array.isArray(roster) || !Array.isArray(selectedIDs) || !selectedIDs.length)
+    throw Error('Select at least one athlete.');
+  const allowed = new Set(roster.map(row => String(row.athlete_id)));
+  const ids = [...new Set(selectedIDs.map(String))];
+  if(ids.length>500)throw Error('Select up to 500 athletes per export.');
+  if (ids.some(id => !allowed.has(id))) throw Error('An athlete is no longer in the available roster.');
+  const cards = [];
+  for (const id of ids) {
+    if (!isCurrent()) throw Error('The team or account changed. Start the again.');
+    const card = await loadCard(id, false);
+    if (!isCurrent()) throw Error('The team or account changed. Start the again.');
+    if (!card || String(card.athlete_id) !== id || typeof card.credential_token !== 'string' || !card.credential_token)
+      throw Error('An athlete card could not be verified. No file was exported.');
+    cards.push(Object.freeze({...card}));
+    onProgress(cards.length, ids.length);
+  }
+  return Object.freeze(cards);
+}
+
+// CR80: 85.60 x 53.98 mm. Letter sheet fits eight with cutting space.
+function athleteCardLayout(count, individual = false) {
+  if (!Number.isInteger(count) || count < 1) throw Error('No cards to export.');
+  const mm = 72 / 25.4, width = 85.6 * mm, height = 53.98 * mm;
+  return Array.from({length:count}, (_,i) => ({
+    page: individual ? i : Math.floor(i / 8),
+    pageWidth: individual ? width : 612,
+    pageHeight: individual ? height : 792,
+    x: individual ? 0 : (612 - 2 * width - 18) / 2 + (i % 2) * (width + 18),
+    y: individual ? 0 : 792 - 45 - height - Math.floor((i % 8) / 2) * (height + 18),
+    width, height
+  }));
+}
+
+async function renderAthleteCardPDF({cards, teamName, individual = false,
+  PDFLib, document, QRCode, isCurrent, loadPhoto = async () => null}) {
+  const pdf = await PDFLib.PDFDocument.create();
+  pdf.setTitle(String(teamName || 'Team') + ' - Athlete Cards');
+  const positions = athleteCardLayout(cards.length, individual);
+  let page, pageIndex = -1;
+  for (let i=0; i<cards.length; i++) {
+    if (!isCurrent()) throw Error('The team or account changed. Start the again.');
+    const c=cards[i], p=positions[i];
+    if (p.page !== pageIndex) { page=pdf.addPage([p.pageWidth,p.pageHeight]);pageIndex=p.page; }
+    const canvas=document.createElement('canvas');canvas.width=1011;canvas.height=638;
+    const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,1011,638);
+    ctx.fillStyle='#153b75';ctx.fillRect(0,0,1011,88);
+    ctx.fillStyle='#fff';ctx.font='bold 32px sans-serif';ctx.fillText('WRESTLING MANAGER',34,57);
+    ctx.fillStyle='#14253b';ctx.font='bold 43px sans-serif';
+    const name=[c.first_name,c.last_name].filter(Boolean).join(' ');
+    ctx.fillText(name,34,160,560);ctx.font='28px sans-serif';ctx.fillText(String(teamName||''),34,215,550);
+    ctx.font='26px sans-serif';ctx.fillText('Athlete check-in card',34,270);
+    const photo = c.photo_path ? await loadPhoto(c.photo_path) : null;
+    if (!isCurrent()) throw Error('The team or account changed. Start the again.');
+    ctx.fillStyle='#edf2f8';ctx.fillRect(34,300,180,180);
+    if(photo){const size=Math.min(photo.naturalWidth,photo.naturalHeight);ctx.drawImage(photo,(photo.naturalWidth-size)/2,(photo.naturalHeight-size)/2,size,size,34,300,180,180);}
+    else {ctx.fillStyle='#153b75';ctx.font='bold 55px sans-serif';ctx.fillText([c.first_name,c.last_name].filter(Boolean).map(x=>Array.from(x)[0]).join(''),65,410,125);}
+    ctx.fillStyle='#14253b';ctx.font='26px sans-serif';
+    ctx.fillText('Keep this card private.',34,540);
+    ctx.fillText('NFC must be programmed separately.',34,585,590);
+    const qrBox=document.createElement('div');
+    new QRCode(qrBox,{text:c.credential_token,width:320,height:320,correctLevel:QRCode.CorrectLevel.M});
+    const qr=qrBox.querySelector('canvas');if(!qr)throw Error('QR code could not be generated.');
+    // White quiet zone remains outside the code on all four sides.
+    ctx.imageSmoothingEnabled=false;ctx.drawImage(qr,650,170,320,320);
+    const png=await pdf.embedPng(canvas.toDataURL('image/png'));
+    if (!isCurrent()) throw Error('The team or account changed. Start the again.');
+    page.drawImage(png,{x:p.x,y:p.y,width:p.width,height:p.height});
+    if(!individual)page.drawRectangle({x:p.x,y:p.y,width:p.width,height:p.height,
+      borderColor:PDFLib.rgb(.65,.65,.65),borderWidth:.4});
+    canvas.width=canvas.height=0;qrBox.replaceChildren();
+  }
+  const bytes=await pdf.save();
+  if(!isCurrent())throw Error('The team or account changed. Start the again.');
+  return bytes;
+}
+
+(function(){
+ const allowed=()=>actualIsStaff&&!managedLogin&&!!session?.user?.id&&!document.body.classList.contains('kiosk-locked')&&!document.querySelector('#appLockOverlay:not(.hidden)');
+ const sheet=document.getElementById('athleteCardSheet');
+ const panel=document.createElement('details');panel.id='bulkAthleteCards';panel.className='feature-card';
+ panel.innerHTML='<summary>Print team athlete cards</summary><p class="fine">Choose up to 500 athletes per PDF and print at 100% actual size. NFC chips must be programmed separately.</p><button type="button" class="secondary" data-all>Select all</button><div data-list></div><label>PDF format<select data-format><option value="sheet">Letter sheets · 8 cards per page</option><option value="individual">Individual credit-card size pages</option></select></label><button type="button" class="wide" data-export>Prepare selected cards</button><p role="status" data-status></p>';
+ sheet.append(panel);let busy=false,exportEpoch=0,prepared=null,preparedTimer=null;
+ const list=panel.querySelector('[data-list]'),status=panel.querySelector('[data-status]'),button=panel.querySelector('[data-export]');
+ function discardPrepared(){prepared=null;if(preparedTimer)clearTimeout(preparedTimer);preparedTimer=null;button.textContent='Prepare selected cards';}
+ function syncVisibility(){panel.hidden=!allowed();if(!allowed()||sheet.classList.contains('hidden')){++exportEpoch;discardPrepared();status.textContent='';}}
+ function paint(){++exportEpoch;discardPrepared();syncVisibility();list.replaceChildren();for(const a of athleteCardRows){const label=document.createElement('label'),box=document.createElement('input');box.type='checkbox';box.value=a.athlete_id;box.disabled=busy;label.append(box,document.createTextNode(' '+[a.first_name,a.last_name].filter(Boolean).join(' ')));list.append(label);}status.textContent='';}
+ new MutationObserver(paint).observe(document.getElementById('athleteCardSelect'),{childList:true});
+ const visibilityObserver=new MutationObserver(syncVisibility);
+ for(const el of [document.body,sheet,document.getElementById('appLockOverlay')].filter(Boolean))visibilityObserver.observe(el,{attributes:true,attributeFilter:['class']});
+ paint();
+ panel.querySelector('[data-all]').onclick=()=>{if(!busy){discardPrepared();status.textContent='';list.querySelectorAll('input').forEach(x=>x.checked=true);}};
+ panel.addEventListener('change',()=>{discardPrepared();status.textContent='';});
+ document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){++exportEpoch;discardPrepared();status.textContent='';}});
+ button.onclick=async()=>{
+  if(busy||!allowed())return;
+  if(prepared){
+   const ready=prepared;if(!ready.current()){discardPrepared();status.textContent='The team or account changed. Prepare the cards again.';return;}
+   busy=true;button.disabled=true;
+   try{
+    // Sharing starts directly from this new tap. Preparing a large PDF can
+    // outlast the browser's transient user activation from the first tap.
+    const bridge=window.webkit?.messageHandlers?.officialWeighInExport;
+    if(bridge&&ready.nativePayload){bridge.postMessage(ready.nativePayload);if(ready.current())status.textContent='Share requested. Choose a destination in the share window, then print at 100% actual size.';}
+    else if(navigator.canShare?.({files:[ready.file]})){await navigator.share({files:[ready.file],title:'Team athlete cards'});if(ready.current())status.textContent='Cards ready. Print at 100% actual size.';}
+    else if(window.webkit?.messageHandlers){if(ready.current())status.textContent='This app build cannot share PDFs yet. Open the app in Safari to save your cards.';}
+    else{const url=URL.createObjectURL(ready.file),a=document.createElement('a');a.href=url;a.download=ready.file.name;a.target='_blank';a.rel='noopener noreferrer';panel.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);if(ready.current())status.textContent='PDF download requested. Print at 100% actual size.';}
+   }catch(e){if(ready.current())status.textContent=e.name==='AbortError'?'Sharing cancelled. Tap Save or share PDF to try again.':'PDF could not be shared. Try saving from your browser.';}
+   finally{busy=false;button.disabled=false;}return;
+  }
+  const selectedIDs=[...list.querySelectorAll('input:checked')].map(x=>x.value);
+  if(!selectedIDs.length||selectedIDs.length>500){status.textContent='Select between 1 and 500 athletes for this PDF.';return;}
+  busy=true;
+  const teamID=activeTeam?.id,userID=session?.user?.id,version=athleteCardRequestVersion,epoch=exportEpoch,exportSession=session;
+  const current=()=>allowed()&&session===exportSession&&epoch===exportEpoch&&activeTeam?.id===teamID&&session?.user?.id===userID&&version===athleteCardRequestVersion&&!sheet.classList.contains('hidden');
+  panel.querySelectorAll('button,input,select').forEach(x=>x.disabled=true);
+  try{
+   const cards=await collectAthleteCards({roster:athleteCardRows,selectedIDs,isCurrent:current,
+    loadCard:async id=>{const {data,error}=await client.rpc('get_athlete_scan_card',{p_team_id:teamID,p_athlete_id:id,p_replace:false});if(error)throw error;return data;},
+    onProgress:(n,total)=>{status.textContent=`Preparing card ${n} of ${total}…`;}});
+   const bytes=await renderAthleteCardPDF({cards,teamName:activeTeam.name,individual:panel.querySelector('[data-format]').value==='individual',PDFLib:window.PDFLib,document,QRCode,isCurrent:current,loadPhoto:async path=>{
+    const url=await athletePhotoUrl(path);if(!url||!current())return null;
+    return await new Promise(resolve=>{const img=new Image();img.crossOrigin='anonymous';const timer=setTimeout(()=>{img.src='';resolve(null);},10000);img.onload=()=>{clearTimeout(timer);resolve(current()?img:null);};img.onerror=()=>{clearTimeout(timer);resolve(null);};img.src=url;});
+   }});
+   if(!current())return;
+   // Match the installed native PDF handler's exact decoded-byte limit.
+   if(bytes.byteLength>20000000){status.textContent='This PDF is too large. Select fewer athletes and prepare it again.';return;}
+   let nativePayload=null;
+   if(window.webkit?.messageHandlers?.officialWeighInExport){let binary='';for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));nativePayload={filename:'Team-Athlete-Cards.pdf',base64:btoa(binary)};}
+   prepared={file:new File([bytes],'Team-Athlete-Cards.pdf',{type:'application/pdf'}),nativePayload,current};
+   button.textContent='Save or share PDF';status.textContent='PDF prepared. Tap Save or share PDF, then print at 100% actual size.';
+   preparedTimer=setTimeout(()=>{discardPrepared();if(current())status.textContent='Prepared PDF cleared. Prepare the cards again when ready.';},120000);
+  }catch(e){if(current())status.textContent=e.name==='AbortError'?'Sharing cancelled.':'Export could not finish. Check your connection and try again.';}
+  finally{busy=false;panel.querySelectorAll('button,input,select').forEach(x=>x.disabled=false);}
+ };
 })();
 
 </script>
