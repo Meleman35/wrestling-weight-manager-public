@@ -3,6 +3,11 @@ on:
   pull_request:
     paths:
       - native-candidate/WrestlingManagerRemote*.swift
+      - tests/remote-retention-tests.swift
+      - src/remote-weighins-policy.mjs
+      - src/remote-weighins-retention.mjs
+      - tests/remote-weighins-policy.mjs
+      - tests/remote-weighins-retention.mjs
       - tests/remote-capture-tests.swift
       - tests/remote-delivery-tests.swift
       - scripts/prepare-native-remote-scale.py
@@ -68,3 +73,7 @@ jobs:
         run: |
           swiftc native-candidate/WrestlingManagerRemoteDelivery.swift tests/remote-delivery-tests.swift -o /tmp/remote-delivery-tests
           /tmp/remote-delivery-tests
+      - name: Exercise native retention calculation
+        run: |
+          swiftc native-candidate/WrestlingManagerRemoteRetention.swift tests/remote-retention-tests.swift -o /tmp/remote-retention-tests
+          /tmp/remote-retention-tests

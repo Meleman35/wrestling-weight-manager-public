@@ -12,7 +12,11 @@ create table remote_reporting.windows (
  id text primary key, program_id text not null references remote_reporting.programs(id),
  event_id text, opens_at timestamptz not null, closes_at timestamptz not null,
  time_zone text not null, sync_grace_ms bigint not null default 0 check(sync_grace_ms between 0 and 604800000),
- active boolean not null default false, unique(program_id,id), check(opens_at<closes_at)
+ active boolean not null default false, event_date date,
+ unique(program_id,id), check(opens_at<closes_at),
+ check(event_id is null or (event_date is not null
+  and opens_at=((event_date-1)::timestamp at time zone time_zone)
+  and closes_at=((event_date+1)::timestamp at time zone time_zone)))
 );
 create table remote_reporting.club_enrollments (
  program_id text not null references remote_reporting.programs(id), club_id text not null,
@@ -103,6 +107,8 @@ begin
  if not found or not w.active or (p.kind='tournament' and (w.event_id is distinct from p.event_id or p_record->>'eventId' is distinct from p.event_id)) or p_record->>'kind' is distinct from p.kind then raise exception 'Window unavailable';end if;
  perform 1 from remote_reporting.roster where program_id=p.id and window_id=w.id and club_id=p_record->>'clubId' and athlete_id=p_record->>'athleteId' and active and remote_consent for share;
  if not found then raise exception 'Roster consent unavailable';end if;
+ captured:=(p_record->>'capturedAt')::timestamptz;
+ if captured is null or captured+interval '240 hours'<=clock_timestamp() then raise exception 'Capture retention expired';end if;
  select * into prior from remote_reporting.submissions where submission_id=p_record->>'submissionId';
  if found then
  if prior.payload_hash<>p_hash or prior.record<>p_record then raise exception 'Idempotency conflict';end if;

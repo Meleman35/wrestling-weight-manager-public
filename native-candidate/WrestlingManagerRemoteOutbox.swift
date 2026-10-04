@@ -13,16 +13,18 @@ actor WrestlingManagerRemoteOutbox {
         let jpeg: Data
         var receipt: Data?
     }
-    enum Failure: Error { case locked, keyUnavailable, wrongScope, conflict, capacity, unconfirmed }
+    enum Failure: Error { case locked, keyUnavailable, wrongScope, conflict, capacity, unconfirmed, expired }
     private let accountID: UUID
     private let clubID: UUID
+    private let now: @Sendable () -> Date
     private let folder: URL
     private var key: SymmetricKey?
     private static let service = "com.damonmele.wrestlingmanager.remote-outbox.v1"
     private let maxBytes = 32 * 1024 * 1024
     private let maxEntries = 200
 
-    init(accountID: UUID, clubID: UUID) throws {
+    init(accountID: UUID, clubID: UUID, now: @escaping @Sendable () -> Date = { Date() }) throws {
+        self.now = now
         self.accountID = accountID
         self.clubID = clubID
         let scope = "\(accountID.uuidString):\(clubID.uuidString)"
@@ -62,6 +64,10 @@ actor WrestlingManagerRemoteOutbox {
         let bytes = try AES.GCM.open(box, using: key, authenticating: identity(id))
         let capture = try JSONDecoder().decode(Capture.self, from: bytes)
         guard capture.submissionID == id, capture.accountID == accountID, capture.clubID == clubID else { throw Failure.wrongScope }
+        if now() >= (try WrestlingManagerRemoteRetention.expiresAt(payload: capture.payload)) {
+            try FileManager.default.removeItem(at: path(id))
+            throw Failure.expired
+        }
         return capture
     }
     private func write(_ capture: Capture) throws {
@@ -75,6 +81,7 @@ actor WrestlingManagerRemoteOutbox {
         guard capture.accountID == accountID, capture.clubID == clubID,
               capture.jpeg.count <= 5 * 1024 * 1024, capture.payload.count <= 12000,
               capture.receipt == nil else { throw Failure.wrongScope }
+        guard now() < (try WrestlingManagerRemoteRetention.expiresAt(payload: capture.payload)) else { throw Failure.expired }
         if FileManager.default.fileExists(atPath: path(capture.submissionID).path) {
             let previous = try read(capture.submissionID)
             guard previous.payload == capture.payload, previous.jpeg == capture.jpeg else { throw Failure.conflict }
@@ -88,12 +95,13 @@ actor WrestlingManagerRemoteOutbox {
     }
     func pending() throws -> [UUID] {
         _ = try requireKey()
-        return try FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)
-            .filter { $0.pathExtension == "sealed" }.map { url in
-                guard let id = UUID(uuidString: url.deletingPathExtension().lastPathComponent) else { throw Failure.conflict }
-                _ = try read(id) // Corrupt/foreign ciphertext never silently disappears.
-                return id
-            }.sorted { $0.uuidString < $1.uuidString }
+        var ids: [UUID] = []
+        for url in try FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil) where url.pathExtension == "sealed" {
+            guard let id = UUID(uuidString: url.deletingPathExtension().lastPathComponent) else { throw Failure.conflict }
+            do { _ = try read(id); ids.append(id) }
+            catch Failure.expired { continue }
+        }
+        return ids.sorted { $0.uuidString < $1.uuidString }
     }
     func capture(_ id: UUID) throws -> Capture { try read(id) }
     private static func receiptDate(_ text: String) -> Date? {

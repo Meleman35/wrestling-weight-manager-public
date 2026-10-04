@@ -246,3 +246,16 @@ The PostgreSQL report and receipt adapters hide expired submissions. Physical
 removal still requires a deployed retention worker, including encrypted device
 queues, database rows, objects and the applicable backup policy; these changes do
 not establish an exact physical deletion guarantee or activate production.
+
+The draft database now enforces event window midnight boundaries whenever an
+`event_id` is present and rejects missing `event_date`. The acceptance function
+also rejects expired captures before its idempotent receipt return. Elapsed
+retention uses `240 hours` in SQL to avoid session-time-zone DST differences.
+The server retention worker removes submissions/evidence only after photo purge
+confirms object absence, and keeps failed removals retryable. Real disposable
+PostgreSQL integration tests exercise expiry, event constraints and cleanup.
+Encrypted JS and native queues deny expired captures and remove expired local
+files when accessed or enumerated. The native installer includes the shared date
+policy, and CI checks it with the Apple SDK and a native date-policy executable.
+Closed or locked devices cannot run cleanup until the app can access its protected
+files again; scheduled server cleanup and backup handling remain deployment work.

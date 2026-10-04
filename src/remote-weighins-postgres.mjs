@@ -25,7 +25,7 @@ export function createRemotePostgresAdapters({db,verifyPersonalSession,resolveRo
  }
  async function getWindow(id){
   const r=(await db.query('select * from remote_reporting.windows where id=$1',[id])).rows[0];
-  return r?{id:r.id,programId:r.program_id,eventId:r.event_id,opensAt:iso(r.opens_at),closesAt:iso(r.closes_at),timeZone:r.time_zone,syncGraceMs:Number(r.sync_grace_ms),active:r.active}:null;
+  return r?{id:r.id,programId:r.program_id,eventId:r.event_id,opensAt:iso(r.opens_at),closesAt:iso(r.closes_at),timeZone:r.time_zone,eventDate:r.event_date,syncGraceMs:Number(r.sync_grace_ms),active:r.active}:null;
  }
  async function getWindows(programId){
   const rows=(await db.query('select id from remote_reporting.windows where program_id=$1 and active order by closes_at desc,id limit 100',[programId])).rows;
@@ -46,11 +46,11 @@ export function createRemotePostgresAdapters({db,verifyPersonalSession,resolveRo
  }
  const store={
   async receipt(submissionId){
-   const r=(await db.query(`select submission_id,receipt_id,received_at from remote_reporting.submissions where submission_id=$1 and (record->>'capturedAt')::timestamptz+interval '10 days'>clock_timestamp()`,[submissionId])).rows[0];
+   const r=(await db.query(`select submission_id,receipt_id,received_at from remote_reporting.submissions where submission_id=$1 and (record->>'capturedAt')::timestamptz+interval '240 hours'>clock_timestamp()`,[submissionId])).rows[0];
    return r?{submissionId:r.submission_id,receiptId:r.receipt_id,status:'submitted',receivedAt:iso(r.received_at)}:null;
   },
   async findSubmission(submissionId){
-   const r=(await db.query(`select record from remote_reporting.submissions where submission_id=$1 and (record->>'capturedAt')::timestamptz+interval '10 days'>clock_timestamp()`,[submissionId])).rows[0];return r?.record??null;
+   const r=(await db.query(`select record from remote_reporting.submissions where submission_id=$1 and (record->>'capturedAt')::timestamptz+interval '240 hours'>clock_timestamp()`,[submissionId])).rows[0];return r?.record??null;
   },
   async atomicAccept({actor,record,payloadHash}){
    const session=sessions.get(actor);if(!session)fail('Trusted acceptance actor required');
@@ -64,7 +64,7 @@ export function createRemotePostgresAdapters({db,verifyPersonalSession,resolveRo
   async list({programId,windowId,clubId=null}){
    const rows=(await db.query(`select record,receipt_id,received_at from remote_reporting.submissions
       where program_id=$1 and window_id=$2 and ($3::text is null or club_id=$3)
-      and (record->>'capturedAt')::timestamptz+interval '10 days'>clock_timestamp() order by club_id,athlete_id`,[programId,windowId,clubId])).rows;
+      and (record->>'capturedAt')::timestamptz+interval '240 hours'>clock_timestamp() order by club_id,athlete_id`,[programId,windowId,clubId])).rows;
    return rows.map(r=>({...r.record,receiptId:r.receipt_id,receivedAt:iso(r.received_at),status:'submitted'}));
   }
  };

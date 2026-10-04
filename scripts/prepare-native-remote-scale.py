@@ -45,7 +45,7 @@ def main():
     names = ['WrestlingManagerRemoteCapture.swift', 'WrestlingManagerRemotePhoto.swift',
              'WrestlingManagerRemoteCaptureHost.swift', 'WrestlingManagerRemoteOutbox.swift',
              'WrestlingManagerRemoteDelivery.swift', 'WrestlingManagerRemoteDeliveryStore.swift',
-             'WrestlingManagerRemoteHTTP.swift', 'WrestlingManagerRemoteReportingSession.swift']
+             'WrestlingManagerRemoteRetention.swift', 'WrestlingManagerRemoteHTTP.swift', 'WrestlingManagerRemoteReportingSession.swift']
     changes = {scale: source.encode()}
     for name in names:
         target = app / name
