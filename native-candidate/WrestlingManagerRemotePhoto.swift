@@ -49,6 +49,9 @@ final class WrestlingManagerRemotePhoto {
 }
 
 // Mutable AVFoundation capture state is confined to a serial queue.
+#if compiler(>=6.2)
+nonisolated
+#endif
 private final class RemoteSnapshotCamera: NSObject, @unchecked Sendable, AVCapturePhotoCaptureDelegate {
     nonisolated(unsafe) let session = AVCaptureSession()
     private let queue = DispatchQueue(label: "app.wrestlingmanager.remote-photo", qos: .userInitiated)

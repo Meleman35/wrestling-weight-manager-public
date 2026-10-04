@@ -1,8 +1,8 @@
 import Foundation
 
 enum WrestlingManagerRemoteRetention {
-    static let duration: TimeInterval = 10 * 24 * 60 * 60
-    static func expiresAt(payload: Data) throws -> Date {
+    nonisolated static let duration: TimeInterval = 10 * 24 * 60 * 60
+    nonisolated static func expiresAt(payload: Data) throws -> Date {
         let object = try JSONSerialization.jsonObject(with: payload) as? [String: Any]
         guard let text = object?["capturedAt"] as? String else { throw Failure.invalidCaptureDate }
         let formatter = ISO8601DateFormatter()

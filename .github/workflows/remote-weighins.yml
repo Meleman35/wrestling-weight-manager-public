@@ -64,7 +64,7 @@ jobs:
       - name: Typecheck protected iOS queue
         run: |
           sdk_path="$(xcrun --sdk iphonesimulator --show-sdk-path)"
-          xcrun swiftc -typecheck -sdk "$sdk_path" -target arm64-apple-ios17.0-simulator native-candidate/WrestlingManagerRemote*.swift
+          xcrun swiftc -typecheck -sdk "$sdk_path" -target arm64-apple-ios17.0-simulator -swift-version 5 -default-isolation MainActor -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-upcoming-feature InferIsolatedConformances -warnings-as-errors native-candidate/WrestlingManagerRemote*.swift
       - name: Exercise native capture transitions
         run: |
           swiftc native-candidate/WrestlingManagerRemoteCapture.swift tests/remote-capture-tests.swift -o /tmp/remote-capture-tests
