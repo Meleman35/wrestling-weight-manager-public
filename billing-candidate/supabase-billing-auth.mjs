@@ -1,5 +1,6 @@
 // Server-only. Contexts can be minted only after Supabase verifies this exact JWT.
 // Never construct an authContext from a request-body user or decoded JWT alone.
+import {Buffer} from 'node:buffer';
 const uuid=x=>typeof x==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(x);
 export class SupabaseBillingAuth {
  #contexts=new WeakMap();

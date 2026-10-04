@@ -1,0 +1,33 @@
+# Combined launch verification — October 4, 2026
+
+Main-app verification checkpoint: `17911b0c4fe2210ce76829284f418c3e7d30193b` on PR #62, with all 24 workflows successful. The subsequent Node-verifier change has additional checks listed below. This report concerns candidate code, not production billing or Apple acceptance.
+
+## Passed
+
+- Full original main-app Debug and Release simulator builds, with preserved bundle/signing identity and matching canonical billing/remote/scale sources.
+- Production capture host with actual encrypted file queue and Keychain: camera opens before stable weight, one scan authorization, two automatic weight/photo saves, fresh-zero next-scan handoff, duplicate/revoked scan rejection, isolated personal-account cleanup and stale-queue resurrection rejection. Camera hardware and BLE input are simulated.
+- Billing: 151 tests passed, zero failed or skipped, including disposable PostgreSQL transactions, concurrent purchase bindings, exact session revocation, deletion actor locks, deleting-team rejection, unavailable-purchaser access, canonical family selection and restricted app-role access.
+- Separate Apple notification database checks: refund update and inbox completion are atomic; duplicates, stale status, leases, deletion freeze and client-role denial are checked.
+- Native purchase authentication/transport executables and Swift component type checking.
+- Browser Plans and family selection, including responsive rendering, native activation readiness and account/session lifecycle isolation.
+- Existing application regressions including offline/Mat Mode, parent permission and adult review, account deletion, health/trainer, notifications, cards, merge, practice plans and statistics.
+- Remote reporting JavaScript/PostgreSQL/browser checks, including bounded export, immutable time windows, retention, lower valid reweigh selection and club access.
+
+Evidence:
+- Main app and production capture host: https://github.com/Meleman35/wrestling-weight-manager-public/actions/runs/37241459224
+- Billing: https://github.com/Meleman35/wrestling-weight-manager-public/actions/runs/37241459155
+- Remote foundation: https://github.com/Meleman35/wrestling-weight-manager-public/actions/runs/37241459196
+
+## Scope of these results
+
+The owner already confirmed isolated Build 7 physical scale/camera behavior. That does not establish end-to-end production reporting. A compiled app and simulated capture do not validate actual Apple receipts, live tournament imports, hosted throughput, real device camera/BLE permissions or live database/storage expiry.
+
+No web publication, live remote/billing migration, payment activation, charge, App Store submission or production data deletion was performed in this integration work. The only hosted change was the read-only, JWT-protected `wm-runtime-readiness` diagnostic, which reads no business data. Remote reporting remains hidden. The original main app still loads https://theteammanager.app/.
+
+The diagnostic returned HTTP 200 with `appleCertificateVerification: false` and `billingEnabled: false`. Pinned Deno 2.1.4 reproduces the missing `crypto.X509Certificate.prototype.verify` API. Apple's official verification library needs that function; local payment verification cannot be activated on the checked Supabase runtime.
+
+A separate Node backend verifier and private server transport are prepared in this branch. The six Deno compatibility checks pass for the remote path, including an explicit assertion that local certificate verification remains blocked. Focused Node checks cover authorization, input bounds, request/environment binding, worker failure and configuration. No valid live Apple transaction has been verified in this environment.
+
+The Apple private key is not available in the project or uploaded files. The proposed Node service stores it privately as `APPLE_IAP_PRIVATE_KEY`; Supabase receives only that service's URL/shared secret. Deployment requires approval of the new hosting cost and owner secret configuration. See `docs/apple-verifier-deployment.md` for the concrete proposal. Private database identity, billing deletion/retention and paid-team remainder integration, remote program/consent/credential provisioning, trusted capture provenance and live routes/workers remain prerequisites, not completed deployments.
+
+Use `docs/launch-acceptance-batch.md` for the single combined physical round after these prerequisites are complete. Use `docs/app-store-submission-draft.md` for prepared listing and review text after the accepted feature set is known.

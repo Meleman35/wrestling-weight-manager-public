@@ -6,7 +6,8 @@ import {SubscriptionAccessService} from './subscription-access.mjs';
 import {FamilyCoverageService} from './family-coverage.mjs';
 import {createBillingHandler} from './billing-handler.mjs';
 import {createAppleEvidenceAdapter} from './apple-evidence.mjs';
-import {readAppleServerConfiguration} from './apple-server-config.mjs';
+import {readAppleServerConfiguration,readApplePublicConfiguration} from './apple-server-config.mjs';
+import {createRemoteAppleEvidenceAdapter} from './remote-apple-evidence.mjs';
 import {appleTrustRoots} from './apple-trust-roots.mjs';
 import {createAppleNotificationHandler} from './apple-notification-handler.mjs';
 import {createAppleNotificationInbox} from './apple-notification-inbox.mjs';
@@ -35,14 +36,16 @@ export function billingDatabase(pool){
  return {transaction,query:(sql,args)=>transaction(connection=>connection.query(sql,args))};
 }
 export async function createBillingRuntime({pool,publishableKey,readSecret,environment,
- verifyDeployment,allowNotification,authorizeWorker,fetchImpl=fetch,appleFactory=createAppleEvidenceAdapter}){
+ verifyDeployment,allowNotification,authorizeWorker,fetchImpl=fetch,appleFactory=createAppleEvidenceAdapter,remoteApple=null}){
  if(!publishableKey||![verifyDeployment,allowNotification,authorizeWorker].every(f=>typeof f==='function'))throw Error('Billing runtime configuration required');
  const privatePool=privateBillingPool(pool),db=billingDatabase(privatePool);
  // Deployment verification must include the approved deletion catalog and
  // retention integration. Configuration alone cannot make draft schemas live.
  if(await verifyDeployment(db)!==true)throw Error('Billing deployment not approved');
- const config=readAppleServerConfiguration({readSecret,rootCertificates:appleTrustRoots(),environment});
- const apple=await appleFactory(config);
+ const config=remoteApple?readApplePublicConfiguration(environment):readAppleServerConfiguration({readSecret,rootCertificates:appleTrustRoots(),environment});
+ // remoteApple is private deployment configuration, never a browser request.
+ // Deno must use a verified Node service while its X509 API is unavailable.
+ const apple=remoteApple?createRemoteAppleEvidenceAdapter({...remoteApple,config,fetchImpl}):await appleFactory(config);
  const auth=new SupabaseBillingAuth({projectURL:'https://vfocpoyexnjsjpxhhyqr.supabase.co',publishableKey,pool:privatePool,fetchImpl});
  const repository=new PostgresBillingRepository({pool:privatePool,auth});
  const billing=createBillingHandler({enabled:true,auth,

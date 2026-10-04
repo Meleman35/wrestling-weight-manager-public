@@ -31,6 +31,8 @@ jobs:
           node-version: 22
       - run: npm ci --prefix billing-candidate --ignore-scripts --no-audit --no-fund
       - run: npm test --prefix billing-candidate
+      - name: Check Supabase-compatible runtime and remote Apple verification path
+        run: npm exec --yes --package=deno@2.1.4 -- deno test --config billing-candidate/deno.json --no-check --allow-env billing-candidate/tests/edge-runtime.test.mjs
   swift:
     runs-on: macos-14
     steps:

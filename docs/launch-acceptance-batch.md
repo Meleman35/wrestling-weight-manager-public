@@ -14,7 +14,7 @@ This is the single device acceptance round to run **after** the hosted prerequis
 
 ## Prerequisites before handing over the device checklist
 
-1. Configure the existing Apple In-App Purchase private key in the server secret store as `APPLE_IAP_PRIVATE_KEY`. The key stays on the owner's Mac / Supabase Secrets; do not put it in chat, source, screenshots, the native app, or a ZIP. Existing public key ID is `79R244P822`; this is not a request to recreate products, agreements, tax or banking setup.
+1. Resolve the confirmed Apple-verification runtime incompatibility using the prepared Node service in `docs/apple-verifier-deployment.md`. New paid hosting needs owner approval. Configure the existing `.p8` as `APPLE_IAP_PRIVATE_KEY` in that Node service, with only its private URL/shared secret in Supabase. Keep the key out of chat, source, screenshots, the native app and ZIPs. Public key ID remains `79R244P822`; products, agreements, tax and banking do not need recreating for this step.
 2. Complete and verify hosted billing deletion/retention integration, least-privilege runtime identity, schema migrations, notification receiver and authenticated reconciliation schedule. Test Apple's signed sandbox notification delivery. The runtime composition deliberately requires deployment verification and a restricted database identity.
 3. Finish remote program/window provisioning, canonical consent and credential resolution, trusted capture provenance and server-clock validation, team/director coverage, private storage and the 240-hour retention worker. Complete their server deletion/merge catalog integration and hosted capacity checks.
 4. Connect the remote reporting coordinator to its authorized native capture screen and real receipt service. Server-saved data must not be represented as saved while only queued on the device. The reporting screen stays hidden until that integration is ready.
@@ -43,5 +43,7 @@ Use designated test accounts and fictional athlete records. Use an adult in appr
 Record each failed step with the test account role, expected behavior, actual behavior and whether connectivity changed. A screenshot of status text is enough; do not send athlete photographs or private keys.
 
 ## Submission work
+
+Prepared listing text and review fields are in `docs/app-store-submission-draft.md`; they have not been entered or submitted.
 
 After acceptance, review App Store privacy answers against the deployed data inventory, complete category/content-rights/age-rating fields and review notes, attach the correct subscriptions and accepted build, and check outstanding trader verification. Earlier screenshots are not proof of current App Store Connect status. Public release still requires Apple's review.
