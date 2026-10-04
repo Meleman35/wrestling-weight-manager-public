@@ -84,7 +84,7 @@ final class WrestlingManagerRemoteDeviceCheckController: UIViewController {
     required init?(coder: NSCoder) { fatalError("Use init(onClose:)") }
     override func viewDidLoad() {
         super.viewDidLoad(); view.backgroundColor = .systemBackground
-        let title = UILabel(); title.text = "Remote camera & scale check • Build 6"; title.font = .preferredFont(forTextStyle: .title2)
+        let title = UILabel(); title.text = "Remote camera & scale check • Build 7"; title.font = .preferredFont(forTextStyle: .title2)
         let note = UILabel(); note.text = "Continuous development test • Numbered fictional athletes\nCheck framing once, then start the session. After each photo, step off to prepare the next test automatically. Use an adult test subject in athletic clothing. Nothing here is uploaded or saved. NFC test results clear when the session is cleared."
         for label in [title,note,status] { label.numberOfLines = 0; label.adjustsFontForContentSizeCategory = true }
         status.text = "1. Check the camera framing. 2. Start a test weigh-in and step on the scale."

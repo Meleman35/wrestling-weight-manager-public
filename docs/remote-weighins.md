@@ -395,3 +395,18 @@ scale, stability check and camera still run. Repeating the same selection tests
 lowest-valid-result replacement without a physical NFC reader. Real-reader and
 automatic modes remain selectable. The simulator gate executes the five-attempt
 flow with both the card adapter and the manual scan button.
+
+### Build 7: SwiftUI cleanup publication warning
+
+The Oct 4 3:17 PM screenshots identify a synchronous @Published update to
+remoteReadStatus when representable teardown stops scale reads. That diagnostic
+is already read by the UIKit camera/session status callbacks; SwiftUI does not
+render it directly. Remove its unnecessary @Published wrapper so cleanup stops
+transport and clears observers immediately without publishing during a view
+update. Connection/session observable properties remain unchanged. A regression
+check subscribes to the real client's objectWillChange and exercises repeated
+stop/observer-removal cleanup.
+
+The physical Build 6 test improved capture speed but had one unreproduced pause
+that cleared after stepping off/on. The cleanup warning does not prove the cause
+of that pause; on-device status during a recurrence is still needed.

@@ -57,7 +57,7 @@ private struct RemoteScaleCheckHome: View {
             VStack(alignment: .leading, spacing: 24) {
                 Group {
                     Text("Camera + American Scale").font(.largeTitle.bold())
-                    Text("Device check • Build 6").font(.caption)
+                    Text("Device check • Build 7").font(.caption)
                     Text("Separate development test. Your Wrestling Manager app and athlete records are not used.")
                     Text("1. Connect the scale.\n2. Check the camera framing.\n3. Start the continuous test. Scan, step on, then step off after the photo.")
                 }

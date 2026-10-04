@@ -1,4 +1,4 @@
-REMOTE SCALE CHECK — BUILD 6
+REMOTE SCALE CHECK — BUILD 7
 
 Continuous local camera + American Scale test. Nothing is uploaded, charged,
 or saved to the Photos library. Automatic mode keeps only the latest test photo. NFC mode keeps the lowest
@@ -11,7 +11,7 @@ INSTALL
    Do not drag the files into another Xcode project.
 2. Select RemoteScaleCheck and your physical iPhone or team iPad. Keep your
    existing developer team and the separate .remotescalecheck bundle identifier.
-3. Product > Run (Debug). Confirm Build 6 on the home screen.
+3. Product > Run (Debug). Confirm Build 7 on the home screen.
 
 TEST THE SCAN BUTTON FIRST (NO NFC READER NEEDED)
 1. Connect the American Scale. Keep Athlete identification set to
@@ -88,3 +88,15 @@ scanning must resolve actual authorized roster athletes; it is not exercised
 here. Server submissions, receipts, offline delivery and exports are separate
 integration checks. Tell us whether three consecutive attempts work and how
 long the photo takes after the weight becomes stable. Status text is enough.
+
+BUILD 7 CLEANUP FIX
+The scale diagnostic no longer publishes SwiftUI view changes during controller
+teardown. Scale reads and observers still stop immediately, and the camera's
+existing status callback keeps showing the current diagnostic. This targets the
+Xcode warning shown in your two 3:17 PM screenshots. It does not establish the
+cause of the isolated missed photo.
+
+After a few scans, close and reopen the test, then background and return. Check
+that Xcode no longer reports "Publishing changes from within view updates". If
+a capture pauses, note the top status before stepping off: Settling, Weight
+updates paused, or Taking photo.

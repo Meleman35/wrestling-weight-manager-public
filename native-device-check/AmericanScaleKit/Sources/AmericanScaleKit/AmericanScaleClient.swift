@@ -50,7 +50,11 @@ public final class AmericanScaleClient: NSObject, ObservableObject {
 
     /// Real BLE packet evidence; optional and dormant until an authorized host connects it.
     public var onRemoteWeightPacket: (@MainActor (Double, Date) -> Void)?
-    @Published public private(set) var remoteReadStatus = "Direct scale reads inactive."
+    // The capture controller reads this diagnostic through its status callback.
+    // It is deliberately not @Published: stopping reads is also called from
+    // UIViewControllerRepresentable teardown, inside SwiftUI's view update.
+    // Transport shutdown and the diagnostic value must still change immediately.
+    public private(set) var remoteReadStatus = "Direct scale reads inactive."
     private var remoteReadsRequested = false
     private var remoteReads = AmericanScaleReadCycle()
     private var remoteFeed = AmericanScaleRemoteFeed()
@@ -89,6 +93,13 @@ public final class AmericanScaleClient: NSObject, ObservableObject {
     public override init() {
         super.init()
         _ = central
+    }
+
+    /// Package-internal lifecycle verification without requesting Bluetooth
+    /// access from the test runner. The public initializer always starts BLE.
+    init(startBluetooth: Bool) {
+        super.init()
+        if startBluetooth { _ = central }
     }
 
     public func startScanning(knownScaleIdentifier: UUID? = nil) {
