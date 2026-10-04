@@ -1,5 +1,5 @@
 (function(){
- const allowed=()=>actualIsStaff&&!managedLogin&&!!session?.user?.id&&!document.body.classList.contains('kiosk-locked')&&!document.querySelector('#appLockOverlay:not(.hidden)');
+ const allowed=()=>actualIsStaff&&!managedLogin&&!!activeTeam?.id&&!!session?.user?.id&&!document.body.classList.contains('kiosk-locked')&&!document.querySelector('#appLockOverlay:not(.hidden)');
  const sheet=document.getElementById('athleteCardSheet');
  const panel=document.createElement('details');panel.id='bulkAthleteCards';panel.className='feature-card';
  panel.innerHTML='<summary>Print team athlete cards</summary><p class="fine">Choose up to 500 athletes per PDF and print at 100% actual size. NFC chips must be programmed separately.</p><button type="button" class="secondary" data-all>Select all</button><div data-list></div><label>PDF format<select data-format><option value="sheet">Letter sheets · 8 cards per page</option><option value="individual">Individual credit-card size pages</option></select></label><button type="button" class="wide" data-export>Prepare selected cards</button><p role="status" data-status></p>';
