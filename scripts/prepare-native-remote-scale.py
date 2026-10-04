@@ -26,14 +26,16 @@ def main():
         raise RuntimeError('Scale source differs from the reviewed original upload. No files were changed. Use a fresh source copy.')
     scale_sources = repo / 'native-device-check/AmericanScaleKit/Sources/AmericanScaleKit'
     read_cycle = scale.with_name('AmericanScaleReadCycle.swift')
-    if read_cycle.exists():
+    remote_feed = scale.with_name('AmericanScaleRemoteFeed.swift')
+    if read_cycle.exists() or remote_feed.exists():
         raise RuntimeError('Scale read cycle already exists. No files were changed.')
     names = ['WrestlingManagerRemoteCapture.swift', 'WrestlingManagerRemotePhoto.swift',
-             'WrestlingManagerRemoteCaptureHost.swift', 'WrestlingManagerRemoteReadiness.swift', 'WrestlingManagerRemoteOutbox.swift',
+             'WrestlingManagerRemoteCaptureHost.swift', 'WrestlingManagerRemoteCardReader.swift', 'WrestlingManagerRemoteReadiness.swift', 'WrestlingManagerRemoteOutbox.swift',
              'WrestlingManagerRemoteDelivery.swift', 'WrestlingManagerRemoteDeliveryStore.swift',
              'WrestlingManagerRemoteRetention.swift', 'WrestlingManagerRemoteHTTP.swift', 'WrestlingManagerRemoteReportingSession.swift', 'WrestlingManagerRemoteDeviceCheck.swift']
     changes = {scale: (scale_sources / 'AmericanScaleClient.swift').read_bytes(),
-               read_cycle: (scale_sources / 'AmericanScaleReadCycle.swift').read_bytes()}
+               read_cycle: (scale_sources / 'AmericanScaleReadCycle.swift').read_bytes(),
+               remote_feed: (scale_sources / 'AmericanScaleRemoteFeed.swift').read_bytes()}
     for name in names:
         target = app / name
         if target.exists():

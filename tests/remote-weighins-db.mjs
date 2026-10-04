@@ -49,7 +49,7 @@ await db.exec('update remote_reporting.programs set coverage_revoked=true');awai
 await db.exec('update auth.sessions set not_after=now()-interval \'1 second\'');await assert.rejects(accept(),/Session/);await db.exec('update auth.sessions set not_after=null');
 await db.exec("alter table remote_reporting.windows disable trigger remote_lock_window_schedule;update remote_reporting.windows set opens_at=now()-interval '3 days',closes_at=now()-interval '2 days';alter table remote_reporting.windows enable trigger remote_lock_window_schedule");assert.deepEqual((await accept()).rows[0].receipt,original);await assert.rejects(accept({...record,submissionId:'new'}),/deadline/);
 await db.exec("alter table remote_reporting.windows disable trigger remote_lock_window_schedule;update remote_reporting.windows set closes_at=now()+interval '1 hour';alter table remote_reporting.windows enable trigger remote_lock_window_schedule");await assert.rejects(accept({...record,submissionId:'new',evidenceId:'unverified'}),/Evidence/);
-await assert.rejects(accept({...record,submissionId:'new'}),/unique constraint/);
+await assert.rejects(accept({...record,submissionId:'new'}),/Repeat weigh-ins/);
 // Trial coverage uses the same SQL predicate as paid program coverage, including
 // direct acceptance (not merely the HTTP preflight).
 await db.exec('create table public.organizations(id uuid primary key)');

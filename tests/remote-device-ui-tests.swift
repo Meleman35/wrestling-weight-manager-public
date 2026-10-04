@@ -11,6 +11,10 @@ import UIKit
     static var connected = true
     static var reading = false
     static var installs = 0
+    static var cardPresent = true
+    static var cardReply: ((Result<String, Error>) -> Void)?
+    static let cardReader = WrestlingManagerRemoteCardReader(isAvailable: { true },
+        isCardPresent: { cardPresent }, startRead: { cardReply = $0 }, cancelRead: { cardReply = nil })
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions options: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         let window = UIWindow(frame: UIScreen.main.bounds)
@@ -55,24 +59,36 @@ import UIKit
             try await tap("Take setup test photo")
             try await tap("Full athlete and scale are visible")
             try await tap("Start continuous test")
-            for attempt in 1...3 {
-                try await wait("Camera did not open for athlete \(attempt)") {
-                    self.label("Test athlete \(attempt) •")
+            let cases: [(Int, Double, Double)] = [(1,121,121),(2,122,122),(3,123,123),(1,120,120),(1,124,120)]
+            for (index, item) in cases.enumerated() {
+                let attempt = index + 1, athlete = item.0, weight = item.1
+                try await wait("Next NFC scan did not open") { self.label("Tap NFC card for the next athlete.") }
+                await pause(0.25)
+                guard Self.cardReply == nil else { throw TestFailure(message: "Card left on reader was accepted again") }
+                Self.cardPresent = false
+                try await wait("Reader did not rearm after card removal") { Self.cardReply != nil }
+                let reply = Self.cardReply; Self.cardReply = nil; Self.cardPresent = true
+                reply?(.success("test-card-\(athlete)"))
+                reply?(.success("stale-duplicate")) // Late duplicate callback must not change the selected athlete.
+                try await wait("Camera did not open for athlete \(athlete)") {
+                    self.label("Test athlete \(athlete) •")
                 }
                 // Near-zero drift cannot take a picture of the empty platform.
                 packet([0.2]); await pause(0.6); packet([0]); await pause(0.6); packet([0])
                 guard !label("Test \(attempt) complete:") else { throw TestFailure(message: "Empty scale captured") }
-                let weight = 120 + Double(attempt)
                 packet([weight]); await pause(0.6); packet([weight]); await pause(0.6)
                 let stableAt = Date(); packet([weight, weight])
                 try await wait("No immediate photo for athlete \(attempt)", timeout: 1.5) {
                     self.label("Test \(attempt) complete:")
                 }
+                guard label(String(format: "Test %d complete: %.1f lb", attempt, item.2)) else {
+                    throw TestFailure(message: "Wrong current result after repeat NFC scan")
+                }
                 print("Athlete \(attempt): photo complete \(Date().timeIntervalSince(stableAt)) seconds after stability")
                 guard Self.reading else { throw TestFailure(message: "Reader stopped between athletes") }
                 packet([weight]); await pause(0.6); packet([weight]); await pause(0.2)
                 guard label("Test \(attempt) complete:") else { throw TestFailure(message: "Advanced while occupied") }
-                if attempt < 3 {
+                if attempt < cases.count {
                     // Last zero in a mixed response must not hide an occupied scale.
                     packet([0, weight, 0]); await pause(0.3)
                     guard label("Test \(attempt) complete:") else { throw TestFailure(message: "Mixed packet advanced") }
@@ -84,11 +100,14 @@ import UIKit
             try await tap("End test session — keep setup")
             guard !Self.reading else { throw TestFailure(message: "Reader remained enabled after end") }
             try await tap("Start continuous test")
+            Self.cardPresent = false
+            try await wait("Retained setup did not rearm reader") { Self.cardReply != nil }
+            let reply = Self.cardReply; Self.cardReply = nil; Self.cardPresent = true; reply?(.success("test-card-1"))
             try await wait("Retained setup did not reopen camera") { self.label("Test athlete 1 •") }
             Self.connected = false
             try await wait("Disconnect did not stop session") { self.label("Reconnect before starting again.") }
             guard !Self.reading else { throw TestFailure(message: "Reader remained enabled after disconnect") }
-            finish("PASS: three immediate captures, one-zero automatic handoff, occupied/mixed-packet rejection, retained setup and disconnect.")
+            finish("PASS: five immediate NFC captures, lower reweigh retained, higher reweigh ignored, card-removal gating, one-zero handoff, stale callback rejection, retained setup and disconnect.")
         } catch {
             let labels = views.compactMap { ($0 as? UILabel)?.text }.joined(separator: " | ")
             finish("FAIL: \(error)\n\(labels)")
@@ -114,7 +133,9 @@ import UIKit
                             removeScaleObserver: { RemoteDeviceUITests.receive = nil },
                             isScaleConnected: { RemoteDeviceUITests.connected },
                             setScaleReadingEnabled: { RemoteDeviceUITests.reading = $0 },
-                            scaleReadStatus: { "Simulated BLE transport" })
+                            scaleReadStatus: { "Simulated BLE transport" },
+                            readAthleteCard: { RemoteDeviceUITests.cardReader.read($0) },
+                            cancelCardRead: { RemoteDeviceUITests.cardReader.cancel() })
                             .navigationTitle("Local device check")
                     }.interactiveDismissDisabled()
                 }

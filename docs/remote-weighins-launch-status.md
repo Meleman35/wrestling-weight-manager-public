@@ -50,7 +50,7 @@ screen showed 0.0 lb. Build 5 removes the extra shutter countdown, advances on
 one fresh empty-scale response and retries camera presentation after dismissal.
 It includes an iPad simulator regression for three captures inside the real
 SwiftUI sheet, single-zero handoff, mixed-response rejection and retained setup.
-Only camera hardware and BLE are simulated; physical acceptance remains pending.
+Only camera hardware and BLE are simulated; physical Build 5 reset is now confirmed; Build 6 transport/NFC acceptance remains pending.
 The production host signals its coordinator for the next authorized scan only
 after durable save and scale clear.
 
@@ -86,3 +86,10 @@ Successful web publication and simulator compilation do not establish those.
 References for the JPEG implementation and deployment constraints:
 - https://github.com/jpeg-js/jpeg-js#decode-options
 - https://supabase.com/docs/guides/functions/limits
+
+Build 6 adds the existing Bluetooth NFC reader to the isolated test, fresh-card
+removal gating, and per-card lower-weight selection. Private draft tournament
+windows may explicitly allow repeats; server reports select one lowest valid
+attempt with its matching photo/timestamps. The window setting locks at
+activation. Production credential resolution, hosted acceptance and director
+window provisioning still need the previously listed integration work.

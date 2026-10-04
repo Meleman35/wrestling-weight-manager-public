@@ -12,11 +12,15 @@ const query=`with candidates as materialized (
  join public.teams t on t.id=r.club_id::uuid
  join public.athletes a on a.id=r.athlete_id::uuid and a.organization_id=t.organization_id
  left join private.athlete_membership_identifiers m on m.profile_id=a.profile_id
- left join remote_reporting.submissions s on s.program_id=r.program_id and s.window_id=r.window_id
-  and s.club_id=r.club_id and s.athlete_id=r.athlete_id
-  and (s.record->>'capturedAt')::timestamptz+interval '240 hours'>statement_timestamp()
-  and exists(select 1 from remote_reporting.evidence e where e.id=s.evidence_id
-    and e.verified and not e.revoked and e.expires_at>statement_timestamp())
+ left join lateral (
+  select s.* from remote_reporting.submissions s
+  where s.program_id=r.program_id and s.window_id=r.window_id
+   and s.club_id=r.club_id and s.athlete_id=r.athlete_id
+   and (s.record->>'capturedAt')::timestamptz+interval '240 hours'>statement_timestamp()
+   and exists(select 1 from remote_reporting.evidence e where e.id=s.evidence_id
+     and e.verified and not e.revoked and e.expires_at>statement_timestamp())
+  order by (s.record->>'weight')::numeric,(s.record->>'capturedAt'),s.submission_id limit 1
+ ) s on true
  where r.program_id=$1 and r.window_id=$2 and ($3::text is null or r.club_id=$3)
   and r.active and r.remote_consent and w.active
   and exists(select 1 from remote_reporting.club_enrollments ce where ce.program_id=r.program_id and ce.club_id=r.club_id and ce.active)

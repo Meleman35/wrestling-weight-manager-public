@@ -10,6 +10,7 @@ xcrun swiftc -D DEBUG -D REMOTE_SCALE_UI_TESTS -sdk "$sdk_path" \
   native-candidate/WrestlingManagerRemoteReadiness.swift \
   native-candidate/WrestlingManagerRemotePhoto.swift \
   native-candidate/WrestlingManagerRemoteDeviceCheck.swift \
+  native-candidate/WrestlingManagerRemoteCardReader.swift \
   tests/remote-device-ui-tests.swift -o "$test_app/RemoteSessionUITests"
 cat > "$test_app/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>

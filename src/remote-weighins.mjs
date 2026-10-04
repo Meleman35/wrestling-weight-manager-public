@@ -13,6 +13,7 @@ export function validateWindow(window) {
   try { new Intl.DateTimeFormat('en', {timeZone: window.timeZone}); }
   catch { fail('Reporting timezone required'); }
   if (!window.timeZone || instant(window.opensAt) >= instant(window.closesAt)) fail('Invalid reporting window');
+  if(window.allowReweigh!==undefined&&typeof window.allowReweigh!=='boolean')fail('Invalid repeat weigh-in setting');
   return Object.freeze({...window});
 }
 export function createRemoteCapture({context, window, now = Date.now, uuid = () => crypto.randomUUID(), submit, maxAgeMs = 30000}) {
@@ -93,7 +94,13 @@ export function summarizeWindow({window, expected, submissions, clubId = null, s
     if (!id(row.submissionId) || !id(row.receiptId) || !Number.isFinite(row.weight) || row.weight <= 0 || row.weight > 800 || row.unit !== 'lb') fail('Invalid accepted submission');
     const captured = instant(row.capturedAt), received = instant(row.receivedAt);
     if (captured < instant(period.opensAt) || captured >= instant(period.closesAt) || received < captured) fail('Invalid accepted capture time');
-    if (accepted.has(k) && accepted.get(k).submissionId !== row.submissionId) fail('Conflicting current submissions require server reconciliation');
+    const previous=accepted.get(k);
+    if(previous&&previous.submissionId!==row.submissionId){
+      if(period.allowReweigh!==true)fail('Conflicting current submissions require server reconciliation');
+      // Keep the whole winning attempt so its photo and timestamps remain bound.
+      const order=row.weight-previous.weight||captured-instant(previous.capturedAt)||row.submissionId.localeCompare(previous.submissionId);
+      if(order>=0)continue;
+    }
     accepted.set(k,row);
   }
   const rows = [...roster].map(([k, athlete]) => {

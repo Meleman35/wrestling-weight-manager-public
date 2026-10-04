@@ -44,7 +44,7 @@ export function createRemoteReportingService({getActor, getProgram, getWindow, g
         if(program.kind==='tournament'&&!validId(program.eventId))continue;
         const windows=await getWindows(programId);
         const periods=[];
-        for(const candidate of windows){const w=await period(program,candidate.id);periods.push({id:w.id,programId:w.programId,timeZone:w.timeZone,opensAt:w.opensAt,closesAt:w.closesAt,lockedAt:w.lockedAt??null,label:`${w.id} · ${w.timeZone}`});}
+        for(const candidate of windows){const w=await period(program,candidate.id);periods.push({id:w.id,programId:w.programId,timeZone:w.timeZone,opensAt:w.opensAt,closesAt:w.closesAt,lockedAt:w.lockedAt??null,allowReweigh:program.kind==='tournament'&&w.allowReweigh===true,label:`${w.id} · ${w.timeZone}`});}
         const grants=actor.reportingGrants.filter(g=>g.programId===programId&&g.active===true),clubs=new Map();
         if(grants.some(g=>g.role==='director'))scopes.push({programId,clubId:null,canCapture:false,label:`${programId} · All clubs`,windows:periods});
         for(const g of grants){if(['operator','club_reader'].includes(g.role)&&program.clubIds.includes(g.clubId))clubs.set(g.clubId,(clubs.get(g.clubId)||false)||g.role==='operator');}

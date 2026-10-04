@@ -53,6 +53,7 @@ public final class AmericanScaleClient: NSObject, ObservableObject {
     @Published public private(set) var remoteReadStatus = "Direct scale reads inactive."
     private var remoteReadsRequested = false
     private var remoteReads = AmericanScaleReadCycle()
+    private var remoteFeed = AmericanScaleRemoteFeed()
     private var remoteReadTask: Task<Void, Never>?
     private var notificationChangeAt: TimeInterval?
     private var readRequestCount = 0
@@ -176,16 +177,16 @@ public final class AmericanScaleClient: NSObject, ObservableObject {
         session = next
     }
 
-    /// Used only during an explicit remote-capture attempt. Temporarily suspend
-    /// notifications so each callback can be attributed to one requested read.
+    /// Prefer live notifications, then suspend them briefly for attributable
+    /// GATT reads when a change-only scale is quiet. Never use cached UI weight.
     public func setRemoteWeightReadingEnabled(_ enabled: Bool) {
         if enabled {
             guard connectionState == .ready, onRemoteWeightPacket != nil else { return }
             guard !remoteReadsRequested else { return }
             remoteReadsRequested = true
             readRequestCount = 0; readReplyCount = 0
-            remoteReadStatus = "Preparing direct scale reads…"
-            remoteReads.start(at: ProcessInfo.processInfo.systemUptime)
+            remoteReadStatus = "Listening for live scale updates…"
+            remoteFeed.start(at: ProcessInfo.processInfo.systemUptime)
         } else {
             remoteReadsRequested = false; remoteReads.stop()
             remoteReadStatus = "Direct scale reads inactive."
@@ -199,7 +200,7 @@ public final class AmericanScaleClient: NSObject, ObservableObject {
               let peripheral = connectedPeripheral, let characteristic = scaleCharacteristic else { return }
         // Drain a cancelled read before restoring notifications or issuing another.
         guard !remoteReads.awaitingReply else { return }
-        let shouldNotify = !remoteReadsRequested
+        let shouldNotify = !remoteReadsRequested || remoteFeed.wantsNotifications
         if characteristic.isNotifying != shouldNotify {
             parser.reset()
             notificationChangeAt = ProcessInfo.processInfo.systemUptime
@@ -214,6 +215,13 @@ public final class AmericanScaleClient: NSObject, ObservableObject {
             while !Task.isCancelled {
                 guard let self, self.connectionState == .ready else { return }
                 let now = ProcessInfo.processInfo.systemUptime
+                if self.remoteReadsRequested {
+                    self.remoteFeed.tick(at: now)
+                    if self.remoteFeed.wantsNotifications {
+                        if self.remoteReads.enabled { self.remoteReads.stop() }
+                    } else if !self.remoteReads.enabled { self.remoteReads.start(at: now) }
+                    self.configureRemoteReadMode()
+                }
                 if let changedAt = self.notificationChangeAt, now - changedAt >= 2 {
                     self.failRemoteRead("Scale read setup timed out. Reconnect the scale."); return
                 }
@@ -597,6 +605,11 @@ extension AmericanScaleClient: CBPeripheralDelegate {
                     } : []
                     let reply = !complete ? "Incomplete reply" : weights.isEmpty ? "No weight in reply" : "Weight received"
                     self.remoteReadStatus = "Read requests: \(self.readRequestCount) • replies: \(self.readReplyCount) • \(reply)"
+                    self.remoteFeed.readReply(hasWeight: !weights.isEmpty, at: ProcessInfo.processInfo.systemUptime)
+                    if self.remoteFeed.wantsNotifications {
+                        self.remoteReads.stop()
+                        self.remoteReadStatus += " • restoring live updates"
+                    }
                     if complete { self.apply(messages) }
                     for pounds in weights { self.onRemoteWeightPacket?(pounds, observedAt) }
                 }
@@ -611,9 +624,14 @@ extension AmericanScaleClient: CBPeripheralDelegate {
             let messages = self.parser.append(data)
             let observedAt = Date()
             // Reject callbacks from a stale peripheral or incomplete connection.
-            if self.connectionState == .ready, !self.remoteReadsRequested, self.notificationChangeAt == nil {
+            if self.connectionState == .ready, self.notificationChangeAt == nil,
+               characteristic.isNotifying, !self.remoteReadsRequested || self.remoteFeed.wantsNotifications {
                 for message in messages {
                     if case .weight(let pounds) = message {
+                        if self.remoteReadsRequested {
+                            self.remoteFeed.notificationWeight(at: ProcessInfo.processInfo.systemUptime)
+                            self.remoteReadStatus = "Live scale update • read requests: \(self.readRequestCount) • replies: \(self.readReplyCount)"
+                        }
                         self.onRemoteWeightPacket?(pounds, observedAt)
                     }
                 }

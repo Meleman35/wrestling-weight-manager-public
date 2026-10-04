@@ -13,6 +13,8 @@ on:
       - tests/remote-scale-stream-tests.swift
       - tests/remote-session-tests.swift
       - tests/remote-device-ui-tests.swift
+      - tests/remote-nfc-protocol-tests.swift
+      - tests/remote-weighins-reweigh.mjs
       - scripts/test-remote-device-ui.sh
       - tests/remote-delivery-tests.swift
       - scripts/prepare-native-remote-scale.py
@@ -91,7 +93,7 @@ jobs:
 
   native-typecheck:
     runs-on: macos-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -123,6 +125,10 @@ jobs:
           /tmp/remote-retention-tests
       - name: Test American Scale protocol and discovery
         run: swift test --package-path native-device-check/AmericanScaleKit
+      - name: Exercise existing NFC card decoder
+        run: |
+          swiftc native-device-check/NFC/WrestlingManagerACRProtocol.swift tests/remote-nfc-protocol-tests.swift -o /tmp/remote-nfc-tests
+          /tmp/remote-nfc-tests
       - name: Build separate camera and scale test app
         run: xcodebuild -project native-device-check/RemoteScaleCheck.xcodeproj -scheme RemoteScaleCheck -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath /tmp/remote-scale-check CODE_SIGNING_ALLOWED=NO build -quiet
       - name: Exercise iPad camera presentation and consecutive captures

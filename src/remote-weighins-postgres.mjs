@@ -25,7 +25,7 @@ export function createRemotePostgresAdapters({db,verifyPersonalSession,resolveRo
  }
  async function getWindow(id){
   const r=(await db.query('select * from remote_reporting.windows where id=$1',[id])).rows[0];
-  return r?{id:r.id,programId:r.program_id,eventId:r.event_id,opensAt:iso(r.opens_at),closesAt:iso(r.closes_at),timeZone:r.time_zone,eventDate:r.event_date,lockedAt:iso(r.locked_at),syncGraceMs:Number(r.sync_grace_ms),active:r.active}:null;
+  return r?{id:r.id,programId:r.program_id,eventId:r.event_id,opensAt:iso(r.opens_at),closesAt:iso(r.closes_at),timeZone:r.time_zone,eventDate:r.event_date,lockedAt:iso(r.locked_at),syncGraceMs:Number(r.sync_grace_ms),allowReweigh:r.allow_reweigh===true,active:r.active}:null;
  }
  async function getWindows(programId){
   const rows=(await db.query('select id from remote_reporting.windows where program_id=$1 and active order by closes_at desc,id limit 100',[programId])).rows;
@@ -66,9 +66,13 @@ export function createRemotePostgresAdapters({db,verifyPersonalSession,resolveRo
    return {submissionId:receipt.submissionId,receiptId:receipt.receiptId,status:receipt.status,receivedAt:iso(receipt.receivedAt)};
   },
   async list({programId,windowId,clubId=null}){
-   const rows=(await db.query(`select record,receipt_id,received_at from remote_reporting.submissions
-      where program_id=$1 and window_id=$2 and ($3::text is null or club_id=$3)
-      and (record->>'capturedAt')::timestamptz+interval '240 hours'>clock_timestamp() order by club_id,athlete_id`,[programId,windowId,clubId])).rows;
+   const rows=(await db.query(`select distinct on (s.club_id,s.athlete_id) s.record,s.receipt_id,s.received_at
+      from remote_reporting.submissions s
+      where s.program_id=$1 and s.window_id=$2 and ($3::text is null or s.club_id=$3)
+      and (s.record->>'capturedAt')::timestamptz+interval '240 hours'>statement_timestamp()
+      and exists(select 1 from remote_reporting.evidence e where e.id=s.evidence_id
+        and e.verified and not e.revoked and e.expires_at>statement_timestamp())
+      order by s.club_id,s.athlete_id,(s.record->>'weight')::numeric,(s.record->>'capturedAt'),s.submission_id`,[programId,windowId,clubId])).rows;
    return rows.map(r=>({...r.record,receiptId:r.receipt_id,receivedAt:iso(r.received_at),status:'submitted'}));
   }
  };

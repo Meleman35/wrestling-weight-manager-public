@@ -13,6 +13,7 @@ create table remote_reporting.windows (
  event_id text, opens_at timestamptz not null, closes_at timestamptz not null,
  time_zone text not null, sync_grace_ms bigint not null default 0 check(sync_grace_ms between 0 and 604800000),
  active boolean not null default false, event_date date, locked_at timestamptz,
+ allow_reweigh boolean not null default false,
  unique(program_id,id), check(opens_at<closes_at),
  check(event_id is null or (event_date is not null
   and opens_at=((event_date-1)::timestamp at time zone time_zone)
@@ -24,8 +25,8 @@ create function remote_reporting.lock_window_schedule() returns trigger
 language plpgsql security invoker set search_path='' as $$
 begin
  if TG_OP='UPDATE' and OLD.locked_at is not null then
-  if row(NEW.id,NEW.program_id,NEW.event_id,NEW.opens_at,NEW.closes_at,NEW.time_zone,NEW.event_date,NEW.sync_grace_ms)
-   is distinct from row(OLD.id,OLD.program_id,OLD.event_id,OLD.opens_at,OLD.closes_at,OLD.time_zone,OLD.event_date,OLD.sync_grace_ms)
+  if row(NEW.id,NEW.program_id,NEW.event_id,NEW.opens_at,NEW.closes_at,NEW.time_zone,NEW.event_date,NEW.sync_grace_ms,NEW.allow_reweigh)
+   is distinct from row(OLD.id,OLD.program_id,OLD.event_id,OLD.opens_at,OLD.closes_at,OLD.time_zone,OLD.event_date,OLD.sync_grace_ms,OLD.allow_reweigh)
    then raise exception 'Activated reporting schedule is locked';end if;
   NEW.locked_at:=OLD.locked_at;
  elsif NEW.active then NEW.locked_at:=clock_timestamp();
@@ -66,10 +67,9 @@ create table remote_reporting.submissions (
  evidence_id text not null unique references remote_reporting.evidence(id),
  record jsonb not null, payload_hash text not null check(length(payload_hash)=64),
  receipt_id uuid not null unique default gen_random_uuid(), received_at timestamptz not null default clock_timestamp(),
- unique(program_id,window_id,club_id,athlete_id),
  foreign key(program_id,window_id,club_id,athlete_id) references remote_reporting.roster(program_id,window_id,club_id,athlete_id)
 );
-create index remote_submission_report on remote_reporting.submissions(program_id,window_id,club_id,athlete_id);
+create index remote_submission_report on remote_reporting.submissions(program_id,window_id,club_id,athlete_id,((record->>'weight')::numeric),(record->>'capturedAt'),submission_id);
 create index remote_assignment_user on remote_reporting.assignments(user_id,program_id);
 create index remote_evidence_expiry on remote_reporting.evidence(expires_at);
 create function remote_reporting.lock_accepted_submission() returns trigger
@@ -151,6 +151,11 @@ begin
  select * into e from remote_reporting.evidence where id=p_record->>'evidenceId' and program_id=p.id for share;
  expected_binding:=p_record-array['submissionId','evidenceId','eventId','kind','evidenceDigest'];
  if not found or not e.verified or e.revoked or not e.notice_accepted or not e.settled or e.expires_at<=accepted_at or e.digest is distinct from p_record->>'evidenceDigest' or e.binding<>expected_binding then raise exception 'Evidence unavailable';end if;
+ -- Serialize repeat attempts under the program lock; preserve immutable evidence.
+ if not (p.kind='tournament' and w.allow_reweigh) and exists(
+  select 1 from remote_reporting.submissions where program_id=p.id and window_id=w.id
+   and club_id=p_record->>'clubId' and athlete_id=p_record->>'athleteId')
+ then raise exception 'Repeat weigh-ins are not allowed for this window';end if;
  insert into remote_reporting.submissions(submission_id,program_id,window_id,club_id,athlete_id,operator_id,evidence_id,record,payload_hash,received_at)
  values(p_record->>'submissionId',p.id,w.id,p_record->>'clubId',p_record->>'athleteId',p_user,e.id,p_record,p_hash,accepted_at) returning * into prior;
  return jsonb_build_object('submissionId',prior.submission_id,'receiptId',prior.receipt_id,'status','submitted','receivedAt',prior.received_at);

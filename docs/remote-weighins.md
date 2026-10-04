@@ -358,3 +358,33 @@ to verify camera/BLE provenance. Production billing readers and transaction-time
 coverage checks still need wiring; mandatory callbacks are not live products.
 Physical iPad v2 regression passed; the next remote test must use the deployed
 authenticated backend and actual capture coordinator.
+
+## October 4 Build 6: live updates, NFC and allowed reweighs
+
+The user's Build 5 recording confirms automatic reset and multiple physical
+captures. Weight-to-photo timestamps differ by about 20–32 ms in the visible
+results, but some live-weight updates pause for 3–5 seconds. Build 6 restores
+notifications after non-weight/incomplete reads and prefers notification updates
+until the scale is quiet. GATT reads still run with notifications suspended and
+one request outstanding; no UI-cached reading is used. Stability remains three
+distinct receipts spanning one second within 0.2 lb.
+
+The isolated device check now includes the existing GoToTags/ACS Bluetooth NFC
+reader and decoder from the supplied native source. Only reading is exposed;
+MIT notices are included. `WrestlingManagerRemoteCardReader` waits for an empty
+reader before arming each scan, ignores callbacks after cancellation, and is
+reusable by the production coordinator. The test maps programmed credentials to
+fictional card numbers in memory. It keeps the lower attempt's weight, photo and
+timestamps together, with bounded memory, and clears them on new session/close/
+background. This does not resolve real profiles or submit production records.
+
+Trusted tournament-window provisioning can set `allow_reweigh=true` before
+activation. The setting locks with the schedule. Default and network windows
+still accept one attempt only. Allowed attempts remain immutable, idempotent
+records; authorized reports and CSV/Excel exports select exactly one lowest
+unexpired, unrevoked result per program/window/club/athlete. Equal weights keep
+the earlier capture (submission ID breaks exact ties). The selected photo ID
+comes from the same whole attempt. A higher weight never replaces a lower valid
+one. Original receipts remain retryable, including out-of-order delivery. Each
+attempt/photo keeps its own original 240-hour expiry; reweighing does not extend
+old records. The private draft schema is tested locally, not deployed.
