@@ -1,4 +1,5 @@
-# Review-only deployment blueprint. Creating this paid service needs owner approval.
+# Owner approved this single $7/month service on October 4, 2026.
+# Account connection and private secrets are still required before deployment.
 # Select this file explicitly in Render; it is not an automatic production deploy.
 previews:
   generation: "off"

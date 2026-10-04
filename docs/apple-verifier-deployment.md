@@ -1,6 +1,6 @@
 # Apple verification hosting decision
 
-Status: code and deployment configuration prepared; no Render service created and no new hosting charge authorized. This is a backend component of the existing app. Families and directors do not install another app.
+Status: Damon approved the proposed $7/month Render service plus applicable usage/taxes on October 4, 2026. Code and deployment configuration are prepared. Render account connection and private-key configuration are still needed; no service or charge has been created. This is a backend component of the existing app. Families and directors do not install another app.
 
 ## Why this is needed
 
@@ -8,13 +8,13 @@ The read-only `wm-runtime-readiness` function on the existing Supabase project r
 
 The prepared solution uses Node for Apple's verification library. Supabase retains authentication, purchase ownership, database decisions and notifications. The new service receives signed Apple evidence or an existing subscription binding, checks it through Apple's library and API, and returns verified facts. It has no database credentials and receives no athlete photographs or weigh-in records. It does not grant access or charge customers itself.
 
-## Proposed service for owner approval
+## Approved service scope
 
 One Render Node web service, `wm-apple-verifier`, on its 0.5 CPU / 512 MB plan (formerly Starter). Render lists this compute size at **$7/month**; applicable usage and taxes are additional. Confirm the displayed total before creation. No new database, disk, workspace upgrade, preview service or autoscaling is requested. The prepared Blueprint is `billing-candidate/render-verifier.yaml`. Automatic deploys are disabled.
 
 This size is a starting deployment, not proof of nationwide capacity. Two verification requests can execute concurrently, with a 25-second worker deadline; excess work receives a retryable response. Existing delivery/reconciliation must retain pending work when verification is unavailable. Check actual Apple sandbox latency and queue drainage before opening paid access.
 
-## Setup after approval
+## Setup
 
 1. Connect the existing GitHub repository to the owner's Render account. Select the prepared Blueprint file and the integration branch. Review the proposed resource and price before creating it.
 2. In Render's private environment settings, supply the existing `.p8` contents as `APPLE_IAP_PRIVATE_KEY`, preserving actual line breaks. Public key ID: `79R244P822`. Do not recreate Apple products, tax, banking or agreements for this step. Never paste the private key into chat, the repository, an app package or a screenshot.

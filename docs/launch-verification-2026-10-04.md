@@ -2,6 +2,8 @@
 
 Main-app verification checkpoint: `17911b0c4fe2210ce76829284f418c3e7d30193b` on PR #62, with all 24 workflows successful. The subsequent Node-verifier change has additional checks listed below. This report concerns candidate code, not production billing or Apple acceptance.
 
+Follow-up checkpoint `c23c32ee211320fb265ffa29398f035c4c9d9dff`: the full main-app Debug/Release and production encrypted capture/queue workflow passed again. Billing passed 159 Node/PostgreSQL tests with zero failures or skips, all six Deno compatibility checks, and notification database, Swift and browser jobs. Evidence: https://github.com/Meleman35/wrestling-weight-manager-public/actions/runs/37243198669 and https://github.com/Meleman35/wrestling-weight-manager-public/actions/runs/37243198754.
+
 ## Passed
 
 - Full original main-app Debug and Release simulator builds, with preserved bundle/signing identity and matching canonical billing/remote/scale sources.
@@ -28,6 +30,6 @@ The diagnostic returned HTTP 200 with `appleCertificateVerification: false` and 
 
 A separate Node backend verifier and private server transport are prepared in this branch. The six Deno compatibility checks pass for the remote path, including an explicit assertion that local certificate verification remains blocked. Focused Node checks cover authorization, input bounds, request/environment binding, worker failure and configuration. No valid live Apple transaction has been verified in this environment.
 
-The Apple private key is not available in the project or uploaded files. The proposed Node service stores it privately as `APPLE_IAP_PRIVATE_KEY`; Supabase receives only that service's URL/shared secret. Deployment requires approval of the new hosting cost and owner secret configuration. See `docs/apple-verifier-deployment.md` for the concrete proposal. Private database identity, billing deletion/retention and paid-team remainder integration, remote program/consent/credential provisioning, trusted capture provenance and live routes/workers remain prerequisites, not completed deployments.
+The Apple private key is not available in the project or uploaded files. The approved Node service stores it privately as `APPLE_IAP_PRIVATE_KEY`; Supabase receives only that service's URL/shared secret. Damon approved the proposed $7/month hosting on October 4. Deployment still requires Render account connection and owner secret configuration. See `docs/apple-verifier-deployment.md` for the concrete setup. Private database identity, billing deletion/retention and paid-team remainder integration, remote program/consent/credential provisioning, trusted capture provenance and live routes/workers remain prerequisites, not completed deployments.
 
 Use `docs/launch-acceptance-batch.md` for the single combined physical round after these prerequisites are complete. Use `docs/app-store-submission-draft.md` for prepared listing and review text after the accepted feature set is known.
