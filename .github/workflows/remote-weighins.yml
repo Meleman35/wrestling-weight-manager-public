@@ -4,8 +4,12 @@ on:
     paths:
       - src/remote-weighins.mjs
       - src/remote-weighins-service.mjs
+      - src/remote-weighins-photos.mjs
+      - src/remote-weighins-outbox.mjs
       - tests/remote-weighins.mjs
       - tests/remote-weighins-service.mjs
+      - tests/remote-weighins-photos.mjs
+      - tests/remote-weighins-outbox.mjs
       - tests/remote-weighins-db.mjs
       - supabase/drafts/remote-weighins.sql
       - previews/remote-weighins.html
