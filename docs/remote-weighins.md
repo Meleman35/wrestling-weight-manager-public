@@ -227,3 +227,9 @@ It uploads evidence, accepts/retrieves a receipt, reads a photo by submission,
 retries JSONB-ordered bindings, denies revoked evidence and rejects confirmation
 when assignment is revoked during upload. This verifies composition, not live
 Supabase storage or complete device provenance/retention/deletion integration.
+
+### Production account deletion coordination
+
+The draft now reuses `private.board_personal` and `private.scoped_deletion_jobs` from the live app. Managed team logins, unfinished actor deletion jobs, and sealed personal deletion tombstones deny remote access. Evidence reservation/confirmation and SQL acceptance acquire the same actor advisory lock (`hashtextextended(user UUID text, 91347)`) before program and auth row locks. A deletion beginning during private-object upload prevents confirmation and acceptance; the unconfirmed object still requires the cleanup worker. Isolated database tests exercise these paths.
+
+This completes actor coordination only. Program ownership, team/organization deletion mapping, deletion catalog registration, private-object cleanup, and schema fingerprints still require integration before deployment. No production schema changed.

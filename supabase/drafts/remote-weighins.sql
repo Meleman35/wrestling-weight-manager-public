@@ -57,6 +57,26 @@ do $$declare t text;begin
  execute format('revoke all on remote_reporting.%I from public,anon,authenticated',t);
  end loop;
 end$$;
+-- Uses the existing production personal-account and deletion controls.
+-- No public RPC. The private backend needs explicit helper/table privileges.
+create function remote_reporting.personal_access(p_user uuid) returns boolean
+language sql security invoker set search_path='' as $$
+ select p_user is not null and private.board_personal(p_user)
+ and not exists(select 1 from private.scoped_deletion_jobs j
+  where (j.actor_id=p_user and j.state not in ('cancelled','completed'))
+   or (j.personal and j.sealed_at is not null and
+    j.subject_hash=encode(sha256(convert_to(p_user::text,'UTF8')),'hex')))
+$$;
+revoke all on function remote_reporting.personal_access(uuid) from public,anon,authenticated;
+create function remote_reporting.lock_personal_access(p_user uuid) returns void
+language plpgsql security invoker set search_path='' as $$
+begin
+ if p_user is null then raise exception 'Personal account unavailable';end if;
+ -- Identical key and lock order to private.scoped_deletion_begin.
+ perform pg_advisory_xact_lock(hashtextextended(p_user::text,91347));
+ if not remote_reporting.personal_access(p_user) then raise exception 'Personal account unavailable';end if;
+end$$;
+revoke all on function remote_reporting.lock_personal_access(uuid) from public,anon,authenticated;
 -- Invoker, restricted schema. Server must supply validated Auth session separately
 -- from native generation. SQL rechecks the active session at acceptance.
 create function remote_reporting.accept(p_user uuid,p_session uuid,p_record jsonb,p_hash text) returns jsonb
@@ -66,6 +86,7 @@ declare p remote_reporting.programs%rowtype; w remote_reporting.windows%rowtype;
  captured timestamptz; photo timestamptz; accepted_at timestamptz; expected_binding jsonb;
 begin
  if p_record is null or jsonb_typeof(p_record)<>'object' or octet_length(p_record::text)>12000 or p_hash is null or p_hash!~'^[a-f0-9]{64}$' then raise exception 'Invalid payload';end if;
+ perform remote_reporting.lock_personal_access(p_user);
  -- Locks serialize acceptance for a program and keep mutable authorization rows
  -- stable until commit. Provision/revocation adapters must use normal row locks.
  select * into p from remote_reporting.programs where id=p_record->>'programId' for update;

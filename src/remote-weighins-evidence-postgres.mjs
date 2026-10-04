@@ -12,6 +12,7 @@ export function createRemotePostgresEvidenceStore({db,session,getActor,verifyCap
  }
  async function lockScope(tx,actor,b){
   if(!['captureId','programId','windowId','clubId','athleteId','operatorId','generation'].every(k=>safe(b[k]))||!['qr','nfc'].includes(b.method)||b.unit!=='lb'||!Number.isFinite(b.weight)||b.weight<=0||b.weight>800)deny('Invalid evidence binding');
+  await tx.query('select remote_reporting.lock_personal_access($1::uuid)',[actor.userId]);
   const program=(await tx.query(`select * from remote_reporting.programs where id=$1 and active and not coverage_revoked and covered_until>clock_timestamp() for update`,[b.programId])).rows[0];
   if(!program)deny('Coverage unavailable');
   const live=(await tx.query(`select u.id from auth.users u join auth.sessions s on s.user_id=u.id where u.id=$1::uuid and s.id=$2::uuid

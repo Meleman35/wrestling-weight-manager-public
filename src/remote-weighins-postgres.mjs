@@ -9,7 +9,7 @@ export function createRemotePostgresAdapters({db,verifyPersonalSession,resolveRo
   const personal=await verifyPersonalSession(session);
   if(!personal?.userId||!personal.sessionId||!personal.generation||personal.personal!==true||personal.locked!==false||personal.deleted!==false)fail('Active personal session required');
   const live=await db.query(`select u.id from auth.users u join auth.sessions s on s.user_id=u.id
-    where u.id=$1::uuid and s.id=$2::uuid and u.email_confirmed_at is not null and u.deleted_at is null
+    where remote_reporting.personal_access($1::uuid) and u.id=$1::uuid and s.id=$2::uuid and u.email_confirmed_at is not null and u.deleted_at is null
     and (u.banned_until is null or u.banned_until<=clock_timestamp()) and (s.not_after is null or s.not_after>clock_timestamp())`,[personal.userId,personal.sessionId]);
   if(live.rows.length!==1)fail('Active personal session required');
   const grants=await db.query('select program_id,club_id,role,active from remote_reporting.assignments where user_id=$1::uuid and active',[personal.userId]);
