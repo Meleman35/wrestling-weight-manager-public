@@ -5,10 +5,10 @@ import {generateKeyPairSync} from 'node:crypto';
 import {createAppleVerifierServer,runAppleVerification,validateAppleVerifierStartup} from './apple-verifier-server.mjs';
 const secret='a'.repeat(64),requestID='11111111-1111-4111-8111-111111111111';
 const body={requestID,environment:'Sandbox',action:'resolve',input:'e30.eyJmYWtlIjp0cnVlfQ.c2ln'};
-async function withServer(verify,callback){
- const server=createAppleVerifierServer({secret,verify,maxConcurrent:1});server.listen(0,'127.0.0.1');await once(server,'listening');
+async function withServer(verify,callback,sharedSecret=secret){
+ const server=createAppleVerifierServer({secret:sharedSecret,verify,maxConcurrent:1});server.listen(0,'127.0.0.1');await once(server,'listening');
  const url='http://127.0.0.1:'+server.address().port;
- const send=(data=body,headers={})=>fetch(url+'/apple',{method:'POST',headers:{Authorization:'Bearer '+secret,'Content-Type':'application/json',...headers},body:JSON.stringify(data)});
+ const send=(data=body,headers={})=>fetch(url+'/apple',{method:'POST',headers:{Authorization:'Bearer '+sharedSecret,'Content-Type':'application/json',...headers},body:JSON.stringify(data)});
  try {await callback({send,url});}finally{server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}
 }
 test('verifier rejects unauthorized/browser/malformed requests before Apple work',async()=>{
@@ -23,6 +23,13 @@ test('verified result binds to the request and environment, with no caching',asy
   const response=await send();assert.equal(response.status,200);assert.equal(response.headers.get('Cache-Control'),'no-store');
   assert.deepEqual(await response.json(),{requestID,environment:'Sandbox',result:{transactionID:'123'}});
  });
+});
+test('Render Base64 secret authenticates over HTTP and requires the exact configured text',async()=>{
+ const bytes=Buffer.alloc(32,251);
+ await withServer(async()=>({transactionID:'123'}),async({send})=>{
+  assert.equal((await send()).status,200);
+  assert.equal((await send(body,{Authorization:'Bearer '+bytes.toString('hex')})).status,403);
+ },bytes.toString('base64'));
 });
 test('concurrent work is bounded and verifier failures reveal no internals',async()=>{
  let release,started;const active=new Promise(r=>{started=r;});

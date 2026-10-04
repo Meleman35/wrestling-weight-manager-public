@@ -5,6 +5,7 @@ import {Worker} from 'node:worker_threads';
 import {pathToFileURL} from 'node:url';
 import {appleTrustRoots} from './apple-trust-roots.mjs';
 import {readAppleServerConfiguration} from './apple-server-config.mjs';
+import {validAppleVerifierSecret} from './apple-verifier-secret.mjs';
 
 const maxBody=196608,uuid=x=>typeof x==='string'&&/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(x);
 const jws=x=>typeof x==='string'&&x.length<=131072&&/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(x);
@@ -30,7 +31,7 @@ export function runAppleVerification(call,{timeoutMs=25000}={}){
  });
 }
 export function createAppleVerifierServer({secret,verify=runAppleVerification,maxConcurrent=2}){
- if(!/^[a-f0-9]{64}$/i.test(secret)||typeof verify!=='function'||!Number.isInteger(maxConcurrent)||maxConcurrent<1||maxConcurrent>8)throw Error('Verifier server configuration required');
+ if(!validAppleVerifierSecret(secret)||typeof verify!=='function'||!Number.isInteger(maxConcurrent)||maxConcurrent<1||maxConcurrent>8)throw Error('Verifier server configuration required');
  const expected=Buffer.from('Bearer '+secret);let inFlight=0;
  const server=createServer(async(req,res)=>{
   const reply=(status,body)=>{if(res.destroyed||res.writableEnded)return;res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(body));};

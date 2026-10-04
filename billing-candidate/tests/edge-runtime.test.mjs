@@ -42,7 +42,7 @@ Deno.test('Deno composes the remote-verifier runtime without a local Apple key o
  let read=false;
  const runtime=await createBillingRuntime({pool:{},publishableKey:'synthetic',environment:'Sandbox',
   readSecret:()=>{read=true;throw Error('Apple key must stay on Node');},
-  remoteApple:{url:'https://verifier.example/apple',secret:'a'.repeat(64)},
+  remoteApple:{url:'https://verifier.example/apple',secret:Buffer.alloc(32,251).toString('base64')},
   verifyDeployment:async()=>true,allowNotification:async()=>false,authorizeWorker:async()=>false});
  assert.equal(read,false);assert.equal(typeof runtime.billing,'function');
  assert.equal((await runtime.reconcile(new Request('https://backend.example/worker',{method:'POST'}))).status,403);

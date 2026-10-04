@@ -1,4 +1,5 @@
 import {randomUUID} from 'node:crypto';
+import {validAppleVerifierSecret} from './apple-verifier-secret.mjs';
 const fail=()=>{throw Error('Apple verification unavailable');};
 const object=x=>!!x&&typeof x==='object'&&!Array.isArray(x);
 const uuid=x=>typeof x==='string'&&/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(x);
@@ -6,7 +7,7 @@ const uuid=x=>typeof x==='string'&&/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9
 export function createRemoteAppleEvidenceAdapter({url,secret,config,fetchImpl=fetch}){
  const endpoint=new URL(url);
  if(endpoint.protocol!=='https:'||endpoint.username||endpoint.password||endpoint.search||endpoint.hash||endpoint.port||
-  endpoint.pathname!=='/apple'||!/^[a-f0-9]{64}$/i.test(secret)||!['Sandbox','Production'].includes(config?.environment)||
+  endpoint.pathname!=='/apple'||!validAppleVerifierSecret(secret)||!['Sandbox','Production'].includes(config?.environment)||
   config.bundleID!=='com.damonmele.wrestlingmanager')throw Error('Private Apple verifier configuration required');
  async function send(action,input){
   const requestID=randomUUID();
