@@ -4,6 +4,7 @@ on:
     paths:
       - native-candidate/WrestlingManagerRemote*.swift
       - tests/remote-capture-tests.swift
+      - scripts/prepare-native-remote-scale.py
       - src/remote-weighins.mjs
       - src/remote-weighins-service.mjs
       - src/remote-weighins-photos.mjs

@@ -12,6 +12,7 @@ final class WrestlingManagerRemoteCaptureHost {
     private var active = true
     private var backgroundObserver: NSObjectProtocol?
     private var photoInProgress = false
+    private var saveInProgress = false
 
     init(scope: WrestlingManagerRemoteCapture.Scope, authorize: @escaping () async throws -> Void) throws {
         capture = try WrestlingManagerRemoteCapture(scope: scope)
@@ -24,15 +25,15 @@ final class WrestlingManagerRemoteCaptureHost {
     }
     /// Existing scanner/NFC adapter resolves credentials against the authorized roster first.
     func scan(athleteID: String, method: String) async throws -> UUID {
-        guard active, !photoInProgress else { throw Failure.closed }
+        guard active, !photoInProgress, !saveInProgress else { throw Failure.closed }
         try await authorize()
-        guard active, !photoInProgress else { throw Failure.closed }
+        guard active, !photoInProgress, !saveInProgress else { throw Failure.closed }
         return try capture.scan(athleteID: athleteID, method: method)
     }
     /// Called once per real incoming BLE weight packet, stamped at native receipt.
-    func receiveScalePacket(pounds: Double) throws {
+    func receiveScalePacket(pounds: Double, observedAt: Date) throws {
         guard active, let token = capture.captureToken else { throw Failure.closed }
-        try capture.scaleReading(token: token, pounds: pounds, observedAt: Date(), connected: true)
+        try capture.scaleReading(token: token, pounds: pounds, observedAt: observedAt, connected: true)
     }
     func scaleDisconnected() { capture.scaleDisconnected(); photos.cancel() }
     var settledWeight: Double? { capture.settledWeight }
@@ -40,9 +41,9 @@ final class WrestlingManagerRemoteCaptureHost {
     /// Completion means durably queued, never server accepted.
     func takeSnapshot(from presenter: UIViewController, noticeAccepted: Bool,
                       completion: @escaping (Result<UUID, Error>) -> Void) async {
-        guard active, !photoInProgress, noticeAccepted else { completion(.failure(Failure.unauthorized)); return }
+        guard active, !photoInProgress, !saveInProgress, noticeAccepted else { completion(.failure(Failure.unauthorized)); return }
         do { try await authorize() } catch { completion(.failure(error)); return }
-        guard active, !photoInProgress, let token = capture.captureToken, capture.settledWeight != nil else {
+        guard active, !photoInProgress, !saveInProgress, let token = capture.captureToken, capture.settledWeight != nil else {
             completion(.failure(Failure.noReading)); return
         }
         photoInProgress = true
@@ -54,8 +55,10 @@ final class WrestlingManagerRemoteCaptureHost {
                 let (jpeg, at) = try result.get()
                 try self.capture.snapshot(token: photoToken, normalizedJPEG: jpeg, capturedAt: at, noticeAccepted: noticeAccepted)
                 let frozen = try self.capture.freeze(token: photoToken)
+                self.saveInProgress = true
                 Task { @MainActor [weak self] in
                     guard let self else { return }
+                    defer { self.saveInProgress = false }
                     do {
                         try await self.authorize()
                         guard self.active, self.capture.captureToken == photoToken else { throw Failure.closed }
@@ -70,8 +73,10 @@ final class WrestlingManagerRemoteCaptureHost {
     }
     /// Retry a failed local save with exactly the original envelope/photo bytes.
     func retrySave() async throws -> UUID {
-        guard active, !photoInProgress, let token = capture.captureToken else { throw Failure.closed }
+        guard active, !photoInProgress, !saveInProgress, let token = capture.captureToken else { throw Failure.closed }
         let frozen = try capture.freeze(token: token)
+        saveInProgress = true
+        defer { saveInProgress = false }
         try await authorize()
         guard active, capture.captureToken == token else { throw Failure.closed }
         try await outbox.save(.init(submissionID: frozen.submissionID, accountID: frozen.accountID,
@@ -80,7 +85,7 @@ final class WrestlingManagerRemoteCaptureHost {
         return frozen.submissionID
     }
     /// Call after durable save to advance, or explicitly discard an unsaved attempt.
-    func discard() throws { guard active, !photoInProgress else { throw Failure.closed }; try capture.discard() }
+    func discard() throws { guard active, !photoInProgress, !saveInProgress else { throw Failure.closed }; try capture.discard() }
     /// Lock/logout/account change/navigation must also call this, in addition to automatic background cancellation.
     func close() {
         guard active else { return }; active = false

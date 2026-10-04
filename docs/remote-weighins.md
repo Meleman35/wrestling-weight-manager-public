@@ -97,3 +97,18 @@ lock/navigation/deletion hooks, retry UI and upload transport. The stable-sample
 rule is a capture aid, not scale calibration or official event certification.
 Physical iPad testing remains necessary for camera permissions/rotation, sample
 cadence and stability, protected storage, cancellation and reconnect behavior.
+
+`prepare-native-remote-scale.py` was exercised against a local copy of the
+uploaded source. It installs the four dormant components and adds an optional
+`onRemoteWeightPacket(Double, Date)` callback at parsed BLE receipt, including
+unchanged repeated weights. Stale-peripheral callbacks are excluded. The
+installer validates exact source anchors before writing, preserves the original
+scale file in a backup and rolls back on write failure. No original uploaded ZIP
+is overwritten. The app must connect that callback to the active host, forward
+connection loss to `scaleDisconnected()`, and clear it on host closure.
+
+The host blocks rescans/discards during durable writes, avoiding a discarded
+attempt racing a completed save. Local save failures expose `retrySave()` without
+regenerating submission IDs or evidence. Full uploaded-app Xcode building is
+separate from the candidate SDK typecheck; the supplied pieces do not include the
+project's referenced root `Wrestling-Manager-Info.plist`.
