@@ -50,7 +50,7 @@ Integration order and remaining work
 7. Run full Xcode compilation, local StoreKit and device sandbox checks: purchase,
    cancellation, pending approval, restart/network recovery, restore, account
    switch/logout, monthly/annual changes, refund and expiry.
-8. Complete App Store Connect paid agreements, tax, banking and review metadata.
+8. Paid Apps Agreement, bank account and U.S. W-9 confirmed Active from owner screenshots October 3, 2026. Digital Services Act remains In Review. Complete remaining review metadata.
    Submit first subscriptions with the app version and subscription group.
 
 Known product limits
@@ -66,8 +66,8 @@ Apple In-App Purchase key ID: 79R244P822
 Apple issuer ID: b5931be7-ac93-4ab3-9b1a-15e1dd26a549
 Private signing key: downloaded on owner's Mac; not configured on server yet.
 Apple numeric app ID: still needs confirmation for production verification.
-Bundle ID: confirm from the working Xcode target and App Store Connect; do not
-infer it from a product ID prefix.
+Bundle ID: com.damonmele.wrestlingmanager confirmed from both configurations
+of the uploaded working Xcode project. Confirm the same value in App Store Connect.
 Endpoint reserved in native code:
 https://vfocpoyexnjsjpxhhyqr.supabase.co/functions/v1/wrestling-manager-billing
 This endpoint has not been deployed. Publishable gateway key is public app
@@ -76,8 +76,8 @@ configuration; service-role credentials and Apple private keys are server only.
 Product catalog
 com.damonmele.wrestlingmanager.teampro.annual — $269.99/year
 com.damonmele.wrestlingmanager.teampro.monthly — $75/month
-com.damonmele.wrestlingmanager.familyvideo.annual — $99.99/year
-com.damonmele.wrestlingmanager.familyvideo.monthly — $14.99/month
+com.damonmele.wrestlingmanager.familyvideo.annual — $75/year
+com.damonmele.wrestlingmanager.familyvideo.monthly — $10/month
 Actual localized purchase prices must come from StoreKit, not this checklist.
 
 Local checks
@@ -169,3 +169,10 @@ Database access and family selection connected October 3:
   authorization. Every protected operation must check server permissions again.
 - Real PostgreSQL tests include captured app permission helper definitions and
   synthetic teams/guardians/events; they never use live athlete or billing data.
+
+Launch payment status updated October 3, 2026:
+- Owner screenshots confirm Paid Apps Agreement, bank account and U.S. W-9 Active.
+- Digital Services Act In Review; account setup does not activate the billing runtime.
+- Family prices above reflect the owner's October 3 revision; change the matching
+  App Store Connect prices before submission. StoreKit localized metadata remains
+  authoritative in the purchase screen. SMS allowance has not been defined.
