@@ -25,7 +25,12 @@ number as login, permission or guaranteed unique identity. Multiple matches requ
 explicit athlete selection. The reporting database adapter accepts a trusted
 canonical membership resolver and rejects foreign or duplicate mappings.
 
-Not deployed: profile coordinator registration, persistent membership storage,
+Private membership storage and transaction adapters are now drafted and database-tested.
+Numbers attach to the canonical athlete profile and follow its linked athlete records.
+Client database roles have no direct access. Profile deletion cascades to the numbers;
+production scoped deletion catalog still requires explicit integration.
+
+Not deployed: profile coordinator registration, membership storage migration,
 profile deletion-catalog integration, membership resolver wiring and production
 remote reporting runtime. Existing app/profile schema must be checked before
 adding storage; do not create competing athlete profiles or overwrite index.html

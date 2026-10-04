@@ -11,6 +11,10 @@ on:
       - tests/remote-capture-tests.swift
       - tests/remote-delivery-tests.swift
       - scripts/prepare-native-remote-scale.py
+      - src/remote-athlete-memberships-postgres.mjs
+      - supabase/drafts/athlete-membership-identifiers.sql
+      - tests/remote-weighins-memberships-db.mjs
+      - docs/remote-weighins-exports.md
       - src/remote-athlete-memberships.mjs
       - src/remote-athlete-memberships-screen.mjs
       - src/remote-weighins-export.mjs
