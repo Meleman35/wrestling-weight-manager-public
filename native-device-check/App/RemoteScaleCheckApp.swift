@@ -41,24 +41,28 @@ private struct RemoteScaleCheckHome: View {
     }
     #endif
 
-    var body: some View {
-        NavigationStack {
-            ScrollView(.vertical, showsIndicators: true) {
+    @ViewBuilder private var identificationControls: some View {
+        Picker("Athlete identification", selection: $scanMode) {
+            ForEach(ScanMode.allCases, id: \.self) { mode in Text(mode.rawValue).tag(mode) }
+        }.pickerStyle(.menu)
+        if scanMode == .reader {
+            Button("Connect NFC reader") { showReader = true }.buttonStyle(.bordered)
+            Text(nfc.available ? "NFC reader connected" : "Connect your NFC reader to test athlete cards.").font(.caption)
+        } else if scanMode == .simulated {
+            Text("No NFC reader needed. Choose a test athlete and tap Simulate NFC scan before stepping on.").font(.caption)
+        }
+    }
+    private var homeContent: some View {
+        ScrollView(.vertical, showsIndicators: true) {
             VStack(alignment: .leading, spacing: 24) {
-                Text("Camera + American Scale").font(.largeTitle.bold())
-                Text("Device check • Build 6").font(.caption)
-                Text("Separate development test. Your Wrestling Manager app and athlete records are not used.")
-                Text("1. Connect the scale.\n2. Check the camera framing.\n3. Start the continuous test. Step off after each photo to prepare the next test.")
-                Button("Connect American Scale") { showScale = true }.buttonStyle(.borderedProminent)
-                Picker("Athlete identification", selection: $scanMode) {
-                    ForEach(ScanMode.allCases, id: \.self) { mode in Text(mode.rawValue).tag(mode) }
-                }.pickerStyle(.menu)
-                if scanMode == .reader {
-                    Button("Connect NFC reader") { showReader = true }.buttonStyle(.bordered)
-                    Text(nfc.available ? "NFC reader connected" : "Connect your NFC reader to test athlete cards.").font(.caption)
-                } else if scanMode == .simulated {
-                    Text("No NFC reader needed. Choose a test athlete and tap Simulate NFC scan before stepping on.").font(.caption)
+                Group {
+                    Text("Camera + American Scale").font(.largeTitle.bold())
+                    Text("Device check • Build 6").font(.caption)
+                    Text("Separate development test. Your Wrestling Manager app and athlete records are not used.")
+                    Text("1. Connect the scale.\n2. Check the camera framing.\n3. Start the continuous test. Scan, step on, then step off after the photo.")
                 }
+                Button("Connect American Scale") { showScale = true }.buttonStyle(.borderedProminent)
+                identificationControls
                 #if DEBUG
                 Button("Open camera & scale check") { showCheck = true }
                     .buttonStyle(.borderedProminent).disabled(scale.connectionState != .ready || (scanMode == .reader && !nfc.available))
@@ -68,34 +72,45 @@ private struct RemoteScaleCheckHome: View {
                 Text(scale.connectionState == .ready ? "Scale connected" : "Connect the scale to continue.")
                 Text("No sign-in, subscriptions, uploads, or saved photos. Use an adult test subject. Test pictures clear when you close or background this screen.")
                     .font(.footnote).foregroundStyle(.secondary)
-                Spacer()
             }.padding()
-            }.navigationTitle("Remote Scale Check")
+        }.navigationTitle("Remote Scale Check")
+    }
+    #if DEBUG
+    private var athleteCardHandler: ((@escaping (Result<String, Error>) -> Void) -> Void)? {
+        guard scanMode == .reader else { return nil }
+        return { completion in readCard(completion) }
+    }
+    private var checkScreen: some View {
+        NavigationStack {
+            WrestlingManagerRemoteDeviceCheck(
+                installScaleObserver: { handler in scale.onRemoteWeightPacket = handler },
+                removeScaleObserver: { scale.setRemoteWeightReadingEnabled(false); scale.onRemoteWeightPacket = nil },
+                isScaleConnected: { scale.connectionState == .ready },
+                setScaleReadingEnabled: { scale.setRemoteWeightReadingEnabled($0) },
+                scaleReadStatus: { scale.connectionState == .ready ? scale.remoteReadStatus : scale.lastError ?? "Scale disconnected." },
+                readAthleteCard: athleteCardHandler,
+                cancelCardRead: { cardReader?.cancel() },
+                simulateNFCScans: scanMode == .simulated)
+            .navigationTitle("Local device check")
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Done") { showCheck = false } } }
+        }.interactiveDismissDisabled()
+    }
+    #endif
+    var body: some View {
+        NavigationStack {
+            homeContent
                 .sheet(isPresented: $showScale) {
                     AmericanScaleView(client: scale)
                         .overlay(alignment: .bottom) { Button("Done") { showScale = false }.buttonStyle(.borderedProminent).padding() }
                 }
                 .sheet(isPresented: $showReader) { RemoteScaleCheckReaderSetup(reader: nfc) }
                 #if DEBUG
-                .sheet(isPresented: $showCheck) {
-                    NavigationStack {
-                        WrestlingManagerRemoteDeviceCheck(
-                            installScaleObserver: { handler in scale.onRemoteWeightPacket = handler },
-                            removeScaleObserver: { scale.setRemoteWeightReadingEnabled(false); scale.onRemoteWeightPacket = nil },
-                            isScaleConnected: { scale.connectionState == .ready },
-                            setScaleReadingEnabled: { scale.setRemoteWeightReadingEnabled($0) },
-                            scaleReadStatus: { scale.connectionState == .ready ? scale.remoteReadStatus : scale.lastError ?? "Scale disconnected." },
-                            readAthleteCard: scanMode == .reader ? readCard : nil,
-                            cancelCardRead: { cardReader?.cancel() },
-                            simulateNFCScans: scanMode == .simulated)
-                        .navigationTitle("Local device check")
-                        .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Done") { showCheck = false } } }
-                    }.interactiveDismissDisabled()
-                }
+                .sheet(isPresented: $showCheck) { checkScreen }
                 #endif
         }
         .onChange(of: scenePhase) { _, phase in nfc.setForeground(phase == .active) }
     }
+
 }
 
 @MainActor private struct RemoteScaleCheckReaderSetup: View {
