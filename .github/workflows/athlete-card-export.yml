@@ -1,0 +1,38 @@
+name: Athlete card export checks
+on:
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'sw.js'
+      - 'src/athlete-card-export*'
+      - 'tests/athlete-card-export*'
+      - 'tests/browser-fixture.js'
+      - '.ci/**'
+      - 'scripts/prepare-bulk-athlete-cards.py'
+      - '.github/workflows/athlete-card-export.yml'
+permissions:
+  contents: read
+jobs:
+  cards:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NODE_PATH: ${{ github.workspace }}/.ci/node_modules
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - run: npm ci --prefix .ci --ignore-scripts --no-audit --no-fund
+      - run: .ci/node_modules/.bin/playwright install --with-deps chromium
+      - run: sudo apt-get update && sudo apt-get install -y poppler-utils
+      - run: python3 scripts/prepare-bulk-athlete-cards.py
+      - name: Verify production card integration matches its source
+        run: git diff --exit-code -- index.html
+      - run: node --test tests/athlete-card-export.test.mjs
+      - run: node tests/athlete-card-export-browser.cjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: athlete-card-print-check
+          path: validation/cards/
