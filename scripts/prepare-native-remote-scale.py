@@ -18,35 +18,22 @@ def main():
     scale = args.scale_client.resolve()
     if not (app / 'ContentView.swift').is_file() or not scale.is_file():
         raise RuntimeError('Provide the app source folder and AmericanScaleClient.swift.')
-    source = scale.read_text()
-    property_anchor = '    public var displayUnit: AmericanScaleDisplayUnit = .pounds\n'
-    packet_anchor = '            let messages = self.parser.append(data)\n            self.apply(messages)\n'
-    if 'onRemoteWeightPacket' in source:
-        raise RuntimeError('Remote hook already exists; review the prior installation before applying again.')
-    if source.count(property_anchor) != 1 or source.count(packet_anchor) != 1:
-        raise RuntimeError('Scale source differs from the reviewed upload. No files were changed.')
-    source = source.replace(property_anchor, property_anchor + '''
-    /// Real BLE packet evidence; optional and dormant until an authorized host connects it.
-    public var onRemoteWeightPacket: (@MainActor (Double, Date) -> Void)?
-''')
-    source = source.replace(packet_anchor, '''            let messages = self.parser.append(data)
-            let observedAt = Date()
-            // Reject callbacks from a stale peripheral or incomplete connection.
-            if self.connectionState == .ready, self.connectedPeripheral === peripheral {
-                for message in messages {
-                    if case .weight(let pounds) = message {
-                        self.onRemoteWeightPacket?(pounds, observedAt)
-                    }
-                }
-            }
-            self.apply(messages)
-''')
     repo = Path(__file__).resolve().parents[1]
+    # Exact original vendor/client snapshot from the supplied source ZIP. Never
+    # overwrite a differently edited client, including a prior remote install.
+    expected = 'bbcb20277d29fe6dd0f5407610002d6d60a2daeaed8d3beedcfc0218d413ce36'
+    if hashlib.sha256(scale.read_bytes()).hexdigest() != expected:
+        raise RuntimeError('Scale source differs from the reviewed original upload. No files were changed. Use a fresh source copy.')
+    scale_sources = repo / 'native-device-check/AmericanScaleKit/Sources/AmericanScaleKit'
+    read_cycle = scale.with_name('AmericanScaleReadCycle.swift')
+    if read_cycle.exists():
+        raise RuntimeError('Scale read cycle already exists. No files were changed.')
     names = ['WrestlingManagerRemoteCapture.swift', 'WrestlingManagerRemotePhoto.swift',
              'WrestlingManagerRemoteCaptureHost.swift', 'WrestlingManagerRemoteReadiness.swift', 'WrestlingManagerRemoteOutbox.swift',
              'WrestlingManagerRemoteDelivery.swift', 'WrestlingManagerRemoteDeliveryStore.swift',
              'WrestlingManagerRemoteRetention.swift', 'WrestlingManagerRemoteHTTP.swift', 'WrestlingManagerRemoteReportingSession.swift', 'WrestlingManagerRemoteDeviceCheck.swift']
-    changes = {scale: source.encode()}
+    changes = {scale: (scale_sources / 'AmericanScaleClient.swift').read_bytes(),
+               read_cycle: (scale_sources / 'AmericanScaleReadCycle.swift').read_bytes()}
     for name in names:
         target = app / name
         if target.exists():
@@ -66,7 +53,7 @@ def main():
             else:
                 path.write_bytes(data)
         raise
-    print('Prepared remote capture components and optional real BLE packet hook.')
+    print('Prepared remote capture components, optional BLE packet hook and bounded direct-read support.')
     print('Scale backup:', backup)
     print('Original scale SHA256:', hashlib.sha256(originals[scale]).hexdigest())
     print('Host activation, authorization and upload integration still required before device use.')

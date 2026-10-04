@@ -78,6 +78,46 @@ import Foundation
         let result = try capture.freeze(token: token)
         let envelope = try JSONDecoder().decode(WrestlingManagerRemoteCapture.Envelope.self, from: result.payload)
         precondition(envelope.weight == 125)
+        capture.close()
+        // A change-only peripheral sends no unsolicited notifications while
+        // still. Real read responses must keep the countdown alive; requesting
+        // a read without getting a response must never do so.
+        clock = start
+        let polled = try WrestlingManagerRemoteCapture(scope: scope, now: { clock })
+        let polledToken = try polled.scan(athleteID: "adult-test", method: "qr")
+        var reader = AmericanScaleReadCycle()
+        var countdown = WrestlingManagerRemoteReadiness()
+        reader.start(at: 0)
+        var remaining: Int?
+        for i in 0...9 {
+            let requestedAt = 0.1 + Double(i) * 0.6
+            precondition(reader.tick(at: requestedAt, canRead: true) == .read)
+            let repliedAt = requestedAt + 0.05
+            precondition(reader.received(at: repliedAt))
+            clock = start.addingTimeInterval(repliedAt)
+            var replyParser = AmericanScaleStreamParser()
+            for message in replyParser.append(Data("Weight=67.400####".utf8)) {
+                if case .weight(let pounds) = message {
+                    try polled.scaleReading(token: polledToken, pounds: pounds, observedAt: clock, connected: true)
+                }
+            }
+            remaining = countdown.remaining(ready: polled.settledWeight != nil, at: repliedAt)
+        }
+        precondition(remaining == 0 && polled.settledWeight == 67.4)
+        // Stepping off must still stop a ready shutter immediately.
+        clock = start.addingTimeInterval(6.2)
+        try? polled.scaleReading(token: polledToken, pounds: 0, observedAt: clock, connected: true)
+        precondition(countdown.remaining(ready: polled.settledWeight != nil, at: 6.2) == nil)
+        for offset in [6.8, 7.4, 8.0] {
+            clock = start.addingTimeInterval(offset)
+            try polled.scaleReading(token: polledToken, pounds: 67.4, observedAt: clock, connected: true)
+        }
+        precondition(polled.settledWeight == 67.4)
+        precondition(reader.tick(at: 8.1, canRead: true) == .read)
+        // Deliberately no received() and no scaleReading() here.
+        clock = start.addingTimeInterval(9.51)
+        precondition(polled.settledWeight == nil)
+        precondition(reader.tick(at: 10.11, canRead: true) == .timeout)
         print("Bluetooth stream checks passed: batching, distinct receipts, movement, invalid weight, fragments, freshness and capture.")
     }
 }

@@ -50,6 +50,13 @@ public final class AmericanScaleClient: NSObject, ObservableObject {
 
     /// Real BLE packet evidence; optional and dormant until an authorized host connects it.
     public var onRemoteWeightPacket: (@MainActor (Double, Date) -> Void)?
+    @Published public private(set) var remoteReadStatus = "Direct scale reads inactive."
+    private var remoteReadsRequested = false
+    private var remoteReads = AmericanScaleReadCycle()
+    private var remoteReadTask: Task<Void, Never>?
+    private var notificationChangeAt: TimeInterval?
+    private var readRequestCount = 0
+    private var readReplyCount = 0
 
     private lazy var central = CBCentralManager(delegate: self, queue: .main)
     private var peripheralsByID: [UUID: CBPeripheral] = [:]
@@ -169,6 +176,74 @@ public final class AmericanScaleClient: NSObject, ObservableObject {
         session = next
     }
 
+    /// Used only during an explicit remote-capture attempt. Temporarily suspend
+    /// notifications so each callback can be attributed to one requested read.
+    public func setRemoteWeightReadingEnabled(_ enabled: Bool) {
+        if enabled {
+            guard connectionState == .ready, onRemoteWeightPacket != nil else { return }
+            guard !remoteReadsRequested else { return }
+            remoteReadsRequested = true
+            readRequestCount = 0; readReplyCount = 0
+            remoteReadStatus = "Preparing direct scale reads…"
+            remoteReads.start(at: ProcessInfo.processInfo.systemUptime)
+        } else {
+            remoteReadsRequested = false; remoteReads.stop()
+            remoteReadStatus = "Direct scale reads inactive."
+        }
+        configureRemoteReadMode()
+        startRemoteReadTaskIfNeeded()
+    }
+
+    private func configureRemoteReadMode() {
+        guard connectionState == .ready, notificationChangeAt == nil,
+              let peripheral = connectedPeripheral, let characteristic = scaleCharacteristic else { return }
+        // Drain a cancelled read before restoring notifications or issuing another.
+        guard !remoteReads.awaitingReply else { return }
+        let shouldNotify = !remoteReadsRequested
+        if characteristic.isNotifying != shouldNotify {
+            parser.reset()
+            notificationChangeAt = ProcessInfo.processInfo.systemUptime
+            peripheral.setNotifyValue(shouldNotify, for: characteristic)
+        }
+    }
+
+    private func startRemoteReadTaskIfNeeded() {
+        guard remoteReadTask == nil,
+              remoteReadsRequested || remoteReads.awaitingReply || notificationChangeAt != nil else { return }
+        remoteReadTask = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                guard let self, self.connectionState == .ready else { return }
+                let now = ProcessInfo.processInfo.systemUptime
+                if let changedAt = self.notificationChangeAt, now - changedAt >= 2 {
+                    self.failRemoteRead("Scale read setup timed out. Reconnect the scale."); return
+                }
+                let canRead = self.notificationChangeAt == nil && self.scaleCharacteristic?.isNotifying == false
+                switch self.remoteReads.tick(at: now, canRead: canRead) {
+                case .read:
+                    guard let peripheral = self.connectedPeripheral, let characteristic = self.scaleCharacteristic else { return }
+                    self.readRequestCount += 1
+                    peripheral.readValue(for: characteristic)
+                case .timeout:
+                    self.failRemoteRead("The scale did not answer a fresh read. Reconnect the scale."); return
+                case .none: break
+                }
+                if !self.remoteReadsRequested && !self.remoteReads.awaitingReply && self.notificationChangeAt == nil {
+                    self.remoteReadTask = nil; return
+                }
+                do { try await Task.sleep(nanoseconds: 100_000_000) } catch { return }
+            }
+        }
+    }
+
+    private func failRemoteRead(_ message: String) {
+        remoteReadStatus = message
+        onRemoteWeightPacket?(.nan, Date())
+        remoteReadsRequested = false; remoteReads.reset()
+        remoteReadTask?.cancel(); remoteReadTask = nil; notificationChangeAt = nil
+        fail(message)
+        if let peripheral = connectedPeripheral { central.cancelPeripheralConnection(peripheral) }
+    }
+
     public func reconnectLastScale(knownScaleIdentifier: UUID? = nil) {
         switch connectionState {
         case .scanning, .idle, .failed: break
@@ -262,6 +337,8 @@ public final class AmericanScaleClient: NSObject, ObservableObject {
     }
 
     private func resetTransportState() {
+        remoteReadsRequested = false; remoteReads.reset()
+        remoteReadTask?.cancel(); remoteReadTask = nil; notificationChangeAt = nil
         parser.reset()
         scaleCharacteristic = nil
         connectedPeripheral = nil
@@ -269,6 +346,8 @@ public final class AmericanScaleClient: NSObject, ObservableObject {
     }
 
     private func fail(_ message: String) {
+        remoteReadTask?.cancel(); remoteReadTask = nil
+        remoteReadsRequested = false; remoteReads.reset(); notificationChangeAt = nil
         lastError = message
         connectionState = .failed(message)
     }
@@ -290,6 +369,7 @@ extension AmericanScaleClient: CBCentralManagerDelegate {
                     self.connectionState = .idle
                 }
             default:
+                self.resetTransportState()
                 self.connectionState = .bluetoothUnavailable
             }
         }
@@ -466,10 +546,19 @@ extension AmericanScaleClient: CBPeripheralDelegate {
         error: Error?
     ) {
         onMainActor {
-            guard characteristic.uuid == Self.scaleCharacteristicUUID else { return }
+            guard characteristic.uuid == Self.scaleCharacteristicUUID,
+                  self.connectedPeripheral === peripheral, self.scaleCharacteristic === characteristic else { return }
 
             if let error {
+                self.notificationChangeAt = nil
                 self.fail(error.localizedDescription)
+                return
+            }
+
+            if self.notificationChangeAt != nil {
+                self.notificationChangeAt = nil
+                self.parser.reset()
+                self.configureRemoteReadMode()
                 return
             }
 
@@ -490,7 +579,30 @@ extension AmericanScaleClient: CBPeripheralDelegate {
         error: Error?
     ) {
         onMainActor {
-            guard characteristic.uuid == Self.scaleCharacteristicUUID else { return }
+            guard characteristic.uuid == Self.scaleCharacteristicUUID,
+                  self.connectedPeripheral === peripheral, self.scaleCharacteristic === characteristic else { return }
+            // With notifications suspended, only a pending GATT read can supply
+            // remote evidence. Never re-stamp session.liveWeightLb or cached bytes.
+            if !characteristic.isNotifying, self.remoteReads.awaitingReply {
+                let deliver = self.remoteReads.received(at: ProcessInfo.processInfo.systemUptime)
+                let observedAt = Date()
+                if let error { self.failRemoteRead("Scale read failed: \(error.localizedDescription)"); return }
+                if deliver {
+                    self.readReplyCount += 1
+                    var responseParser = AmericanScaleStreamParser()
+                    let messages = responseParser.append(characteristic.value ?? Data())
+                    let complete = responseParser.bufferedByteCount == 0
+                    let weights = complete ? messages.compactMap { message -> Double? in
+                        if case .weight(let pounds) = message { return pounds }; return nil
+                    } : []
+                    let reply = !complete ? "Incomplete reply" : weights.isEmpty ? "No weight in reply" : "Weight received"
+                    self.remoteReadStatus = "Read requests: \(self.readRequestCount) • replies: \(self.readReplyCount) • \(reply)"
+                    if complete { self.apply(messages) }
+                    for pounds in weights { self.onRemoteWeightPacket?(pounds, observedAt) }
+                }
+                self.configureRemoteReadMode()
+                return
+            }
             if let error {
                 self.lastError = error.localizedDescription
                 return
@@ -499,7 +611,7 @@ extension AmericanScaleClient: CBPeripheralDelegate {
             let messages = self.parser.append(data)
             let observedAt = Date()
             // Reject callbacks from a stale peripheral or incomplete connection.
-            if self.connectionState == .ready, self.connectedPeripheral === peripheral {
+            if self.connectionState == .ready, !self.remoteReadsRequested, self.notificationChangeAt == nil {
                 for message in messages {
                     if case .weight(let pounds) = message {
                         self.onRemoteWeightPacket?(pounds, observedAt)

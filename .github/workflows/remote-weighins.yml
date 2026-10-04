@@ -104,7 +104,7 @@ jobs:
           /tmp/remote-capture-tests
       - name: Exercise Bluetooth stream through native capture
         run: |
-          swiftc native-device-check/AmericanScaleKit/Sources/AmericanScaleKit/AmericanScaleProtocol.swift native-candidate/WrestlingManagerRemoteCapture.swift tests/remote-scale-stream-tests.swift -o /tmp/remote-scale-stream-tests
+          swiftc native-device-check/AmericanScaleKit/Sources/AmericanScaleKit/AmericanScaleProtocol.swift native-device-check/AmericanScaleKit/Sources/AmericanScaleKit/AmericanScaleReadCycle.swift native-candidate/WrestlingManagerRemoteCapture.swift native-candidate/WrestlingManagerRemoteReadiness.swift tests/remote-scale-stream-tests.swift -o /tmp/remote-scale-stream-tests
           /tmp/remote-scale-stream-tests
       - name: Exercise native upload and receipt recovery
         run: |

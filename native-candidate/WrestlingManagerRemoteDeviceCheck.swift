@@ -9,8 +9,11 @@ struct WrestlingManagerRemoteDeviceCheck: UIViewControllerRepresentable {
     let installScaleObserver: (@escaping @MainActor (Double, Date) -> Void) -> Void
     let removeScaleObserver: () -> Void
     let isScaleConnected: () -> Bool
+    let setScaleReadingEnabled: (Bool) -> Void
+    let scaleReadStatus: () -> String
     func makeUIViewController(context: Context) -> WrestlingManagerRemoteDeviceCheckController {
-        let controller = WrestlingManagerRemoteDeviceCheckController(onClose: removeScaleObserver, isScaleConnected: isScaleConnected)
+        let controller = WrestlingManagerRemoteDeviceCheckController(onClose: removeScaleObserver,
+            isScaleConnected: isScaleConnected, setScaleReadingEnabled: setScaleReadingEnabled, scaleReadStatus: scaleReadStatus)
         installScaleObserver { [weak controller] pounds, at in controller?.receive(pounds: pounds, at: at) }
         return controller
     }
@@ -25,6 +28,8 @@ final class WrestlingManagerRemoteDeviceCheckController: UIViewController {
     private let photos = WrestlingManagerRemotePhoto()
     private let onClose: () -> Void
     private let isScaleConnected: () -> Bool
+    private let setScaleReadingEnabled: (Bool) -> Void
+    private let scaleReadStatus: () -> String
     private let status = UILabel()
     private let picture = UIImageView()
     private let setup = UIButton(type: .system)
@@ -41,14 +46,16 @@ final class WrestlingManagerRemoteDeviceCheckController: UIViewController {
     private var latestUpdateAt: Date?
     private var updateCount = 0
     private var closesAt: Date?
-    init(onClose: @escaping () -> Void, isScaleConnected: @escaping () -> Bool) {
+    init(onClose: @escaping () -> Void, isScaleConnected: @escaping () -> Bool,
+         setScaleReadingEnabled: @escaping (Bool) -> Void, scaleReadStatus: @escaping () -> String) {
         self.onClose = onClose; self.isScaleConnected = isScaleConnected
+        self.setScaleReadingEnabled = setScaleReadingEnabled; self.scaleReadStatus = scaleReadStatus
         super.init(nibName: nil, bundle: nil)
     }
     required init?(coder: NSCoder) { fatalError("Use init(onClose:)") }
     override func viewDidLoad() {
         super.viewDidLoad(); view.backgroundColor = .systemBackground
-        let title = UILabel(); title.text = "Remote camera & scale check • Build 2"; title.font = .preferredFont(forTextStyle: .title2)
+        let title = UILabel(); title.text = "Remote camera & scale check • Build 3"; title.font = .preferredFont(forTextStyle: .title2)
         let note = UILabel(); note.text = "Development test • Fictional athlete\nConnect the American Scale first. Use an adult test subject in athletic clothing. Keep face, singlet, both feet and scale visible. Nothing here is uploaded or saved."
         for label in [title,note,status] { label.numberOfLines = 0; label.adjustsFontForContentSizeCategory = true }
         status.text = "1. Check the camera framing. 2. Start a test weigh-in and step on the scale."
@@ -114,6 +121,7 @@ final class WrestlingManagerRemoteDeviceCheckController: UIViewController {
                 opensAt: now.addingTimeInterval(-5), closesAt: now.addingTimeInterval(300)))
             let token = try model.scan(athleteID: "fictional-adult-test", method: "qr")
             capture = model; busy = true; controls(); status.text = "Waiting for fresh scale packets. The photo takes automatically after the scale stays stable."
+            setScaleReadingEnabled(true)
             photos.take(token: token, from: self, readyToCapture: { [weak self] in
                 guard let self, self.active, self.operation == ticket else { return false }
                 self.checkConnection()
@@ -133,9 +141,9 @@ final class WrestlingManagerRemoteDeviceCheckController: UIViewController {
                     self.picture.image = UIImage(data: jpeg)
                     self.status.text = String(format: "Test capture: %.1f lb\n", envelope.weight) + "Captured: \(envelope.capturedAt)\nPhoto: \(envelope.photoCapturedAt)\nConfirm the whole athlete and scale are visible. This is a local test, not an accepted tournament weigh-in."
                 } catch { self.status.text = "Test not captured. Keep the scale connected and the athlete still, then try again. No weigh-in was saved." }
-                model.close(); self.capture = nil
+                model.close(); self.capture = nil; self.setScaleReadingEnabled(false)
             }
-        } catch { busy = false; controls(); status.text = "The test could not start. Close and reopen this check." }
+        } catch { setScaleReadingEnabled(false); busy = false; controls(); status.text = "The test could not start. Close and reopen this check." }
     }
     func receive(pounds: Double, at: Date) {
         guard active, let capture, let token = capture.captureToken else { return }
@@ -148,14 +156,17 @@ final class WrestlingManagerRemoteDeviceCheckController: UIViewController {
         if !isScaleConnected() { capture?.scaleDisconnected() }
     }
     private func liveStatus() -> String {
-        guard isScaleConnected() else { return "Scale disconnected. Cancel and reconnect the scale." }
-        if let closesAt, Date() >= closesAt { return "Five-minute test ended. Cancel and start a new test." }
+        guard isScaleConnected() else { return scaleReadStatus() + "\nCancel and reconnect the scale." }
+        if let closesAt, Date() >= closesAt {
+            setScaleReadingEnabled(false)
+            return "Five-minute test ended. Cancel and start a new test."
+        }
         guard let latestUpdateAt, let latestWeight else {
-            return "Scale connected • No new weight updates yet.\nStep on the scale after starting this test."
+            return scaleReadStatus() + "\nNo weight received yet. Step on the scale after starting this test."
         }
         let age = max(0, Date().timeIntervalSince(latestUpdateAt))
         let weight = latestWeight.isFinite ? String(format: "%.1f lb", latestWeight) : "Invalid weight"
-        let details = String(format: "%@ • %d updates • last %.1fs ago", weight, updateCount, age)
+        let details = String(format: "%@ • %d updates • last %.1fs ago", weight, updateCount, age) + "\n" + scaleReadStatus()
         if age > 1.5 { return details + "\nWeight updates paused. Waiting for fresh readings." }
         if !latestWeight.isFinite || latestWeight <= 0 || latestWeight > 800 {
             return details + "\nWaiting for a valid weight. Step onto the scale."
@@ -164,6 +175,7 @@ final class WrestlingManagerRemoteDeviceCheckController: UIViewController {
     }
     @objc private func clearTest() {
         operation = UUID(); capture?.close(); capture = nil; setupConfirmed = false; busy = false
+        setScaleReadingEnabled(false)
         latestWeight = nil; latestUpdateAt = nil; updateCount = 0; closesAt = nil
         photos.cancel(); review?.cancel(); review = nil; picture.image = nil
         status.text = "Temporary test data cleared. Recheck setup to begin."; controls()

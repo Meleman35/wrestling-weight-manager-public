@@ -104,16 +104,37 @@ Physical iPad testing remains necessary for camera permissions/rotation, sample
 cadence and stability, protected storage, cancellation and reconnect behavior.
 
 `prepare-native-remote-scale.py` was exercised against a local copy of the
-uploaded source. It installs the four dormant components and adds an optional
+uploaded source. It installs the dormant components and adds an optional
 `onRemoteWeightPacket(Double, Date)` callback at parsed BLE receipt, including
 unchanged repeated weights. Records completed in the same notification share one
 receipt timestamp and count as one stability sample; the full batch range is
 retained so a last record cannot conceal movement. No cached value gets a new
 timestamp. Stale-peripheral callbacks are excluded. The
-installer validates exact source anchors before writing, preserves the original
-scale file in a backup and rolls back on write failure. No original uploaded ZIP
-is overwritten. The app must connect that callback to the active host, forward
+installer validates the exact SHA256 of the reviewed original client before
+writing, preserves it in a backup and rolls back on write failure. It includes
+`AmericanScaleReadCycle.swift` in the scale source directory. No original
+uploaded ZIP is overwritten. A differently edited or previously patched client
+is rejected. The app must connect the callback to the active host, forward
 connection loss to `scaleDisconnected()`, and clear it on host closure.
+
+Build 3 of the isolated device check explicitly enables direct reads only during
+an active camera weigh-in, via `setRemoteWeightReadingEnabled(true)`. Notifications
+are temporarily suspended and acknowledged before polling, so each response can
+be attributed to one outstanding read. Reads are spaced at least 0.5 seconds
+after the prior response. Missing responses time out after two seconds, stop the
+attempt and disconnect; cancelled attempts drain their old response without
+passing it to a new attempt. Closing, cancelling, backgrounding or finishing the
+attempt disables polling and restores notifications. Ordinary scale use keeps
+its existing notification workflow. Weight samples are created only from actual
+complete Weight records in read responses, never from the cached UI value.
+
+The device screenshot from October 4 showed two weight updates followed by a
+three-second gap. This supports testing change-only notification behavior; it
+does not establish the firmware's behavior for characteristic reads. Build 3
+still requires a physical test that repeated reads return current weight and that
+stepping off immediately stops the countdown. The stability and freshness rules
+are unchanged. This remains a draft, not tournament acceptance or certification.
+
 
 The host blocks rescans/discards during durable writes, avoiding a discarded
 attempt racing a completed save. Local save failures expose `retrySave()` without
