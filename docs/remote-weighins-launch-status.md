@@ -8,7 +8,7 @@ was separately published in web version 0.20.121 through PR #61.
 ## Implemented and checked
 
 - Camera setup with full-frame confirmation, singlet/face/feet/scale guidance,
-  memory-only test pictures and a two-second automatic stable-weight shutter.
+  memory-only test pictures and an automatic shutter immediately after stable weight.
   Movement, a stale BLE packet or the closing deadline resets readiness.
 - Locked original capture fields; protected native retry/outbox components;
   240-hour expiry; explicit late receipt handling and downloaded-copy warnings.
@@ -45,15 +45,17 @@ replace Wrestling Manager. It numbers fictional adult test athletes in a continu
 HTTP, upload, payment or saved photographs. Images clear on close/background.
 
 Physical testing on October 4 confirmed a Build 3 automatic weight/photo capture
-and a disconnect timeout that required reconnection. Countdown cancellation on
-step-off remains unconfirmed. Build 4 retains setup across consecutive attempts,
-waits for fresh empty-scale readings before the next attempt, and exposes settling
-progress with a shorter two-second countdown. The production host signals its
-coordinator for the next authorized scan only after durable save and scale clear.
-Build 4 consecutive-athlete behavior still requires device acceptance.
+and a disconnect timeout. Build 4 failed to advance after one capture while the
+screen showed 0.0 lb. Build 5 removes the extra shutter countdown, advances on
+one fresh empty-scale response and retries camera presentation after dismissal.
+It includes an iPad simulator regression for three captures inside the real
+SwiftUI sheet, single-zero handoff, mixed-response rejection and retained setup.
+Only camera hardware and BLE are simulated; physical acceptance remains pending.
+The production host signals its coordinator for the next authorized scan only
+after durable save and scale clear.
 
-Check portrait/landscape framing; setup cancel/retake; automatic capture after
-stable weight; stepping off during countdown; disconnecting the scale; and
+Check portrait/landscape framing; setup cancel/retake; immediate capture after
+stable weight; stepping off before stability; disconnecting the scale; and
 backgrounding during capture. Use an adult in appropriate athletic clothing.
 No athlete pictures need to be sent back. This does not test production QR/NFC
 resolution, authenticated server receipts or offline delivery.

@@ -2,16 +2,6 @@ import Foundation
 
 @main struct RemoteCaptureTests {
     @MainActor static func main() throws {
-        var readiness = WrestlingManagerRemoteReadiness()
-        precondition(readiness.remaining(ready: false, at: 0) == nil)
-        precondition(readiness.remaining(ready: true, at: 1) == 2)
-        precondition(readiness.remaining(ready: true, at: 2) == 1)
-        precondition(readiness.remaining(ready: false, at: 2.5) == nil)
-        precondition(readiness.remaining(ready: true, at: 3) == 2)
-        precondition(readiness.remaining(ready: true, at: 4.9) == 1)
-        precondition(readiness.remaining(ready: true, at: 5) == 0)
-        precondition(readiness.remaining(ready: true, at: 2) == 2)
-        precondition(readiness.remaining(ready: true, at: .infinity) == nil)
         var clock = Date(timeIntervalSince1970: 1800000000)
         let start = clock
         let scope = WrestlingManagerRemoteCapture.Scope(accountID: UUID(), clubID: UUID(), generation: "personal-session",

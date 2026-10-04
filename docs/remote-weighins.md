@@ -123,8 +123,8 @@ are temporarily suspended and acknowledged before polling, so each response can
 be attributed to one outstanding read. Reads are spaced at least 0.5 seconds
 after the prior response. Missing responses time out after two seconds, stop the
 attempt and disconnect; cancelled attempts drain their old response without
-passing it to a new attempt. Closing, cancelling, backgrounding or finishing the
-attempt disables polling and restores notifications. Ordinary scale use keeps
+passing it to a new attempt. Closing, cancelling, backgrounding or ending the
+continuous session disables polling and restores notifications. Ordinary scale use keeps
 its existing notification workflow. Weight samples are created only from actual
 complete Weight records in read responses, never from the cached UI value.
 
@@ -133,26 +133,36 @@ weight/photo capture and that disconnecting the scale timed out and requested
 reconnection. Stepping off during the countdown is not yet confirmed. The user
 also reported a slow photo and repeated setup between athletes.
 
-Build 4 shortens the extra stable-weight countdown to two seconds. The scale
-still needs three distinct fresh readings across at least one second within
-0.2 lb. Near-zero readings (up to 1 lb) represent an empty platform and cannot
-be captured as an athlete weight. Settling progress and elapsed time appear in
-the device check. A rejected final shutter-readiness check keeps polling rather
-than leaving the shutter permanently waiting.
+Build 4 physical testing failed to advance after the first photo even while the
+screen showed 0.0 lb. That displayed number alone did not establish whether a
+second fresh zero response arrived or whether UIKit presentation was ready.
 
-The device check now keeps setup for a continuous foreground session, numbers
-fictional attempts and retains only the most recent in-memory photo. After a
-successful capture, it keeps direct scale reads running and waits for two fresh
-empty-scale readings at least 0.5 seconds apart. It then opens the next attempt
-automatically. Remaining on the scale cannot duplicate an attempt. A camera
-cancel or session end preserves setup; leaving/backgrounding clears it. Physical
-movement of the camera or scale still requires a framing recheck.
+Build 5 removes the additional shutter countdown: three distinct fresh readings
+across at least one second within 0.2 lb immediately permit the camera to take
+the photo. Near-zero readings (up to 1 lb) cannot be athlete evidence. The final
+readiness check still rejects movement, stale readings, disconnection and expiry.
+The controller notifies the camera after processing the entire BLE response,
+with a 100 ms readiness monitor as a fallback. No timing guarantee is made for
+the physical camera's exposure or image processing.
 
-The production capture host has the same empty-scale gate after a durable queue
-save, exposes `readyForNextScan` and calls `onReadyForNextScan` for its authorized
-coordinator. Integrators must keep the scale reader active through the step-off
-stage, then route the next actual QR/NFC scan through authorized roster lookup.
-No physical test of this production integration or Build 4 is implied.
+The device check keeps setup for a continuous foreground session and retains
+only the most recent in-memory photo. After a successful capture it keeps direct
+reads running. One fresh empty-scale response permits the next attempt without
+requiring a second repeated zero. Any nonempty or invalid record in that same
+response vetoes advancement. Old/stale zeros and staying on the scale cannot
+advance the session. Presentation comes from the sheet's container and keeps its
+view attached; view appearance and a session timer retry the handoff if UIKit is
+still dismissing. The step-off screen shows read age, count and transport status.
+A camera cancel or session end preserves setup; leaving/backgrounding clears it.
+Moving the camera or scale still requires a framing recheck.
+
+The production host shares the empty-scale gate after durable queue save and
+signals `onReadyForNextScan` to its authorized coordinator. Keep the reader active
+through step-off, then resolve the next actual QR/NFC scan through the roster.
+Build 5 adds an iPad simulator test of real SwiftUI sheet/camera transitions,
+three captures, a single-zero handoff, mixed-response rejection, retained setup
+and disconnect. Only BLE and camera hardware are simulated. Physical Build 5
+acceptance and production integration remain outstanding.
 
 
 The host blocks rescans/discards during durable writes, avoiding a discarded

@@ -9,17 +9,32 @@ final class WrestlingManagerRemotePhoto {
     private var completion: ((UUID, Result<(Data, Date), Error>) -> Void)?
     private var token: UUID?
 
+    private func presentationAnchor(_ presenter: UIViewController) -> UIViewController {
+        var anchor = presenter
+        while let parent = anchor.parent { anchor = parent }
+        return anchor
+    }
+    func canTake(from presenter: UIViewController) -> Bool {
+        let anchor = presentationAnchor(presenter)
+        return camera == nil && anchor.viewIfLoaded?.window != nil
+            && anchor.presentedViewController == nil && !anchor.isBeingDismissed
+    }
+    /// Called after all records in a scale response have been processed.
+    func updateCaptureReadiness() { camera?.updateCaptureReadiness() }
+
     func take(token: UUID, from presenter: UIViewController, setup: Bool = false,
               readyToCapture: (() -> Bool)? = nil,
               captureStatus: (() -> String)? = nil,
               completion: @escaping (UUID, Result<(Data, Date), Error>) -> Void) {
         guard camera == nil else { completion(token, .failure(Failure.busy)); return }
-        guard presenter.viewIfLoaded?.window != nil, presenter.presentedViewController == nil else {
+        guard canTake(from: presenter) else {
             completion(token, .failure(Failure.unavailable)); return
         }
         let controller = RemoteSnapshotController(setup: setup, readyToCapture: readyToCapture, captureStatus: captureStatus)
         self.token = token; self.completion = completion; camera = controller
-        controller.modalPresentationStyle = .fullScreen
+        // Keep the sheet's view attached between captures. Present from its
+        // container, rather than a SwiftUI-owned child that can be reattached.
+        controller.modalPresentationStyle = .overFullScreen
         controller.onFinish = { [weak self, weak controller] result in
             guard let self, let controller, self.camera === controller else { return }
             self.finish(result.flatMap { data, at in
@@ -38,7 +53,7 @@ final class WrestlingManagerRemotePhoto {
                 return .success((jpeg, at))
             })
         }
-        presenter.present(controller, animated: true)
+        presentationAnchor(presenter).present(controller, animated: true)
     }
     func cancel() { finish(.failure(Failure.cancelled)) }
     private func finish(_ result: Result<(Data, Date), Error>) {
@@ -131,6 +146,9 @@ nonisolated private final class RemoteSnapshotCamera: NSObject, @unchecked Senda
         self.onReady = onReady; self.onResult = onResult; super.init()
     }
     func start() {
+        #if REMOTE_SCALE_UI_TESTS
+        Task { @MainActor [onReady] in onReady() }
+        #else
         queue.async { [self] in
             guard !finished else { return }
             do {
@@ -151,8 +169,19 @@ nonisolated private final class RemoteSnapshotCamera: NSObject, @unchecked Senda
                 Task { @MainActor [onReady] in onReady() }
             } catch { fail() }
         }
+        #endif
     }
     func shoot(angle: CGFloat) {
+        #if REMOTE_SCALE_UI_TESTS
+        // CI replaces only the camera hardware; presentation, shutter readiness,
+        // JPEG normalization and the session controller remain the real code.
+        Task { @MainActor [onResult] in
+            let image = UIGraphicsImageRenderer(size: CGSize(width: 24, height: 32)).image { _ in
+                UIColor.blue.setFill(); UIRectFill(CGRect(x: 0, y: 0, width: 24, height: 32))
+            }
+            onResult(image.jpegData(compressionQuality: 0.8), Date())
+        }
+        #else
         queue.async { [self] in
             guard !finished, !shooting, let output, session.isRunning else { return }
             shooting = true
@@ -161,6 +190,7 @@ nonisolated private final class RemoteSnapshotCamera: NSObject, @unchecked Senda
             }
             output.capturePhoto(with: AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg]), delegate: self)
         }
+        #endif
     }
     func stop() { queue.async { [self] in finished = true; if session.isRunning { session.stopRunning() } } }
     private func fail() {
@@ -194,8 +224,9 @@ nonisolated private final class RemoteSnapshotCamera: NSObject, @unchecked Senda
     private let readyToCapture: (() -> Bool)?
     private let captureStatus: (() -> String)?
     private let scaleStatus = UILabel()
-    private var countdown = WrestlingManagerRemoteReadiness()
-    private var countdownTask: Task<Void, Never>?
+    private var readinessTask: Task<Void, Never>?
+    private var cameraReady = false
+    private var shooting = false
     private let previewView = UIView()
     private let guide = CAShapeLayer()
     init(setup: Bool, readyToCapture: (() -> Bool)?, captureStatus: (() -> String)?) {
@@ -207,25 +238,28 @@ nonisolated private final class RemoteSnapshotCamera: NSObject, @unchecked Senda
     private var preview: AVCaptureVideoPreviewLayer?
     private lazy var capture = RemoteSnapshotCamera(onReady: { [weak self] in
         guard let self, !self.finished else { return }
+        self.cameraReady = true
         self.shutter.isEnabled = self.readyToCapture == nil; self.view.setNeedsLayout()
-        if self.readyToCapture != nil { self.startCountdown() }
+        if self.readyToCapture != nil { self.monitorReadiness() }
     }, onResult: { [weak self] data, at in
         guard let self, !self.finished else { return }
         self.finished = true
         if let data, let at { self.onFinish?(.success((data, at))) }
         else { self.onFinish?(.failure(WrestlingManagerRemotePhoto.Failure.unavailable)) }
     })
-    private func startCountdown() {
-        countdownTask?.cancel()
-        countdownTask = Task { @MainActor [weak self] in
+    func updateCaptureReadiness() {
+        guard cameraReady, !finished, !shooting, readyToCapture != nil else { return }
+        scaleStatus.text = captureStatus?()
+        shutter.setTitle("Waiting for a stable scale reading…", for: .normal)
+        if readyToCapture?() == true { _ = triggerPhoto() }
+    }
+    private func monitorReadiness() {
+        readinessTask?.cancel()
+        readinessTask = Task { @MainActor [weak self] in
             while !Task.isCancelled {
-                guard let self, !self.finished else { return }
-                let seconds = self.countdown.remaining(ready: self.readyToCapture?() == true,
-                                                       at: ProcessInfo.processInfo.systemUptime)
-                self.scaleStatus.text = self.captureStatus?()
-                self.shutter.setTitle(seconds.map { "Photo in \($0)… Stand still" } ?? "Waiting for a stable scale reading…", for: .normal)
-                if seconds == 0, self.triggerPhoto() { return }
-                do { try await Task.sleep(nanoseconds: 200_000_000) } catch { return }
+                guard let self, !self.finished, !self.shooting else { return }
+                self.updateCaptureReadiness()
+                do { try await Task.sleep(nanoseconds: 100_000_000) } catch { return }
             }
         }
     }
@@ -270,6 +304,9 @@ nonisolated private final class RemoteSnapshotCamera: NSObject, @unchecked Senda
             controls.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             controls.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             controls.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor), controls.heightAnchor.constraint(equalToConstant: 64)])
+        #if REMOTE_SCALE_UI_TESTS
+        capture.start()
+        #else
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized: capture.start()
         case .notDetermined:
@@ -281,6 +318,7 @@ nonisolated private final class RemoteSnapshotCamera: NSObject, @unchecked Senda
             }
         default: cancelPhoto()
         }
+        #endif
     }
     private var rotation: CGFloat {
         switch view.window?.windowScene?.interfaceOrientation {
@@ -304,14 +342,15 @@ nonisolated private final class RemoteSnapshotCamera: NSObject, @unchecked Senda
         _ = triggerPhoto()
     }
     private func triggerPhoto() -> Bool {
-        guard !finished, readyToCapture?() != false else { return false }
+        guard cameraReady, !finished, !shooting, readyToCapture?() != false else { return false }
+        shooting = true
         shutter.isEnabled = false; shutter.setTitle("Taking photo… Hold still", for: .normal)
         capture.shoot(angle: rotation)
         return true
     }
     @objc private func cancelPhoto() {
-        guard !finished else { return }; finished = true; countdownTask?.cancel(); capture.stop()
+        guard !finished else { return }; finished = true; readinessTask?.cancel(); capture.stop()
         onFinish?(.failure(WrestlingManagerRemotePhoto.Failure.cancelled))
     }
-    func stop() { finished = true; countdownTask?.cancel(); countdownTask = nil; capture.stop() }
+    func stop() { finished = true; readinessTask?.cancel(); readinessTask = nil; capture.stop() }
 }

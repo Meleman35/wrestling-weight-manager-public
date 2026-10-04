@@ -64,7 +64,7 @@ final class WrestlingManagerRemoteDeviceCheckController: UIViewController {
     required init?(coder: NSCoder) { fatalError("Use init(onClose:)") }
     override func viewDidLoad() {
         super.viewDidLoad(); view.backgroundColor = .systemBackground
-        let title = UILabel(); title.text = "Remote camera & scale check • Build 4"; title.font = .preferredFont(forTextStyle: .title2)
+        let title = UILabel(); title.text = "Remote camera & scale check • Build 5"; title.font = .preferredFont(forTextStyle: .title2)
         let note = UILabel(); note.text = "Continuous development test • Numbered fictional athletes\nCheck framing once, then start the session. After each photo, step off to prepare the next test automatically. Use an adult test subject in athletic clothing. Nothing here is uploaded or saved."
         for label in [title,note,status] { label.numberOfLines = 0; label.adjustsFontForContentSizeCategory = true }
         status.text = "1. Check the camera framing. 2. Start a test weigh-in and step on the scale."
@@ -99,6 +99,10 @@ final class WrestlingManagerRemoteDeviceCheckController: UIViewController {
     private func controls() {
         setup.isEnabled = active && !busy; weigh.isEnabled = active && !busy && setupConfirmed
         pause.isEnabled = active && sessionRunning
+    }
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        scheduleAdvance()
     }
     @objc private func checkSetup() {
         guard active, !busy else { return }; clearTest(); busy = true; controls()
@@ -142,8 +146,8 @@ final class WrestlingManagerRemoteDeviceCheckController: UIViewController {
                 if let closesAt = self.closesAt, Date() >= closesAt {
                     self.stopSession(message: "Five-minute test session ended. Setup is retained; start another session when ready."); return
                 }
-                if self.awaitingScaleClear { self.updateStepOffStatus() }
-                do { try await Task.sleep(nanoseconds: 500_000_000) } catch { return }
+                if self.awaitingScaleClear { self.updateStepOffStatus(); self.scheduleAdvance() }
+                do { try await Task.sleep(nanoseconds: 100_000_000) } catch { return }
             }
         }
     }
@@ -194,20 +198,30 @@ final class WrestlingManagerRemoteDeviceCheckController: UIViewController {
         if awaitingScaleClear {
             scaleClear.observe(pounds: pounds, at: at, now: Date(), connected: isScaleConnected())
             updateStepOffStatus()
-            if scaleClear.isClear(at: Date()), !advanceScheduled {
-                advanceScheduled = true; let ticket = operation
-                Task { @MainActor [weak self] in
-                    guard let self, self.active, self.operation == ticket else { return }
-                    self.advanceScheduled = false
-                    guard self.sessionRunning, self.awaitingScaleClear, self.isScaleConnected(),
-                          self.scaleClear.isClear(at: Date()), self.presentedViewController == nil else { return }
-                    self.beginAttempt()
-                }
-            }
+            scheduleAdvance()
             return
         }
         guard let capture, let token = capture.captureToken else { return }
         try? capture.scaleReading(token: token, pounds: pounds, observedAt: at, connected: isScaleConnected())
+        let ticket = operation
+        Task { @MainActor [weak self] in
+            guard let self, self.active, self.sessionRunning, self.operation == ticket else { return }
+            self.photos.updateCaptureReadiness()
+        }
+    }
+    private func scheduleAdvance() {
+        guard active, sessionRunning, awaitingScaleClear, !advanceScheduled,
+              scaleClear.isClear(at: Date()) else { return }
+        advanceScheduled = true; let ticket = operation
+        // Defer until the complete BLE batch has been checked. Retry from the
+        // session timer and view appearance if UIKit is still dismissing.
+        Task { @MainActor [weak self] in
+            guard let self, self.active, self.operation == ticket else { return }
+            self.advanceScheduled = false
+            guard self.sessionRunning, self.awaitingScaleClear, self.isScaleConnected(),
+                  self.scaleClear.isClear(at: Date()), self.photos.canTake(from: self) else { return }
+            self.beginAttempt()
+        }
     }
     func checkConnection() {
         if !isScaleConnected() {
@@ -217,7 +231,9 @@ final class WrestlingManagerRemoteDeviceCheckController: UIViewController {
     }
     private func updateStepOffStatus() {
         let reading = latestWeight.flatMap { $0.isFinite ? String(format: "%.1f lb", $0) : nil } ?? "unavailable"
-        status.text = lastResult + "\nPhoto complete — step off the scale.\nNext test starts automatically after the scale is empty.\nLive scale: \(reading). Completed this session: \(completedCount)."
+        let age = latestUpdateAt.map { String(format: "%.1fs ago", max(0, Date().timeIntervalSince($0))) } ?? "none"
+        let next = scaleClear.isClear(at: Date()) ? "Scale empty — preparing next athlete." : "Waiting for a fresh empty-scale reading."
+        status.text = lastResult + "\nPhoto complete — step off the scale.\n\(next)\nLive scale: \(reading) • last \(age) • \(updateCount) updates.\n\(scaleReadStatus())\nCompleted this session: \(completedCount)."
     }
     private func liveStatus() -> String {
         guard isScaleConnected() else { return scaleReadStatus() + "\nSession stopped. Reconnect the scale." }
@@ -233,7 +249,7 @@ final class WrestlingManagerRemoteDeviceCheckController: UIViewController {
         if !latestWeight.isFinite || latestWeight <= WrestlingManagerRemoteCapture.emptyScaleMaximumPounds || latestWeight > 800 {
             return details + "\nReady for this test athlete to step on."
         }
-        if capture?.settledWeight != nil { return details + "\nWeight stable — two-second photo countdown. Hold still." }
+        if capture?.settledWeight != nil { return details + "\nWeight stable — taking photo. Hold still." }
         let progress = capture?.settlingProgress ?? (samples: 0, seconds: 0)
         return details + String(format: "\nSettling: %d/3 readings • %.1f/1.0s steady. Hold still.", min(3, progress.samples), min(1, progress.seconds))
     }

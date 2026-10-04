@@ -15,7 +15,7 @@ private struct RemoteScaleCheckHome: View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 24) {
                 Text("Camera + American Scale").font(.largeTitle.bold())
-                Text("Device check • Build 4").font(.caption)
+                Text("Device check • Build 5").font(.caption)
                 Text("Separate development test. Your Wrestling Manager app and athlete records are not used.")
                 Text("1. Connect the scale.\n2. Check the camera framing.\n3. Start the continuous test. Step off after each photo to prepare the next test.")
                 Button("Connect American Scale") { showScale = true }.buttonStyle(.borderedProminent)

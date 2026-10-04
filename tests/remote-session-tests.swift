@@ -13,7 +13,7 @@ import Foundation
         observe(125, 0.1); observe(125, 0.7)
         precondition(!gate.isClear(at: clock), "Remaining on the scale cannot start another athlete")
         observe(0, 1); observe(0, 1)
-        precondition(!gate.isClear(at: clock), "One response with multiple zeros is one observation")
+        precondition(gate.isClear(at: clock), "One fresh empty response permits the next scan; no second zero is required")
         observe(0.2, 1.6)
         precondition(gate.isClear(at: clock))
         // A later record in the same notification must veto advancement.
@@ -23,13 +23,15 @@ import Foundation
         precondition(gate.isClear(at: clock))
         precondition(!gate.isClear(at: start.addingTimeInterval(4.31)), "Stale zeros cannot authorize another scan")
         observe(0, 4.5)
-        precondition(!gate.isClear(at: clock), "A silence gap requires a new empty-scale run")
+        precondition(gate.isClear(at: clock), "A fresh zero after silence is new step-off evidence")
         observe(0, 5.1)
         precondition(gate.isClear(at: clock))
         observe(0, 5.7, connected: false)
         precondition(!gate.isClear(at: clock))
-        observe(.nan, 6.3); observe(0, 6.9)
-        precondition(!gate.isClear(at: clock))
+        observe(.nan, 6.3); observe(0, 6.3)
+        precondition(!gate.isClear(at: clock), "An invalid record vetoes its entire response")
+        observe(0, 6.9)
+        precondition(gate.isClear(at: clock))
         gate.begin(after: clock)
         observe(0, 6.9)
         precondition(!gate.isClear(at: clock), "Readings from before the next gate opens are invalid")
@@ -50,15 +52,13 @@ import Foundation
                 try? capture.scaleReading(token: token, pounds: 0.6, observedAt: clock, connected: true)
             }
             precondition(capture.settledWeight == nil)
-            var countdown = WrestlingManagerRemoteReadiness()
-            var remaining: Int?
-            for i in 0...7 {
+            for i in 0...2 {
                 let offset = base + 2 + Double(i) * 0.6
                 clock = start.addingTimeInterval(offset)
                 try capture.scaleReading(token: token, pounds: 125 + Double(attempt), observedAt: clock, connected: true)
-                remaining = countdown.remaining(ready: capture.settledWeight != nil, at: offset)
+                precondition((capture.settledWeight != nil) == (i == 2))
             }
-            precondition(remaining == 0)
+            precondition(capture.settledWeight != nil, "Capture immediately on the first stable run")
             try capture.snapshot(token: token, normalizedJPEG: jpeg, capturedAt: clock, noticeAccepted: true)
             let frozen = try capture.freeze(token: token)
             let envelope = try JSONDecoder().decode(WrestlingManagerRemoteCapture.Envelope.self, from: frozen.payload)
