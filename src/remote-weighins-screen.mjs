@@ -1,5 +1,7 @@
 // In-app screen component. App coordinator supplies authorized windows and scoped API.
 // This component is not registered/enabled by production index.html yet.
+import {collectRemoteExport} from './remote-weighins-export.mjs';
+import {remoteReviewWorkbook} from './remote-weighins-xlsx.mjs';
 export function mountRemoteReportingScreen({root,scope,windows,api,isCurrent,document=root?.ownerDocument}) {
  if(!root||!document||!Array.isArray(windows)||![api?.report,api?.photo,isCurrent].every(f=>typeof f==='function')||!scope?.programId)throw Error('Authorized reporting screen dependencies required');
  let active=true,epoch=0,nextOffset=null,selected=null,objectURL=null,photoEpoch=0;
@@ -8,7 +10,7 @@ export function mountRemoteReportingScreen({root,scope,windows,api,isCurrent,doc
  const closePhoto=()=>{photoEpoch++;if(objectURL){URL.revokeObjectURL(objectURL);objectURL=null;}photoBox.replaceChildren();};
  const section=node('section');section.className='remote-reporting-screen';
  const title=node('h2','Remote weigh-ins'),description=node('p','Review accepted club reports. Captured time and server receipt time are shown separately.');
- const retention=node('p','Remote weights and verification photos are available for 10 days after capture. Expired encrypted copies on offline or locked devices are deleted when the app next opens unlocked.');
+ const retention=node('p','After weigh-ins, download a copy for your records. Online weights and verification photos are deleted 10 days after capture. Your downloaded spreadsheet remains available after the online copy expires.');
  const filters=node('div');filters.className='ops-actions';
  const windowSelect=node('select');windowSelect.setAttribute('aria-label','Reporting window');
  for(const w of windows){if(w.programId!==scope.programId)throw Error('Reporting window scope mismatch');const option=node('option',w.label||w.id);option.value=w.id;windowSelect.append(option);}
@@ -16,10 +18,12 @@ export function mountRemoteReportingScreen({root,scope,windows,api,isCurrent,doc
  for(const [value,label] of [['','All statuses'],['submitted','Submitted'],['late','Late'],['missing','Missing']]){const option=node('option',label);option.value=value;statusSelect.append(option);}
  const refresh=node('button','Refresh');refresh.type='button';
  const capture=node('button','Start club weigh-ins');capture.type='button';capture.hidden=scope.canCapture!==true||typeof api.captureWindow!=='function';
- filters.append(windowSelect,statusSelect,refresh,capture);
+ const exportButton=node('button','Download spreadsheet CSV');exportButton.type='button';
+ const workbookButton=node('button','Download Excel with photos');workbookButton.type='button';
+ filters.append(windowSelect,statusSelect,refresh,capture,exportButton,workbookButton);
  const message=node('p');message.setAttribute('role','status');message.setAttribute('aria-live','polite');
  const counts=node('p'),table=node('table'),head=node('thead'),header=node('tr'),rows=node('tbody');
- for(const label of ['Athlete','Club','Status','Weight','Captured','Received','Photo'])header.append(node('th',label));head.append(header);table.append(head,rows);
+ for(const label of ['Athlete','Club','USAW ID','AAU number','Status','Weight','Captured','Received','Photo'])header.append(node('th',label));head.append(header);table.append(head,rows);
  const wrap=node('div');wrap.style.overflowX='auto';wrap.append(table);
  const more=node('button','Load more');more.type='button';more.hidden=true;
  const photoBox=node('div');photoBox.setAttribute('aria-label','Private verification photo');
@@ -42,18 +46,27 @@ export function mountRemoteReportingScreen({root,scope,windows,api,isCurrent,doc
    if(report.programId!==scope.programId||report.windowId!==request.windowId||!Array.isArray(report.rows))throw Error('Report scope changed');
    for(const row of report.rows){
     if(scope.clubId&&row.clubId!==scope.clubId)throw Error('Report club changed');
-    const tr=node('tr');tr.append(node('td',row.athleteName),node('td',row.clubName),node('td',row.status));
+    const prior=rows.lastElementChild;
+    if(!prior||prior.dataset.clubId!==row.clubId){const group=node('tr');group.dataset.clubId=row.clubId;const cell=node('th',row.clubName);cell.colSpan=9;cell.scope='rowgroup';group.append(cell);rows.append(group);}
+    const tr=node('tr');tr.dataset.clubId=row.clubId;tr.dataset.athleteRow='true';tr.append(node('td',row.athleteName),node('td',row.clubName),node('td',row.usawId||'—'),node('td',row.aauNumber||'—'),node('td',row.status));
     tr.append(node('td',row.submission?`${Number(row.submission.weight).toFixed(1)} lb`:'—'));
     tr.append(node('td',row.submission?fmt(row.submission.capturedAt,report.timeZone):'—'),node('td',row.submission?fmt(row.submission.receivedAt,report.timeZone):'—'));
     const cell=node('td');if(row.submission){const button=node('button','View photo');button.type='button';button.onclick=()=>showPhoto(row.submission.submissionId);cell.append(button);}tr.append(cell);rows.append(tr);
    }
    selected=windows.find(w=>w.id===request.windowId);nextOffset=report.nextOffset;more.hidden=nextOffset===null;
    counts.textContent=`Expected: ${report.counts.expected} · Submitted: ${report.counts.submitted} · Late: ${report.counts.late} · Missing: ${report.counts.missing}`;
-   title.textContent=report.classification||'Remote weigh-ins';message.textContent=`${rows.children.length} of ${report.total} athletes shown. Times: ${report.timeZone}. Pending device uploads are not counted as submitted.`;
+   title.textContent=report.classification||'Remote weigh-ins';message.textContent=`${rows.querySelectorAll('[data-athlete-row]').length} of ${report.total} athletes shown. Times: ${report.timeZone}. Pending device uploads are not counted as submitted.`;
   }catch{if(current(t)){rows.replaceChildren();counts.textContent='';more.hidden=true;nextOffset=null;message.textContent='Reports could not be loaded. Check your access and retry.';}}
   finally{if(current(t)){refresh.disabled=false;more.disabled=false;capture.disabled=false;}}
  }
  windowSelect.onchange=()=>load();statusSelect.onchange=()=>load();refresh.onclick=()=>load();more.onclick=()=>load(true);
+ const download=async withPhotos=>{const t=epoch;exportButton.disabled=true;workbookButton.disabled=true;message.textContent='Preparing all matching athletes for export…';let url;
+  try{const result=await collectRemoteExport({api,query:query(0),isCurrent:()=>current(t)});if(!current(t))return;
+   const blob=withPhotos?await remoteReviewWorkbook({rows:result.rows,api,isCurrent:()=>current(t)}):new Blob(['\ufeff',result.csv],{type:'text/csv;charset=utf-8'});if(!current(t))return;
+   url=URL.createObjectURL(blob);const link=node('a');link.href=url;link.download=withPhotos?'remote-weighins.xlsx':'remote-weighins.csv';section.append(link);link.click();link.remove();message.textContent='Spreadsheet downloaded. Keep your copy for your records. Online weights and photos expire 10 days after capture; your saved spreadsheet remains available.';
+  }catch{if(current(t))message.textContent='Export failed. Refresh and retry, or export one club at a time.';}finally{if(url)URL.revokeObjectURL(url);exportButton.disabled=false;workbookButton.disabled=false;}
+ };
+ exportButton.onclick=()=>download(false);workbookButton.onclick=()=>download(true);
  capture.onclick=async()=>{const t=epoch;if(!current(t)||!selected)return;capture.disabled=true;try{await api.captureWindow(selected);if(current(t))message.textContent='Club capture opened. Saved uploads remain pending until accepted by the server.';}catch{if(current(t))message.textContent='Capture could not open. Check club access, scale and camera permissions.';}finally{if(current(t))capture.disabled=false;}};
  function close(){active=false;epoch++;closePhoto();root.replaceChildren();}
  const ready=windows.length?load():Promise.resolve().then(()=>{message.textContent='No authorized reporting windows are available.';capture.disabled=true;});

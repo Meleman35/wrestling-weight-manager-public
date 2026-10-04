@@ -13,15 +13,15 @@ if(action==='context')return Response.json({scopes:[{programId:'network',clubId:
 if(action==='photo-read')return new Promise(resolve=>window.photoResolve=()=>resolve(new Response(new Uint8Array([255,216,255,217]),{headers:{'Content-Type':'image/jpeg'}})));
 return Response.json({programId:'network',windowId:'week',classification:'Remote club report',timeZone:'America/Denver',counts:{expected:2,submitted:1,late:0,missing:1},total:2,nextOffset:body.offset?null:1,rows:body.status==='missing'?[{athleteId:'missing',clubId:'club',athleteName:'Casey Sample',clubName:'Club',status:'missing',submission:null}]:[{athleteId:'athlete',clubId:'club',athleteName:'<img src=x onerror=alert(1)>',clubName:'Club',status:'submitted',submission:{submissionId:'capture',weight:120,capturedAt:'2026-10-03T20:00:00Z',receivedAt:'2026-10-03T20:01:00Z'}}]});}});
 </script></body></html>`;
-const server=createServer(async(req,res)=>{try{if(req.url==='/'){res.setHeader('Content-Type','text/html');res.end(html);return;}if(!['/src/remote-weighins-app.mjs','/src/remote-weighins-screen.mjs'].includes(req.url)){res.statusCode=404;res.end();return;}res.setHeader('Content-Type','text/javascript');res.end(await readFile('.'+req.url));}catch{res.statusCode=500;res.end();}});
+const server=createServer(async(req,res)=>{try{if(req.url==='/'){res.setHeader('Content-Type','text/html');res.end(html);return;}if(!['/src/remote-weighins-app.mjs','/src/remote-weighins-screen.mjs','/src/remote-weighins-export.mjs','/src/remote-weighins-xlsx.mjs','/src/remote-weighins.mjs'].includes(req.url)){res.statusCode=404;res.end();return;}res.setHeader('Content-Type','text/javascript');res.end(await readFile('.'+req.url));}catch{res.statusCode=500;res.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const browser=await chromium.launch({headless:true});
 try{
 const page=await browser.newPage();await page.goto(`http://127.0.0.1:${server.address().port}`);
 await page.waitForFunction(()=>window.api);await page.click('#open');await page.waitForSelector('tbody tr');
-assert.equal(await page.locator('tbody img').count(),0);assert.match(await page.locator('tbody').textContent(),/<img src=x/);
+assert.equal(await page.locator('tbody th').textContent(),'Club');assert.equal(await page.getByText('Download Excel with photos',{exact:true}).count(),1);assert.match(await page.locator('.remote-reporting-screen').textContent(),/Your downloaded spreadsheet remains available/);assert.equal(await page.locator('tbody img').count(),0);assert.match(await page.locator('tbody').textContent(),/<img src=x/);
 assert.equal(await page.getByText('Start club weigh-ins',{exact:true}).isVisible(),false);
-await page.getByText('Load more',{exact:true}).click();await page.waitForFunction(()=>document.querySelectorAll('tbody tr').length===2);
+await page.getByText('Load more',{exact:true}).click();await page.waitForFunction(()=>document.querySelectorAll('tbody [data-athlete-row]').length===2);
 const queries=await page.evaluate(()=>window.responses.filter(r=>r.action==='report').map(r=>r.body));assert.equal(queries[0].clubId,'club');assert.equal(queries[1].offset,1);
 await page.locator('select[aria-label="Submission status"]').selectOption('missing');await page.waitForFunction(()=>document.querySelector('tbody')?.textContent.includes('Casey Sample'));assert.equal(await page.getByText('View photo',{exact:true}).count(),0);
 await page.locator('select[aria-label="Submission status"]').selectOption('');await page.waitForSelector('tbody button');

@@ -11,6 +11,13 @@ on:
       - tests/remote-capture-tests.swift
       - tests/remote-delivery-tests.swift
       - scripts/prepare-native-remote-scale.py
+      - src/remote-athlete-memberships.mjs
+      - src/remote-athlete-memberships-screen.mjs
+      - src/remote-weighins-export.mjs
+      - src/remote-weighins-xlsx.mjs
+      - src/remote-weighins-trial.mjs
+      - tests/remote-weighins-export.mjs
+      - tests/remote-weighins-trial.mjs
       - src/remote-weighins.mjs
       - src/remote-weighins-service.mjs
       - src/remote-weighins-coverage.mjs

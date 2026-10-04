@@ -103,6 +103,6 @@ export function summarizeWindow({window, expected, submissions, clubId = null, s
   return {counts, rows: rows.filter(row => (!clubId || row.clubId === clubId) && (!status || row.status === status))};
 }
 export function reportCsv(rows) {
-  const cell = value => '"' + String(value ?? '').replace(/^[=+@\-\t\r\n]/, "'$&").replaceAll('"','""') + '"';
-  return [['Club','Athlete','Status','Weight (lb)','Captured at','Received at'], ...rows.map(r => [r.clubName,r.athleteName,r.status,r.submission?.weight,r.submission?.capturedAt,r.submission?.receivedAt])].map(row => row.map(cell).join(',')).join('\r\n');
+  const cell = value => '"' + String(value ?? '').replace(/^(?:\s*[=+@\-]|[\t\r\n])/, "'$&").replaceAll('"','""') + '"';
+  return [['Club','Athlete','USAW ID','AAU membership number','Status','Scale weight (lb)','Captured at','Received at','Verification submission ID','Expires at'], ...rows.map(r => [r.clubName,r.athleteName,r.usawId,r.aauNumber,r.status,r.submission?.weight,r.submission?.capturedAt,r.submission?.receivedAt,r.submission?.submissionId,r.submission?new Date(Date.parse(r.submission.capturedAt)+240*3600000).toISOString():''])].map(row => row.map(cell).join(',')).join('\r\n');
 }

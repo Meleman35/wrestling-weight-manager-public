@@ -1,6 +1,7 @@
 /* Server-only service contract. Not a deployed API. Every dependency below must
  * use trusted server data; atomicAccept must enforce database transactions. */
 import {createHash} from 'node:crypto';
+import {normalizeMemberships} from './remote-athlete-memberships.mjs';
 import {validateWindow, summarizeWindow, reportCsv} from './remote-weighins.mjs';
 const deny = message => { throw new Error(message); };
 const validId = value => typeof value === 'string' && /^[A-Za-z0-9_-]{1,160}$/.test(value);
@@ -112,11 +113,11 @@ export function createRemoteReportingService({getActor, getProgram, getWindow, g
       const expected=(await getRoster(program.id,window.id,clubId)).filter(r=>r.active===true && r.remoteConsent===true && (!clubId||r.clubId===clubId));
       const submissions=await store.list({programId,windowId,clubId});
       const result=summarizeWindow({window,expected,submissions,clubId,status});
-      const rows=result.rows.sort((a,b)=>`${a.clubId}:${a.athleteId}`.localeCompare(`${b.clubId}:${b.athleteId}`));
+      const rows=result.rows.sort((a,b)=>String(a.clubName).localeCompare(String(b.clubName))||a.clubId.localeCompare(b.clubId)||String(a.athleteName).localeCompare(String(b.athleteName))||a.athleteId.localeCompare(b.athleteId));
       const page=rows.slice(offset,offset+limit),nextOffset=offset+page.length<rows.length?offset+page.length:null;
       // Explicit allowlist: never return evidence IDs, photo links, raw evidence,
       // account/session identifiers, arbitrary roster columns or medical records.
-      const projected=page.map(r=>({clubId:r.clubId,athleteId:r.athleteId,clubName:r.clubName,athleteName:r.athleteName,status:r.status,submission:r.submission?{submissionId:r.submission.submissionId,receiptId:r.submission.receiptId,weight:r.submission.weight,unit:r.submission.unit,capturedAt:r.submission.capturedAt,receivedAt:r.submission.receivedAt}:null}));
+      const projected=page.map(r=>({clubId:r.clubId,athleteId:r.athleteId,clubName:r.clubName,athleteName:r.athleteName,...normalizeMemberships(r),status:r.status,submission:r.submission?{submissionId:r.submission.submissionId,receiptId:r.submission.receiptId,weight:r.submission.weight,unit:r.submission.unit,capturedAt:r.submission.capturedAt,receivedAt:r.submission.receivedAt}:null}));
       return {programId,windowId,kind:program.kind,eventId:program.kind==='tournament'?program.eventId:null,classification:program.kind==='tournament'?'Remote tournament check-in':'Remote club report',timeZone:window.timeZone,counts:result.counts,total:rows.length,nextOffset,rows:projected,...(format==='csv'?{csv:reportCsv(projected)}:{})};
     }
   });

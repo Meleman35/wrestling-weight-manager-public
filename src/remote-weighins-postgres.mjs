@@ -2,7 +2,7 @@
 // db.query is a parameterized privileged server connection, never a browser client.
 const fail=m=>{throw Error(m);};
 const iso=x=>x==null?null:new Date(x).toISOString();
-export function createRemotePostgresAdapters({db,verifyPersonalSession,resolveRosterNames}) {
+export function createRemotePostgresAdapters({db,verifyPersonalSession,resolveRosterNames,resolveRosterMemberships=async()=>[]}) {
  if(![db?.query,verifyPersonalSession,resolveRosterNames].every(f=>typeof f==='function'))fail('Trusted PostgreSQL dependencies required');
  const sessions=new WeakMap();
  async function getActor(session){
@@ -38,7 +38,11 @@ export function createRemotePostgresAdapters({db,verifyPersonalSession,resolveRo
   const names=await resolveRosterNames(rows.map(r=>({clubId:r.clubId,athleteId:r.athleteId})));
   if(!Array.isArray(names))fail('Canonical roster names required');
   const map=new Map(names.map(r=>[JSON.stringify([r.clubId,r.athleteId]),r]));
-  return rows.map(r=>{const n=map.get(JSON.stringify([r.clubId,r.athleteId]));if(!n||typeof n.clubName!=='string'||typeof n.athleteName!=='string')fail('Canonical roster names required');return {...r,clubName:n.clubName,athleteName:n.athleteName};});
+  const memberships=await resolveRosterMemberships(rows.map(r=>({clubId:r.clubId,athleteId:r.athleteId})));
+  if(!Array.isArray(memberships))fail('Canonical roster memberships required');
+  const membershipMap=new Map();
+  for(const m of memberships){const key=JSON.stringify([m.clubId,m.athleteId]);if(!map.has(key)||membershipMap.has(key))fail('Membership scope mismatch');membershipMap.set(key,m);}
+  return rows.map(r=>{const key=JSON.stringify([r.clubId,r.athleteId]),n=map.get(key),m=membershipMap.get(key);if(!n||typeof n.clubName!=='string'||typeof n.athleteName!=='string')fail('Canonical roster names required');return {...r,clubName:n.clubName,athleteName:n.athleteName,usawId:m?.usawId??'',aauNumber:m?.aauNumber??''};});
  }
  async function getEvidence(id){
   const e=(await db.query(`select *,expires_at>clock_timestamp() as unexpired from remote_reporting.evidence where id=$1`,[id])).rows[0];
