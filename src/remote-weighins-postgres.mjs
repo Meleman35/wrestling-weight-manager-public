@@ -46,11 +46,11 @@ export function createRemotePostgresAdapters({db,verifyPersonalSession,resolveRo
  }
  const store={
   async receipt(submissionId){
-   const r=(await db.query('select submission_id,receipt_id,received_at from remote_reporting.submissions where submission_id=$1',[submissionId])).rows[0];
+   const r=(await db.query(`select submission_id,receipt_id,received_at from remote_reporting.submissions where submission_id=$1 and (record->>'capturedAt')::timestamptz+interval '10 days'>clock_timestamp()`,[submissionId])).rows[0];
    return r?{submissionId:r.submission_id,receiptId:r.receipt_id,status:'submitted',receivedAt:iso(r.received_at)}:null;
   },
   async findSubmission(submissionId){
-   const r=(await db.query('select record from remote_reporting.submissions where submission_id=$1',[submissionId])).rows[0];return r?.record??null;
+   const r=(await db.query(`select record from remote_reporting.submissions where submission_id=$1 and (record->>'capturedAt')::timestamptz+interval '10 days'>clock_timestamp()`,[submissionId])).rows[0];return r?.record??null;
   },
   async atomicAccept({actor,record,payloadHash}){
    const session=sessions.get(actor);if(!session)fail('Trusted acceptance actor required');
@@ -63,7 +63,8 @@ export function createRemotePostgresAdapters({db,verifyPersonalSession,resolveRo
   },
   async list({programId,windowId,clubId=null}){
    const rows=(await db.query(`select record,receipt_id,received_at from remote_reporting.submissions
-      where program_id=$1 and window_id=$2 and ($3::text is null or club_id=$3) order by club_id,athlete_id`,[programId,windowId,clubId])).rows;
+      where program_id=$1 and window_id=$2 and ($3::text is null or club_id=$3)
+      and (record->>'capturedAt')::timestamptz+interval '10 days'>clock_timestamp() order by club_id,athlete_id`,[programId,windowId,clubId])).rows;
    return rows.map(r=>({...r.record,receiptId:r.receipt_id,receivedAt:iso(r.received_at),status:'submitted'}));
   }
  };

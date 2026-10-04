@@ -233,3 +233,16 @@ Supabase storage or complete device provenance/retention/deletion integration.
 The draft now reuses `private.board_personal` and `private.scoped_deletion_jobs` from the live app. Managed team logins, unfinished actor deletion jobs, and sealed personal deletion tombstones deny remote access. Evidence reservation/confirmation and SQL acceptance acquire the same actor advisory lock (`hashtextextended(user UUID text, 91347)`) before program and auth row locks. A deletion beginning during private-object upload prevents confirmation and acceptance; the unconfirmed object still requires the cleanup worker. Isolated database tests exercise these paths.
 
 This completes actor coordination only. Program ownership, team/organization deletion mapping, deletion catalog registration, private-object cleanup, and schema fingerprints still require integration before deployment. No production schema changed.
+
+### Approved event dates and retention (October 4, 2026)
+Event capture eligibility is the previous local calendar day plus the event day,
+using the event's IANA time zone. `eventCaptureWindow` derives midnight boundaries
+and handles daylight saving transitions. Window provisioning must use these
+boundaries; this helper is not yet connected to production provisioning.
+Weights and associated photos expire together exactly 240 hours after the original
+weight capture, not upload, acceptance, retry, or event completion. The evidence
+adapter now fixes this expiry rather than accepting an arbitrary TTL callback.
+The PostgreSQL report and receipt adapters hide expired submissions. Physical
+removal still requires a deployed retention worker, including encrypted device
+queues, database rows, objects and the applicable backup policy; these changes do
+not establish an exact physical deletion guarantee or activate production.

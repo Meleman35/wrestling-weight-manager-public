@@ -1,8 +1,9 @@
-// Request-scoped privileged PostgreSQL adapter. Proof and retention policy are mandatory.
+// Request-scoped privileged PostgreSQL adapter with fixed ten-day retention.
+import {remoteExpiresAt} from "./remote-weighins-policy.mjs";
 const deny=m=>{throw Error(m);};
 const safe=x=>typeof x==='string'&&/^[A-Za-z0-9_-]{1,160}$/.test(x);
-export function createRemotePostgresEvidenceStore({db,session,getActor,verifyCapture,expiresAtForCapture}) {
- if(![db?.query,db?.transaction,getActor,verifyCapture,expiresAtForCapture].every(f=>typeof f==='function'))deny('Trusted evidence database dependencies required');
+export function createRemotePostgresEvidenceStore({db,session,getActor,verifyCapture}) {
+ if(![db?.query,db?.transaction,getActor,verifyCapture].every(f=>typeof f==='function'))deny('Trusted evidence database dependencies required');
  async function authorize(binding){
   const actor=await getActor(session);
   if(actor.userId!==binding.operatorId||actor.generation!==binding.generation)deny('Evidence session changed');
@@ -36,7 +37,7 @@ export function createRemotePostgresEvidenceStore({db,session,getActor,verifyCap
   async find(evidenceId){return project((await db.query('select * from remote_reporting.evidence where id=$1',[evidenceId])).rows[0]);},
   async reserve({evidenceId,binding,path,digest,byteCount}){
    if(!safe(evidenceId)||!/^([a-f0-9]{64})$/.test(digest)||!Number.isInteger(byteCount)||byteCount<1||byteCount>5*1024*1024||path!==`${binding.programId}/${binding.captureId}/${evidenceId}.jpg`)deny('Invalid evidence reservation');
-   const actor=await authorize(binding),expiresAt=await expiresAtForCapture(binding);
+   const actor=await authorize(binding),expiresAt=remoteExpiresAt(binding);
    if(!Number.isFinite(Date.parse(expiresAt)))deny('Evidence retention policy required');
    return db.transaction(async tx=>{
     await lockScope(tx,actor,binding);
