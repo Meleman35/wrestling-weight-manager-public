@@ -1,29 +1,11 @@
-# Paid team coverage when a purchaser deletes their account
+# Approved paid-team deletion behavior
 
-Decision needed before production billing/deletion integration.
+Owner approved October 3, 2026: if the purchaser deletes their personal account, preserve Team Pro only through the already paid period, provided another authorized administrator remains. Family coverage ends with its owner.
 
-Verified production finding: scoped_deletion_schema_hash and the current deletion catalog enumerate public/private schemas. The new wm_billing schema is outside that inventory. Do not deploy it without explicit deletion handling.
+Implemented server policy candidate: team-paid-remainder.mjs. It stores only team/environment/plan/paid boundary/revocation/version; no purchaser ID, account token, receipt or athlete link is copied. Current remaining-admin authority is required when creating and using the grant. Later renewals cannot extend the paid boundary. Verified refunds revoke access; old active evidence cannot undo them. Seven focused checks pass.
 
-Current candidate behavior: deleting/frozen purchaser accounts suppress both team and family subscription access. A personal-account deletion could therefore interrupt a whole team's paid tools even if another authorized administrator remains.
+Canonical remaining-admin permission must follow the live public.is_team_admin definition inspected October 3: active head coach, active assistant coach/manager with team_admin permission, or organization_admin membership. Reject deleted/banned/managed/deleting identities and deleted team/organization.
 
-Recommended team behavior for approval:
-- Personal account deletion continues immediately; never require cancellation or an administrator transfer to complete deletion.
-- Show Apple's subscription-management link and explain that deleting the app account does not cancel Apple billing.
-- An existing paid team's access continues only through the already verified paid expiry/grace boundary, subject to current team permissions and team/organization deletion.
-- Do not extend this team grant from future renewals after purchaser deletion. A remaining authorized admin can arrange the next subscription.
-- Family athlete coverage ends when its owner account is deleted.
-- Remove personal profile/guardian links. Retained team access state must be explicitly minimized and covered by the final privacy/deletion design; no indefinite financial retention is authorized by this proposal.
+The policy is not yet attached to the production deletion worker or live entitlement resolver. Deployment requires private remainder storage, atomic billing deletion/grant creation, mapping refunds after purchaser deletion, full catalog/schema integration, and removal of the grant on expiry/team deletion. Do not treat this policy file as a deployed entitlement.
 
-Alternative:
-- End both Team Pro and Family Video access as soon as the purchaser deletes their account, even if another team administrator remains.
-
-Implementation after the owner chooses:
-1. Update entitlement/deletion policies and notice together.
-2. Register every wm_billing table in the deletion workflow; reject unknown schemas/tables during preflight.
-3. Test deletion with paid team, remaining admin, expired/refunded purchase, family slots, queued notifications and simultaneous delivery.
-4. Re-run deletion acceptance and billing CI before deployment.
-
-Apple reference:
-https://developer.apple.com/support/offering-account-deletion-in-your-app/
-
-Private signing key: owner reports APPLE_IAP_PRIVATE_KEY successfully saved in Supabase October 3, 2026. Its presence/signing validity has not yet been verified by a deployed runtime. Never fetch or display it.
+Deletion remains immediate. Explain Apple billing cancellation and link https://apps.apple.com/account/subscriptions. Reference: https://developer.apple.com/support/offering-account-deletion-in-your-app/
