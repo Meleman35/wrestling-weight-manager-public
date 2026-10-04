@@ -2,7 +2,8 @@ name: Remote weigh-in foundation
 on:
   pull_request:
     paths:
-      - native-candidate/WrestlingManagerRemoteOutbox.swift
+      - native-candidate/WrestlingManagerRemote*.swift
+      - tests/remote-capture-tests.swift
       - src/remote-weighins.mjs
       - src/remote-weighins-service.mjs
       - src/remote-weighins-photos.mjs
@@ -45,4 +46,8 @@ jobs:
       - name: Typecheck protected iOS queue
         run: |
           sdk_path="$(xcrun --sdk iphonesimulator --show-sdk-path)"
-          xcrun swiftc -typecheck -sdk "$sdk_path" -target arm64-apple-ios17.0-simulator native-candidate/WrestlingManagerRemoteOutbox.swift
+          xcrun swiftc -typecheck -sdk "$sdk_path" -target arm64-apple-ios17.0-simulator native-candidate/WrestlingManagerRemote*.swift
+      - name: Exercise native capture transitions
+        run: |
+          swiftc native-candidate/WrestlingManagerRemoteCapture.swift tests/remote-capture-tests.swift -o /tmp/remote-capture-tests
+          /tmp/remote-capture-tests

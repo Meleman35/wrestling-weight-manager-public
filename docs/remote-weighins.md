@@ -68,3 +68,32 @@ These modules expand the suite to 34 contract/provider/queue tests plus the SQL 
 native-candidate/WrestlingManagerRemoteOutbox.swift implements an actor-scoped CryptoKit AES-GCM store with account/club/submission authenticated identity, WhenUnlockedThisDeviceOnly Keychain keys, complete file protection, backup exclusion and atomic ciphertext writes. It refuses to regenerate a missing key over existing captures; corrupt records fail visibly. Confirmed receipts are persisted before a capture can be removed. SDK typechecking is in CI; physical lock/unlock, force-quit, write interruption, Keychain access, low-storage and deletion acceptance are still required. Host must use one instance per account/club, call lock on session/role/app-lock changes, validate authorized native context before/after async delivery, and never expose raw queue methods to arbitrary web origins. No WKWebView bridge/camera composition is installed by this candidate.
 
 The recovered October 3 purchase-host package supplies the ContentView baseline but is not the complete current Xcode project and omits later billing Authentication/PageSession components. Full wrapper composition must reconcile those additions and the installed scale/NFC/deletion/video code; do not install that older package as a replacement. Current full Xcode source is needed for that integration.
+
+### Native capture integration (October 3 source upload)
+
+The user supplied the build 1.0 (8) Xcode project settings, the separate 36-file
+app source folder, AmericanScaleKit sources, StoreKit configuration and
+verification package. The uploaded ContentView includes the established scanner,
+NFC, security, video and deletion hooks; it does not yet register the later
+purchase-authentication/page-session candidates. Preserve this source when
+assembling the next native build; do not substitute the earlier partial purchase
+host package. These private uploads are not copied into the public repository.
+
+New native candidates:
+- `WrestlingManagerRemoteCapture.swift`: native scan-bound evidence state, bounded
+  stable BLE sample run, movement/disconnect invalidation, 30-second freshness,
+  photo notice, immutable envelope matching the service contract.
+- `WrestlingManagerRemotePhoto.swift`: camera-only UIKit presenter; front camera
+  preference; decode/render/re-encode to strip original metadata, orient correctly
+  and cap dimensions at 1280 pixels. No photo-library selection.
+- `WrestlingManagerRemoteCaptureHost.swift`: joins the state, camera and protected
+  outbox behind an injected live authorization check; background cancellation;
+  checks authorization again before queueing. Queue success is not acceptance.
+
+These are integration components, not registered production web handlers. The
+host needs authoritative personal-session/club/window activation, roster-resolved
+QR/NFC routing, actual packet receipt callbacks (not cached UI weight changes),
+lock/navigation/deletion hooks, retry UI and upload transport. The stable-sample
+rule is a capture aid, not scale calibration or official event certification.
+Physical iPad testing remains necessary for camera permissions/rotation, sample
+cadence and stability, protected storage, cancellation and reconnect behavior.
