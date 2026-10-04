@@ -20,10 +20,10 @@ was separately published in web version 0.20.121 through PR #61.
   timeout and cancellation on close.
 - Required server JPEG normalization before any evidence reservation or upload:
   complete decoding, dimensions at most 1280 by 1280, five-MiB input/output caps,
-  approximate 32-MiB decoder allocation limit, strict decoding, and fresh encoding
+  approximate 48-MiB decoder allocation limit, strict decoding, and fresh encoding
   from pixels only. EXIF and comments are not copied. Provider and PostgreSQL/HTTP
   tests now use actual JPEG images, including rejection of marker-only junk.
-- Eighty-four Node/PGlite tests pass locally. Prior native validation includes
+- Eighty-five Node/PGlite tests pass locally. Prior native validation includes
   Apple SDK release/DEBUG typechecking, capture/delivery/retention executables,
   American Scale protocol tests and the full unsigned simulator build. Consult
   the current PR checks for the final combined branch result.

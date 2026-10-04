@@ -5,6 +5,11 @@ import {createRemoteJPEGNormalizer} from '../src/remote-weighins-jpeg.mjs';
 const codec=createRequire(import.meta.url)('jpeg-js');
 const normalize=createRemoteJPEGNormalizer({codec});
 const fixture=(width=32,height=48)=>({width,height,data:new Uint8Array(width*height*4).fill(150)});
+test('maximum permitted square frame fits the decoder resource budget',()=>{
+ const result=normalize(codec.encode(fixture(1280,1280),80).data);
+ const decoded=codec.decode(result);
+ assert.equal(decoded.width,1280);assert.equal(decoded.height,1280);
+});
 test('full JPEG decode and encode preserve portrait framing and remove metadata',()=>{
  const raw=fixture(480,640),jpeg=codec.encode({...raw,comments:['Synthetic location must not survive'],exifBuffer:new Uint8Array([69,120,105,102,0,0,71,80,83])},80).data;
  const result=normalize(jpeg),decoded=codec.decode(result);

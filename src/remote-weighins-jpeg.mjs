@@ -28,7 +28,7 @@ export function createRemoteJPEGNormalizer({codec}){
  return jpeg=>{
   const expected=dimensions(jpeg);
   try{
-   const decoded=codec.decode(jpeg,{useTArray:true,formatAsRGBA:true,tolerantDecoding:false,maxResolutionInMP:1.6384,maxMemoryUsageInMB:32});
+   const decoded=codec.decode(jpeg,{useTArray:true,formatAsRGBA:true,tolerantDecoding:false,maxResolutionInMP:1.6384,maxMemoryUsageInMB:48});
    if(decoded.width!==expected.width||decoded.height!==expected.height||!(decoded.data instanceof Uint8Array)||decoded.data.length!==expected.width*expected.height*4)invalid();
    // The native camera already renders upright pixels. Keep the whole frame,
    // and pass only pixels/dimensions so EXIF, comments and source profiles do
