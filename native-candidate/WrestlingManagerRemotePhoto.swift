@@ -224,7 +224,7 @@ nonisolated private final class RemoteSnapshotCamera: NSObject, @unchecked Senda
                                                        at: ProcessInfo.processInfo.systemUptime)
                 self.scaleStatus.text = self.captureStatus?()
                 self.shutter.setTitle(seconds.map { "Photo in \($0)… Stand still" } ?? "Waiting for a stable scale reading…", for: .normal)
-                if seconds == 0 { self.takePhoto(); return }
+                if seconds == 0, self.triggerPhoto() { return }
                 do { try await Task.sleep(nanoseconds: 200_000_000) } catch { return }
             }
         }
@@ -301,8 +301,13 @@ nonisolated private final class RemoteSnapshotCamera: NSObject, @unchecked Senda
         }
     }
     @objc private func takePhoto() {
-        guard !finished, readyToCapture?() != false else { return }
-        shutter.isEnabled = false; capture.shoot(angle: rotation)
+        _ = triggerPhoto()
+    }
+    private func triggerPhoto() -> Bool {
+        guard !finished, readyToCapture?() != false else { return false }
+        shutter.isEnabled = false; shutter.setTitle("Taking photo… Hold still", for: .normal)
+        capture.shoot(angle: rotation)
+        return true
     }
     @objc private func cancelPhoto() {
         guard !finished else { return }; finished = true; countdownTask?.cancel(); capture.stop()

@@ -16,6 +16,15 @@ final class WrestlingManagerRemoteCaptureHost {
     private var setupInProgress = false
     private var setupConfirmed = false
     private var setupReview: WrestlingManagerRemoteSetupReview?
+    private var awaitingScaleClear = false
+    private var scaleClear = WrestlingManagerRemoteScaleClear()
+    private var advanceScheduled = false
+    /// The authorized coordinator may resume QR/NFC lookup when this fires.
+    var onReadyForNextScan: (() -> Void)?
+    var readyForNextScan: Bool {
+        active && setupConfirmed && !setupInProgress && !photoInProgress && !saveInProgress
+            && !awaitingScaleClear && capture.captureToken == nil
+    }
 
     init(scope: WrestlingManagerRemoteCapture.Scope, outbox: WrestlingManagerRemoteOutbox? = nil,
          authorize: @escaping () async throws -> Void) throws {
@@ -60,17 +69,37 @@ final class WrestlingManagerRemoteCaptureHost {
     func invalidateCameraSetup() { setupConfirmed = false }
     /// Existing scanner/NFC adapter resolves credentials against the authorized roster first.
     func scan(athleteID: String, method: String) async throws -> UUID {
-        guard active, setupConfirmed, !setupInProgress, !photoInProgress, !saveInProgress else { throw Failure.unauthorized }
+        guard active, setupConfirmed, !setupInProgress, !photoInProgress, !saveInProgress, !awaitingScaleClear else { throw Failure.unauthorized }
         try await authorize()
-        guard active, setupConfirmed, !setupInProgress, !photoInProgress, !saveInProgress else { throw Failure.closed }
+        guard active, setupConfirmed, !setupInProgress, !photoInProgress, !saveInProgress, !awaitingScaleClear else { throw Failure.closed }
         return try capture.scan(athleteID: athleteID, method: method)
     }
     /// Called once per real incoming BLE weight packet, stamped at native receipt.
     func receiveScalePacket(pounds: Double, observedAt: Date) throws {
         guard active, let token = capture.captureToken else { throw Failure.closed }
+        if awaitingScaleClear {
+            scaleClear.observe(pounds: pounds, at: observedAt, now: Date(), connected: true)
+            if scaleClear.isClear(at: Date()), !advanceScheduled {
+                advanceScheduled = true
+                // Finish processing every record in the current BLE response
+                // before announcing an empty scale to the scanner coordinator.
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    defer { self.advanceScheduled = false }
+                    guard self.active, self.awaitingScaleClear, !self.saveInProgress,
+                          self.capture.captureToken == token, self.scaleClear.isClear(at: Date()) else { return }
+                    do {
+                        try self.capture.discard()
+                        self.awaitingScaleClear = false; self.scaleClear.reset()
+                        self.onReadyForNextScan?()
+                    } catch { /* Retain the saved attempt; never advance on failure. */ }
+                }
+            }
+            return
+        }
         try capture.scaleReading(token: token, pounds: pounds, observedAt: observedAt, connected: true)
     }
-    func scaleDisconnected() { capture.scaleDisconnected(); photos.cancel() }
+    func scaleDisconnected() { scaleClear.invalidate(); capture.scaleDisconnected(); photos.cancel() }
     var settledWeight: Double? { capture.settledWeight }
 
     /// Completion means durably queued, never server accepted.
@@ -103,6 +132,7 @@ final class WrestlingManagerRemoteCaptureHost {
                         try await self.outbox.save(.init(submissionID: frozen.submissionID, accountID: frozen.accountID,
                             clubID: frozen.clubID, payload: frozen.payload, jpeg: frozen.jpeg, receipt: nil))
                         guard self.active, self.capture.captureToken == photoToken else { throw Failure.closed }
+                        self.awaitingScaleClear = true; self.scaleClear.begin(after: Date())
                         completion(.success(frozen.submissionID))
                     } catch { completion(.failure(error)) }
                 }
@@ -120,14 +150,19 @@ final class WrestlingManagerRemoteCaptureHost {
         try await outbox.save(.init(submissionID: frozen.submissionID, accountID: frozen.accountID,
             clubID: frozen.clubID, payload: frozen.payload, jpeg: frozen.jpeg, receipt: nil))
         guard active, capture.captureToken == token else { throw Failure.closed }
+        awaitingScaleClear = true; scaleClear.begin(after: Date())
         return frozen.submissionID
     }
     /// Call after durable save to advance, or explicitly discard an unsaved attempt.
-    func discard() throws { guard active, !photoInProgress, !saveInProgress else { throw Failure.closed }; try capture.discard() }
+    func discard() throws {
+        guard active, !photoInProgress, !saveInProgress else { throw Failure.closed }
+        try capture.discard(); awaitingScaleClear = false; scaleClear.reset()
+    }
     /// Lock/logout/account change/navigation must also call this, in addition to automatic background cancellation.
     func close() {
         guard active else { return }; active = false
         setupConfirmed = false; capture.close(); photos.cancel(); setupReview?.cancel(); setupReview = nil
+        awaitingScaleClear = false; scaleClear.reset(); onReadyForNextScan = nil
         if let observer = backgroundObserver { NotificationCenter.default.removeObserver(observer); backgroundObserver = nil }
         Task { await outbox.lock() }
     }

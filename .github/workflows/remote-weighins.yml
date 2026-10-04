@@ -11,6 +11,7 @@ on:
       - tests/remote-weighins-retention.mjs
       - tests/remote-capture-tests.swift
       - tests/remote-scale-stream-tests.swift
+      - tests/remote-session-tests.swift
       - tests/remote-delivery-tests.swift
       - scripts/prepare-native-remote-scale.py
       - src/remote-athlete-memberships-postgres.mjs
@@ -106,6 +107,10 @@ jobs:
         run: |
           swiftc native-device-check/AmericanScaleKit/Sources/AmericanScaleKit/AmericanScaleProtocol.swift native-device-check/AmericanScaleKit/Sources/AmericanScaleKit/AmericanScaleReadCycle.swift native-candidate/WrestlingManagerRemoteCapture.swift native-candidate/WrestlingManagerRemoteReadiness.swift tests/remote-scale-stream-tests.swift -o /tmp/remote-scale-stream-tests
           /tmp/remote-scale-stream-tests
+      - name: Exercise consecutive athlete capture sessions
+        run: |
+          swiftc native-candidate/WrestlingManagerRemoteCapture.swift native-candidate/WrestlingManagerRemoteReadiness.swift tests/remote-session-tests.swift -o /tmp/remote-session-tests
+          /tmp/remote-session-tests
       - name: Exercise native upload and receipt recovery
         run: |
           swiftc native-candidate/WrestlingManagerRemoteDelivery.swift tests/remote-delivery-tests.swift -o /tmp/remote-delivery-tests

@@ -128,12 +128,31 @@ attempt disables polling and restores notifications. Ordinary scale use keeps
 its existing notification workflow. Weight samples are created only from actual
 complete Weight records in read responses, never from the cached UI value.
 
-The device screenshot from October 4 showed two weight updates followed by a
-three-second gap. This supports testing change-only notification behavior; it
-does not establish the firmware's behavior for characteristic reads. Build 3
-still requires a physical test that repeated reads return current weight and that
-stepping off immediately stops the countdown. The stability and freshness rules
-are unchanged. This remains a draft, not tournament acceptance or certification.
+Physical feedback on October 4 confirmed that Build 3 completed an automatic
+weight/photo capture and that disconnecting the scale timed out and requested
+reconnection. Stepping off during the countdown is not yet confirmed. The user
+also reported a slow photo and repeated setup between athletes.
+
+Build 4 shortens the extra stable-weight countdown to two seconds. The scale
+still needs three distinct fresh readings across at least one second within
+0.2 lb. Near-zero readings (up to 1 lb) represent an empty platform and cannot
+be captured as an athlete weight. Settling progress and elapsed time appear in
+the device check. A rejected final shutter-readiness check keeps polling rather
+than leaving the shutter permanently waiting.
+
+The device check now keeps setup for a continuous foreground session, numbers
+fictional attempts and retains only the most recent in-memory photo. After a
+successful capture, it keeps direct scale reads running and waits for two fresh
+empty-scale readings at least 0.5 seconds apart. It then opens the next attempt
+automatically. Remaining on the scale cannot duplicate an attempt. A camera
+cancel or session end preserves setup; leaving/backgrounding clears it. Physical
+movement of the camera or scale still requires a framing recheck.
+
+The production capture host has the same empty-scale gate after a durable queue
+save, exposes `readyForNextScan` and calls `onReadyForNextScan` for its authorized
+coordinator. Integrators must keep the scale reader active through the step-off
+stage, then route the next actual QR/NFC scan through authorized roster lookup.
+No physical test of this production integration or Build 4 is implied.
 
 
 The host blocks rescans/discards during durable writes, avoiding a discarded

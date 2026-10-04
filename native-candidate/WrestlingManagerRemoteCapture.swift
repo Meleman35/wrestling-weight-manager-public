@@ -4,6 +4,7 @@ import Foundation
 /// This type does not authorize an operator or certify weight/identity.
 @MainActor
 final class WrestlingManagerRemoteCapture {
+    static let emptyScaleMaximumPounds = 1.0
     struct Scope {
         let accountID: UUID
         let clubID: UUID
@@ -63,6 +64,10 @@ final class WrestlingManagerRemoteCapture {
     private var active = true
     private var pending: Pending?
     var captureToken: UUID? { pending?.token }
+    var settlingProgress: (samples: Int, seconds: TimeInterval) {
+        guard let row = pending, let first = row.samples.first, let last = row.samples.last else { return (0, 0) }
+        return (row.samples.count, last.at.timeIntervalSince(first.at))
+    }
     var settledWeight: Double? {
         guard let row = pending, let reading = row.reading,
               fresh(reading.at), inWindow(now()), hasRecentPacket(row, at: now()) else { return nil }
@@ -105,7 +110,7 @@ final class WrestlingManagerRemoteCapture {
     func scaleReading(token: UUID, pounds: Double, observedAt: Date, connected: Bool) throws {
         var row = try require(token)
         guard row.frozen == nil else { throw Failure.frozen }
-        guard connected, pounds.isFinite, pounds > 0, pounds <= 800,
+        guard connected, pounds.isFinite, pounds > Self.emptyScaleMaximumPounds, pounds <= 800,
               observedAt > row.scannedAt, fresh(observedAt), inWindow(observedAt),
               row.samples.last.map({ observedAt >= $0.at }) ?? true else {
             row.samples = []; row.reading = nil; row.jpeg = nil; row.photoAt = nil; row.evidenceID = nil

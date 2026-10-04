@@ -8,7 +8,7 @@ was separately published in web version 0.20.121 through PR #61.
 ## Implemented and checked
 
 - Camera setup with full-frame confirmation, singlet/face/feet/scale guidance,
-  memory-only test pictures and a three-second automatic stable-weight shutter.
+  memory-only test pictures and a two-second automatic stable-weight shutter.
   Movement, a stale BLE packet or the closing deadline resets readiness.
 - Locked original capture fields; protected native retry/outbox components;
   240-hour expiry; explicit late receipt handling and downloaded-copy warnings.
@@ -41,8 +41,16 @@ authenticity. Those still require trusted provenance and authorized human review
 
 Open `native-device-check/RemoteScaleCheck.xcodeproj`, select the separate
 RemoteScaleCheck scheme and run on the team iPad or iPhone. This app does not
-replace Wrestling Manager. It has one fictional adult test athlete, no sign-in,
+replace Wrestling Manager. It numbers fictional adult test athletes in a continuous session, with no sign-in,
 HTTP, upload, payment or saved photographs. Images clear on close/background.
+
+Physical testing on October 4 confirmed a Build 3 automatic weight/photo capture
+and a disconnect timeout that required reconnection. Countdown cancellation on
+step-off remains unconfirmed. Build 4 retains setup across consecutive attempts,
+waits for fresh empty-scale readings before the next attempt, and exposes settling
+progress with a shorter two-second countdown. The production host signals its
+coordinator for the next authorized scan only after durable save and scale clear.
+Build 4 consecutive-athlete behavior still requires device acceptance.
 
 Check portrait/landscape framing; setup cancel/retake; automatic capture after
 stable weight; stepping off during countdown; disconnecting the scale; and
