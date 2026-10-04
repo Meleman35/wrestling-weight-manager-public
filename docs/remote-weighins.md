@@ -106,7 +106,10 @@ cadence and stability, protected storage, cancellation and reconnect behavior.
 `prepare-native-remote-scale.py` was exercised against a local copy of the
 uploaded source. It installs the four dormant components and adds an optional
 `onRemoteWeightPacket(Double, Date)` callback at parsed BLE receipt, including
-unchanged repeated weights. Stale-peripheral callbacks are excluded. The
+unchanged repeated weights. Records completed in the same notification share one
+receipt timestamp and count as one stability sample; the full batch range is
+retained so a last record cannot conceal movement. No cached value gets a new
+timestamp. Stale-peripheral callbacks are excluded. The
 installer validates exact source anchors before writing, preserves the original
 scale file in a backup and rolls back on write failure. No original uploaded ZIP
 is overwritten. The app must connect that callback to the active host, forward

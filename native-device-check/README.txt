@@ -1,10 +1,13 @@
-REMOTE SCALE CHECK — SEPARATE DEVELOPMENT APP
+REMOTE SCALE CHECK — BUILD 2
 
 This installs a separate app named Remote Scale Check. It does not replace
 The Wrestling Manager, sign into your account, upload, charge, or save photos.
 It uses the same camera/capture models and American Scale BLE code as the draft.
 
-1. Open native-device-check/RemoteScaleCheck.xcodeproj.
+1. Extract this ZIP into a fresh folder. Open
+   native-device-check/RemoteScaleCheck.xcodeproj directly.
+   Do not drag these files into another Xcode project. Confirm Build 2 appears
+   on the home screen after running.
 2. Select the RemoteScaleCheck scheme and your iPhone or team iPad.
 3. Under Signing & Capabilities, select your existing Apple developer team
    if Xcode asks. Keep the separate .remotescalecheck bundle identifier.
@@ -14,6 +17,12 @@ It uses the same camera/capture models and American Scale BLE code as the draft.
    in athletic clothing. Confirm face, singlet, both feet and scale are visible.
 7. Start a test weigh-in, step on and stand still. The photo takes after a
    continuous stable countdown. Confirm the displayed pounds and full frame.
+
+IF IT STILL WAITS
+The camera now shows the live pounds, number of separate weight updates,
+and time since the last update. Tell us those three values and the message
+underneath them after standing still for about 10 seconds.
+Do not use Lock In to force the automatic test.
 
 TRY THESE ONCE
 - Portrait and landscape on the iPad, and at least one iPhone capture.

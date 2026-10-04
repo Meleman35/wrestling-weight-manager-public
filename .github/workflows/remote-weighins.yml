@@ -10,6 +10,7 @@ on:
       - tests/remote-weighins-policy.mjs
       - tests/remote-weighins-retention.mjs
       - tests/remote-capture-tests.swift
+      - tests/remote-scale-stream-tests.swift
       - tests/remote-delivery-tests.swift
       - scripts/prepare-native-remote-scale.py
       - src/remote-athlete-memberships-postgres.mjs
@@ -101,6 +102,10 @@ jobs:
         run: |
           swiftc native-candidate/WrestlingManagerRemoteCapture.swift native-candidate/WrestlingManagerRemoteReadiness.swift tests/remote-capture-tests.swift -o /tmp/remote-capture-tests
           /tmp/remote-capture-tests
+      - name: Exercise Bluetooth stream through native capture
+        run: |
+          swiftc native-device-check/AmericanScaleKit/Sources/AmericanScaleKit/AmericanScaleProtocol.swift native-candidate/WrestlingManagerRemoteCapture.swift tests/remote-scale-stream-tests.swift -o /tmp/remote-scale-stream-tests
+          /tmp/remote-scale-stream-tests
       - name: Exercise native upload and receipt recovery
         run: |
           swiftc native-candidate/WrestlingManagerRemoteDelivery.swift tests/remote-delivery-tests.swift -o /tmp/remote-delivery-tests

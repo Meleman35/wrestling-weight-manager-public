@@ -11,12 +11,13 @@ final class WrestlingManagerRemotePhoto {
 
     func take(token: UUID, from presenter: UIViewController, setup: Bool = false,
               readyToCapture: (() -> Bool)? = nil,
+              captureStatus: (() -> String)? = nil,
               completion: @escaping (UUID, Result<(Data, Date), Error>) -> Void) {
         guard camera == nil else { completion(token, .failure(Failure.busy)); return }
         guard presenter.viewIfLoaded?.window != nil, presenter.presentedViewController == nil else {
             completion(token, .failure(Failure.unavailable)); return
         }
-        let controller = RemoteSnapshotController(setup: setup, readyToCapture: readyToCapture)
+        let controller = RemoteSnapshotController(setup: setup, readyToCapture: readyToCapture, captureStatus: captureStatus)
         self.token = token; self.completion = completion; camera = controller
         controller.modalPresentationStyle = .fullScreen
         controller.onFinish = { [weak self, weak controller] result in
@@ -191,12 +192,15 @@ nonisolated private final class RemoteSnapshotCamera: NSObject, @unchecked Senda
     private let shutter = UIButton(type: .system)
     private let setup: Bool
     private let readyToCapture: (() -> Bool)?
+    private let captureStatus: (() -> String)?
+    private let scaleStatus = UILabel()
     private var countdown = WrestlingManagerRemoteReadiness()
     private var countdownTask: Task<Void, Never>?
     private let previewView = UIView()
     private let guide = CAShapeLayer()
-    init(setup: Bool, readyToCapture: (() -> Bool)?) {
+    init(setup: Bool, readyToCapture: (() -> Bool)?, captureStatus: (() -> String)?) {
         self.setup = setup; self.readyToCapture = setup ? nil : readyToCapture
+        self.captureStatus = setup ? nil : captureStatus
         super.init(nibName: nil, bundle: nil)
     }
     required init?(coder: NSCoder) { fatalError("Use init(setup:)") }
@@ -218,6 +222,7 @@ nonisolated private final class RemoteSnapshotCamera: NSObject, @unchecked Senda
                 guard let self, !self.finished else { return }
                 let seconds = self.countdown.remaining(ready: self.readyToCapture?() == true,
                                                        at: ProcessInfo.processInfo.systemUptime)
+                self.scaleStatus.text = self.captureStatus?()
                 self.shutter.setTitle(seconds.map { "Photo in \($0)… Stand still" } ?? "Waiting for a stable scale reading…", for: .normal)
                 if seconds == 0 { self.takePhoto(); return }
                 do { try await Task.sleep(nanoseconds: 200_000_000) } catch { return }
@@ -240,17 +245,25 @@ nonisolated private final class RemoteSnapshotCamera: NSObject, @unchecked Senda
             ? "Camera & scale setup\nShow the athlete’s face, singlet, both feet and the scale. Use a private area with nobody else in frame."
             : "Keep the athlete’s face, singlet, both feet and scale in view. Stand still for the verification photo."
         view.addSubview(instructions)
+        scaleStatus.textColor = .white; scaleStatus.numberOfLines = 0; scaleStatus.textAlignment = .center
+        scaleStatus.font = .preferredFont(forTextStyle: .caption1); scaleStatus.adjustsFontForContentSizeCategory = true
+        scaleStatus.text = captureStatus?(); scaleStatus.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(scaleStatus)
         let cancel = UIButton(type: .system); cancel.setTitle("Cancel", for: .normal)
         cancel.addTarget(self, action: #selector(cancelPhoto), for: .touchUpInside)
         shutter.setTitle(setup ? "Take setup test photo" : "Take weigh-in photo", for: .normal); shutter.isEnabled = false
         shutter.addTarget(self, action: #selector(takePhoto), for: .touchUpInside)
+        shutter.titleLabel?.numberOfLines = 0; shutter.titleLabel?.textAlignment = .center
         let controls = UIStackView(arrangedSubviews: [cancel, shutter]); controls.axis = .horizontal
         controls.distribution = .fillEqually; controls.backgroundColor = .black; controls.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(controls)
         NSLayoutConstraint.activate([instructions.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
             instructions.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
             instructions.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
-            previewView.topAnchor.constraint(equalTo: instructions.bottomAnchor, constant: 12),
+            scaleStatus.topAnchor.constraint(equalTo: instructions.bottomAnchor, constant: 4),
+            scaleStatus.leadingAnchor.constraint(equalTo: instructions.leadingAnchor),
+            scaleStatus.trailingAnchor.constraint(equalTo: instructions.trailingAnchor),
+            previewView.topAnchor.constraint(equalTo: scaleStatus.bottomAnchor, constant: 12),
             previewView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             previewView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
             previewView.bottomAnchor.constraint(equalTo: controls.topAnchor, constant: -8),

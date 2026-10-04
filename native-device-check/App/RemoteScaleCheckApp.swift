@@ -15,6 +15,7 @@ private struct RemoteScaleCheckHome: View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 24) {
                 Text("Camera + American Scale").font(.largeTitle.bold())
+                Text("Device check • Build 2").font(.caption)
                 Text("Separate development test. Your Wrestling Manager app and athlete records are not used.")
                 Text("1. Connect the scale.\n2. Check the camera framing.\n3. Try an automatic test photo while standing on the scale.")
                 Button("Connect American Scale") { showScale = true }.buttonStyle(.borderedProminent)
@@ -38,7 +39,8 @@ private struct RemoteScaleCheckHome: View {
                     NavigationStack {
                         WrestlingManagerRemoteDeviceCheck(
                             installScaleObserver: { handler in scale.onRemoteWeightPacket = handler },
-                            removeScaleObserver: { scale.onRemoteWeightPacket = nil })
+                            removeScaleObserver: { scale.onRemoteWeightPacket = nil },
+                            isScaleConnected: { scale.connectionState == .ready })
                         .navigationTitle("Local device check")
                         .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Done") { showCheck = false } } }
                     }.interactiveDismissDisabled()

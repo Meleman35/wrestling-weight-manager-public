@@ -37,7 +37,15 @@ final class WrestlingManagerRemoteCapture {
         let jpeg: Data
     }
     enum Failure: Error { case closed, windowClosed, invalidScan, changed, frozen, unsettled, expired, photoRequired, invalidPhoto }
-    private struct Sample { let weight: Double; let at: Date }
+    private struct Sample {
+        let weight: Double
+        let at: Date
+        var lowest: Double
+        var highest: Double
+        init(weight: Double, at: Date) {
+            self.weight = weight; self.at = at; lowest = weight; highest = weight
+        }
+    }
     private struct Pending {
         let token: UUID
         let athleteID: String
@@ -92,29 +100,42 @@ final class WrestlingManagerRemoteCapture {
         return token
     }
     /// Stamp at receipt of each BLE packet. Never call from cached UI values.
-    /// Three samples spanning >=1s, spread <=0.2lb and gaps <=1.5s form a candidate.
+    /// Three distinct receipt times spanning >=1s, spread <=0.2lb and gaps <=1.5s form a candidate.
+    /// Records from one BLE notification share a timestamp and count as one sample.
     func scaleReading(token: UUID, pounds: Double, observedAt: Date, connected: Bool) throws {
         var row = try require(token)
         guard row.frozen == nil else { throw Failure.frozen }
         guard connected, pounds.isFinite, pounds > 0, pounds <= 800,
               observedAt > row.scannedAt, fresh(observedAt), inWindow(observedAt),
-              row.samples.last.map({ observedAt > $0.at }) ?? true else {
+              row.samples.last.map({ observedAt >= $0.at }) ?? true else {
             row.samples = []; row.reading = nil; row.jpeg = nil; row.photoAt = nil; row.evidenceID = nil
             pending = row; throw Failure.unsettled
         }
+        var sample = Sample(weight: pounds, at: observedAt)
+        let last = row.samples.last
+        if let last, observedAt == last.at {
+            // Retain the entire batch's range so movement cannot be hidden by
+            // a final record that returns to the original weight.
+            sample.lowest = min(last.lowest, pounds)
+            sample.highest = max(last.highest, pounds)
+            row.samples.removeLast()
+        }
         // Stable packets keep the chosen reading/photo together without refreshing its age.
         // Movement or a packet gap invalidates the chosen reading and any photo.
-        if let reading = row.reading, fresh(reading.at), let last = row.samples.last,
-           abs(pounds - reading.weight) <= 0.200001, observedAt.timeIntervalSince(last.at) <= 1.5 {
-            row.samples = [Sample(weight: pounds, at: observedAt)]; pending = row; return
+        if let reading = row.reading, fresh(reading.at), reading.at < observedAt, let last,
+           abs(sample.lowest - reading.weight) <= 0.200001,
+           abs(sample.highest - reading.weight) <= 0.200001,
+           sample.highest - sample.lowest <= 0.200001,
+           observedAt.timeIntervalSince(last.at) <= 1.5 {
+            row.samples = [sample]; pending = row; return
         }
         row.reading = nil; row.jpeg = nil; row.photoAt = nil; row.evidenceID = nil
-        if let last = row.samples.last, observedAt.timeIntervalSince(last.at) > 1.5 { row.samples = [] }
-        row.samples.append(Sample(weight: pounds, at: observedAt))
+        if let last, observedAt.timeIntervalSince(last.at) > 1.5 { row.samples = [] }
+        row.samples.append(sample)
         row.samples.removeAll { observedAt.timeIntervalSince($0.at) > 3 }
         // A changing scale must first establish a new run of stable samples.
         while row.samples.count > 1,
-              (row.samples.map(\.weight).max()! - row.samples.map(\.weight).min()!) > 0.200001 {
+              (row.samples.map(\.highest).max()! - row.samples.map(\.lowest).min()!) > 0.200001 {
             row.samples.removeFirst()
         }
         if row.samples.count >= 3, observedAt.timeIntervalSince(row.samples[0].at) >= 1 {
