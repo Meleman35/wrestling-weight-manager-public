@@ -100,14 +100,14 @@ final class WrestlingManagerRemoteCaptureHost {
         try capture.scaleReading(token: token, pounds: pounds, observedAt: observedAt, connected: true)
     }
     func scaleDisconnected() { scaleClear.invalidate(); capture.scaleDisconnected(); photos.cancel() }
-    var settledWeight: Double? { capture.settledWeight }
+    var settledWeight: Double? { awaitingScaleClear ? nil : capture.settledWeight }
 
     /// Completion means durably queued, never server accepted.
     func takeSnapshot(from presenter: UIViewController, noticeAccepted: Bool,
                       completion: @escaping (Result<UUID, Error>) -> Void) async {
-        guard active, setupConfirmed, !setupInProgress, !photoInProgress, !saveInProgress, noticeAccepted else { completion(.failure(Failure.unauthorized)); return }
+        guard active, setupConfirmed, !setupInProgress, !photoInProgress, !saveInProgress, !awaitingScaleClear, noticeAccepted else { completion(.failure(Failure.unauthorized)); return }
         do { try await authorize() } catch { completion(.failure(error)); return }
-        guard active, setupConfirmed, !setupInProgress, !photoInProgress, !saveInProgress, let token = capture.captureToken, capture.settledWeight != nil else {
+        guard active, setupConfirmed, !setupInProgress, !photoInProgress, !saveInProgress, !awaitingScaleClear, let token = capture.captureToken, capture.settledWeight != nil else {
             completion(.failure(Failure.noReading)); return
         }
         photoInProgress = true
