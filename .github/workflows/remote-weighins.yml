@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - native-candidate/WrestlingManagerRemote*.swift
+      - native-device-check/**
       - tests/remote-retention-tests.swift
       - src/remote-weighins-policy.mjs
       - src/remote-weighins-retention.mjs
@@ -92,9 +93,10 @@ jobs:
         run: |
           sdk_path="$(xcrun --sdk iphonesimulator --show-sdk-path)"
           xcrun swiftc -typecheck -sdk "$sdk_path" -target arm64-apple-ios17.0-simulator -swift-version 5 -default-isolation MainActor -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-upcoming-feature InferIsolatedConformances -warnings-as-errors native-candidate/WrestlingManagerRemote*.swift
+          xcrun swiftc -typecheck -D DEBUG -sdk "$sdk_path" -target arm64-apple-ios17.0-simulator -swift-version 5 -default-isolation MainActor -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-upcoming-feature InferIsolatedConformances -warnings-as-errors native-candidate/WrestlingManagerRemote*.swift
       - name: Exercise native capture transitions
         run: |
-          swiftc native-candidate/WrestlingManagerRemoteCapture.swift tests/remote-capture-tests.swift -o /tmp/remote-capture-tests
+          swiftc native-candidate/WrestlingManagerRemoteCapture.swift native-candidate/WrestlingManagerRemoteReadiness.swift tests/remote-capture-tests.swift -o /tmp/remote-capture-tests
           /tmp/remote-capture-tests
       - name: Exercise native upload and receipt recovery
         run: |
@@ -104,3 +106,7 @@ jobs:
         run: |
           swiftc native-candidate/WrestlingManagerRemoteRetention.swift tests/remote-retention-tests.swift -o /tmp/remote-retention-tests
           /tmp/remote-retention-tests
+      - name: Test American Scale protocol and discovery
+        run: swift test --package-path native-device-check/AmericanScaleKit
+      - name: Build separate camera and scale test app
+        run: xcodebuild -project native-device-check/RemoteScaleCheck.xcodeproj -scheme RemoteScaleCheck -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath /tmp/remote-scale-check CODE_SIGNING_ALLOWED=NO build -quiet

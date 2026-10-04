@@ -82,7 +82,10 @@ final class WrestlingManagerRemoteCaptureHost {
             completion(.failure(Failure.noReading)); return
         }
         photoInProgress = true
-        photos.take(token: token, from: presenter) { [weak self] photoToken, result in
+        photos.take(token: token, from: presenter, readyToCapture: { [weak self] in
+            guard let self else { return false }
+            return self.active && self.setupConfirmed && self.capture.captureToken == token && self.capture.settledWeight != nil
+        }) { [weak self] photoToken, result in
             guard let self else { return }
             self.photoInProgress = false
             guard self.active else { completion(.failure(Failure.closed)); return }

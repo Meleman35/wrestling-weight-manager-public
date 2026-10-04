@@ -57,7 +57,7 @@ final class WrestlingManagerRemoteCapture {
     var captureToken: UUID? { pending?.token }
     var settledWeight: Double? {
         guard let row = pending, let reading = row.reading,
-              fresh(reading.at), hasRecentPacket(row, at: now()) else { return nil }
+              fresh(reading.at), inWindow(now()), hasRecentPacket(row, at: now()) else { return nil }
         return reading.weight
     }
 
@@ -104,7 +104,7 @@ final class WrestlingManagerRemoteCapture {
         }
         // Stable packets keep the chosen reading/photo together without refreshing its age.
         // Movement or a packet gap invalidates the chosen reading and any photo.
-        if let reading = row.reading, let last = row.samples.last,
+        if let reading = row.reading, fresh(reading.at), let last = row.samples.last,
            abs(pounds - reading.weight) <= 0.200001, observedAt.timeIntervalSince(last.at) <= 1.5 {
             row.samples = [Sample(weight: pounds, at: observedAt)]; pending = row; return
         }

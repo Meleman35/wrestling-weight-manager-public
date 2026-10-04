@@ -6,6 +6,7 @@ import {validateWindow, summarizeWindow, reportCsv} from './remote-weighins.mjs'
 const deny = message => { throw new Error(message); };
 const validId = value => typeof value === 'string' && /^[A-Za-z0-9_-]{1,160}$/.test(value);
 const timestamp = value => { const ms = Date.parse(value); if (!Number.isFinite(ms)) deny('Invalid timestamp'); return ms; };
+const projectReportRow = r=>({clubId:r.clubId,athleteId:r.athleteId,clubName:r.clubName,athleteName:r.athleteName,firstName:typeof r.firstName==='string'?r.firstName:'',lastName:typeof r.lastName==='string'?r.lastName:'',...normalizeMemberships(r),status:r.status,submission:r.submission?{submissionId:r.submission.submissionId,receiptId:r.submission.receiptId,weight:r.submission.weight,unit:r.submission.unit,capturedAt:r.submission.capturedAt,receivedAt:r.submission.receivedAt}:null});
 const same = (a,b) => a && typeof a === 'object' && Object.keys(a).length === Object.keys(b).length && Object.keys(b).every(k=>a[k]===b[k]);
 export function createRemoteReportingService({getActor, getProgram, getWindow, getWindows, getRoster, getEvidence, store, getReportPage, coverageGate, now=Date.now}) {
   if (![getActor,getProgram,getWindow,getRoster,getEvidence,store?.atomicAccept,store?.list,coverageGate?.read,coverageGate?.capture].every(x=>typeof x==='function')) deny('Trusted reporting adapters required');
@@ -118,7 +119,9 @@ export function createRemoteReportingService({getActor, getProgram, getWindow, g
         if(!Array.isArray(result?.rows)||result.rows.length>limit||!Number.isInteger(result.total)||result.total<0||result.total>20000||!/^[a-f0-9]{64}$/.test(result.revision)||
           (revision!==null&&result.revision!==revision)||result.rows.some(r=>clubId&&r.clubId!==clubId))deny('Report scope changed');
         const current=await authority(session,programId,'read',clubId);await period(current.program,windowId);
-        return {programId,windowId,...result,kind:program.kind,eventId:program.kind==='tournament'?program.eventId:null,classification:program.kind==='tournament'?'Remote tournament check-in':'Remote club report',timeZone:window.timeZone,...(format==='csv'?{csv:reportCsv(result.rows)}:{})};
+        const safeRows=result.rows.map(projectReportRow),counts=Object.fromEntries(['expected','submitted','late','missing'].map(k=>[k,result.counts?.[k]]));
+        if(Object.values(counts).some(v=>!Number.isInteger(v)||v<0)||counts.expected!==counts.submitted+counts.late+counts.missing||result.nextOffset!==(offset+safeRows.length<result.total?offset+safeRows.length:null))deny('Invalid report page');
+        return {programId,windowId,revision:result.revision,counts,total:result.total,nextOffset:result.nextOffset,rows:safeRows,kind:program.kind,eventId:program.kind==='tournament'?program.eventId:null,classification:program.kind==='tournament'?'Remote tournament check-in':'Remote club report',timeZone:window.timeZone,...(format==='csv'?{csv:reportCsv(safeRows)}:{})};
       }
       // Narrow query at storage/roster boundary; do not retrieve other clubs for a
       // club_reader then hide them only in the browser.
@@ -129,7 +132,7 @@ export function createRemoteReportingService({getActor, getProgram, getWindow, g
       const rows=result.rows.sort((a,b)=>String(a.clubName).localeCompare(String(b.clubName))||a.clubId.localeCompare(b.clubId)||String(a.athleteName).localeCompare(String(b.athleteName))||a.athleteId.localeCompare(b.athleteId));
       // Explicit allowlist: never return evidence IDs, photo links, raw evidence,
       // account/session identifiers, arbitrary roster columns or medical records.
-      const projected=rows.map(r=>({clubId:r.clubId,athleteId:r.athleteId,clubName:r.clubName,athleteName:r.athleteName,firstName:typeof r.firstName==='string'?r.firstName:'',lastName:typeof r.lastName==='string'?r.lastName:'',...normalizeMemberships(r),status:r.status,submission:r.submission?{submissionId:r.submission.submissionId,receiptId:r.submission.receiptId,weight:r.submission.weight,unit:r.submission.unit,capturedAt:r.submission.capturedAt,receivedAt:r.submission.receivedAt}:null}));
+      const projected=rows.map(projectReportRow);
       const currentRevision=createHash('sha256').update(JSON.stringify({programId,windowId,clubId,status,timeZone:window.timeZone,opensAt:window.opensAt,closesAt:window.closesAt,counts:result.counts,rows:projected})).digest('hex');
       if(revision!==null&&revision!==currentRevision)deny('Report changed; refresh and export again');
       // Do not return a completed asynchronous read after account/grant revocation.

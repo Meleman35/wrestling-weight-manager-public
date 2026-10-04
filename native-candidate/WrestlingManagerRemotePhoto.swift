@@ -10,12 +10,13 @@ final class WrestlingManagerRemotePhoto {
     private var token: UUID?
 
     func take(token: UUID, from presenter: UIViewController, setup: Bool = false,
+              readyToCapture: (() -> Bool)? = nil,
               completion: @escaping (UUID, Result<(Data, Date), Error>) -> Void) {
         guard camera == nil else { completion(token, .failure(Failure.busy)); return }
         guard presenter.viewIfLoaded?.window != nil, presenter.presentedViewController == nil else {
             completion(token, .failure(Failure.unavailable)); return
         }
-        let controller = RemoteSnapshotController(setup: setup)
+        let controller = RemoteSnapshotController(setup: setup, readyToCapture: readyToCapture)
         self.token = token; self.completion = completion; camera = controller
         controller.modalPresentationStyle = .fullScreen
         controller.onFinish = { [weak self, weak controller] result in
@@ -189,19 +190,40 @@ nonisolated private final class RemoteSnapshotCamera: NSObject, @unchecked Senda
     private var finished = false
     private let shutter = UIButton(type: .system)
     private let setup: Bool
+    private let readyToCapture: (() -> Bool)?
+    private var countdown = WrestlingManagerRemoteReadiness()
+    private var countdownTask: Task<Void, Never>?
     private let previewView = UIView()
     private let guide = CAShapeLayer()
-    init(setup: Bool) { self.setup = setup; super.init(nibName: nil, bundle: nil) }
+    init(setup: Bool, readyToCapture: (() -> Bool)?) {
+        self.setup = setup; self.readyToCapture = setup ? nil : readyToCapture
+        super.init(nibName: nil, bundle: nil)
+    }
     required init?(coder: NSCoder) { fatalError("Use init(setup:)") }
     private var preview: AVCaptureVideoPreviewLayer?
     private lazy var capture = RemoteSnapshotCamera(onReady: { [weak self] in
-        guard let self, !self.finished else { return }; self.shutter.isEnabled = true; self.view.setNeedsLayout()
+        guard let self, !self.finished else { return }
+        self.shutter.isEnabled = self.readyToCapture == nil; self.view.setNeedsLayout()
+        if self.readyToCapture != nil { self.startCountdown() }
     }, onResult: { [weak self] data, at in
         guard let self, !self.finished else { return }
         self.finished = true
         if let data, let at { self.onFinish?(.success((data, at))) }
         else { self.onFinish?(.failure(WrestlingManagerRemotePhoto.Failure.unavailable)) }
     })
+    private func startCountdown() {
+        countdownTask?.cancel()
+        countdownTask = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                guard let self, !self.finished else { return }
+                let seconds = self.countdown.remaining(ready: self.readyToCapture?() == true,
+                                                       at: ProcessInfo.processInfo.systemUptime)
+                self.shutter.setTitle(seconds.map { "Photo in \($0)… Stand still" } ?? "Waiting for a stable scale reading…", for: .normal)
+                if seconds == 0 { self.takePhoto(); return }
+                do { try await Task.sleep(nanoseconds: 200_000_000) } catch { return }
+            }
+        }
+    }
     override func viewDidLoad() {
         super.viewDidLoad(); view.backgroundColor = .black
         previewView.translatesAutoresizingMaskIntoConstraints = false; view.addSubview(previewView)
@@ -265,10 +287,13 @@ nonisolated private final class RemoteSnapshotCamera: NSObject, @unchecked Senda
             guide.frame = previewView.bounds; guide.path = UIBezierPath(roundedRect: frame.insetBy(dx: 12, dy: 12), cornerRadius: 14).cgPath
         }
     }
-    @objc private func takePhoto() { guard !finished else { return }; shutter.isEnabled = false; capture.shoot(angle: rotation) }
+    @objc private func takePhoto() {
+        guard !finished, readyToCapture?() != false else { return }
+        shutter.isEnabled = false; capture.shoot(angle: rotation)
+    }
     @objc private func cancelPhoto() {
-        guard !finished else { return }; finished = true; capture.stop()
+        guard !finished else { return }; finished = true; countdownTask?.cancel(); capture.stop()
         onFinish?(.failure(WrestlingManagerRemotePhoto.Failure.cancelled))
     }
-    func stop() { finished = true; capture.stop() }
+    func stop() { finished = true; countdownTask?.cancel(); countdownTask = nil; capture.stop() }
 }

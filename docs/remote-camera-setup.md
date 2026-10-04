@@ -30,3 +30,19 @@ Physical acceptance needs an iPad/iPhone, scale, an adult test subject in approp
 athletic clothing, portrait and landscape, cancel/retake, lock during preview and
 review, and confirmation that the actual saved frame includes head and feet.
 Use test subjects/fixtures for development, not production athlete records.
+
+Automatic shutter and hardware check (October 4 candidate):
+- After the setup confirmation and a resolved credential, the normal camera
+  waits for three continuous stable seconds before taking the photo. Movement,
+  stale/missing packets or the exclusive closing time reset readiness. Setup
+  test pictures still use an explicit shutter.
+- A selected reading is usable only with a BLE packet within 1.5 seconds. A
+  continuously connected scale can establish a new reading when an older
+  selection expires; it does not get stuck after a long camera permission delay.
+- The separate native-device-check Xcode project uses the real American Scale
+  transport and the same capture/photo models with one fictional athlete. Its
+  distinct bundle identifier does not replace Wrestling Manager. It contains
+  no app login, HTTP client, outbox or upload. Images stay in memory and clear
+  on background/close. It tests hardware, not authorization or delivery.
+- The photo review keeps its image visible on landscape phones and scrolls its
+  instructions/buttons separately for larger text settings.

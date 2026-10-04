@@ -2,6 +2,16 @@ import Foundation
 
 @main struct RemoteCaptureTests {
     @MainActor static func main() throws {
+        var readiness = WrestlingManagerRemoteReadiness()
+        precondition(readiness.remaining(ready: false, at: 0) == nil)
+        precondition(readiness.remaining(ready: true, at: 1) == 3)
+        precondition(readiness.remaining(ready: true, at: 2) == 2)
+        precondition(readiness.remaining(ready: false, at: 2.5) == nil)
+        precondition(readiness.remaining(ready: true, at: 3) == 3)
+        precondition(readiness.remaining(ready: true, at: 5.9) == 1)
+        precondition(readiness.remaining(ready: true, at: 6) == 0)
+        precondition(readiness.remaining(ready: true, at: 2) == 3)
+        precondition(readiness.remaining(ready: true, at: .infinity) == nil)
         var clock = Date(timeIntervalSince1970: 1800000000)
         let start = clock
         let scope = WrestlingManagerRemoteCapture.Scope(accountID: UUID(), clubID: UUID(), generation: "personal-session",
@@ -83,6 +93,19 @@ import Foundation
         try silent.snapshot(token: silentToken, normalizedJPEG: jpeg, capturedAt: clock, noticeAccepted: true)
         _ = try silent.freeze(token: silentToken)
         silent.close()
+        // A long permission/setup delay must allow a new stable reading, not
+        // keep the first timestamp forever while packets continue arriving.
+        clock = start
+        let delayed = try WrestlingManagerRemoteCapture(scope: scope, now: { clock })
+        let delayedToken = try delayed.scan(athleteID: "athlete-a", method: "qr")
+        for i in 0...72 {
+            clock = start.addingTimeInterval(0.1 + Double(i) * 0.5)
+            try delayed.scaleReading(token: delayedToken, pounds: 125, observedAt: clock, connected: true)
+        }
+        precondition(delayed.settledWeight == 125)
+        try delayed.snapshot(token: delayedToken, normalizedJPEG: jpeg, capturedAt: clock, noticeAccepted: true)
+        _ = try delayed.freeze(token: delayedToken)
+        delayed.close()
         // Closing time is exclusive for both scale samples and camera capture.
         clock = scope.opensAt.addingTimeInterval(-0.1)
         let boundary = try WrestlingManagerRemoteCapture(scope: scope, now: { clock })

@@ -41,3 +41,21 @@ from the older local checkout. No external membership verification API is assume
 Official sources checked October 4, 2026:
 https://www.usawmembership.com/verify_membership
 https://aausports.org/parents-page/
+
+October 4 hardening:
+- Every report page carries a SHA-256 revision of all matching projected rows
+  and counts. Pagination/export stops on any revision change, even if row count
+  remains the same. Export checks again before download, including after photos.
+- Excel now includes canonical first/last name, server receipt time and the
+  verification submission ID. Portrait and landscape JPEGs preserve proportions.
+- createCanonicalRemoteReportReader supplies scoped canonical names, memberships,
+  accepted weights, counts, at most 500 rows and the revision in one SQL statement.
+  Compose it as getReportPage in createRemoteReportingService. It requires the
+  canonical public roster and the private membership draft, and remains behind
+  live service authorization. The older injected-array adapter is a test/fallback
+  path; do not use that path for nationwide production reporting.
+- The SQL reader handles 32 fictional clubs / 3,200 athletes in isolated PGlite
+  checks, filters active canonical rosters/club enrollment/consent, and excludes
+  revoked or expired photo evidence. This is not a hosted production load test.
+- Report connections bind to the Auth session ID as well as the account, cancel
+  pending requests on close, time out stalled reads and bound JSON/photo sizes.
