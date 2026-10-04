@@ -16,8 +16,8 @@ async function boundedJson(request,max) {
  catch{throw new BadRequest();}
 }
 const bindingKeys=['captureId','programId','windowId','clubId','athleteId','operatorId','generation','weight','unit','capturedAt','photoCapturedAt','method'];
-export function createRemoteReportingHandler({authenticate,allowRequest,photos,reporting,basePath='/functions/v1/remote-weighins',allowedOrigins=[]}) {
- if(![authenticate,allowRequest,photos?.upload,photos?.read,reporting?.submit,reporting?.report].every(f=>typeof f==='function'))throw Error('Trusted HTTP dependencies required');
+export function createRemoteReportingHandler({authenticate,allowRequest,authorizeCapture,photos,reporting,basePath='/functions/v1/remote-weighins',allowedOrigins=[]}) {
+ if(![authenticate,allowRequest,authorizeCapture,photos?.upload,photos?.read,reporting?.submit,reporting?.report].every(f=>typeof f==='function'))throw Error('Trusted HTTP dependencies required');
  const respond=(status,body,extra={})=>new Response(JSON.stringify(body),{status,headers:{...headers,...extra}});
  return async request=>{
   const origin=request.headers.get('origin');
@@ -25,7 +25,7 @@ export function createRemoteReportingHandler({authenticate,allowRequest,photos,r
   const cors=origin?{'Access-Control-Allow-Origin':origin,'Vary':'Origin'}:{};
   const path=new URL(request.url).pathname;
   const action=path.startsWith(basePath+'/')?path.slice(basePath.length+1):'';
-  if(!['photo','submit','report','photo-read'].includes(action))return respond(404,{error:'Unavailable'},cors);
+  if(!['authorize','photo','submit','report','photo-read'].includes(action))return respond(404,{error:'Unavailable'},cors);
   if(request.method==='OPTIONS'&&origin)return new Response(null,{status:204,headers:{...headers,...cors,'Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Allow-Headers':'Authorization, Content-Type'}});
   if(request.method!=='POST')return respond(405,{error:'POST required'},{...cors,Allow:'POST'});
   let session;
@@ -34,6 +34,10 @@ export function createRemoteReportingHandler({authenticate,allowRequest,photos,r
   try{
    if(await allowRequest(session,action)!==true)return respond(429,{error:'Try again later'},cors);
    const body=await boundedJson(request,action==='photo'?7*1024*1024:12000);
+   if(action==='authorize'){
+    if(await authorizeCapture(session,body)!==true)return respond(403,{error:'Access denied'},cors);
+    return respond(200,{authorized:true},cors);
+   }
    if(action==='photo'){
     if(!object(body.payload)||typeof body.jpegBase64!=='string'||body.jpegBase64.length>Math.ceil(5*1024*1024/3)*4||body.jpegBase64.length%4!==0||/[^A-Za-z0-9+/=]/.test(body.jpegBase64))throw new BadRequest();
     const jpeg=new Uint8Array(Buffer.from(body.jpegBase64,'base64'));

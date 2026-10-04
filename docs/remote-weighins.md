@@ -143,3 +143,16 @@ origins are denied; configured app origins receive narrow CORS. Responses are
 no-store and internal provider exceptions are not returned to clients. Missing
 production auth/storage/database/rate-limit adapters are not replaced with mocks.
 This composition is not a deployed Supabase function.
+
+
+`WrestlingManagerRemoteHTTP.swift` now supplies the native delivery transport for
+that route contract: fixed project HTTPS endpoint, ephemeral no-cookie/no-cache
+URLSession, redirect rejection, personal account/session/generation checks before
+and after every request, authenticated authorization/photo/submit requests and
+bounded JSON response validation. `authorizeCapture` is an obligatory trusted
+handler dependency; an explicit true result is required. This does not provision
+that endpoint or infer billing/roster/native provenance from client fields.
+Session provider wiring must reuse the current auth coordinator rather than a
+page-supplied token; close the client with the capture/delivery host on logout,
+lock and page change. Response size is checked after URLSession download; this is
+not yet a streaming response size cap. Real HTTP and full app tests remain.
