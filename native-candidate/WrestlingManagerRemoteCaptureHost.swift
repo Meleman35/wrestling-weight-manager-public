@@ -14,9 +14,10 @@ final class WrestlingManagerRemoteCaptureHost {
     private var photoInProgress = false
     private var saveInProgress = false
 
-    init(scope: WrestlingManagerRemoteCapture.Scope, authorize: @escaping () async throws -> Void) throws {
+    init(scope: WrestlingManagerRemoteCapture.Scope, outbox: WrestlingManagerRemoteOutbox? = nil,
+         authorize: @escaping () async throws -> Void) throws {
         capture = try WrestlingManagerRemoteCapture(scope: scope)
-        outbox = try WrestlingManagerRemoteOutbox(accountID: scope.accountID, clubID: scope.clubID)
+        self.outbox = try outbox ?? WrestlingManagerRemoteOutbox(accountID: scope.accountID, clubID: scope.clubID)
         self.authorize = authorize
         backgroundObserver = NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification,
             object: nil, queue: .main) { [weak self] _ in

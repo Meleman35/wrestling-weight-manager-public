@@ -156,3 +156,13 @@ Session provider wiring must reuse the current auth coordinator rather than a
 page-supplied token; close the client with the capture/delivery host on logout,
 lock and page change. Response size is checked after URLSession download; this is
 not yet a streaming response size cap. Real HTTP and full app tests remain.
+
+
+`WrestlingManagerRemoteReportingSession.swift` is the native composition owner: one
+protected outbox is shared by camera capture and HTTP delivery. The owner verifies
+scope vs personal session, installs one delivery worker despite async reentrancy,
+closes camera and transport on background, and exposes `close()` for app
+lock/logout/navigation/club-change/deletion hooks. It also closes owned resources
+when released. `authorizeActivation` must enforce current program/window/club and
+operator coverage at activation, not merely return a client-side flag. Current
+wrapper registration and real production adapters still remain.
