@@ -5,17 +5,23 @@ import {readFile} from 'node:fs/promises';
 const root=new URL('../',import.meta.url);
 const schemas="('public','private','wm_billing')";
 function definition(source,name){
- const marker='create function '+name+'(';
- const start=source.indexOf(marker),end=source.indexOf('$$;',start);
- if(start<0||end<0||source.indexOf(marker,start+1)!==-1)throw Error('Deletion source requires review: '+name);
- return source.slice(start,end+3).replace('create function ','create or replace function ');
+ const markers=['create function '+name+'(','create or replace function '+name+'('];
+ const matches=markers.flatMap(marker=>source.split(marker).slice(1).map(()=>source.indexOf(marker)));
+ if(matches.length!==1)throw Error('Deletion source requires review: '+name);
+ const start=matches[0],end=source.indexOf('$$;',start);
+ if(end<0)throw Error('Deletion source requires review: '+name);
+ return source.slice(start,end+3).replace(/^create function /,'create or replace function ');
 }
 export async function billingDeletionIntegrationSQL(){
  const service=await readFile(new URL('supabase/scoped-deletion-service.sql',root),'utf8');
  const media=await readFile(new URL('supabase/scoped-deletion-media.sql',root),'utf8');
+ // This deployed follow-up owns the current shared-photo behavior. Preserve
+ // the original migration's assembly source instead of rewriting its history.
+ const mediaFix=await readFile(new URL('supabase/migrations/20260930065511_scoped_deletion_hosted_acceptance.sql',root),'utf8');
  const parts=[];
  for(const [source,names] of [[service,['private.scoped_deletion_schema_hash','private.scoped_deletion_read']],
-  [media,['private.scoped_deletion_media_inventory','private.scoped_deletion_seal_media']]]){
+  [mediaFix,['private.scoped_deletion_media_inventory']],
+  [media,['private.scoped_deletion_seal_media']]]){
   for(const name of names){
    const text=definition(source,name);
    if(!text.includes("('public','private')"))throw Error('Deletion schema boundary requires review');
