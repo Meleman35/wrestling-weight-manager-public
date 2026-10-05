@@ -2,6 +2,8 @@
 
 Prepared for the combined launch work on October 4, 2026. These are prepared fields, not an App Store Connect update or a submission. Publish only after the accepted build and deployed feature set match the description. Review information must describe the actual submitted build.
 
+Owner-approved scope, October 4 at 8:14 PM Mountain: launch the core app first. Nationwide remote weigh-ins, director subscriptions/trials, remote evidence capture/reporting and tournament imports will ship in a later update. Ordinary team scale/NFC tools remain in the first release. Do not advertise remote weigh-ins as an available first-release benefit. Core purchases and their actual benefits still require hosted and device acceptance.
+
 ## Prepared listing fields
 
 | Field | Prepared value |
@@ -59,7 +61,7 @@ Use dedicated fictional review accounts and test athletes. Enter reviewer creden
 - Give the exact accepted-build route to account deletion, including the disposable reviewer account to use. General account deletion must be available and verified before submission; the earlier pilot gate is not sufficient.
 - Explain which functions require compatible scale/NFC hardware and provide a review attachment showing the accepted physical workflow. Do not present a simulation as a real reading or bypass authorization for review.
 - If billing is included, list the four exact product identifiers in `billing-candidate/READ_ME_FIRST.txt`, their actual benefits, the in-app Plans and Restore routes, and the test team's immutable purchase binding. Attach the subscriptions and required review screenshots with the submitted version. Do not promise unlimited storage, SMS, streaming or undecided athlete discounts.
-- If remote weigh-ins are included, provide the actual program/window and assigned reviewer roles. Explain permitted reweigh selection, queued-versus-server-saved status, export and ten-day deletion. Add this feature to the public description only after its hosted service and physical acceptance pass.
+- Remote weigh-ins are deferred from this submission. They have no first-release reviewer setup, director purchase or trial. Preserve their later-update acceptance checklist in `docs/remote-weighins-launch-status.md`.
 - Include a staffed review contact phone number in App Store Connect. The support email above is known; a review phone number has not been verified here.
 
 ## Fields that still need current account/build evidence

@@ -3,13 +3,13 @@ import {randomUUID} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
 import {fixture} from '../tests/helpers/scoped-deletion-db.mjs';
 import {runScopedDeletion} from '../scripts/scoped-deletion-worker.mjs';
-import {billingDeletionIntegrationSQL} from './billing-deletion-integration.mjs';
+import {prepareCoreBillingFixture,fixtureBillingMigration} from './tests/core-billing-fixture.mjs';
 import {reconcileSubscription,proposedProducts} from './subscription-policy.mjs';
 
 // Actual planner, service SQL, freeze triggers and worker; only Auth/Storage
 // providers and adult eligibility helpers are synthetic. Never uses a live URL.
 const {db}=await fixture();
-const root=new URL('../',import.meta.url),uuid=()=>randomUUID();
+const uuid=()=>randomUUID();
 const config={environment:'Sandbox',bundleID:'com.damonmele.wrestlingmanager',products:proposedProducts};
 let checks=0,sequence=500;
 const pass=name=>{checks++;console.log('PASS '+name);};
@@ -69,22 +69,8 @@ function providers(s,{pauseRevocation=false,pauseAuth=false}={}){
 }
 const run=(job,provider)=>runScopedDeletion({service,provider,jobId:job.id,receiptHash:'a'.repeat(64),budgetMs:120000});
 try{
- await db.exec(`create role wm_billing_runtime;
-  alter table auth.users add confirmed_at timestamptz generated always as (email_confirmed_at) stored;
-  alter table auth.users add is_anonymous boolean not null default false;
-  create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text not null,name text not null,version text,owner uuid,owner_id text,unique(bucket_id,name));
-  grant usage on schema private,auth,public to authenticated,service_role;
-  create function private.enforce_team_login_request() returns void language plpgsql as $$begin return;end$$;
-  create function private.board_personal(u uuid) returns boolean language sql as $$select u is not null and not exists(select 1 from private.team_logins where user_id=u)$$;
-  create function private.board_minor(u uuid) returns boolean language sql as $$select false$$;
-  create function public.is_team_admin(t uuid) returns boolean language sql as $$select exists(select 1 from public.team_memberships where team_id=t and user_id=auth.uid() and active and role='head_coach')$$;`);
- const phone=await readFile(new URL('supabase/migrations/20260930031742_account_deletion_phone_preflight.sql',root),'utf8');
- await db.exec(phone.slice(phone.indexOf('create function private.account_deletion_phone_preflight()'),phone.indexOf('create function public.account_deletion_phone_preflight()')));
- for(const path of ['tests/fixtures/scoped-deletion-mutation-triggers.sql','supabase/migrations/20260930060258_scoped_deletion_worker.sql',
-  'supabase/migrations/20260930065511_scoped_deletion_hosted_acceptance.sql',
-  'billing-candidate/billing-storage-candidate.sql','billing-candidate/apple-notification-inbox.sql','billing-candidate/team-paid-remainder-storage.sql'])
-  await db.exec(await readFile(new URL(path,root),'utf8'));
- await db.exec(await billingDeletionIntegrationSQL());
+ await prepareCoreBillingFixture(db);
+ await db.exec(await fixtureBillingMigration(db));
  // A fixed synthetic failure trigger is present before inventory fingerprinting.
  await db.exec(`create function wm_billing.synthetic_failure() returns trigger language plpgsql as $$begin
   if current_setting('wm.synthetic_billing_failure',true)='on' then raise exception 'SYNTHETIC_FAILURE';end if;return old;end$$;

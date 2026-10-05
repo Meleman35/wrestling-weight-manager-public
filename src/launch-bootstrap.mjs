@@ -1,12 +1,8 @@
-import {installRemoteReportingApp} from './remote-weighins-app.mjs';
-window.WMRemoteReporting=installRemoteReportingApp({
-  enabled:false, // Turn on with the reviewed service deployment, not independently.
-  button:document.getElementById('remoteReportingBtn'),root:document.getElementById('remoteReportingContent'),
-  beforeOpen:()=>closeSheets(),show:()=>openSheet('remoteReportingSheet'),hide:()=>show('remoteReportingSheet',false),
-  getSession:async()=>{const {data,error}=await client.auth.getSession();if(error)throw error;return data.session},
-  unlocked:()=>!securityState.appLockEnabled||securityUnlockedThisLaunch,
-  personal:()=>!!session?.user?.id&&!managedLogin,publishableKey:SUPABASE_KEY
-});
+// Owner-approved first release: ordinary team scale/NFC tools stay in the app;
+// nationwide remote reporting ships in a later update with its hosted services.
+// Do not register the remote client or expose its unfinished reporting screen.
+document.getElementById('remoteReportingBtn')?.remove();
+document.getElementById('remoteReportingSheet')?.remove();
 import {installSubscriptionApp} from '../billing-candidate/subscription-app.mjs';
 window.WMSubscriptionPlans=installSubscriptionApp({
  button:document.getElementById('subscriptionPlansBtn'),root:document.getElementById('subscriptionPlansContent'),

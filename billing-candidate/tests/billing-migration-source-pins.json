@@ -1,0 +1,26 @@
+[
+  {
+    "signature": "private.athlete_merge_request(text,jsonb)",
+    "hash": "991e2028b296773026c1a090426585d7af554636572e6ff42d2aa66754af4835"
+  },
+  {
+    "signature": "private.scoped_deletion_media_inventory(uuid,jsonb)",
+    "hash": "97cf77eb84ce9c86f34f55be2d3915e24c071fd1794dfe806b502649ebe1168d"
+  },
+  {
+    "signature": "private.scoped_deletion_read(text,jsonb,jsonb,integer)",
+    "hash": "eb6d2395060ba7c2fd314ea3947b93108ff8d4cc34a2276eb3b4f0ad8950444f"
+  },
+  {
+    "signature": "private.scoped_deletion_schema_hash()",
+    "hash": "1f4e32621a38bd54fd2f475ecfab04fcdac701a24d3d261af9bf181639645d4a"
+  },
+  {
+    "signature": "private.scoped_deletion_seal_media(uuid,jsonb)",
+    "hash": "4d0bb56b946649e117277757b93260dca693704f015dfa21b67e2e08eca6c43c"
+  },
+  {
+    "signature": "private.scoped_deletion_service(text,uuid,uuid,jsonb)",
+    "hash": "36d5ef044514777cfa77ae1ceef0a666005129c0d249ee359891a86e1f8b644e"
+  }
+]

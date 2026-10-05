@@ -1,5 +1,7 @@
 # Remote weigh-in launch status — October 4, 2026
 
+**Later update, not a version 1.0 launch requirement.** Damon approved launching the core app first on October 4 at 8:14 PM Mountain. Preserve all work below for that update. The first-release bootstrap does not register the remote reporting client and removes its entry/screen; ordinary team scale/NFC use remains in scope. Remote director billing/trials, hosted evidence/retention, nationwide capacity and vendor-import acceptance are deferred together. This decision does not enable or price any unfinished remote service.
+
 The combined launch candidate is now in PR #62 (`codex/launch-integration-20261004`), incorporating the earlier PR #60 remote work. No remote endpoint,
 private bucket, scheduled purge or paid director product was activated overnight.
 The existing Wrestling Manager app stays usable. Team athlete card PDF export
@@ -57,12 +59,12 @@ preflight, removes only the deleted account's files after verified server
 completion, and prevents stale queue instances from writing them back. This does
 not deploy the server-side remote deletion/retention integration.
 
-The single future physical acceptance round, including the remaining prerequisites,
-is in `docs/launch-acceptance-batch.md`. The main app still loads the live website;
+The core release's single physical acceptance round is in
+`docs/launch-acceptance-batch.md`; remote-specific acceptance follows below for the later update. The main app still loads the live website;
 a local build does not deploy the candidate site or remote endpoint. Reporting
 remains hidden until authorized live capture and receipt integration is ready.
 
-## Remaining launch integration
+## Remaining integration for the later remote update
 
 1. Wire the production app coordinator to live scope/consent and QR/NFC resolution,
    its scale connection, camera setup/recheck, protected queue and reporting UI.
@@ -81,9 +83,13 @@ remains hidden until authorized live capture and receipt integration is ready.
    acceptance, and actual-weight import acceptance in Trackwrestling/USA Bracketing.
    Vendor-specific automatic weight updates remain disabled.
 
-The full app launch additionally retains the existing sandbox purchase/restore,
-general deletion device acceptance, privacy inventory and Apple review gates.
-Successful web publication and simulator compilation do not establish those.
+Core launch retains sandbox purchase/restore, general deletion device acceptance,
+privacy inventory and Apple review gates. Remote work does not block that release.
+Successful web publication and simulator compilation do not establish acceptance.
+
+## Later-update device acceptance
+
+After the remote prerequisites above pass, use fictional athletes and an adult in appropriate athletic clothing. Check scan → step on → automatic weight/photo → step off → next scan; permitted lighter/heavier reweighs; movement/disconnect/window close; locked original timestamps; interrupted upload/restart with the same receipt; two-club director access; CSV/photo-workbook Save to Files and real vendor import; exact 240-hour expiry and saved-copy warning; remote evidence cleanup after disposable account deletion. Do not ask the owner to repeat the already-passed isolated scale test while live remote integration is incomplete.
 
 References for the JPEG implementation and deployment constraints:
 - https://github.com/jpeg-js/jpeg-js#decode-options

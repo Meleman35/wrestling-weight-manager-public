@@ -28,7 +28,7 @@ export function mountSubscriptionScreen(container, configuration, callbacks = {}
   status.setAttribute('role', 'status');
   status.setAttribute('aria-live', 'polite');
   const unavailable = element('details');
-  element('summary', 'Streaming, storage and texting', unavailable);
+  element('summary', 'Availability and plan limits', unavailable);
   const list = element('ul', null, unavailable);
   for (const notice of model.notices) element('li', notice, list);
   element('p', model.renewal);

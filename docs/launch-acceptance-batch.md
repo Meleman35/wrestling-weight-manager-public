@@ -1,6 +1,6 @@
-# Combined launch acceptance
+# Core app launch acceptance
 
-This is the single device acceptance round to run **after** the hosted prerequisites below are complete. Do not ask the owner to repeat the isolated scale test while these prerequisites remain open.
+Owner approved the phased release on October 4, 2026 at 8:14 PM Mountain: core app first; nationwide remote weigh-ins in a later update. This is the single core device acceptance round to run **after** the hosted prerequisites below are complete. Remote capture, director billing/trials, exports, vendor imports and 240-hour remote evidence expiry do not block this release. Preserve their later-update requirements in `docs/remote-weighins-launch-status.md`.
 
 ## Candidate and known state
 
@@ -16,28 +16,23 @@ This is the single device acceptance round to run **after** the hosted prerequis
 
 1. Resolve the confirmed Apple-verification runtime incompatibility using the prepared Node service in `docs/apple-verifier-deployment.md`. Damon approved and deployed the Render service on October 4. The private Apple key is configured there, and the saved Supabase URL/shared secret passed live authentication. Actual signed Apple evidence still needs verification. Keep the existing `.p8` as `APPLE_IAP_PRIVATE_KEY` in that Node service, with only its private URL/shared secret in Supabase. Keep the key out of chat, source, screenshots, the native app and ZIPs. Public key ID remains `79R244P822`; products, agreements, tax and banking do not need recreating for this step.
 2. Complete and verify hosted billing deletion/retention integration, data schema migrations, notification receiver and authenticated reconciliation schedule. The restricted database connection passed live password authentication and role checks after the owner's private secret copy (see `docs/billing-database-connection.md`). The isolated merge integration now preserves canonical family selections, rejects stale previews and coordinates selection with the administrator merge lock; include it in the reviewed migration with the deletion catalog/fingerprint update. Test Apple's signed sandbox notification delivery. The runtime composition deliberately requires deployment verification and a restricted database identity.
-3. Finish remote program/window provisioning, canonical consent and credential resolution, trusted capture provenance and server-clock validation, team/director coverage, private storage and the 240-hour retention worker. Complete their server deletion/merge catalog integration and hosted capacity checks.
-4. Connect the remote reporting coordinator to its authorized native capture screen and real receipt service. Server-saved data must not be represented as saved while only queued on the device. The reporting screen stays hidden until that integration is ready.
+3. Connect paid access to the actual first-release benefits. Practice plans and wrestler-statistics coverage helpers currently fail closed; video remains subject to the existing pilot/consent/recorder gates. A working purchase/restore screen alone is insufficient. Verify granted, expired and refunded access at the protected operation. Advertise only accepted available benefits.
+4. Keep remote reporting unregistered in `src/launch-bootstrap.mjs` and exclude remote/director promises from the first-release listing and purchase screens. Preserve ordinary team scale/NFC behavior and future remote source/tests.
 5. Publish the reviewed web candidate with matching cache/version changes, then build the same native candidate. Confirm no production data was altered by acceptance fixtures.
-6. Require current CI to pass: full Debug/Release app builds; production capture/queue tests; billing PostgreSQL/native/browser checks; remote export/retention/access checks; existing app regressions.
+6. Require current CI to pass: full Debug/Release app builds; billing PostgreSQL/native/browser checks; core launch entry points and existing app regressions. Existing remote component tests may continue as regression coverage without implying remote launch readiness.
 
 ## One device round
 
-Use designated test accounts and fictional athlete records. Use an adult in appropriate athletic clothing for camera tests. Keep ordinary paid accounts and real athlete records out of destructive tests.
+Use designated test accounts and fictional athlete records. Keep ordinary paid accounts and real athlete records out of destructive tests. Reuse the known working scale/NFC setup; do not repeat isolated remote camera testing.
 
 | Check | Required result |
 |---|---|
 | Sign in and open Plans | Team Pro and Family Video appear in the main app; Apple's prices and original team binding are correct. |
 | Purchase and restore in Apple sandbox | Test cancellation, pending approval, completed purchase, lost response/reopen and restore. Server access changes only after verified delivery. Family selections contain accepted linked athletes and remain consistent across team copies. |
+| Purchased benefits | The plan's advertised accepted features work for the covered team/athlete. Refund/expiry tests remove paid access without changing roles or guardian controls. An unrelated team receives no benefit. |
 | Switch account/team; lock/background | Previous account requests and screens close. No old photo, purchase result, access display or capture continues into a replacement account. |
-| Camera setup and two athlete credentials | Confirm face, singlet, feet and scale framing once. Each NFC/QR lookup identifies the intended enrolled athlete. Scan → step on → automatic weight/photo → step off → next scan. |
-| Permitted reweigh | A lighter valid repeat replaces the selected result with its matching photo/time. A heavier repeat keeps the lower result. A tournament that disallows reweigh rejects a repeat. |
-| Movement, disconnect and deadline | No settled result is fabricated after movement, stale readings, disconnect, changed device clock or the closed capture window. Reconnect/retake does not attach a previous athlete's image. |
-| Interrupted delivery and restart | A captured attempt stays visibly queued until the matching server receipt is saved. Retry/restart returns the same submission/receipt and does not duplicate or refresh the original timestamp. |
-| Director across two clubs | Club readers see only their club; the assigned director sees both. Name, member number, picture, scale weight and time remain matched. |
-| Export and actual vendor import | Save CSV and photo workbook to Files, reopen them, and import the agreed columns into Trackwrestling / USA Bracketing using a test tournament. Vendor-specific weight-update automation remains off until proven. |
-| Retention notice | Directors see the ten-day expiry/download warning and understand their saved copy persists independently. Automated expiry tests cover the exact 240-hour boundary; the owner need not wait ten days. |
-| Disposable account deletion | Cancel first. Then delete a designated disposable personal account containing queued remote evidence. Require server completion plus local cleanup; another account's files remain usable. Verify the approved paid-team remainder behavior with another authorized administrator. |
+| Ordinary team weigh-in and athlete cards | Existing scale/NFC/QR identification records the intended test athlete's weight; Save to Files and printing work for the team athlete-card export. Remote reporting is absent. |
+| Disposable account deletion | Cancel first. Then delete a designated disposable personal account. Require server completion plus local cleanup; another account's files remain usable. Verify the approved paid-team remainder behavior with another authorized administrator. |
 | Existing main app smoke check | Sign-in, scale/NFC setup, team navigation, messaging safeguards, Offline Mat Mode and saved bouts remain usable. |
 
 Record each failed step with the test account role, expected behavior, actual behavior and whether connectivity changed. A screenshot of status text is enough; do not send athlete photographs or private keys.

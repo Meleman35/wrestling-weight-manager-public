@@ -6,6 +6,7 @@ on:
       - 'scripts/scoped-deletion-*.mjs'
       - 'scripts/scoped-deletion-policy.json'
       - 'supabase/scoped-deletion-*.sql'
+      - 'supabase/migrations/*core_billing*'
       - '.github/workflows/billing-candidate.yml'
 permissions:
   contents: read
@@ -84,3 +85,5 @@ jobs:
       - run: node billing-candidate/billing-identity-postgres-check.mjs
       - run: node billing-candidate/billing-deletion-worker-check.mjs
       - run: node billing-candidate/billing-merge-postgres-check.mjs
+      - run: node billing-candidate/core-billing-migration.mjs
+      - run: node billing-candidate/core-billing-migration-check.mjs
