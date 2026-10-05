@@ -1,6 +1,14 @@
 # Apple verification hosting decision
 
-Status: Damon approved the proposed $7/month Render service plus applicable usage/taxes on October 4, 2026. Code and deployment configuration are saved. The Render account is connected; the owner still needs to enter the Apple private key and deploy. The earlier new-service form was not deployed. This is a backend component of the existing app. Families and directors do not install another app.
+Status: Damon approved the proposed $7/month Render service plus applicable usage/taxes on October 4, 2026, entered the Apple private key privately, and deployed the Blueprint. Render reports the service live on commit `5ce6fee11931e9fe4cf191f052bbda92eeaef380`. An external check returned HTTP 200 with `ready: true`; a POST to `/apple` without credentials returned HTTP 403 with `not_authorized`. Supabase secret configuration and actual Apple evidence verification remain pending. This is a backend component of the existing app. Families and directors do not install another app.
+
+## Created service
+
+- Service: `wm-apple-verifier` (`srv-db1eoms9v7es73f7knpg`), one Oregon 0.5 CPU / 512 MB instance.
+- Runtime URL: `https://wm-apple-verifier.onrender.com`; Supabase verifier endpoint: `https://wm-apple-verifier.onrender.com/apple`.
+- Deployment: `dep-db1eonc9v7es73f7kp60`, live at 2026-10-05 00:16:56 UTC (October 4, 6:16 PM Mountain).
+- Node 22.23.3; build and startup succeeded. Service automatic deploys are off.
+- Next owner step: copy the generated `APPLE_VERIFIER_SHARED_SECRET` privately from this service's Environment page into the existing Supabase project's Edge Function Secrets, and add the endpoint as `APPLE_VERIFIER_URL`. Do not recreate the service or deploy the earlier unfinished form.
 
 ## Why this is needed
 
