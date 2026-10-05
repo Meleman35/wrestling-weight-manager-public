@@ -1,6 +1,6 @@
 // Fetch-compatible server route candidate. Disabled unless explicitly configured.
 // No live deployment, private credentials or feature access grants are installed.
-import {proposedProducts} from './subscription-policy.mjs';
+import {launchProductIDs} from './launch-products.mjs';
 const origins=new Set(['https://theteammanager.app']);
 const response=(status,body,origin)=>new Response(JSON.stringify(body),{status,headers:{'Content-Type':'application/json','Cache-Control':'no-store',...(origin?{'Access-Control-Allow-Origin':origin,'Vary':'Origin'}:{})}});
 async function boundedJSON(request){
@@ -22,11 +22,14 @@ export function createBillingHandler({enabled=false,auth,intents,delivery,access
    const body=await boundedJSON(request);
    if(!body||Object.keys(body).some(k=>!['action','data'].includes(k))||!['capabilities','prepare','deliver','abandon','access','coverage','coverage-options'].includes(body.action)||!body.data||Array.isArray(body.data)||typeof body.data!=='object')throw Error('invalid_request');
    const context=await auth.authenticate(request.headers.get('authorization'));
+   // This gate is independent of which buttons a client displays. Preserve
+   // delivery/restore reconciliation, but never create a later-update purchase.
+   if(body.action==='prepare'&&!launchProductIDs.includes(body.data.productID))throw Error('unknown_product');
    if(body.action==='capabilities'){
     if(Object.keys(body.data).length)throw Error('invalid_request');
     const actor=await auth.currentActor(context);
     if(!actor||actor.liveSession!==true||actor.confirmed!==true||actor.deleted===true||actor.banned===true||actor.managedTeamLogin===true||actor.deletionFrozen===true)throw Error('unauthorized');
-    return response(200,{ready:true,productIDs:Object.keys(proposedProducts).sort()},origin);
+    return response(200,{ready:true,productIDs:[...launchProductIDs].sort()},origin);
    }
    const result=body.action==='coverage-options'?await coverage.options(context,body.data):body.action==='coverage'?await coverage.select(context,body.data):body.action==='access'?await access.read(context,body.data):body.action==='prepare'?await intents.prepare(context,body.data):body.action==='abandon'?await intents.abandon(context,body.data):await delivery.deliver(context,body.data);
    return response(200,result,origin);

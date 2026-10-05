@@ -37,8 +37,9 @@ test('unimplemented services and extra athletes are explicit, with no paid flag'
   const view = present({kind:'family', products:[product('familyvideo.annual'),product('familyvideo.monthly')], purchaseReady:'true'});
   assert.equal(view.canPurchase, false);
   assert.deepEqual(view.options.map(p => p.period), ['month','year']);
-  assert.equal(view.notices.length, 4);
+  assert.equal(view.notices.length, 5);
   assert.match(view.notices[0], /remote weigh-ins.*later update.*not included at launch/);
+  assert.match(view.notices[1], /Family Video.*later update.*not included at launch/);
   assert.match(view.extraAthletes, /not available yet/);
   assert.equal(Object.hasOwn(view, 'paid'), false);
   assert.equal(Object.hasOwn(view, 'entitlement'), false);

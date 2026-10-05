@@ -18,7 +18,11 @@ acceptance round after those prerequisites are ready.
 Owner-approved October 4, 8:14 PM Mountain: core app first; nationwide remote
 weigh-ins in a later update. Remote reporting, director subscriptions/trials,
 remote evidence storage/expiry and vendor imports do not block the core release.
-Core paid plans must unlock accepted working benefits before purchases activate.
+At 9:08 PM Mountain the owner also approved deferring Family Video; at 9:10 PM
+he included texting in the same October 25 update goal. Launch purchases and the
+in-app Plans screen offer Team Pro only. Later-update family logic remains tested
+but the HTTP prepare route rejects both Family Video products. Core paid plans
+must unlock accepted working benefits before purchases activate.
 The athlete-merge/family-selection integration now passes six full-schema checks
 and real PostgreSQL concurrency CI; its reviewed hosted migration is installed.
 

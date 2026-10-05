@@ -10,9 +10,10 @@ const catalog = Object.freeze({
 const uuid = value => typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 const notices = Object.freeze([
   'Nationwide remote weigh-ins are planned for a later update and are not included at launch.',
+  'Family Video is planned for a later update and is not included at launch.',
   'Live streaming is not available yet.',
   'Cloud image and video storage allowances are not finalized.',
-  'SMS texting is not available yet. Texting limits and costs will be shown before activation.'
+  'Text messaging is planned for a later update. Texting limits and costs will be shown before activation.'
 ]);
 
 export function subscriptionPresentation({kind, teamID = null, products = [], purchaseReady = false} = {}) {

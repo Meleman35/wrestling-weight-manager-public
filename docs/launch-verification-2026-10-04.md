@@ -94,3 +94,12 @@ Real hosted acceptance run `aa9b1d7a-ccc5-4c4c-a630-d826385e4a60` completed in o
 Live post-deployment checks confirm both benefits are connected, helpers are not client-executable, the deletion fingerprint still matches and there are no subscriptions. Security-advisor counts remain at the prior baseline: 110 informational RLS/no-policy entries, 2 anonymous and 183 authenticated definer warnings, and 1 password-protection warning; no new billing findings. All 25 workflows passed at `9b406ac0ab5c5ab8417c6b4b13d070af7cb687ef`; the new checkpoint must also pass CI after publication.
 
 Payments remain disabled. Next prerequisites are the actual signed Apple notification/purchase flow, durable reconciliation/retention scheduling, Family Video's accepted paid rollout, and one consolidated native device round. No website publication or App Store submission is implied by these server deployments.
+
+
+## October 4, 9:08–9:10 PM Mountain: Team Pro first; Family Video and texting target
+
+Damon accepted deferring Family Video from the first release and set a three-week goal, then added texting to that same update. The target is October 25, subject to acceptance and Apple review. Nationwide remote weigh-ins remain a separate later update. The roadmap is in `family-video-texting-update-plan.md`.
+
+The first-release host now exposes Team Pro only; a direct Family Video open request shows an unavailable notice without activating StoreKit or loading family selections. Backend capabilities advertise only the two Team Pro products, and the authenticated prepare route rejects both Family Video IDs before creating an intent. Existing verified delivery/restore reconciliation and future family component tests remain. Native StoreKit already restricts product loading and purchases to the server-authorized product set. Focused launch checks pass (15/15); the full local Node suite passes 155 tests with one localhost database skip. The full main-app native build at the prior `954ca5d5a69a864c62dbc852d68c7a470968775c` checkpoint passed. Updated browser checks must pass on the new published checkpoint.
+
+A one-time October 25 morning readiness review is scheduled. It will inspect current repository evidence and report remaining owner decisions/tests; it cannot activate purchases/texting or submit/release a build.

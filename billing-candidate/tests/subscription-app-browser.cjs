@@ -20,15 +20,20 @@ window.host=installSubscriptionApp({button:document.querySelector('#open'),root:
   await page.click('#open');await page.getByText('Team Pro is active for this team.',{exact:true}).waitFor();
   await page.getByRole('button',{name:'Monthly — $75.00/month',exact:true}).click();
   assert.deepEqual(await page.evaluate(()=>calls.filter(x=>x?.command==='purchase').at(-1).target),{kind:'team',teamID:'22222222-2222-4222-8222-222222222222'});
-  await page.getByRole('button',{name:'Family Video',exact:true}).click();await page.getByRole('heading',{name:'Choose up to two athletes'}).waitFor();
-  assert.equal(await page.locator('.wm-family-coverage-screen img').count(),0);
-  await page.getByRole('button',{name:'Monthly — $10.00/month',exact:true}).click();
-  assert.deepEqual(await page.evaluate(()=>calls.filter(x=>x?.command==='purchase').at(-1).target),{kind:'family'});
+  assert.equal(await page.getByRole('button',{name:'Family Video',exact:true}).count(),0);
+  await page.getByText('Availability and plan limits',{exact:true}).click();
+  await page.getByText('Family Video is planned for a later update and is not included at launch.',{exact:true}).waitFor();
+  const purchasesBefore=await page.evaluate(()=>calls.filter(x=>x?.command==='purchase').length);
+  await page.evaluate(()=>host.open('family'));
+  await page.getByText('Family Video is planned for a later update and is not available for purchase.',{exact:true}).waitFor();
+  assert.equal(await page.evaluate(()=>calls.filter(x=>x?.command==='purchase').length),purchasesBefore);
+  assert.equal(await page.locator('.wm-family-coverage-screen').count(),0);
+  await page.evaluate(()=>host.open('team'));await page.getByText('Team Pro is active for this team.',{exact:true}).waitFor();
   await page.evaluate(()=>unlocked=false);await page.waitForFunction(()=>document.querySelector('#root').childElementCount===0);
   await page.evaluate(()=>{unlocked=true;personal=false;});await page.click('#open');assert.equal(await page.locator('#root').textContent(),'');
   await page.evaluate(()=>{personal=true;waitActivation=true;});await page.click('#open');await page.waitForFunction(()=>window.resolveActivation);
   await page.evaluate(()=>{host.close();owner='66666666-6666-4666-8666-666666666666';resolveActivation();});
   await page.waitForTimeout(100);assert.equal(await page.locator('#root').textContent(),'');
-  assert.deepEqual(errors,[]);console.log('PASS: in-app plan host, native activation, immutable team/family targets, linked-athlete escaping, lock/managed rejection and stale activation isolation');
+  assert.deepEqual(errors,[]);console.log('PASS: in-app plan host, native activation, immutable team target, deferred Family Video blocked, lock/managed rejection and stale activation isolation');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exit(1);});

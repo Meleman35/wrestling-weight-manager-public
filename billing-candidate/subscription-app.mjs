@@ -23,6 +23,7 @@ export function installSubscriptionApp({button,root,show,hide,beforeOpen,getSess
  }
  async function open(kind='team'){
   beforeOpen();close();if(!allowed())return;
+  if(kind!=='team'){show();text('Family Video is planned for a later update and is not available for purchase.');return;}
   const ticket=epoch;owner=getSession()?.user?.id;team=getTeam()?.id??null;if(!owner)return;
   show();const loading=text('Checking purchase availability…');
   watch=setInterval(()=>{if(!valid(ticket))close();},500);
@@ -33,13 +34,8 @@ export function installSubscriptionApp({button,root,show,hide,beforeOpen,getSess
    if(result?.ready!==true||typeof result.generation!=='string')throw Error('unavailable');
    generation=result.generation;
    api=createAPI({currentSession,sessionGeneration:generation,publishableKey,fetchImpl});
-   const choices=root.ownerDocument.createElement('div');choices.className='wm-plan-choices';
-   for(const [value,label] of [['team','Team Pro'],['family','Family Video']]){
-    const choice=root.ownerDocument.createElement('button');choice.type='button';choice.textContent=label;
-    choice.disabled=kind===value;choice.onclick=()=>open(value);choices.append(choice);
-   }
-   root.append(choices);loading.remove();
-   if(kind==='team'&&!team){text('Choose a team in the app before opening Team Pro. You can still review Family Video.');return;}
+   loading.remove();
+   if(!team){text('Choose a team in the app before opening Team Pro.');return;}
    const accessStatus=text('');
    const refreshAccess=async()=>{
     if(!valid(ticket))throw Error('session_ended');
@@ -47,14 +43,9 @@ export function installSubscriptionApp({button,root,show,hide,beforeOpen,getSess
     const result=await api.readAccess({teamID:team},{isCurrent:()=>valid(ticket)});
     if(valid(ticket))accessStatus.textContent=result.teamPro?'Team Pro is active for this team.':'Team Pro is not active for this team.';
    };
-   let familyCoverage=null;
-   if(kind==='family'){
-    const {athletes}=await api.coverageOptions({isCurrent:()=>valid(ticket)});if(!valid(ticket))return;
-    familyCoverage={athletes,selectedAthleteIDs:athletes.filter(a=>a.selected).map(a=>a.athlete_id),saveCoverage:args=>api.saveCoverage(args)};
-   }
-   const mounted=await openScreen({container:root,kind,teamID:kind==='team'?team:null,
+   const mounted=await openScreen({container:root,kind:'team',teamID:team,
     handler:native().wmPurchases,currentSession:()=>valid(ticket)?generation:null,sessionGeneration:generation,
-    purchaseReady:true,refreshAccess,familyCoverage});
+    purchaseReady:true,refreshAccess});
    if(!valid(ticket)){mounted.dispose();return;}screen=mounted;
    await mounted.recover();
    if(valid(ticket))await refreshAccess();
