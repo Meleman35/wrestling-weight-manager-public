@@ -10,7 +10,7 @@ import {readAppleServerConfiguration,readApplePublicConfiguration} from './apple
 import {createRemoteAppleEvidenceAdapter} from './remote-apple-evidence.mjs';
 import {appleTrustRoots} from './apple-trust-roots.mjs';
 import {createAppleNotificationHandler} from './apple-notification-handler.mjs';
-import {createAppleNotificationInbox} from './apple-notification-inbox.mjs';
+import {createBillingNotificationPersistence} from './billing-notification-persistence.mjs';
 import {createAppleNotificationPostgres} from './apple-notification-postgres.mjs';
 import {createAppleNotificationWorker} from './apple-notification-worker.mjs';
 
@@ -52,7 +52,7 @@ export async function createBillingRuntime({pool,publishableKey,readSecret,envir
   intents:new PurchaseIntentService({auth,repository}),delivery:new PurchaseDeliveryService({auth,apple,repository,config}),
   access:new SubscriptionAccessService({auth,repository,environment}),coverage:new FamilyCoverageService({auth,repository})});
  const notification=createAppleNotificationHandler({enabled:true,apple,
-  persistVerified:createAppleNotificationInbox({db,environment}),allowRequest:allowNotification});
+  persistVerified:createBillingNotificationPersistence({db,config}),allowRequest:allowNotification});
  const worker=createAppleNotificationWorker({apple,...createAppleNotificationPostgres({db,environment}),config});
  const headers={'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'};
  return Object.freeze({billing,notification,async reconcile(request){

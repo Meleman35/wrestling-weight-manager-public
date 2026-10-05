@@ -24,8 +24,8 @@ export function reconcileTeamPaidRemainder(remainder,evidence,{config,now}){
    (evidence.revokedAt!=null&&!millis(evidence.revokedAt))||
    (evidence.status===4&&!millis(evidence.graceExpiresAt)))throw Error('Invalid team remainder evidence');
  if(evidence.snapshotSignedAt<remainder.snapshotSignedAt)return {...remainder};
- const revoked=evidence.revokedAt??(evidence.status===5?now:remainder.revokedAt);
- const boundary=evidence.status===4?evidence.graceExpiresAt:evidence.expiresAt;
+ const revoked=remainder.revokedAt??evidence.revokedAt??(evidence.status===5?now:null);
+ const boundary=[2,3].includes(evidence.status)?Math.min(now,evidence.expiresAt):evidence.status===4?evidence.graceExpiresAt:evidence.expiresAt;
  return {...remainder,paidThrough:Math.min(remainder.paidThrough,boundary),
   revokedAt:revoked,snapshotSignedAt:evidence.snapshotSignedAt};
 }

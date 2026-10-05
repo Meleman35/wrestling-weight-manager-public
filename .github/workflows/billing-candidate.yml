@@ -77,3 +77,4 @@ jobs:
           node-version: '22'
       - run: npm ci --prefix billing-candidate/notification-verification --ignore-scripts --no-audit --no-fund
       - run: node billing-candidate/apple-notification-postgres-check.mjs
+      - run: node billing-candidate/team-paid-remainder-postgres-check.mjs

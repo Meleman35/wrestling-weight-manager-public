@@ -50,6 +50,11 @@ returns jsonb language sql stable security definer set search_path='' as $$
      where (j.actor_id=u.id and j.state not in ('cancelled','completed')) or
       (j.personal and j.sealed_at is not null and
        j.subject_hash=encode(sha256(convert_to(u.id::text,'UTF8')),'hex')))),'[]'::jsonb),
+  'remainingTeamAdmin',wm_billing.remaining_team_admin(p_team),
+  'teamPaidRemainders',coalesce((select jsonb_agg(jsonb_build_object('teamID',r.team_id,'environment',r.environment,
+   'plan',r.plan,'paidThrough',r.paid_through,'revokedAt',r.revoked_at,'snapshotSignedAt',r.snapshot_signed_at))
+   from wm_billing.team_paid_remainders r where r.team_id=p_team and r.revoked_at is null
+    and r.paid_through>floor(extract(epoch from now())*1000)),'[]'::jsonb),
   'familyCoverage',case when athlete_ok or record_ok then coalesce((select jsonb_agg(jsonb_build_object(
    'subscription',snapshot,'familyOwnerID',family_owner_id,'linkedProfileIDs',profiles)) from coverage),'[]'::jsonb)
    else '[]'::jsonb end) end from permission

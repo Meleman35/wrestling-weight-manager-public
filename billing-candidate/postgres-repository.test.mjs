@@ -14,6 +14,8 @@ test('real PostgreSQL transactions, concurrency, permissions and revoked session
   await admin.query(fs.readFileSync(new URL('./tests/postgres-fixture.sql',import.meta.url),'utf8'));
   await admin.query(fs.readFileSync(new URL('./tests/access-fixture.sql',import.meta.url),'utf8'));
   await admin.query(fs.readFileSync(new URL('./billing-storage-candidate.sql',import.meta.url),'utf8'));
+  await admin.query(fs.readFileSync(new URL('./apple-notification-inbox.sql',import.meta.url),'utf8'));
+  await admin.query(fs.readFileSync(new URL('./team-paid-remainder-storage.sql',import.meta.url),'utf8'));
   await admin.query(fs.readFileSync(new URL('./billing-access-candidate.sql',import.meta.url),'utf8'));
   await admin.query('insert into auth.users(id,confirmed_at) values($1,now())',[user]);await admin.query('insert into auth.sessions(id,user_id) values($1,$2)',[session,user]);
   for(const id of [team,other]){await admin.query('insert into public.teams(id) values($1)',[id]);await admin.query("insert into public.team_memberships(team_id,user_id,role) values($1,$2,'head_coach')",[id,user]);}

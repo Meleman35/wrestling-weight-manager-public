@@ -1,4 +1,5 @@
 import {hasTeamSubscriptionAccess,hasFamilyVideoAccess} from './subscription-policy.mjs';
+import {hasTeamPaidRemainderAccess} from './team-paid-remainder.mjs';
 const uuid=x=>typeof x==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(x);
 const allowed=a=>a&&uuid(a.userID)&&a.liveSession===true&&a.confirmed===true&&
  a.deleted!==true&&a.banned!==true&&a.managedTeamLogin!==true&&a.deletionFrozen!==true;
@@ -22,7 +23,8 @@ export class SubscriptionAccessService {
    const state=await tx.resolveAccess(actor.userID,request.teamID,request.athleteID??null,request.eventID??null);
    if(state?.teamAuthorized!==true)throw Error('access_forbidden');
    const now=this.clock();if(!Number.isSafeInteger(now)||now<0)throw Error('invalid_clock');
-   const teamPro=(state.teamSubscriptions||[]).some(s=>hasTeamSubscriptionAccess(s,{teamID:request.teamID,environment:this.environment,now}));
+   const teamPro=(state.teamSubscriptions||[]).some(s=>hasTeamSubscriptionAccess(s,{teamID:request.teamID,environment:this.environment,now}))||
+    (state.teamPaidRemainders||[]).some(s=>hasTeamPaidRemainderAccess(s,{teamID:request.teamID,environment:this.environment,remainingAdmin:state.remainingTeamAdmin===true,now}));
    const familyVideo=!!request.eventID&&state.athleteAuthorized===true&&(state.familyCoverage||[]).some(c=>
     hasFamilyVideoAccess(c.subscription,{athleteID:state.athleteProfileID,familyOwnerID:c.familyOwnerID,
      linkedAthleteIDs:c.linkedProfileIDs,recorderAuthorized:state.recorderAuthorized===true,environment:this.environment,now}));

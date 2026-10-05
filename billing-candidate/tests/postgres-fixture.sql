@@ -1,12 +1,12 @@
 -- Synthetic disposable database only. Never load into the live app database.
-create role anon nologin;create role authenticated nologin;create role wm_billing_runtime nologin;
+create role anon nologin;create role authenticated nologin;create role wm_billing_runtime nologin;create role service_role nologin;
 create schema auth;create schema private;
 create table auth.users(id uuid primary key,confirmed_at timestamptz,deleted_at timestamptz,banned_until timestamptz,is_anonymous boolean default false);
 create table auth.sessions(id uuid primary key,user_id uuid,not_after timestamptz);
 create function auth.uid() returns uuid language sql stable as $$select (nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'sub')::uuid$$;
 create table private.team_logins(user_id uuid);
 create table private.test_minors(user_id uuid);
-create table private.scoped_deletion_jobs(actor_id uuid,state text);
+create table private.scoped_deletion_jobs(actor_id uuid,state text,id uuid primary key default gen_random_uuid(),lease_token uuid,lease_until timestamptz);
 create function private.board_personal(u uuid) returns boolean language sql as $$select u is not null and not exists(select 1 from private.team_logins where user_id=u)$$;
 create function private.board_minor(u uuid) returns boolean language sql as $$select exists(select 1 from private.test_minors where user_id=u)$$;
 create table public.teams(id uuid primary key,organization_id uuid);
