@@ -748,6 +748,17 @@ struct WrestlingManagerWebView: UIViewRepresentable {
                 return
             }
             let scheme = url.scheme?.lowercased() ?? ""
+            // Keep referral signup outside the authenticated app web view.
+            // Only the fixed public link, tapped from our main page, is eligible.
+            if navigationAction.navigationType == .linkActivated,
+               navigationAction.sourceFrame.isMainFrame,
+               isWrestlingManagerPage(navigationAction.sourceFrame.request.url),
+               isWrestlingManagerPage(webView.url),
+               url.absoluteString == "https://join.zeffy.com/ahiq6lm6xo6a" {
+                UIApplication.shared.open(url, options: [:], completionHandler: nil)
+                decisionHandler(.cancel)
+                return
+            }
             if scheme == "wrestlingmanager" {
                 securityBridge.forwardAuthURL(url)
                 decisionHandler(.cancel)

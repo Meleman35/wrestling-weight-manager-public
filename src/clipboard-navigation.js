@@ -5,6 +5,7 @@
   {id:'practice',icon:'🤼',name:'Practice & Competition',detail:'Practice plans, attendance & Match Book',ids:['practicePlansBtn','tournamentDayBtn','clipboardAttendanceBtn','clipboardLineupBtn','matchBookBtn']},
   {id:'health',icon:'✍️',name:'Forms & Health',detail:'Agreements & medical clearance',ids:['athleteHealthBtn','agreementsBtn','medicalClearanceBtn']},
   {id:'gear',icon:'🎒',name:'Gear & Files',detail:'Equipment & team resources',ids:['clipboardEquipmentBtn','clipboardFilesBtn']},
+  {id:'fundraising',icon:'💚',name:'Fundraising',detail:'Zeffy for eligible nonprofits',ids:['fundraisingBtn'],direct:'fundraisingBtn'},
   {id:'settings',icon:'⚙️',name:'Settings',detail:'Account, team settings & feedback',ids:['accountBtn','feedbackBtn']},
   {id:'organization',icon:'🏛️',name:'Organization',detail:'Teams, leadership & organization tools',ids:['organizationHubBtn'],direct:'organizationHubBtn'}
  ];

@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.121: Bulk athlete card PDF export with protected preparation and direct-tap sharing. -->
+<!-- Wrestling Manager v0.20.122: Zeffy fundraising referrals in Clipboard, Board Room and the public website. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -429,6 +429,8 @@ button{touch-action:manipulation}
 #opsHubSheet>.sheet-head>div,#createTeamSheet>.sheet-head>div{min-width:0;flex:1}#opsHubSheet>.sheet-head .icon-close,#createTeamSheet>.sheet-head .icon-close{flex:0 0 40px;height:40px}
 .ops-tabs button{min-height:44px}.ops-subtabs{padding:0 0 10px}.ops-subtabs button{font-size:13px;background:#f1f5fa;color:#173d67}.ops-subtabs:empty{display:none}
 
+
+.wm-fundraising-card{max-width:680px}.wm-fundraising-link{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:12px 18px;border-radius:12px;background:#15553e;color:white!important;font-weight:750;text-decoration:none;white-space:normal}.wm-fundraising-link:focus-visible{outline:3px solid #d1982a;outline-offset:4px}.wm-fundraising-disclosure{margin:12px 0!important;line-height:1.5}.wm-fundraising-copy{width:100%;min-width:0;font-size:16px;user-select:text;-webkit-user-select:text}.wm-fundraising-card details{margin-top:16px}.wm-fundraising-card summary{cursor:pointer;min-height:44px;font-size:14px}.wm-fundraising-card p{overflow-wrap:anywhere}
 </style>
   <script src="./vendor/supabase.js"></script>
   <script>/* QRCode.js 1.0.0, MIT, David Shim — bundled for athlete cards. */
@@ -1355,6 +1357,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
           </div></section>
           <section class="toolbox-group"><div class="toolbox-group-head"><span>🧰</span><div><b>Program</b><small>Organization, admin and app settings</small></div></div><div class="menu-card">
             <button id="remoteReportingBtn" class="menu-row" hidden type="button"><span>⚖️</span><div><b>Remote weigh-ins</b><small>Club and tournament reporting</small></div><i>›</i></button><button id="subscriptionPlansBtn" class="menu-row" hidden type="button"><span>☆</span><div><b>Plans &amp; purchases</b><small>Team Pro and Family Video</small></div><i>›</i></button><button id="organizationHubBtn" class="menu-row" data-layout-key="organization_hub"><span>🏛️</span><div><b>Board Room</b><small>Meetings, votes, clubs, programs and leadership</small></div><i>›</i></button>
+            <button id="fundraisingBtn" class="menu-row coach-only" type="button"><span>💚</span><div><b>Fundraising</b><small>Zeffy for eligible nonprofits</small></div><i>›</i></button>
             <button id="staffAccessBtn" class="menu-row admin-only" data-layout-key="staff_access"><span>🪪</span><div><b>Edit Team Leaders</b><small>Assign coaches, team leaders, volunteers and administrators</small></div><i>›</i></button>
             <button id="feedbackBtn" class="menu-row" data-layout-key="feedback"><span>💬</span><div><b>Feedback</b><small>Share ideas, problems and what you like</small></div><i>›</i></button>
             <button id="accountBtn" class="menu-row" data-layout-key="account"><span>⚙️</span><div><b>Account & Team</b><small>Profile, team and sign out</small></div><i>›</i></button>
@@ -1373,6 +1376,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
   </section>
 
   <div id="sheetBackdrop" class="backdrop hidden"></div>
+<section id="fundraisingSheet" class="sheet ops-sheet hidden" aria-modal="true" role="dialog" aria-labelledby="fundraisingTitle"><div class="sheet-handle"></div><div class="sheet-head"><h2 id="fundraisingTitle">Fundraising</h2><button class="icon-close" data-close-sheet aria-label="Close">×</button></div><div id="fundraisingContent"></div></section>
 <section id="subscriptionPlansSheet" class="sheet ops-sheet hidden" aria-modal="true" role="dialog" aria-labelledby="subscriptionPlansTitle"><div class="sheet-handle"></div><div class="sheet-head"><h2 id="subscriptionPlansTitle">Plans &amp; purchases</h2><button class="icon-close" data-close-sheet aria-label="Close">×</button></div><div id="subscriptionPlansContent"></div></section>
 <section id="remoteReportingSheet" class="sheet ops-sheet hidden" aria-modal="true" role="dialog" aria-labelledby="remoteReportingTitle">
 <div class="sheet-handle"></div><div class="sheet-head"><h2 id="remoteReportingTitle">Remote weigh-ins</h2><button class="icon-close" data-close-sheet aria-label="Close">×</button></div><div id="remoteReportingContent"></div></section>
@@ -2382,7 +2386,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.121</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.122</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -3790,7 +3794,7 @@ function closeSheets(){
   document.activeElement?.blur?.();
   stopCommunicationReceiptLiveRefresh();
   clearPendingCommunicationMedia();
-  ['tournamentSheet','agreementRecordsSheet','agreementPdfSheet','agreementReceiptSheet','signUpSheet','wrestlingProfilesSheet','profileApprovalsSheet','profileChatsSheet','bulletinBoardSheet','parentControlsSheet','extendedFamilySheet','weightTestAthleteSheet','athleteCardSheet','missingWeightChecksSheet','weightPinSheet','teammateWeightCheckSheet','eventSheet','eventEditSheet','eventDetailSheet','attendanceSheet','announcementSheet','communicationThreadSheet','conversationActionsSheet','communicationMuteSheet','newCommunicationSheet','guardianSafetyTestSheet','athleteChatPermissionsSheet','scheduleMessageSheet','communicationPreferencesSheet','communicationNotificationsSheet','massTextSheet','textRepliesSheet','communicationSafetySheet','rosterSheet','athleteTeamsSheet','addAthleteSheet','joinSheet','joinRequestSheet','coachJoinRequestsSheet','athleteViewSheet','athleteProfileSheet','weightTrendSheet','photoCropSheet','communicationSheet','staffProfileSheet','staffDirectorySheet','familySheet','agreementsSheet','agreementEditorSheet','agreementPreviewSheet','calendarSubscriptionSheet','medicalClearanceSheet','medicalCaseSheet','excuseSheet','athleteAccessSheet','staffAccessSheet','weighedTodaySheet','weighInStartSheet','weighInConsoleSheet','myWeightCheckSheet','importRosterSheet','teamSwitcherSheet','createTeamSheet','editTeamSheet','lineupClassSheet','accountSheet','layoutEditorSheet','forgotPasswordSheet','resetPasswordSheet','securitySheet'].forEach(id=>show(id,false));
+  ['fundraisingSheet','tournamentSheet','agreementRecordsSheet','agreementPdfSheet','agreementReceiptSheet','signUpSheet','wrestlingProfilesSheet','profileApprovalsSheet','profileChatsSheet','bulletinBoardSheet','parentControlsSheet','extendedFamilySheet','weightTestAthleteSheet','athleteCardSheet','missingWeightChecksSheet','weightPinSheet','teammateWeightCheckSheet','eventSheet','eventEditSheet','eventDetailSheet','attendanceSheet','announcementSheet','communicationThreadSheet','conversationActionsSheet','communicationMuteSheet','newCommunicationSheet','guardianSafetyTestSheet','athleteChatPermissionsSheet','scheduleMessageSheet','communicationPreferencesSheet','communicationNotificationsSheet','massTextSheet','textRepliesSheet','communicationSafetySheet','rosterSheet','athleteTeamsSheet','addAthleteSheet','joinSheet','joinRequestSheet','coachJoinRequestsSheet','athleteViewSheet','athleteProfileSheet','weightTrendSheet','photoCropSheet','communicationSheet','staffProfileSheet','staffDirectorySheet','familySheet','agreementsSheet','agreementEditorSheet','agreementPreviewSheet','calendarSubscriptionSheet','medicalClearanceSheet','medicalCaseSheet','excuseSheet','athleteAccessSheet','staffAccessSheet','weighedTodaySheet','weighInStartSheet','weighInConsoleSheet','myWeightCheckSheet','importRosterSheet','teamSwitcherSheet','createTeamSheet','editTeamSheet','lineupClassSheet','accountSheet','layoutEditorSheet','forgotPasswordSheet','resetPasswordSheet','securitySheet'].forEach(id=>show(id,false));
   show('sheetBackdrop', false); $('sheetBackdrop').style.pointerEvents='none'; document.body.style.overflow='';
   syncLockerRoomTabs();
 }
@@ -11515,8 +11519,8 @@ window.WMOrgInvites=(()=>{
 window.WMOperations=(()=>{
  let hub=null,org=null,division='',tab='home',generation=0,editor=null,feedbackId=null,dialogResolve=null;
  const $o=id=>document.getElementById(id),e=v=>esc(String(v??'')),list=v=>Array.isArray(v)?v:[];
- const labels={home:'Overview',members:'Members',invitations:'Leadership invitations',positions:'Positions',affiliates:'Affiliate clubs',meetings:'Meetings & minutes',voting:'Private voting',event:'Calendar',teams:'Managed teams',person:'Staff & credentials',assignment:'Officials',requirement:'Annual requirements',squad:'Dual rosters',budget:'Budgets',contract:'Contracts',settings:'Divisions & access'};
- const sections={home:[],board:['meetings','voting','budget','contract'],clubs:['affiliates','teams'],programs:['event','squad','assignment'],people:['members','positions','person','requirement'],admin:['invitations','settings']};
+ const labels={home:'Overview',fundraising:'Fundraising',members:'Members',invitations:'Leadership invitations',positions:'Positions',affiliates:'Affiliate clubs',meetings:'Meetings & minutes',voting:'Private voting',event:'Calendar',teams:'Managed teams',person:'Staff & credentials',assignment:'Officials',requirement:'Annual requirements',squad:'Dual rosters',budget:'Budgets',contract:'Contracts',settings:'Divisions & access'};
+ const sections={home:[],board:['meetings','voting','budget','contract'],clubs:['affiliates','teams'],programs:['event','squad','assignment','fundraising'],people:['members','positions','person','requirement'],admin:['invitations','settings']};
  const sectionFor=key=>Object.keys(sections).find(section=>sections[section].includes(key))||'home';
  const visibleTools=section=>sections[section].filter(key=>!['invitations','members'].includes(key)||hub?.admin);
  const roles={athletic_director:'Athletic director',school_administrator:'School administrator',athletic_trainer:'Athletic trainer',team_manager:'Team manager',head_coach:'Head coach',assistant_coach:'Assistant coach',club_director:'Club director',membership_coordinator:'Membership coordinator',board_member:'Board member',president:'President',director:'Overall director',board:'Board member',division_director:'Division director',pairing_director:'Pairing director',mat_director:'Mat officials director',coach:'Coach',chaperone:'Chaperone',team_leader:'Team leader',official:'Official',pairing_official:'Pairing official',mat_official:'Mat official',all:'Everyone'};
@@ -11570,7 +11574,7 @@ window.WMOperations=(()=>{
  }
  async function reload(){const ticket=++generation;const data=await rpc(false,{action:'hub',organization_id:org});if(ticket!==generation)return;hub=data;homeOrganizationGeneration++;acceptHomeOrganization(data);
   if(!hub.divisions.some(d=>d.id===division))division='';if(!division&&!hub.capabilities?.find(c=>c.division_id===null&&(c.event||c.records)))division=hub.capabilities?.find(c=>c.division_id&&(c.event||c.records))?.division_id||'';$o('opsDivision').innerHTML=opts([['','All divisions'],...hub.divisions.map(d=>[d.id,d.name])],division);note('opsStatus','');render();}
- function render(){window.WMVoting?.close();window.WMMeetings?.close();window.WMOrgStructure?.close();window.WMOrgInvites?.close();if(!hub)return;$o('opsDivision').disabled=['members','invitations','affiliates','meetings','voting'].includes(tab);
+ function render(){window.WMVoting?.close();window.WMMeetings?.close();window.WMOrgStructure?.close();window.WMOrgInvites?.close();if(!hub)return;$o('opsDivision').disabled=['members','invitations','affiliates','meetings','voting','fundraising'].includes(tab);
   $o('opsHubTitle').textContent='Board Room · '+(hub.organizations?.find(o=>o.id===org)?.name||'Organization');
   const section=sectionFor(tab),names={home:'Overview',board:'Board',clubs:schoolOrg()?'Teams':'Clubs',programs:'Programs & events',people:'People',admin:'Administration'};
   $o('opsTabs').innerHTML=Object.keys(sections).map(key=>`<button type="button" class="secondary ${section===key?'selected':''}" data-ops-section="${key}" aria-current="${section===key?'page':'false'}">${e(names[key])}</button>`).join('');
@@ -11579,6 +11583,7 @@ window.WMOperations=(()=>{
   $o('opsSubtabs').querySelectorAll('[data-ops-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.opsTab;render()});
   roles.director=schoolOrg()?'Athletic program director':'Overall director';roles.division_director=schoolOrg()?'School / sport director':'Division director';
   if(tab==='home'){home();return;}
+  if(tab==='fundraising'){$o('opsContent').innerHTML=window.WMFundraising.card();return;}
   if(tab==='members'){if(hub.admin)WMOrgInvites.open({org,mode:'members'});else $o('opsContent').textContent='Organization administrator access required.';return;}
   if(tab==='invitations'){if(hub.admin)WMOrgInvites.open({org});else $o('opsContent').textContent='Organization administrator access required.';return;}
   if(tab==='teams'){teams();return;}
@@ -11611,6 +11616,7 @@ window.WMOperations=(()=>{
    ['teams','🤼','Managed teams','Teams and programs directly managed by this organization'],
    ['event','📅','Calendar','Board meetings, tournaments and shared dates'],
    ['squad','📋','Dual rosters','Red and Blue teams and tournament rosters'],
+   ['fundraising','💚','Fundraising','Zeffy for eligible nonprofits'],
    ['assignment','🏅','Officials','Ranks, assignments and tournament counts'],
    ...(hub.admin?[['members','👥','Members','Invite adults to join without a board or team role']]:[]),
    ['positions','🏛️','Board positions','Vacancies, adult assignments and explicit access'],
@@ -14095,6 +14101,28 @@ window.WMAgreementPDF = (() => {
 })();
 
 </script>
+<script id="wm-fundraising">
+/* Public referral information only; no account, athlete or payment data is sent. */
+window.WMFundraising=(()=>{
+ const referral='https://join.zeffy.com/ahiq6lm6xo6a';
+ function card(){return `<article class="ops-card wm-fundraising-card">
+  <p class="eyebrow">Zeffy referral partner</p><h3>Fund your next season.</h3>
+  <p>Help cover gear, travel and team events through an eligible nonprofit. Zeffy offers donation forms, event ticketing and memberships.</p>
+  <p>Zeffy covers platform and payment processing fees for eligible nonprofits. Donors can choose an optional contribution to support Zeffy.</p>
+  <p>Set up and manage your fundraiser in Zeffy. Zeffy determines eligibility and handles payments and donor records.</p>
+  <a class="wm-fundraising-link" href="${referral}" target="_blank" rel="sponsored noopener noreferrer" referrerpolicy="no-referrer">Start fundraising with Zeffy <span aria-hidden="true">↗</span></a>
+  <p class="fine wm-fundraising-disclosure">Referral disclosure: Mele Sports Technologies LLC may earn a commission when you sign up through this link.</p>
+  <details><summary>Need to open the link in your browser?</summary><p class="fine">If your installed app does not open a new window, copy this link into Safari or your browser.</p><label class="fine">Zeffy referral link<input class="wm-fundraising-copy" readonly value="${referral}" aria-label="Zeffy referral link"></label></details>
+ </article>`;}
+ function open(){
+  if(!session?.user?.id||!activeTeam?.id||!isStaff||managedLogin||document.body.classList.contains('kiosk-locked')||document.querySelector('#appLockOverlay:not(.hidden)'))return;
+  document.getElementById('fundraisingContent').innerHTML=card();
+  openSheet('fundraisingSheet');
+ }
+ document.getElementById('fundraisingBtn')?.addEventListener('click',open);
+ return {card,open};
+})();
+</script>
 <script id="wm-clipboard-0.20.29">
 /* Category and nested tool preferences share the existing account layout. */
 (() => {
@@ -14103,6 +14131,7 @@ window.WMAgreementPDF = (() => {
   {id:'practice',icon:'🤼',name:'Practice & Competition',detail:'Practice plans, attendance & Match Book',ids:['practicePlansBtn','tournamentDayBtn','clipboardAttendanceBtn','clipboardLineupBtn','matchBookBtn']},
   {id:'health',icon:'✍️',name:'Forms & Health',detail:'Agreements & medical clearance',ids:['athleteHealthBtn','agreementsBtn','medicalClearanceBtn']},
   {id:'gear',icon:'🎒',name:'Gear & Files',detail:'Equipment & team resources',ids:['clipboardEquipmentBtn','clipboardFilesBtn']},
+  {id:'fundraising',icon:'💚',name:'Fundraising',detail:'Zeffy for eligible nonprofits',ids:['fundraisingBtn'],direct:'fundraisingBtn'},
   {id:'settings',icon:'⚙️',name:'Settings',detail:'Account, team settings & feedback',ids:['accountBtn','feedbackBtn']},
   {id:'organization',icon:'🏛️',name:'Organization',detail:'Teams, leadership & organization tools',ids:['organizationHubBtn'],direct:'organizationHubBtn'}
  ];
@@ -17565,7 +17594,7 @@ window.WMRolePreviewDocument="\u003c!doctype html>\u003chtml lang=\"en\">\u003ch
 /* Public web-version status only. Never activates a worker or reloads user work. */
 window.WMWebUpdates=(()=>{
  'use strict';
- const CURRENT='0.20.121',LIMIT=65536;
+ const CURRENT='0.20.122',LIMIT=65536;
  const sheet=document.getElementById('accountSheet');
  if(!sheet)return Object.freeze({check:async()=>{}});
  const card=document.createElement('section');card.id='webUpdatesCard';card.className='feature-card';
