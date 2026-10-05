@@ -9,10 +9,16 @@ import {appleTrustRoots} from '../apple-trust-roots.mjs';
 import {createRemoteAppleEvidenceAdapter} from '../remote-apple-evidence.mjs';
 import {SupabaseBillingAuth} from '../supabase-billing-auth.mjs';
 import {createBillingRuntime} from '../billing-runtime.mjs';
+import {createBillingDatabaseReadiness} from '../../supabase/functions/wm-billing-readiness/database-check.mjs';
 
 Deno.test('Deno loads the PostgreSQL adapter without connecting as a privileged identity',async()=>{
  const pool=new pg.Pool({max:1}); // No connection or credentials are used.
  await pool.end();
+});
+Deno.test('Deno database readiness stays disabled without a private credential',async()=>{
+ const handler=createBillingDatabaseReadiness({Pool:pg.Pool,readSecret:()=>undefined});
+ const response=await handler(new Request('https://example.invalid/check',{method:'POST'}));
+ assert.deepEqual(await response.json(),{databaseURLConfigured:false,databaseConnected:false,restrictedDatabaseIdentity:false,billingEnabled:false});
 });
 Deno.test('Deno 2.1.4 blocks local Apple verification at the unsupported certificate API',()=>{
  assert.equal(Deno.version.deno,'2.1.4');
