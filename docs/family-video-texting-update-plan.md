@@ -15,7 +15,7 @@ Nationwide remote weigh-ins remain a separate later-update workstream. This deci
 
 | Window | Work | Evidence required |
 | --- | --- | --- |
-| October 5–11 | Complete the core release; finish the Family Video paid-access design and texting provider setup. Inventory existing video and Twilio code, decide storage/SMS allowances and costs, and identify required private owner setup. | Accepted core candidate; precise update benefits and spending limits; server-only provider configuration. |
+| October 5–11 | Complete the core release; finish the Family Video paid-access design and texting provider setup. Inventory existing video and Twilio code, carry forward the accepted 50-credit family allowance, verify storage/SMS costs and provider spending limits, and identify required private owner setup. | Accepted core candidate; precise update benefits and spending limits; server-only provider configuration. |
 | October 12–18 | Connect paid video operations and delivery channels while preserving guardian permissions, recorder authorization and notification preferences. Add storage/usage enforcement and reliable delivery/retry behavior. | Cross-account/athlete/team isolation; expired/refunded subscription denial; consent and opt-out enforcement; duplicate/retry and provider-failure checks. |
 | October 19–25 | Run one combined update device/provider acceptance round, finish listing/privacy/review materials and submit the accepted update. | Actual Apple sandbox purchase/restore/refund results, authorized recording/playback, approved text delivery and reply/opt-out tests, usage accounting and final build checks. |
 
@@ -30,7 +30,9 @@ Nationwide remote weigh-ins remain a separate later-update workstream. This deci
 ## Texting acceptance
 
 - Complete the existing Twilio integration; verify the current account, sender/registration requirements and provider configuration when doing that setup. No external texts are authorized merely by this roadmap.
-- Obtain the owner's decisions on included SMS usage, overage behavior and a hard spending limit before activation. Count provider-billed message segments, not just app messages.
+- Preserve the October 3 decision carried forward in the October 5 master handoff: **50 short SMS credits per family per month**, on both the $10 monthly and $75 annual plans. The allowance is shared across the two selected linked athletes and opted-in family numbers. It resets monthly, with no rollover and no automatic overage charge. At exhaustion, applicable in-app notifications continue. This is an accepted product rule, not a live texting entitlement.
+- One single-segment alert to one opted-in phone consumes one credit; two phones consume two credits. Keep alerts single-segment or clearly disclose actual segment accounting. Track provider-billed segments, consent, used/remaining credits, provider outcomes and cost. Retries must not duplicate family-credit usage. Revisions apply prospectively with clear notice.
+- Obtain the remaining decisions on a hard provider spending limit and separate team/organization allowances before activation. Additional-athlete pricing and top-ups remain unresolved; do not ask the owner to re-decide the accepted family allowance or overage rule.
 - Respect current recipient permissions, explicit opt-in, guardian controls, category preferences and quiet hours; implement verified inbound webhooks and opt-out handling before any live campaign.
 - Test opted-out/blocked recipients, changed phone numbers, invalid signatures, duplicate callbacks, undelivered messages, retries and replies using designated consenting test recipients.
 - Avoid exposing private athlete/health content on lock screens. Text delivery is not an emergency-response guarantee.

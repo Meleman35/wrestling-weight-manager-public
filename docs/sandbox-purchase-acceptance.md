@@ -4,14 +4,19 @@ The app billing endpoint is deployed in **Sandbox only**. No account is enrolled
 and production purchases remain disabled. The endpoint has no request-selectable
 production mode and accepts only verified Apple Sandbox subscription evidence.
 
-## Owner selection needed
+## Selected test identity; creation pending
 
-Choose a dedicated test app account and a fictional test team, and provide their
-login email and team name. Reuse an existing disposable test account/team if
-available. Do not send passwords, keys, real athlete records or payment details.
-The operator will resolve the exact account/team and verify its current access
-before adding a short-lived server enrollment. This does not create an Apple
-Sandbox Apple Account; that separate Apple account may be needed on the device.
+The October 5 master handoff already selects the dedicated personal app login
+`damonmele+wmtest@gmail.com`, Coach / Team Leader role, and fictional team
+**WM Launch Test**. A read-only Auth lookup on October 5 found no account at that
+exact email; account creation and team authority are not yet established. Do not
+ask the owner to choose the identity again. The owner must complete ordinary
+account creation and email confirmation without sending passwords or codes to
+chat. Then the operator must resolve the actual account/team IDs and verify
+current authority before adding short-lived, exact-team server enrollment.
+Do not create an account through an administrative bypass or enroll a real team.
+This does not create an Apple Sandbox Apple Account; that separate Apple account
+may be needed on the device.
 
 Use a dedicated app account because the first Team Pro purchase binds its
 purchaser to one team, including future restores. Sandbox acceptance records

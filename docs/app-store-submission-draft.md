@@ -58,7 +58,7 @@ Privacy: https://theteammanager.app/privacy.html
 Use dedicated fictional review accounts and test athletes. Enter reviewer credentials directly in App Store Connect's review fields; do not save passwords in this repository.
 
 - Explain how the reviewer signs in, selects the prepared team and reaches its roster, schedule, family permissions and scorebook.
-- Give the exact accepted-build route to account deletion, including the disposable reviewer account to use. General account deletion must be available and verified before submission; the earlier pilot gate is not sufficient.
+- Give the exact accepted-build route to account deletion. Keep the durable coach, parent, athlete, trainer, reviewer and organization review accounts intact. Provide a separately prepared disposable fixture for deletion; the designated purchase account is not automatically the deletion fixture either. General account deletion must be available and verified before submission; the earlier pilot gate is not sufficient.
 - Explain which functions require compatible scale/NFC hardware and provide a review attachment showing the accepted physical workflow. Do not present a simulation as a real reading or bypass authorization for review.
 - If billing is included, list only the two Team Pro product identifiers in `billing-candidate/READ_ME_FIRST.txt`, their actual benefits, the in-app Plans and Restore routes, and the test team's immutable purchase binding. Attach the subscriptions and required review screenshots with the submitted version. Do not promise unlimited storage, SMS, streaming or undecided athlete discounts.
 - Remote weigh-ins are deferred from this submission. They have no first-release reviewer setup, director purchase or trial. Preserve their later-update acceptance checklist in `docs/remote-weighins-launch-status.md`.
@@ -71,7 +71,7 @@ Use dedicated fictional review accounts and test athletes. Enter reviewer creden
 - App Privacy answers: reconcile the deployed data inventory and providers, including account/contact identifiers, athlete records, photos/videos, messages, health/fitness information and purchases. The native required-reason manifest is not a replacement for these answers.
 - Digital Services Act trader verification and all remaining agreement status: verify current App Store Connect state. Earlier screenshots established active paid agreement/tax/banking setup; do not repeat those tasks without a new issue.
 - Screenshot sizes, supported devices and final native build: create screenshots from the accepted build with fictional data. Missing earlier uploads are not submission screenshots.
-- Production and sandbox notification URLs: configure only after the signed receiver, deployment and Apple TEST notification verification pass.
+- Production and sandbox notification URLs: the owner already saved both Version 2 URLs on October 4, and actual signed Sandbox TEST delivery passed on October 5. Confirm the current saved values without recreating setup. Production TEST requests returned HTTP 401 twice; production authorization/delivery remains unverified. See `apple-production-authorization-2026-10-05.md`.
 
 ## References checked
 
