@@ -9,6 +9,8 @@ on:
       - 'supabase/migrations/*core_billing*'
       - 'supabase/migrations/*billing_closed_team*'
       - 'supabase/migrations/*team_pro_feature_access*'
+      - 'supabase/migrations/*billing_notification_runtime*'
+      - 'supabase/functions/wrestling-manager-apple-notifications/**'
       - 'tests/hosted/core-billing*'
       - '.github/workflows/billing-candidate.yml'
 permissions:
@@ -92,3 +94,4 @@ jobs:
       - run: node billing-candidate/core-billing-migration-check.mjs
       - run: node billing-candidate/core-billing-hosted-fixture-check.mjs
       - run: node billing-candidate/team-feature-access-check.mjs
+      - run: node billing-candidate/notification-runtime-check.mjs

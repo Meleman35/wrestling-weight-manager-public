@@ -103,3 +103,45 @@ Damon accepted deferring Family Video from the first release and set a three-wee
 The first-release host now exposes Team Pro only; a direct Family Video open request shows an unavailable notice without activating StoreKit or loading family selections. Backend capabilities advertise only the two Team Pro products, and the authenticated prepare route rejects both Family Video IDs before creating an intent. Existing verified delivery/restore reconciliation and future family component tests remain. Native StoreKit already restricts product loading and purchases to the server-authorized product set. Focused launch checks pass (15/15); the full local Node suite passes 155 tests with one localhost database skip. The full main-app native build at the prior `954ca5d5a69a864c62dbc852d68c7a470968775c` checkpoint passed. Updated browser checks must pass on the new published checkpoint.
 
 A one-time October 25 morning readiness review is scheduled. It will inspect current repository evidence and report remaining owner decisions/tests; it cannot activate purchases/texting or submit/release a build.
+
+## October 5: hosted Apple notification receiver and schedule
+
+Migration `20261005032225_billing_notification_runtime.sql` is installed. Readiness
+requires the reviewed schema/catalog hash, completed and cleaned hosted deletion
+acceptance, all seven billing RLS/freeze protections and the exact reviewed
+deletion preparation function. Worker authorization uses a dedicated Vault
+credential generated inside the database; no new secret was copied or exposed.
+Anonymous/authenticated roles cannot invoke the helpers, and even the restricted
+billing role cannot read Vault or invoke the private scheduler.
+
+`wrestling-manager-apple-notifications` version 2 is active. All 27 downloaded
+deployment files exactly match source. Production and Sandbox routes are
+separate; the host never routes user purchase commands. The first deployment
+revealed Supabase's internal path omits `/functions/v1`; the corrected strict
+allowlist handles both internal and external forms, with a regression check.
+Authenticated probes returned HTTP 200, `status: idle`, in both environments.
+External checks returned 405 for GET, 403 for missing worker authorization and
+browser origins, 400 for an empty notification, and 503 for forged signed data.
+These results do not establish successful verification of real Apple evidence.
+
+The `wm-billing-notifications` minute schedule was enabled only after those
+probes. Its next two executions succeeded. It calls the bounded leased worker
+only for due work; idle ticks perform no outbound request. Operational cleanup
+removes completed or unbound pending inbox entries older than 30 days and expired
+paid-team remainders, while preserving bound pending work and the subscription
+ledger. Cleanup defers to active account deletion. This is separate from the
+future remote weigh-in evidence policy of exactly 10 days.
+
+Local verification: 161 Node tests passed, zero failed, one localhost PostgreSQL
+skip. Four full-schema runtime database scenarios passed, covering permissions,
+deployment drift, bounded retention, deletion priority and fixed scheduler
+routes. Security-advisor counts remain unchanged (110 informational, 2 anonymous
+and 183 authenticated definer warnings, 1 password-protection warning), with no
+new billing findings. The live deletion hash remains
+`22b2b942416753db8212d4f2bb4550da01713e687376eb2becaa8f6dfb22f350`;
+there are zero subscription/inbox rows and zero pending deletion jobs.
+
+Next owner setup is the Production/Sandbox Version 2 URL pair in
+`apple-notification-setup.md`. Then complete a real signed Apple TEST, finish the
+separate app billing route and run the consolidated native sandbox acceptance.
+Payments remain disabled; no website publication or App Store submission occurred.

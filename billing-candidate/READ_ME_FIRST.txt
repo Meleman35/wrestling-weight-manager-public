@@ -10,10 +10,13 @@ privately in Render; Supabase's verifier authentication and restricted database
 connection passed live checks. The core billing schema is deployed. Hosted account/file/billing deletion passed
 and all disposable fixtures were cleaned. Team Pro now backs practice plans and
 statistics; their paid/refund/expiry/session/scope checks pass in a full-schema
-fixture. Notification scheduling, live billing routes, Family Video rollout and
-real Apple sandbox purchase acceptance remain outstanding.
+fixture. The separate Production/Sandbox notification receiver and authenticated
+minute scheduler are deployed; both private worker probes pass. Actual signed
+Apple notification delivery, live app billing routes and real Apple sandbox
+purchase acceptance remain outstanding. Family Video and texting are deferred.
 Payments are not enabled. See docs/launch-acceptance-batch.md for the one combined
 acceptance round after those prerequisites are ready.
+Notification URLs and the next Apple setup step: docs/apple-notification-setup.md.
 
 Owner-approved October 4, 8:14 PM Mountain: core app first; nationwide remote
 weigh-ins in a later update. Remote reporting, director subscriptions/trials,
