@@ -25,7 +25,8 @@ const {chromium}=require('playwright');
    assert.equal(await page.locator('body').evaluate(n=>n.scrollWidth<=innerWidth),true,`overflow at ${width}`);
   }
   await page.setViewportSize({width:390,height:844});
-  await page.getByText('Streaming, storage and texting',{exact:true}).click();
+  await page.getByText('Availability and plan limits',{exact:true}).click();
+  assert(await page.getByText('Nationwide remote weigh-ins are planned for a later update and are not included at launch.',{exact:true}).isVisible());
   assert.equal(await page.getByText('Live streaming is not available yet.',{exact:true}).isVisible(),true);
   fs.mkdirSync(path.join(root,'../validation'),{recursive:true});
   await page.screenshot({path:path.join(root,'../validation/subscription-family-phone.png'),fullPage:true});
