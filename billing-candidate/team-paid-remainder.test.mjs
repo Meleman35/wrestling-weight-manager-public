@@ -1,0 +1,15 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createTeamPaidRemainder,hasTeamPaidRemainderAccess,reconcileTeamPaidRemainder} from './team-paid-remainder.mjs';
+import {proposedProducts} from './subscription-policy.mjs';
+const now=1800000000000,teamID='33333333-3333-4333-8333-333333333333';
+const s={teamID,environment:'Production',plan:'team_pro_year',status:1,expiresAt:now+10000,snapshotSignedAt:now-1000,revokedAt:null,userID:'personal',appAccountToken:'private',familyOwnerID:null};
+const options={remainingAdmin:true,now},config={environment:'Production',bundleID:'com.damonmele.wrestlingmanager',products:proposedProducts};
+const evidence={environment:'Production',bundleID:config.bundleID,productID:Object.keys(proposedProducts)[0],status:1,expiresAt:now+50000,snapshotSignedAt:now};
+test('team continues only through current paid boundary and no personal identifiers survive',()=>{const r=createTeamPaidRemainder(s,options);assert.equal(r.paidThrough,s.expiresAt);assert.equal(JSON.stringify(r).includes('personal'),false);assert.equal(Object.hasOwn(r,'appAccountToken'),false);assert.equal(hasTeamPaidRemainderAccess(r,{...options,teamID,environment:'Production'}),true);assert.equal(hasTeamPaidRemainderAccess(r,{...options,now:s.expiresAt,teamID,environment:'Production'}),false);});
+test('remaining authorized admin required both at deletion and later access',()=>{assert.equal(createTeamPaidRemainder(s,{...options,remainingAdmin:false}),null);assert.equal(hasTeamPaidRemainderAccess(createTeamPaidRemainder(s,options),{...options,remainingAdmin:false,teamID,environment:'Production'}),false);});
+test('family, expired and revoked subscriptions never create preserved team grants',()=>{for(const change of [{plan:'family_video_year'},{expiresAt:now},{revokedAt:now-1},{status:3}])assert.equal(createTeamPaidRemainder({...s,...change},options),null);});
+test('existing verified grace period is bounded',()=>{const r=createTeamPaidRemainder({...s,status:4,graceExpiresAt:now+2000},options);assert.equal(r.paidThrough,now+2000);});
+test('post-deletion renewal never extends the original paid term',()=>{const r=createTeamPaidRemainder(s,options);assert.equal(reconcileTeamPaidRemainder(r,evidence,{config,now}).paidThrough,s.expiresAt);});
+test('verified refund revokes grant and stale active state cannot restore it',()=>{const r=createTeamPaidRemainder(s,options);const refunded=reconcileTeamPaidRemainder(r,{...evidence,status:5,revokedAt:now},{config,now});assert.equal(hasTeamPaidRemainderAccess(refunded,{...options,teamID,environment:'Production'}),false);assert.deepEqual(reconcileTeamPaidRemainder(refunded,{...evidence,snapshotSignedAt:now-1},{config,now}),refunded);});
+test('different environment and family product cannot update team remainder',()=>{const r=createTeamPaidRemainder(s,options);for(const change of [{environment:'Sandbox'},{productID:Object.keys(proposedProducts)[2]}])assert.throws(()=>reconcileTeamPaidRemainder(r,{...evidence,...change},{config,now}));});

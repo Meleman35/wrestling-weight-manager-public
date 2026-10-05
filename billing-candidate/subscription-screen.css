@@ -1,0 +1,19 @@
+:is(.wm-subscription-screen,.wm-family-coverage-screen){box-sizing:border-box;max-width:640px;margin:0 auto;padding:20px;color:#e8eefb;background:#111c30;border:1px solid #31435e;border-radius:16px;font:16px/1.5 system-ui,sans-serif;overflow-wrap:anywhere}
+:is(.wm-subscription-screen,.wm-family-coverage-screen) *{box-sizing:border-box}
+:is(.wm-subscription-screen,.wm-family-coverage-screen) h2{margin:0 0 12px;font-size:24px}
+:is(.wm-subscription-screen,.wm-family-coverage-screen) p{margin:12px 0}
+.wm-subscription-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:20px 0}
+:is(.wm-subscription-screen,.wm-family-coverage-screen) button{width:100%;min-height:48px;padding:12px;border:1px solid #648ac1;border-radius:10px;color:#fff;background:#244b82;font:inherit;font-weight:600;white-space:normal;cursor:pointer}
+:is(.wm-subscription-screen,.wm-family-coverage-screen) button:disabled{background:#233046;border-color:#42516a;color:#acb7cc;cursor:default}
+:is(.wm-subscription-screen,.wm-family-coverage-screen) button:focus-visible,:is(.wm-subscription-screen,.wm-family-coverage-screen) summary:focus-visible{outline:3px solid #90c7ff;outline-offset:3px}
+:is(.wm-subscription-screen,.wm-family-coverage-screen) details{margin:16px 0;padding:12px;border:1px solid #42516a;border-radius:10px}
+:is(.wm-subscription-screen,.wm-family-coverage-screen) summary{cursor:pointer;font-weight:600}
+:is(.wm-subscription-screen,.wm-family-coverage-screen) ul{padding-left:22px}
+:is(.wm-subscription-screen,.wm-family-coverage-screen) li+li{margin-top:8px}
+:is(.wm-subscription-screen,.wm-family-coverage-screen) [role=status]{padding:12px;background:#19283e;border-radius:8px}
+@media(max-width:360px){:is(.wm-subscription-screen,.wm-family-coverage-screen){padding:14px}.wm-subscription-options{grid-template-columns:1fr}}
+
+.wm-family-coverage-screen{margin-top:16px}
+.wm-family-coverage-screen label{display:flex;align-items:center;gap:10px;min-height:48px;padding:10px 0;cursor:pointer}
+.wm-family-coverage-screen input{flex:0 0 auto;width:20px;height:20px}
+.wm-family-coverage-screen h3{margin:0 0 12px;font-size:22px}

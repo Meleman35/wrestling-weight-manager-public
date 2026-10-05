@@ -1,0 +1,76 @@
+name: Billing candidate checks
+on:
+  pull_request:
+    paths:
+      - 'billing-candidate/**'
+      - '.github/workflows/billing-candidate.yml'
+permissions:
+  contents: read
+jobs:
+  policy:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: synthetic_test_only
+          POSTGRES_DB: billing_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      BILLING_TEST_DATABASE_URL: postgresql://postgres:synthetic_test_only@localhost:5432/billing_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --prefix billing-candidate --ignore-scripts --no-audit --no-fund
+      - run: npm test --prefix billing-candidate
+  swift:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Type-check StoreKit component with Apple SDK
+        run: xcrun swiftc -typecheck -target "$(uname -m)-apple-macos13.0" billing-candidate/WrestlingManagerStore.swift billing-candidate/WrestlingManagerPurchaseHTTP.swift billing-candidate/WrestlingManagerPurchaseBridge.swift billing-candidate/WrestlingManagerPurchaseHost.swift billing-candidate/WrestlingManagerPurchaseAuthentication.swift billing-candidate/WrestlingManagerPurchasePageSession.swift
+
+      - name: Execute native purchase transport checks
+        run: |
+          xcrun swiftc -target "$(uname -m)-apple-macos13.0" billing-candidate/WrestlingManagerStore.swift billing-candidate/WrestlingManagerPurchaseHTTP.swift billing-candidate/tests/PurchaseHTTPChecks.swift -o /tmp/wm-purchase-checks
+          /tmp/wm-purchase-checks
+      - name: Execute native purchase authentication checks
+        run: |
+          xcrun swiftc -target "$(uname -m)-apple-macos13.0" billing-candidate/WrestlingManagerStore.swift billing-candidate/WrestlingManagerPurchaseHTTP.swift billing-candidate/WrestlingManagerPurchaseAuthentication.swift billing-candidate/tests/PurchaseAuthenticationChecks.swift -o /tmp/wm-purchase-auth-checks
+          /tmp/wm-purchase-auth-checks
+
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright@1.58.2
+      - run: npx playwright install --with-deps chromium
+      - run: node billing-candidate/tests/subscription-screen-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: subscription-screen-preview
+          path: validation/subscription-*-phone.png
+
+  notification-database:
+    runs-on: ubuntu-latest
+    env:
+      NODE_PATH: ${{ github.workspace }}/billing-candidate/notification-verification/node_modules
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --prefix billing-candidate/notification-verification --ignore-scripts --no-audit --no-fund
+      - run: node billing-candidate/apple-notification-postgres-check.mjs
