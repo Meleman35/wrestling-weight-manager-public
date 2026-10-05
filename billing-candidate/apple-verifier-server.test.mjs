@@ -24,6 +24,15 @@ test('verified result binds to the request and environment, with no caching',asy
   assert.deepEqual(await response.json(),{requestID,environment:'Sandbox',result:{transactionID:'123'}});
  });
 });
+test('private notification test commands use the same authentication and bounded action allowlist',async()=>{
+ let calls=0;await withServer(async call=>{calls++;assert(['testRequest','testStatus'].includes(call.action));return {state:'requested'};},async({send})=>{
+  assert.equal((await send({...body,action:'testRequest',input:null},{Authorization:'Bearer wrong'})).status,403);
+  for(const input of [{},'ignored',false])assert.equal((await send({...body,action:'testRequest',input})).status,400);
+  assert.equal((await send({...body,action:'testStatus',input:'../outside'})).status,400);
+  assert.equal((await send({...body,action:'testRequest',input:null})).status,200);
+  assert.equal((await send({...body,action:'testStatus',input:'test-token'})).status,200);assert.equal(calls,2);
+ });
+});
 test('Render Base64 secret authenticates over HTTP and requires the exact configured text',async()=>{
  const bytes=Buffer.alloc(32,251);
  await withServer(async()=>({transactionID:'123'}),async({send})=>{

@@ -12,6 +12,7 @@ on:
       - 'supabase/migrations/*billing_notification_runtime*'
       - 'supabase/functions/wrestling-manager-apple-notifications/**'
       - 'tests/hosted/core-billing*'
+      - 'tests/hosted/apple-notification-*'
       - '.github/workflows/billing-candidate.yml'
 permissions:
   contents: read

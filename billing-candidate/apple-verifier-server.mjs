@@ -6,12 +6,14 @@ import {pathToFileURL} from 'node:url';
 import {appleTrustRoots} from './apple-trust-roots.mjs';
 import {readAppleServerConfiguration} from './apple-server-config.mjs';
 import {validAppleVerifierSecret} from './apple-verifier-secret.mjs';
+import {validNotificationTestCall} from './apple-notification-test.mjs';
 
 const maxBody=196608,uuid=x=>typeof x==='string'&&/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(x);
 const jws=x=>typeof x==='string'&&x.length<=131072&&/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(x);
 function validCall(body){
  if(!body||Array.isArray(body)||Object.keys(body).sort().join(',')!=='action,environment,input,requestID'||
   !uuid(body.requestID)||!['Sandbox','Production'].includes(body.environment))return false;
+ if(['testRequest','testStatus'].includes(body.action))return validNotificationTestCall(body.action,body.input);
  if(['resolve','notificationTransaction'].includes(body.action))return jws(body.input)&&(body.action!=='resolve'||body.input.length<=65536);
  if(body.action!=='refresh'||!body.input||Array.isArray(body.input)||Object.keys(body.input).sort().join(',')!=='appAccountToken,bundleID,environment,originalTransactionID')return false;
  return body.input.environment===body.environment&&body.input.bundleID==='com.damonmele.wrestlingmanager'&&
