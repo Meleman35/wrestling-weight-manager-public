@@ -1,8 +1,9 @@
 # Apple server notification setup
 
-The separate receiver is deployed and the authenticated reconciliation schedule
-is active. This step connects App Store Connect to those endpoints; it does not
-enable purchases or release the app. Real signed Apple delivery remains unverified.
+The owner confirmed both URLs saved on October 4 at 9:43 PM Mountain. A real
+signed Sandbox TEST subsequently verified and Apple reported delivery SUCCESS.
+Production's test API returned 401 twice; production verification remains blocked.
+The separate receiver and authenticated reconciliation schedule are active.
 
 App: **The Wrestling Manager**, Apple ID **6815511370**, bundle
 `com.damonmele.wrestlingmanager`.
@@ -22,10 +23,10 @@ fields. Do not share those private values in screenshots or chat.
 After saving, use Apple's test-notification API to request a signed TEST delivery
 and inspect its delivery status. A test-notification request is an App Store
 Server API operation; saving a URL is not proof that Apple delivered a notification.
-The receiver already accepts correctly verified TEST notifications without
-granting access. The current Render verifier does not yet expose a test-request
-operation; add a narrowly authorized operator path before using its server key
-for that request, or use an existing authorized Apple API client.
+The receiver accepts correctly verified TEST notifications without granting
+access. The private Render verifier now supports bounded test-request/status
+commands under its existing server authentication. The temporary operator bridge
+was closed after testing. See `apple-notification-test-results.md`.
 
 Completed checks:
 
@@ -36,7 +37,7 @@ Completed checks:
 - Empty inbox/subscription tables and zero pending deletion jobs after probing.
 - Database readiness, account-deletion safeguards and restricted roles remain in place.
 
-Still required: signed Apple TEST delivery, real sandbox purchase/restore and
+Still required: production authorization/delivery, real sandbox purchase/restore and
 renewal/refund/expiry acceptance through the native app, plus the remaining core
 device checklist. The notification host has no user purchase route.
 

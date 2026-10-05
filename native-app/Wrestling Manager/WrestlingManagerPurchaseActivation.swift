@@ -1,5 +1,6 @@
 import Foundation
 import WebKit
+import StoreKit
 
 /// The page can request activation, but only a live authenticated billing service
 /// can make purchases available. No page flag, token, product list or endpoint is accepted.
@@ -66,9 +67,18 @@ final class WrestlingManagerPurchaseActivation: NSObject, WKScriptMessageHandler
                 guard self.attempt == ticket, response.url == endpoint, response.statusCode == 200,
                       response.value(forHTTPHeaderField: "Content-Type")?.lowercased().hasPrefix("application/json") == true,
                       bytes.count <= 8192, let value = try JSONSerialization.jsonObject(with: bytes) as? [String: Any],
-                      Set(value.keys) == ["ready","productIDs"], value["ready"] as? Bool == true,
+                      Set(value.keys) == ["ready","productIDs","environment"], value["ready"] as? Bool == true,
+                      let environment = value["environment"] as? String,
+                      ["Sandbox","Production"].contains(environment),
                       let ids = value["productIDs"] as? [String], !ids.isEmpty,
                       ids.count == Set(ids).count, Set(ids).isSubset(of: WrestlingManagerStore.proposedProductIDs) else { throw Failure.unavailable }
+                // A sandbox-only server must never open a production purchase
+                // sheet. Use StoreKit's verified app transaction, not a page flag.
+                let appResult = try await AppTransaction.shared
+                guard self.attempt == ticket, case .verified(let app) = appResult,
+                      app.bundleID == "com.damonmele.wrestlingmanager",
+                      (environment == "Sandbox" && app.environment == .sandbox) ||
+                      (environment == "Production" && app.environment == .production) else { throw Failure.unavailable }
                 let installed = await self.host.configureAuthenticated(authentication: auth, publishableKey: key,
                     productIDs: Set(ids), enabled: true, refreshServerAccess: {})
                 guard self.attempt == ticket, installed else { throw Failure.unavailable }

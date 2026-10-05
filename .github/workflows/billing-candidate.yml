@@ -11,6 +11,8 @@ on:
       - 'supabase/migrations/*team_pro_feature_access*'
       - 'supabase/migrations/*billing_notification_runtime*'
       - 'supabase/functions/wrestling-manager-apple-notifications/**'
+      - 'supabase/functions/wrestling-manager-billing/**'
+      - 'supabase/migrations/*sandbox_billing_enrollment*'
       - 'tests/hosted/core-billing*'
       - 'tests/hosted/apple-notification-*'
       - '.github/workflows/billing-candidate.yml'
@@ -96,3 +98,4 @@ jobs:
       - run: node billing-candidate/core-billing-hosted-fixture-check.mjs
       - run: node billing-candidate/team-feature-access-check.mjs
       - run: node billing-candidate/notification-runtime-check.mjs
+      - run: node billing-candidate/sandbox-billing-check.mjs

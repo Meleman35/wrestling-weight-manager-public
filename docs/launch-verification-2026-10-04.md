@@ -145,3 +145,46 @@ Next owner setup is the Production/Sandbox Version 2 URL pair in
 `apple-notification-setup.md`. Then complete a real signed Apple TEST, finish the
 separate app billing route and run the consolidated native sandbox acceptance.
 Payments remain disabled; no website publication or App Store submission occurred.
+
+## October 5: real Apple Sandbox delivery and purchase acceptance host
+
+After the owner saved both Version 2 notification URLs, the existing Render
+service deployed `275daac1ca45229e0e2e680f67239ae9d23b7714`. Apple's real Sandbox
+TEST verified successfully and Apple reported first-attempt delivery `SUCCESS`.
+Production's test API returned 401 twice; its cause remains unconfirmed and
+production billing stays blocked. The temporary capability-authenticated,
+expiring operator bridge was replaced by a closed version 2 with JWT verification
+enabled. See `apple-notification-test-results.md`. All 25 workflows passed at
+that checkpoint.
+
+Migration `20261005040311_sandbox_billing_enrollment.sql` adds a runtime-only,
+server-metadata enrollment check without changing tables or the deletion hash.
+The new `wrestling-manager-billing` version 1 accepts Sandbox evidence only, with
+no request-selectable environment. Every actor read rechecks enrollment; prepare,
+access, stored restore bindings and writes also check the exact enrolled team.
+Family purchase/selection routes remain unavailable. No account was enrolled.
+Production or local Xcode evidence cannot create access through this host.
+
+The main native candidate now requires a server-declared purchase environment
+matching StoreKit's verified app transaction and bundle ID before purchase
+activation. Older native activation code rejects the new capabilities shape.
+The updated Swift source is identical in the candidate and main app; project
+identity/source integrity passes. Current SDK compilation and full builds must
+pass on the published checkpoint, followed by real device acceptance.
+
+Six full-schema database scenarios passed: deployment/role restrictions,
+server-only enrollment, exact team/product preparation, actual delivery/access
+services, rejection of Production evidence, enrollment revocation during Apple
+waits, immutable restore scope, refund access removal, and invalid sessions/bans/
+membership. Auth and Apple providers are synthetic in these database scenarios.
+The full Node suite passes 169 tests, with zero failures and one localhost
+PostgreSQL skip. Real PostgreSQL and native SDK checks run in CI.
+
+All 28 deployed billing files match source. Hosted HTTP checks returned 401 for
+missing/forged user authentication, 403 for foreign origins, 405 for GET, 204 for
+the approved browser preflight, and 404 for a requested production subroute.
+The live readiness check stays true; deletion hash and security-advisor counts
+are unchanged. The next owner decision is a dedicated test login/team, followed
+by the matching web/native candidate and consolidated device round described in
+`sandbox-purchase-acceptance.md`. No real purchase or production charge has been
+tested or enabled, and no App Store submission was made.

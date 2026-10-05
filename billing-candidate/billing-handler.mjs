@@ -12,7 +12,8 @@ async function boundedJSON(request){
  const bytes=new Uint8Array(lengthRead);let offset=0;for(const value of chunks){bytes.set(value,offset);offset+=value.length;}
  try{return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));}catch{throw Error('invalid_request');}
 }
-export function createBillingHandler({enabled=false,auth,intents,delivery,access,coverage}){
+export function createBillingHandler({enabled=false,auth,intents,delivery,access,coverage,purchaseEnvironment}){
+ if(purchaseEnvironment!==undefined&&!['Sandbox','Production'].includes(purchaseEnvironment))throw Error('invalid_configuration');
  return async request=>{
   const origin=request.headers.get('origin');if(origin&&!origins.has(origin))return response(403,{error:'origin_forbidden'});
   if(request.method==='OPTIONS')return new Response(null,{status:204,headers:origin?{'Access-Control-Allow-Origin':origin,'Vary':'Origin','Access-Control-Allow-Methods':'POST','Access-Control-Allow-Headers':'Authorization, Content-Type, apikey','Access-Control-Max-Age':'600'}:{}});
@@ -29,7 +30,7 @@ export function createBillingHandler({enabled=false,auth,intents,delivery,access
     if(Object.keys(body.data).length)throw Error('invalid_request');
     const actor=await auth.currentActor(context);
     if(!actor||actor.liveSession!==true||actor.confirmed!==true||actor.deleted===true||actor.banned===true||actor.managedTeamLogin===true||actor.deletionFrozen===true)throw Error('unauthorized');
-    return response(200,{ready:true,productIDs:[...launchProductIDs].sort()},origin);
+    return response(200,{ready:true,productIDs:[...launchProductIDs].sort(),...(purchaseEnvironment?{environment:purchaseEnvironment}:{})},origin);
    }
    const result=body.action==='coverage-options'?await coverage.options(context,body.data):body.action==='coverage'?await coverage.select(context,body.data):body.action==='access'?await access.read(context,body.data):body.action==='prepare'?await intents.prepare(context,body.data):body.action==='abandon'?await intents.abandon(context,body.data):await delivery.deliver(context,body.data);
    return response(200,result,origin);

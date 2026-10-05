@@ -11,10 +11,13 @@ connection passed live checks. The core billing schema is deployed. Hosted accou
 and all disposable fixtures were cleaned. Team Pro now backs practice plans and
 statistics; their paid/refund/expiry/session/scope checks pass in a full-schema
 fixture. The separate Production/Sandbox notification receiver and authenticated
-minute scheduler are deployed; both private worker probes pass. Actual signed
-Apple notification delivery, live app billing routes and real Apple sandbox
-purchase acceptance remain outstanding. Family Video and texting are deferred.
-Payments are not enabled. See docs/launch-acceptance-batch.md for the one combined
+minute scheduler are deployed; both private worker probes pass. Apple's actual
+signed Sandbox TEST verified and delivery succeeded. Production test API returned
+401 twice and remains unverified. The app billing endpoint is deployed for
+explicitly enrolled Sandbox users/teams only; nobody is enrolled yet. The native
+candidate checks StoreKit's verified app environment before activating purchases.
+Real sandbox purchase acceptance remains outstanding. Family Video/texting remain
+deferred. Production payments are disabled. See docs/launch-acceptance-batch.md for the one combined
 acceptance round after those prerequisites are ready.
 Notification URLs and the next Apple setup step: docs/apple-notification-setup.md.
 
@@ -105,7 +108,9 @@ Bundle ID: com.damonmele.wrestlingmanager confirmed from both configurations
 of the uploaded working Xcode project. The same value is confirmed in App Store Connect.
 Endpoint reserved in native code:
 https://vfocpoyexnjsjpxhhyqr.supabase.co/functions/v1/wrestling-manager-billing
-This endpoint has not been deployed. Publishable gateway key is public app
+This endpoint now hosts Sandbox-only acceptance with expiring server enrollment.
+It cannot accept Production/Xcode receipts; no accounts are currently enrolled.
+Publishable gateway key is public app
 configuration; service-role credentials and Apple private keys are server only.
 
 Product catalog
