@@ -3,6 +3,9 @@ on:
   pull_request:
     paths:
       - 'billing-candidate/**'
+      - 'scripts/scoped-deletion-*.mjs'
+      - 'scripts/scoped-deletion-policy.json'
+      - 'supabase/scoped-deletion-*.sql'
       - '.github/workflows/billing-candidate.yml'
 permissions:
   contents: read
@@ -79,3 +82,4 @@ jobs:
       - run: node billing-candidate/apple-notification-postgres-check.mjs
       - run: node billing-candidate/team-paid-remainder-postgres-check.mjs
       - run: node billing-candidate/billing-identity-postgres-check.mjs
+      - run: node billing-candidate/billing-deletion-worker-check.mjs

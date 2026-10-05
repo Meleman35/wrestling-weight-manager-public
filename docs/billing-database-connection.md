@@ -12,7 +12,9 @@ The migration generates a 32-byte random credential inside PostgreSQL, applies S
 
 Live verification confirmed zero application-table privileges for this login, no Vault read permission for the billing/client roles, unchanged deletion schema hash `c1f0c928a7eefd97e1cf22413ae70c730d97dd608417476383d6c635f902bdf8`, and a matching approved catalog. The security-advisor findings are unchanged from the pre-migration baseline. No billing tables, entitlements or customer records were deployed or changed.
 
-## Owner's private copy step
+## Completed private copy step
+
+The owner saved `BILLING_DATABASE_URL` on October 4. The live diagnostic returned HTTP 200 with `databaseURLConfigured`, `databaseConnected` and `restrictedDatabaseIdentity` all true. `billingEnabled` remains false. No further credential copy is needed.
 
 1. Open [Vault secrets](https://supabase.com/dashboard/project/vfocpoyexnjsjpxhhyqr/integrations/vault/secrets).
 2. Find `wm-billing-database-url`. Reveal its value with the eye button and use the copy control. Keep it out of chat and screenshots.
@@ -26,6 +28,6 @@ The connected tools cannot write Edge Function Secrets, so this copy requires th
 
 The shared connection adapter enforces the exact host, project login and session port, verified TLS, one pooled connection and bounded timeouts. It checks the actual session identity before selecting the runtime role, then checks the selected role. Privileged or unexpected identities are discarded. Synthetic tests cover role restrictions, atomic provisioning failure, overwrite refusal, redaction, endpoint restrictions and connection cleanup. The Vault test fixture does not claim to validate Vault's encryption or a real password login.
 
-After the owner saves the Edge secret, verify the live connection and role checks. Full billing schema/catalog, write-freeze, complete deletion-worker and scheduler acceptance remain required before payment activation. A successful database connection alone does not authorize paid access.
+Live password authentication and selected-role checks passed after the owner saved the Edge secret. Full billing schema/catalog, write-freeze, complete deletion-worker and scheduler acceptance remain required before payment activation. A successful database connection alone does not authorize paid access.
 
 Reference checked October 5: [Supabase database connection modes](https://supabase.com/docs/guides/database/connecting-to-postgres).

@@ -5,8 +5,11 @@ This includes the original main native app in native-app/, Plans & purchases,
 server-verified native activation, canonical family selection, notification/runtime
 composition, and billing/deletion actor locks. Full main-app Debug/Release builds
 and the billing database/browser/native checks have passed on integration checkpoints.
-Consult current PR checks for the latest exact commit. The private Apple key,
-server deletion/retention integration and live deployment remain outstanding.
+Consult current PR checks for the latest exact commit. The Apple key is configured
+privately in Render; Supabase's verifier authentication and restricted database
+connection passed live checks. Server deployment, retention/reconciliation and
+athlete-merge compatibility remain outstanding. The complete deletion worker now
+has seven synthetic billing integration scenarios; no billing data schema is live.
 Payments are not enabled. See docs/launch-acceptance-batch.md for the one combined
 acceptance round after those prerequisites are ready.
 
@@ -80,7 +83,7 @@ Known product limits
 Configuration inventory (public identifiers only)
 Apple In-App Purchase key ID: 79R244P822
 Apple issuer ID: b5931be7-ac93-4ab3-9b1a-15e1dd26a549
-Private signing key: downloaded on owner's Mac; not configured on server yet.
+Private signing key: configured directly by the owner in the Render verifier.
 Apple numeric app ID: 6815511370 confirmed from App Store Connect screenshot October 3, 2026.
 Bundle ID: com.damonmele.wrestlingmanager confirmed from both configurations
 of the uploaded working Xcode project. The same value is confirmed in App Store Connect.

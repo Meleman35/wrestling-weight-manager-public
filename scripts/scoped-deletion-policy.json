@@ -2,6 +2,13 @@
   "version": "scoped-deletion-v1",
   "description": "Enrolled execution scope. Unknown nonempty dependencies stop before erasure. Athlete identities are never owned by a workspace.",
   "deleteTables": [
+    "wm_billing.team_bindings",
+    "wm_billing.intents",
+    "wm_billing.subscriptions",
+    "wm_billing.deliveries",
+    "wm_billing.family_coverage",
+    "wm_billing.notification_inbox",
+    "wm_billing.team_paid_remainders",
     "public.profiles",
     "private.wrestling_profiles",
     "public.teams",

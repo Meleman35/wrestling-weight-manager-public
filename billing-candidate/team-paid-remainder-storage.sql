@@ -56,7 +56,7 @@ $$;
 -- Runs within the leased deletion transaction, before Auth can be erased.
 -- Failure rolls the entire record-deletion transaction back. No runtime/client
 -- role can invoke it or insert arbitrary preserved grants.
-create function wm_billing.finalize_deletion(p_job uuid,p_lease uuid)
+create function wm_billing.prepare_deletion(p_job uuid,p_lease uuid)
 returns void language plpgsql security definer set search_path='' as $$
 declare j private.scoped_deletion_jobs%rowtype; notice record; current_ms bigint:=floor(extract(epoch from clock_timestamp())*1000);
 begin
@@ -102,6 +102,18 @@ begin
     where r.binding_hash=notice.binding_hash and (notice.e->>'snapshotSignedAt')::bigint>=r.snapshot_signed_at;
   end loop;
  end if;
+end $$;
+
+-- The final transition remains a cleanup backstop. The complete worker must
+-- prepare the paid grant BEFORE deleting any sealed billing records.
+create function wm_billing.finalize_deletion(p_job uuid,p_lease uuid)
+returns void language plpgsql security definer set search_path='' as $$
+declare j private.scoped_deletion_jobs%rowtype;
+begin
+ select * into j from private.scoped_deletion_jobs where id=p_job and state='records'
+  and sealed_at is not null and lease_token=p_lease and lease_until>clock_timestamp() for update;
+ if not found or current_setting('role',true) is distinct from 'service_role' then raise exception 'BILLING_DELETION_LEASE_REQUIRED';end if;
+ perform wm_billing.prepare_deletion(p_job,p_lease);
  -- Include unpaid intents and pre-delivery notifications, not only purchases.
  delete from wm_billing.notification_inbox n using wm_billing.intents i
   where n.token=i.token and ((j.personal and i.user_id=j.actor_id) or i.team_id=any(j.team_ids));
@@ -144,7 +156,7 @@ begin
  get diagnostics removed=row_count;return removed;
 end $$;
 revoke all on function wm_billing.remainder_binding(text,text,uuid),wm_billing.remaining_team_admin(uuid,uuid),
- wm_billing.finalize_deletion(uuid,uuid),wm_billing.deletion_transition(),wm_billing.purge_paid_remainders() from public,anon,authenticated;
+ wm_billing.prepare_deletion(uuid,uuid),wm_billing.finalize_deletion(uuid,uuid),wm_billing.deletion_transition(),wm_billing.purge_paid_remainders() from public,anon,authenticated;
 revoke all on function wm_billing.remainder_update_guard() from public,anon,authenticated;
 grant execute on function wm_billing.remainder_binding(text,text,uuid),wm_billing.remaining_team_admin(uuid,uuid),
  wm_billing.purge_paid_remainders() to wm_billing_runtime;

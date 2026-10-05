@@ -15,7 +15,7 @@ insert into private.scoped_deletion_media_columns values
 create function private.scoped_deletion_media_inventory(p_job uuid,p_records jsonb) returns jsonb
 language plpgsql security definer set search_path='' as $$
 declare j private.scoped_deletion_jobs%rowtype;r jsonb;data jsonb;m record;obj record;col record;ref jsonb;
- path text;email text;result jsonb:='[]';ids uuid[]:='{}';n integer;
+ path text;email text;result jsonb:='[]';ids uuid[]:='{}';retained uuid[]:='{}';n integer;
 begin
  select * into strict j from private.scoped_deletion_jobs where id=p_job;
  for r in select x from jsonb_array_elements(p_records) x where x->>'action'='delete' loop
@@ -60,11 +60,21 @@ begin
     where n.nspname in ('public','private') and c.relkind='r' and c.relname not like 'scoped_deletion_%' loop
    for ref in execute format('select to_jsonb(r) from %I.%I r where position($1 in to_jsonb(r)::text)>0',col.schema,col.name) using obj.path loop
     if not exists(select 1 from jsonb_array_elements(p_records) x where x->>'table'=col.schema||'.'||col.name and x->>'action'='delete'
-      and x->'key'=private.scoped_deletion_row_key(col.schema||'.'||col.name,ref)) then raise exception 'DELETION_SHARED_FILE_REFERENCE';end if;
+      and x->'key'=private.scoped_deletion_row_key(col.schema||'.'||col.name,ref)) then
+     if j.personal and (
+       exists(select 1 from storage.objects where id=obj.id and (owner=j.actor_id or owner_id=j.actor_id::text))
+       or exists(select 1 from public.profiles where id=j.actor_id and photo_path=obj.path)
+       or exists(select 1 from private.wrestling_profiles where user_id=j.actor_id and photo_path=obj.path)
+       or exists(select 1 from public.communication_attachments where uploader_user_id=j.actor_id and storage_path=obj.path)
+     ) then raise exception 'DELETION_SHARED_FILE_REFERENCE';end if;
+     -- A teammate's portable photo copied into a team staff row is still their
+     -- personal file. Removing the team row does not authorize removing that file.
+     retained:=array_append(retained,obj.id);
+    end if;
    end loop;
   end loop;
  end loop;
- select coalesce(jsonb_agg(x order by x->>'id'),'[]') into result from jsonb_array_elements(result) x;
+ select coalesce(jsonb_agg(x order by x->>'id'),'[]') into result from jsonb_array_elements(result) x where not((x->>'id')::uuid=any(retained));
  return result;
 end $$;
 create function private.scoped_deletion_seal_media(p_job uuid,p_objects jsonb) returns void
