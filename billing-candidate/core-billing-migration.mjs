@@ -2,7 +2,7 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {billingDeletionIntegrationSQL} from './billing-deletion-integration.mjs';
 
-export const coreBillingMigrationPath=new URL('../supabase/migrations/20261005021830_core_billing_deletion_merge.sql',import.meta.url);
+export const coreBillingMigrationPath=new URL('../supabase/migrations/20261005023948_core_billing_deletion_merge.sql',import.meta.url);
 export const reviewedBaselineHash='c1f0c928a7eefd97e1cf22413ae70c730d97dd608417476383d6c635f902bdf8';
 const read=name=>readFile(new URL(name,import.meta.url),'utf8');
 export async function coreBillingMigrationSQL(){

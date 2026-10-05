@@ -7,6 +7,9 @@ on:
       - 'scripts/scoped-deletion-policy.json'
       - 'supabase/scoped-deletion-*.sql'
       - 'supabase/migrations/*core_billing*'
+      - 'supabase/migrations/*billing_closed_team*'
+      - 'supabase/migrations/*team_pro_feature_access*'
+      - 'tests/hosted/core-billing*'
       - '.github/workflows/billing-candidate.yml'
 permissions:
   contents: read
@@ -87,3 +90,5 @@ jobs:
       - run: node billing-candidate/billing-merge-postgres-check.mjs
       - run: node billing-candidate/core-billing-migration.mjs
       - run: node billing-candidate/core-billing-migration-check.mjs
+      - run: node billing-candidate/core-billing-hosted-fixture-check.mjs
+      - run: node billing-candidate/team-feature-access-check.mjs

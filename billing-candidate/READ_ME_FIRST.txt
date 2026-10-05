@@ -7,9 +7,11 @@ composition, and billing/deletion actor locks. Full main-app Debug/Release build
 and the billing database/browser/native checks have passed on integration checkpoints.
 Consult current PR checks for the latest exact commit. The Apple key is configured
 privately in Render; Supabase's verifier authentication and restricted database
-connection passed live checks. Server deployment, retention/reconciliation and
-paid-feature enforcement remain outstanding. The complete deletion worker now
-has seven synthetic billing integration scenarios; no billing data schema is live.
+connection passed live checks. The core billing schema is deployed. Hosted account/file/billing deletion passed
+and all disposable fixtures were cleaned. Team Pro now backs practice plans and
+statistics; their paid/refund/expiry/session/scope checks pass in a full-schema
+fixture. Notification scheduling, live billing routes, Family Video rollout and
+real Apple sandbox purchase acceptance remain outstanding.
 Payments are not enabled. See docs/launch-acceptance-batch.md for the one combined
 acceptance round after those prerequisites are ready.
 
@@ -18,7 +20,7 @@ weigh-ins in a later update. Remote reporting, director subscriptions/trials,
 remote evidence storage/expiry and vendor imports do not block the core release.
 Core paid plans must unlock accepted working benefits before purchases activate.
 The athlete-merge/family-selection integration now passes six full-schema checks
-and real PostgreSQL concurrency CI; it still needs the reviewed hosted migration.
+and real PostgreSQL concurrency CI; its reviewed hosted migration is installed.
 
 The notes below are historical component checkpoints, not the current integration
 status. Earlier "not wired" statements may be superseded by PR #62; deployment and
