@@ -3,6 +3,10 @@ on:
   pull_request:
     paths:
       - welcome.html
+      - index.html
+      - src/fundraising.js
+      - src/clipboard-navigation.js
+      - tests/fundraising-browser.cjs
       - tests/public-website.cjs
       - .github/workflows/public-website.yml
 permissions:
@@ -23,8 +27,11 @@ jobs:
       - run: npm ci --prefix .ci --ignore-scripts --no-audit --no-fund
       - run: .ci/node_modules/.bin/playwright install --with-deps chromium
       - run: node tests/public-website.cjs
+      - run: node tests/fundraising-browser.cjs
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
           name: public-website-layouts
-          path: validation/public-website-*.png
+          path: |
+            validation/public-website-*.png
+            validation/fundraising-*.png
