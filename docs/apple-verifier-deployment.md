@@ -1,6 +1,6 @@
 # Apple verification hosting decision
 
-Status: Damon approved the proposed $7/month Render service plus applicable usage/taxes on October 4, 2026. Code and deployment configuration are prepared. Render account connection and private-key configuration are still needed; no service or charge has been created. This is a backend component of the existing app. Families and directors do not install another app.
+Status: Damon approved the proposed $7/month Render service plus applicable usage/taxes on October 4, 2026. Code and deployment configuration are saved. The Render account is connected; the owner still needs to enter the Apple private key and deploy. The earlier new-service form was not deployed. This is a backend component of the existing app. Families and directors do not install another app.
 
 ## Why this is needed
 
@@ -10,15 +10,15 @@ The prepared solution uses Node for Apple's verification library. Supabase retai
 
 ## Approved service scope
 
-One Render Node web service, `wm-apple-verifier`, on its 0.5 CPU / 512 MB plan (formerly Starter). Render lists this compute size at **$7/month**; applicable usage and taxes are additional. Confirm the displayed total before creation. No new database, disk, workspace upgrade, preview service or autoscaling is requested. The prepared Blueprint is `billing-candidate/render-verifier.yaml`. Automatic deploys are disabled.
+One Render Node web service, `wm-apple-verifier`, on its 0.5 CPU / 512 MB plan (formerly Starter). Render lists this compute size at **$7/month**; applicable usage and taxes are additional. Confirm the displayed total before creation. No new database, disk, workspace upgrade, preview service or autoscaling is requested. The canonical Blueprint is the root `render.yaml`. Automatic deploys are disabled.
 
 This size is a starting deployment, not proof of nationwide capacity. Two verification requests can execute concurrently, with a 25-second worker deadline; excess work receives a retryable response. Existing delivery/reconciliation must retain pending work when verification is unavailable. Check actual Apple sandbox latency and queue drainage before opening paid access.
 
 ## Setup
 
-1. Connect the existing GitHub repository to the owner's Render account. Select the prepared Blueprint file and the integration branch. Review the proposed resource and price before creating it.
+1. In the owner's Chrome browser, open [the prepared Render setup](https://render.com/deploy?repo=https://github.com/Meleman35/wrestling-weight-manager-public/tree/codex/launch-integration-20261004). Sign in to the existing Render account. The link selects the integration branch and root `render.yaml`; it does not create a service merely by being opened. If asked for a Blueprint name, use `wm-apple-verifier`. Review the single proposed service and price. Use this flow instead of deploying the earlier unfinished form as well, to avoid creating a duplicate service.
 2. In Render's private environment settings, supply the existing `.p8` contents as `APPLE_IAP_PRIVATE_KEY`, preserving actual line breaks. Public key ID: `79R244P822`. Do not recreate Apple products, tax, banking or agreements for this step. Never paste the private key into chat, the repository, an app package or a screenshot.
-3. Generate a fresh 32-byte random secret for `APPLE_VERIFIER_SHARED_SECRET`. The verifier accepts both Render's canonical Base64 format and 64 hexadecimal characters from `openssl rand -hex 32`. The owner can use **Generate** beside this field to avoid cross-browser clipboard problems. Save the exact generated value privately for Supabase; do not change its encoding or send it to chat. **Do not use Generate beside `APPLE_IAP_PRIVATE_KEY`**: that field requires the existing Apple `.p8` key.
+3. The Blueprint asks Render to generate `APPLE_VERIFIER_SHARED_SECRET` automatically during creation, so there is no shared-secret paste step in this setup. The verifier accepts Render's canonical Base64 format and 64 hexadecimal characters from `openssl rand -hex 32`. After creation, save the exact generated value privately for Supabase; do not change its encoding or send it to chat. **Do not generate a replacement for `APPLE_IAP_PRIVATE_KEY`**: that field requires the existing Apple `.p8` key.
 4. Deploy the reviewed commit. The service binds Render's supplied `PORT`. `/health` confirms local startup configuration only; it does not establish valid Apple credentials, paid access or end-to-end purchase readiness.
 5. In Supabase's server secret store, configure `APPLE_VERIFIER_URL` as the exact HTTPS service URL ending in `/apple`, and the same `APPLE_VERIFIER_SHARED_SECRET`. The `.p8` stays in the Node service. Never expose either server secret through browser/native configuration.
 6. Wire the approved Supabase billing entry point with `remoteApple: {url, secret}` and the selected Apple environment. Keep the existing deployment, deletion/retention and restricted-database-identity checks. This document does not provide an entry point that bypasses them.
@@ -37,6 +37,7 @@ This size is a starting deployment, not proof of nationwide capacity. Two verifi
 - [Blueprint fields and deployment behavior](https://render.com/docs/blueprint-spec)
 - [Node version configuration](https://render.com/docs/node-version)
 - [Environment variables and secrets](https://render.com/docs/configure-environment-variables)
+- [Deploy to Render setup links](https://render.com/docs/deploy-to-render)
 - [Apple's certificate verification implementation](https://github.com/apple/app-store-server-library-node/blob/main/jws_verification.ts)
 
 Hosting approval resolves the runtime choice only. Hosted billing deletion/retention, paid-team remainder behavior, restricted database identity, remote program/consent/credential provisioning, capture integration and real receipt/storage/retention services still require completion before launch.

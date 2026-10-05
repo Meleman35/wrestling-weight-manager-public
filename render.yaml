@@ -1,12 +1,13 @@
 # Owner approved this single $7/month service on October 4, 2026.
-# Account connection and private secrets are still required before deployment.
-# Select this file explicitly in Render; it is not an automatic production deploy.
+# Open the setup link in docs/apple-verifier-deployment.md in the owner's browser.
+# Supply the Apple key and review the service before deploying.
 previews:
   generation: "off"
 services:
   - type: web
     name: wm-apple-verifier
     runtime: node
+    region: oregon
     plan: 0.5c-512mb
     numInstances: 1
     repo: https://github.com/Meleman35/wrestling-weight-manager-public
@@ -24,4 +25,4 @@ services:
       - key: APPLE_IAP_PRIVATE_KEY
         sync: false
       - key: APPLE_VERIFIER_SHARED_SECRET
-        sync: false
+        generateValue: true
