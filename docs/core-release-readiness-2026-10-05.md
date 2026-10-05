@@ -16,7 +16,7 @@ This source-review checkpoint prepares PR #62 while owner device testing and App
 
 The candidate names the two connected tools, connection requirement and ordinary role restrictions before purchase. This is not a new decision to reduce the agreed Team Pro product or declare its final benefit inventory complete. Apple production authorization and purchase activation remain disabled/pending; naming included tools does not grant access. The Plans menu now says Team Pro rather than suggesting Family Video can be purchased.
 
-Purchase information links open embedded privacy/support and Apple's standard EULA. The native external-link rule remains limited to trusted-main-page user taps on the exact approved EULA and Zeffy URLs. Verify the app's selected standard/custom agreement in App Store Connect before submission; do not claim a custom agreement was established by adding this link.
+Purchase information links open embedded privacy/support and Apple's standard EULA. The native external-link rule remains limited to trusted-main-page user taps on the exact approved EULA and Zeffy URLs. The owner's October 5 App Information screenshot confirms Apple Standard License Agreement is selected; no custom agreement was established by adding this link.
 
 ## Privacy/provider reconciliation
 
@@ -71,7 +71,7 @@ For a failure, record expected/actual result, role, build and connection state. 
 
 ## Owner-dependent items
 
-Resume App Store Connect security-key sign-in when available; inspect current products/agreements/trader state without recreating completed banking or key setup. Resolve the selected test app account and fictional team, which were not present at the earlier October 5 read. Then establish exact short-lived Sandbox enrollment and run one prepared device round. No owner password or private key is needed in chat.
+The owner's signed-in Mac screenshots confirmed app identity, saved receiver URLs and matching active IAP key metadata. A bounded Production recheck at 23:41 UTC still returned 401; a fresh signed Sandbox TEST delivered successfully. The diagnostic is closed at v4. Inspect current products/agreements/trader state using the owner's session without recreating completed banking or key setup. Resolve the selected test app account and fictional team, which were not present at the earlier October 5 read. Then establish exact short-lived Sandbox enrollment and run one prepared device round. No owner password or private key is needed in chat.
 
 ## Verification of this preparation
 

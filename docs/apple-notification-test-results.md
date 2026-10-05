@@ -1,5 +1,27 @@
 # Apple notification delivery checkpoint — October 5, 2026 UTC
 
+## Latest recheck, 23:41–23:43 UTC
+
+Owner screenshots confirmed matching app ID, bundle ID, active IAP key ID, issuer
+and receiver URLs. One fresh Production request at 23:41:57 UTC still returned
+Apple HTTP 401 with no numeric error code or TEST token. A Sandbox control using
+the same live service and credential configuration succeeded: its signed TEST
+verified and Apple reported first-attempt SUCCESS at 23:42:09.333 UTC, notification
+ID `c3e67756-7c41-4484-af77-a5da8698e0a5`.
+
+The bounded private diagnostic v3 matched five reviewed source files and denied
+unauthenticated requests with 403. It was closed immediately as **v4**, restoring
+the original 410 handler and gateway JWT verification. Source equality was
+verified; the gateway now rejects unauthenticated calls with 401. Readiness remains
+true; subscriptions, purchase intents, notification inbox and enrolled accounts
+remain zero. All 10 focused diagnostic/connection tests passed.
+
+Production authorization remains blocked. Product/agreement statuses still need
+owner-visible review. See `apple-production-authorization-2026-10-05.md` and the
+unsent `apple-production-support-draft.md`; no working key was changed.
+
+## Initial checkpoint, 03:50 UTC
+
 The owner saved the Version 2 URLs on October 4 at 9:43 PM America/Denver.
 
 | Check | Result |

@@ -1,11 +1,43 @@
 # Production Apple authorization investigation — October 5, 2026
 
-This read-only continuation does not enable customer payments, publish the web
-candidate, install a native build or submit to Apple. Production 401 is unresolved;
-no additional Apple TEST request was sent and the closed diagnostic bridge was
-not reopened. Keep the working key and environment separation intact.
+Production 401 remains unresolved after a bounded recheck at 23:41 UTC. The same
+live verifier accepted a fresh Sandbox request and verified successful delivery.
+Customer payments remain disabled. No web/native release or App Store submission
+was made. Keep the working key and environment separation intact.
 
-## Fresh evidence
+## Owner screenshots and bounded recheck, 23:41–23:43 UTC
+
+The owner's October 5 screenshots confirm the app ID `6815511370`, exact bundle
+`com.damonmele.wrestlingmanager`, and saved Production/Sandbox receiver URLs.
+The 17:36:49 America/Denver screenshot shows the In-App Purchase key under
+**Active (1)**: key ID `79R244P822`, issuer
+`b5931be7-ac93-4ab3-9b1a-15e1dd26a549`. Both match the deployed public
+configuration. No private key was viewed or changed.
+
+Version 1.0 is **Prepare for Submission**, with no build selected on that version
+page. This does not establish whether TestFlight has uploaded builds. The Apple
+Standard License Agreement is selected. Category, content rights, age rating and
+review fields remain incomplete in the supplied screenshots. Product statuses,
+current Paid Applications Agreement status and trader verification approval have
+not yet been inspected. Notification version was not visible in these screenshots;
+the earlier owner confirmation of Version 2 remains the evidence for that setting.
+
+| Check | Fresh result |
+| --- | --- |
+| Preflight | Readiness true; 10 focused diagnostic, response-validation and connection tests passed. |
+| Private diagnostic | Version 3, five deployed files matched reviewed source; fixed expiry 23:51:33 UTC; unauthenticated call returned 403. Existing database capability and verifier credentials used only server-side. |
+| Production | One request at `2026-10-05T23:41:57.791860Z`; Apple HTTP 401, no numeric Apple error code returned by the adapter, no TEST token. |
+| Sandbox control | Request accepted at `2026-10-05T23:42:08.158061Z`; returned TEST signature verified; Apple reports first-attempt SUCCESS at `23:42:09.333Z`. Notification ID `c3e67756-7c41-4484-af77-a5da8698e0a5`. |
+| Closure | Restored the original closed handler as version 4 at 23:42:39 UTC, with gateway JWT verification enabled. Deployed source matched; unauthenticated request rejected by gateway with 401. Handler itself remains 410. |
+| Postcheck | At 23:43:09 UTC readiness true; zero subscriptions, purchase intents, notification inbox rows and enrolled accounts. |
+
+This is an environment-specific authorization failure under the same service and
+credential configuration. Its root cause is still unknown. Sandbox control success
+does not prove a customer purchase, benefit delivery or Production readiness.
+There is no evidence here that changing notification URLs or rotating the working
+key would fix it. The unreleased app state alone is not an established cause.
+
+## Earlier read-only checkpoint
 
 | Check | Result and limit |
 | --- | --- |
@@ -38,27 +70,19 @@ both environments and emphasizes case-sensitive bundle IDs. Other developers
 in that forum report success after first release, but that anecdote does not
 establish this app's cause or justify releasing unaccepted billing.
 
-## Next bounded action after owner sign-in
+## Remaining owner-visible checks
 
-1. Read the existing app `6815511370`, exact bundle
-   `com.damonmele.wrestlingmanager`, current version/build, both Team Pro product
-   statuses, agreement status and saved Version 2 notification URLs. Preserve
-   earlier confirmed banking/tax setup; fix only a newly observed issue.
-2. Read the active In-App Purchase key's public metadata and compare key ID
-   `79R244P822` and issuer `b5931be7-ac93-4ab3-9b1a-15e1dd26a549` with
-   `billing-candidate/apple-server-config.mjs`. Do not retrieve, display,
-   regenerate, revoke or copy the `.p8` to diagnose a metadata mismatch.
-3. If configuration differs, review the precise correction before applying it.
-   If configuration agrees, collect a fresh bounded Production diagnostic
-   through an explicitly reviewed private operator path. Retain only status,
-   numeric error, time and safe delivery metadata; never log the bearer JWT or
-   key. A retry needs a concrete diagnostic purpose; do not simply repeat the
-   earlier two requests or reopen an expired bridge indefinitely.
-4. If Apple still rejects matching configuration, prepare an Apple support case
-   with redacted identifiers, environment, endpoint, library version, timestamps
-   and error evidence. Sending it requires explicit owner authorization. Do not
-   include a live JWT, private key, banking details or customer records.
-5. Require a verified signed Production TEST and successful delivery before
+1. Use the owner's signed-in Mac session to read **Business → Agreements** and
+   both Team Pro products under **Apps → The Wrestling Manager → Monetization →
+   Subscriptions**. Screenshots of statuses are sufficient; banking/tax details
+   are unnecessary. The cloud browser security-key sign-in was not completed.
+2. Correct only an observed mismatch or incomplete requirement. Preserve completed
+   banking/tax setup, app identity and the working IAP key. Do not repeat the API
+   request without a configuration change or a specific Apple diagnostic request.
+3. An unsent support-case draft is in `apple-production-support-draft.md`. Add the
+   remaining status evidence before sending. Sending requires explicit owner
+   authorization; no live JWT, private key or customer records belong in the case.
+4. Require a verified signed Production TEST and successful delivery before
    marking production authorization complete. Real purchase/restore and benefit
    grant/removal remain separate device acceptance requirements.
 
