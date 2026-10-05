@@ -15,7 +15,7 @@ const root=path.resolve(__dirname,'..');
   if(new URL(req.url()).pathname==='/sw.js'){
    requests.push({url:req.url(),headers:await req.allHeaders()});const selected=mode;
    if(selected==='hold'||selected==='timeout')await new Promise(resolve=>{release=resolve;});
-   try{return await route.fulfill({status:selected==='error'?503:200,contentType:'text/javascript',body:selected==='malformed'?"private backend text":`const CACHE='wm-shell-${selected==='newer'?'0.20.122':selected==='major'?'1.0.0':selected==='older'?'0.20.99':'0.20.121'}';`});}catch{return;}
+   try{return await route.fulfill({status:selected==='error'?503:200,contentType:'text/javascript',body:selected==='malformed'?"private backend text":`const CACHE='wm-shell-${selected==='newer'?'0.20.123':selected==='major'?'1.0.0':selected==='older'?'0.20.99':'0.20.122'}';`});}catch{return;}
   }
   if(req.url().includes('supabase'))return route.fulfill({contentType:'text/javascript',body:''});
   return route.abort();
@@ -30,7 +30,7 @@ const root=path.resolve(__dirname,'..');
  if(!(await page.locator('.account-profile-editor').evaluate(e=>e.open)))await page.locator('.account-profile-editor summary').click();
  await page.locator('#accountDisplayName').fill('Unsaved synthetic edit');
  mode='newer';await button.click();await page.waitForFunction(()=>document.getElementById('webUpdatesCard').dataset.updateState==='available');
- assert.match(await status.innerText(),/0.20.122/);assert.match(await status.innerText(),/Save unfinished work/);assert.match(await status.innerText(),/close all/);
+ assert.match(await status.innerText(),/0.20.123/);assert.match(await status.innerText(),/Save unfinished work/);assert.match(await status.innerText(),/close all/);
  for(const width of [320,390,768]){await page.setViewportSize({width,height:844});await card.scrollIntoViewIfNeeded();assert.equal(await card.evaluate(e=>e.scrollWidth<=e.clientWidth),true);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);}
  await page.setViewportSize({width:390,height:844});await card.screenshot({path:path.join(root,'validation/web-updates-phone.png')});
  assert.equal(await page.locator('#accountDisplayName').inputValue(),'Unsaved synthetic edit');
