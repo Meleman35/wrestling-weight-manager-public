@@ -235,7 +235,10 @@ Notification reconciliation worker and Apple configuration added:
   the existing billing suite and Apple SDK/native/browser checks.
 - Confirmed identity fixed in apple-server-config.mjs; server secret required:
   APPLE_IAP_PRIVATE_KEY (original multiline contents of owner's In-App Purchase .p8).
-  Private key must be added in Supabase Edge Function Secrets, never in chat/GitHub.
+  Superseded October 4: the private key is configured in the deployed Render Node
+  verifier, not Supabase. Supabase holds only APPLE_VERIFIER_URL and the matching
+  APPLE_VERIFIER_SHARED_SECRET; both passed live authentication on October 5.
+  See docs/apple-verifier-deployment.md. Never paste the private key in chat/GitHub.
 - Runtime deployment, dedicated DB identity, financial retention/deletion catalog,
   verified Apple trust roots, authenticated scheduler and real sandbox/device tests
   remain required. No live endpoint or migration was deployed in this step.
