@@ -1,7 +1,7 @@
 /* Public web-version status only. Never activates a worker or reloads user work. */
 window.WMWebUpdates=(()=>{
  'use strict';
- const CURRENT='0.20.122',LIMIT=65536;
+ const CURRENT='0.20.123',LIMIT=65536;
  const sheet=document.getElementById('accountSheet');
  if(!sheet)return Object.freeze({check:async()=>{}});
  const card=document.createElement('section');card.id='webUpdatesCard';card.className='feature-card';

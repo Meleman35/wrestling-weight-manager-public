@@ -18,6 +18,18 @@ window.host=installSubscriptionApp({button:document.querySelector('#open'),root:
   });
   await page.goto('https://plans.test/');await page.waitForFunction(()=>window.host);
   await page.click('#open');await page.getByText('Team Pro is active for this team.',{exact:true}).waitFor();
+  const benefits=await page.locator('.wm-subscription-benefits').innerText();
+  assert.match(benefits,/Practice Plans/);assert.match(benefits,/Wrestler Statistics/);
+  assert.equal(await page.evaluate(()=>calls.filter(x=>x?.command==='purchase').length),0);
+  const links=page.getByRole('navigation',{name:'Subscription information'});
+  assert.equal(await links.getByRole('link',{name:'Privacy information'}).getAttribute('data-wm-info'),'privacy');
+  assert.equal(await links.getByRole('link',{name:'Help and support'}).getAttribute('data-wm-info'),'support');
+  const eula=links.getByRole('link',{name:'Apple standard EULA'});
+  assert.equal(await eula.getAttribute('href'),'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/');
+  assert.equal(await eula.getAttribute('referrerpolicy'),'no-referrer');
+  for(const width of [320,390,768]){await page.setViewportSize({width,height:844});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));}
+  await page.setViewportSize({width:390,height:844});fs.mkdirSync('validation',{recursive:true});
+  await page.screenshot({path:'validation/team-pro-launch-information.png',fullPage:true});
   await page.getByRole('button',{name:'Monthly — $75.00/month',exact:true}).click();
   assert.deepEqual(await page.evaluate(()=>calls.filter(x=>x?.command==='purchase').at(-1).target),{kind:'team',teamID:'22222222-2222-4222-8222-222222222222'});
   assert.equal(await page.getByRole('button',{name:'Family Video',exact:true}).count(),0);

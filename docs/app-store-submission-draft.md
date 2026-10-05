@@ -1,6 +1,6 @@
 # App Store submission draft
 
-Prepared for the combined launch work on October 4, 2026. These are prepared fields, not an App Store Connect update or a submission. Publish only after the accepted build and deployed feature set match the description. Review information must describe the actual submitted build.
+Prepared for the combined launch work on October 4; updated October 5, 2026. These are prepared fields, not an App Store Connect update or a submission. Publish only after the accepted build and deployed feature set match the description. Review information must describe the actual submitted build.
 
 Owner-approved scope, October 4 at 8:14 PM Mountain: launch the core app first. Nationwide remote weigh-ins, director subscriptions/trials, remote evidence capture/reporting and tournament imports will ship in a later update. Ordinary team scale/NFC tools remain in the first release. Do not advertise remote weigh-ins as an available first-release benefit. Team Pro is the only first-release paid plan; Family Video and texting were deferred by the owner on October 4 at 9:08–9:10 PM Mountain, with an October 25 update goal. Do not advertise either as available now. Team Pro purchases and their actual benefits still require hosted and device acceptance.
 
@@ -32,10 +32,10 @@ Keep your wrestling season organized with team schedules, athlete records, famil
 The Wrestling Manager brings coaches, athletes and families into one team workspace.
 
 Organize the season
-Keep team schedules, announcements, rosters and practice plans together so your team can follow what is happening and prepare for what comes next.
+Keep team schedules, announcements and rosters together so your team can follow what is happening and prepare for what comes next.
 
 Support each athlete
-Manage authorized athlete records, weight history and wrestling statistics with access tied to team and family roles.
+Manage authorized athlete records and weight history with access tied to team and family roles.
 
 Keep families involved
 Linked guardian permissions support participation in profile sharing and covered communications. Assigned adult review and notification preferences help adults follow the conversations they are responsible for.
@@ -46,12 +46,18 @@ Use the available scorebook and Offline Mat Mode tools on supported devices. Che
 Connect compatible equipment
 Supported native tools work with compatible American Scale equipment and NFC readers. Hardware availability, device permissions and setup affect which tools you can use.
 
+Team Pro coaching tools
+An optional monthly or annual Team Pro subscription covers the team selected at purchase. It includes Practice Plans and Wrestler Statistics for authorized users. These tools require an internet connection. Prices appear in the app before purchase; subscriptions renew automatically unless cancelled in Apple subscription settings. Restore keeps the original team binding.
+
 Built by Mele Sports Technologies LLC for the everyday work of wrestling teams.
 
 An account and the appropriate team invitation or assigned role are required for team features. Available tools depend on your role, team configuration and installed build. Weight readings do not replace official weigh-in certification. Family and review tools support responsible communication practices; they do not replace adult supervision or establish SafeSport certification.
 
 Support: https://theteammanager.app/support.html
 Privacy: https://theteammanager.app/privacy.html
+Terms (Apple standard EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
+The subscription paragraph and terms link are conditional on accepted benefits, enabled production purchases and the agreement selected in App Store Connect. The current service does not yet meet that launch state. See `core-release-readiness-2026-10-05.md` for the benefit, privacy and moderation evidence gaps.
 
 ## Review information to complete after acceptance
 

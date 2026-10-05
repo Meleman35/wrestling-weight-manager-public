@@ -14,6 +14,9 @@
 @media(max-width:360px){:is(.wm-subscription-screen,.wm-family-coverage-screen){padding:14px}.wm-subscription-options{grid-template-columns:1fr}}
 
 .wm-family-coverage-screen{margin-top:16px}
+.wm-subscription-links{display:flex;flex-wrap:wrap;gap:8px 18px;margin:16px 0}
+.wm-subscription-links a{color:#b8d9ff;min-height:44px;display:inline-flex;align-items:center;text-decoration:underline;text-underline-offset:3px}
+.wm-subscription-links a:focus-visible{outline:3px solid #90c7ff;outline-offset:3px}
 .wm-family-coverage-screen label{display:flex;align-items:center;gap:10px;min-height:48px;padding:10px 0;cursor:pointer}
 .wm-family-coverage-screen input{flex:0 0 auto;width:20px;height:20px}
 .wm-family-coverage-screen h3{margin:0 0 12px;font-size:22px}

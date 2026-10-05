@@ -12,6 +12,8 @@ Owner approved the phased release on October 4, 2026 at 8:14 PM Mountain: core a
 - Owner confirmed the isolated Build 7 camera/scale flow on October 4. Its tested transport/stability logic is preserved in the main app's local package.
 - These source changes do not publish the website, deploy billing/remote services, enable paid access, or submit to Apple.
 
+The October 5 claim/provider/moderation inventory and focused result sheet are in `core-release-readiness-2026-10-05.md`. The next draft pairs web/cache 0.20.123; public web is still 0.20.122 until deliberately published.
+
 ## Prerequisites before handing over the device checklist
 
 1. Preserve the existing solution to the Apple-verification runtime incompatibility in `docs/apple-verifier-deployment.md`. Damon approved and deployed the Render service on October 4. Its private key and the Supabase URL/shared secret passed live authentication; Apple's actual signed Sandbox TEST verified and delivery succeeded on October 5. Production authorization and real purchase acceptance remain separate. Keep the existing `.p8` as `APPLE_IAP_PRIVATE_KEY` in that Node service, with only its private URL/shared secret in Supabase. Keep the key out of chat, source, screenshots, the native app and ZIPs. Public key ID remains `79R244P822`; products, agreements, tax and banking do not need recreating for this step.
@@ -33,6 +35,7 @@ Use designated test accounts and fictional athlete records. Keep ordinary paid a
 | Switch account/team; lock/background | Previous account requests and screens close. No old photo, purchase result, access display or capture continues into a replacement account. |
 | Ordinary team weigh-in and athlete cards | Existing scale/NFC/QR identification records the intended test athlete's weight; Save to Files and printing work for the team athlete-card export. Remote reporting is absent. |
 | Disposable account deletion | Cancel first. Then delete a designated disposable personal account. Require server completion plus local cleanup; another account's files remain usable. Verify the approved paid-team remainder behavior with another authorized administrator. |
+| Unresolved reviewer and moderation checks | After engineering gaps are closed, verify populated reviewer history/media and revocation, reporting, report preservation, block scope and operator response using fictional cases. An empty inbox is insufficient. |
 | Existing main app smoke check | Sign-in, scale/NFC setup, team navigation, messaging safeguards, Offline Mat Mode and saved bouts remain usable. |
 
 Record each failed step with the test account role, expected behavior, actual behavior and whether connectivity changed. A screenshot of status text is enough; do not send athlete photographs or private keys.

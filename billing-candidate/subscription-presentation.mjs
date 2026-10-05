@@ -48,6 +48,13 @@ export function subscriptionPresentation({kind, teamID = null, products = [], pu
     coverage: kind === 'team'
       ? 'One wrestling team. The subscription stays with the team selected at purchase.'
       : 'Up to two linked athletes across teams. Coverage follows your athletes.',
+    benefits: Object.freeze(kind === 'team' ? [
+      'Practice Plans: daily plans, timed activity blocks, copies and links to scheduled practices.',
+      'Wrestler Statistics: team and wrestler reports by style and season, saved match history and CSV export.'
+    ] : []),
+    requirements: kind === 'team'
+      ? 'Practice Plans and Statistics require an internet connection. Your existing team role and athlete permissions still apply.'
+      : null,
     recording: kind === 'family'
       ? 'An authorized coach, manager or other approved filming device can record a covered athlete, even when the team does not have Team Pro.'
       : 'Team subscription coverage does not include unrelated teams.',

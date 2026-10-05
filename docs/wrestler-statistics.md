@@ -6,9 +6,9 @@ Reports include wins/losses, win rate, points for/against, averages, finish type
 
 ## Paid launch boundary
 
-Paid subscriptions are not connected in this app. `private.wrestler_statistics_covered(team_id)` intentionally returns false until the verified Team Pro entitlement service replaces this adapter. Roles, client flags, recording access and family-video coverage do not prove Team Pro coverage. No subscriptions, billing, trial grants or existing pilot access are changed.
+As of October 5, the deployed `private.wrestler_statistics_covered(team_id)` delegates to `wm_billing.team_feature_covered`. The helper checks verified Team Pro coverage, current session and permission, payer/deletion state, expiry/refund/grace and reviewed paid-team remainder rules. Roles, client flags, recording access and Family Video do not prove Team Pro coverage.
 
-Until that integration is complete, the released UI offers only a clearly labeled fictional preview. The real reporting endpoint, calculations and UI are implemented and tested with synthetic paid coverage. Real team statistics are not activated yet. Connect paid coverage, test expiration/refunds/restores, and optionally authorize a named test pilot before promising paid launch readiness. The feature is Team Pro; Family Video does not independently unlock team coaching statistics.
+Customer purchases remain disabled. An uncovered team receives the fictional preview. The hosted purchase route is Sandbox-only and requires short-lived enrollment for the exact account and team; enrollment alone grants no access. Real Apple purchase/restore, protected report access and refund/expiry removal still need the consolidated device acceptance. The implementation and isolated tests are not evidence of a completed customer purchase. College Pro and trial preferences are not activated entitlements.
 
 ## Privacy and maintenance
 

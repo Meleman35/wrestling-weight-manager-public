@@ -20,6 +20,13 @@ export function mountSubscriptionScreen(container, configuration, callbacks = {}
   }
   element('h2', model.title);
   element('p', model.coverage);
+  if (model.benefits.length) {
+    element('h3', 'Included tools');
+    const benefits = element('ul');
+    benefits.className = 'wm-subscription-benefits';
+    for (const benefit of model.benefits) element('li', benefit, benefits);
+    element('p', model.requirements);
+  }
   element('p', model.recording);
   if (model.extraAthletes) element('p', model.extraAthletes);
   const pricing = element('div');
@@ -32,6 +39,20 @@ export function mountSubscriptionScreen(container, configuration, callbacks = {}
   const list = element('ul', null, unavailable);
   for (const notice of model.notices) element('li', notice, list);
   element('p', model.renewal);
+  const links = element('nav');
+  links.className = 'wm-subscription-links';
+  links.setAttribute('aria-label', 'Subscription information');
+  for (const [label, url, info] of [
+    ['Privacy information', 'https://theteammanager.app/privacy.html', 'privacy'],
+    ['Help and support', 'https://theteammanager.app/support.html', 'support'],
+    ['Apple standard EULA', 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/', null]
+  ]) {
+    const link = element('a', label, links);
+    link.href = url;
+    link.rel = 'noopener noreferrer';
+    link.referrerPolicy = 'no-referrer';
+    if (info) link.dataset.wmInfo = info;
+  }
   function control(label, allowed, action, parent = root) {
     const button = element('button', label, parent);
     button.type = 'button';

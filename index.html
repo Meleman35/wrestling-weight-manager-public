@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.122: Zeffy fundraising referrals in Clipboard, Board Room and the public website. -->
+<!-- Wrestling Manager v0.20.123: Zeffy fundraising referrals in Clipboard, Board Room and the public website. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -1356,7 +1356,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
             <button class="menu-row disabled" data-layout-key="files"><span>📁</span><div><b>Files & Photos</b><small>Team documents and albums</small></div><i>›</i></button>
           </div></section>
           <section class="toolbox-group"><div class="toolbox-group-head"><span>🧰</span><div><b>Program</b><small>Organization, admin and app settings</small></div></div><div class="menu-card">
-            <button id="remoteReportingBtn" class="menu-row" hidden type="button"><span>⚖️</span><div><b>Remote weigh-ins</b><small>Club and tournament reporting</small></div><i>›</i></button><button id="subscriptionPlansBtn" class="menu-row" hidden type="button"><span>☆</span><div><b>Plans &amp; purchases</b><small>Team Pro and Family Video</small></div><i>›</i></button><button id="organizationHubBtn" class="menu-row" data-layout-key="organization_hub"><span>🏛️</span><div><b>Board Room</b><small>Meetings, votes, clubs, programs and leadership</small></div><i>›</i></button>
+            <button id="remoteReportingBtn" class="menu-row" hidden type="button"><span>⚖️</span><div><b>Remote weigh-ins</b><small>Club and tournament reporting</small></div><i>›</i></button><button id="subscriptionPlansBtn" class="menu-row" hidden type="button"><span>☆</span><div><b>Plans &amp; purchases</b><small>Team Pro · Monthly or annual</small></div><i>›</i></button><button id="organizationHubBtn" class="menu-row" data-layout-key="organization_hub"><span>🏛️</span><div><b>Board Room</b><small>Meetings, votes, clubs, programs and leadership</small></div><i>›</i></button>
             <button id="fundraisingBtn" class="menu-row coach-only" type="button"><span>💚</span><div><b>Fundraising</b><small>Zeffy for eligible nonprofits</small></div><i>›</i></button>
             <button id="staffAccessBtn" class="menu-row admin-only" data-layout-key="staff_access"><span>🪪</span><div><b>Edit Team Leaders</b><small>Assign coaches, team leaders, volunteers and administrators</small></div><i>›</i></button>
             <button id="feedbackBtn" class="menu-row" data-layout-key="feedback"><span>💬</span><div><b>Feedback</b><small>Share ideas, problems and what you like</small></div><i>›</i></button>
@@ -2386,7 +2386,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.122</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.123</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -12134,7 +12134,7 @@ document.getElementById('organizationHomeBtn').onclick=()=>WMOperations.open(sel
 <section class="wm-doc-contact"><h2>Contact support</h2>
 <p><a class="wm-doc-email" href="mailto:support@theteammanager.app?subject=Wrestling%20Manager%20support">support@theteammanager.app</a></p>
 <p>Include what you were trying to do, what happened, your device model, iOS/iPadOS version, whether you used the installed app or Safari, and the web Build shown in the app. Include the installed Apple version/build separately when known; the web Build and TestFlight build are different. A cropped screenshot of the error can help, without other people’s information.</p>
-<p>Product company: <strong>Mele Sports Technologies LLC</strong> · The Team Manager / Wrestling Manager. This page was updated October 1, 2026.</p>
+<p>Product company: <strong>Mele Sports Technologies LLC</strong> · The Team Manager / Wrestling Manager. This page was updated October 5, 2026.</p>
 <p>If the email button does not open your mail app, copy the address into your usual email app.</p></section>
 <h2>Sign-in and team access</h2>
 <p>For a personal account, use <strong>Forgot password?</strong> on the sign-in screen. For a shared Team Login, ask your team administrator to check the team code, username and password in <strong>Account &amp; Team → Team Logins</strong>.</p>
@@ -12144,7 +12144,7 @@ document.getElementById('organizationHomeBtn').onclick=()=>WMOperations.open(sel
 <p>Assigned adult conversation reviewers accept from <strong>Messages → Conversation review · approved adults</strong>. Reviewer-only access is read-only and creates no routine reviewer notifications. Normal parent or conversation-participant notifications are separate.</p>
 <p>Specifically authorized personal logins can open <strong>More / Toolbox → Creator Dashboard</strong> without signing out. <strong>Return to Team</strong> closes that workspace. This does not give other team members Creator access.</p>
 <h2>Demonstrations and paid features</h2>
-<p><strong>Explore Role Views · Demo</strong> uses fictional people and representative screens; it never opens a real person’s account. Practice Plans currently shows a paid-feature sample while verified billing access is unfinished. Creator discount drafts cannot be redeemed, and saving a trial preference does not start a trial or charge anyone.</p>
+<p><strong>Explore Role Views · Demo</strong> uses fictional people and representative screens; it never opens a real person’s account. Practice Plans and Wrestler Statistics use verified Team Pro access. Customer purchases remain disabled while Apple purchase and device acceptance are completed; accounts without qualifying coverage see labeled samples. Family Video, texting and nationwide remote weigh-ins are planned for later updates. Creator discount drafts cannot be redeemed, and saving a trial preference does not start a trial or charge anyone.</p>
 <h2>Connection and saved work</h2>
 <p>Reconnect before reopening private health or reviewer views. Offline support varies by feature; do not assume a queued message was delivered or that a local recording was uploaded. For recovery problems, report the exact status rather than submitting the same operation again.</p>
 <p><strong>Do not uninstall, clear app/site data or remove saved credentials as a first troubleshooting step.</strong> Unsynced work and device recordings may be lost. Preserve your current installation and available exports while support checks the issue. A web update does not install new Apple-native functionality.</p>
@@ -12153,8 +12153,9 @@ document.getElementById('organizationHomeBtn').onclick=()=>WMOperations.open(sel
 <h2>Feedback and suggestions</h2>
 <p>Use <strong>Feedback</strong> in the app for ideas, things you like and problems you find. Email support if you cannot sign in or need help with a private account matter. Team-associated in-app feedback can be reviewed by authorized team administrators.</p>
 <h2>Account deletion during the beta</h2>
-<p>Look in <strong>My Account → Account deletion</strong> for the controls available to your account. Native deletion remains a limited pilot for compatible builds and specifically enrolled test accounts. Do not create a new request to recover an already accepted interrupted request; resume the original request and wait for its actual completion status.</p>
+<p>Look in <strong>My Account → Account deletion</strong> for the controls available to your account. The account-deletion service is deployed. Available actions depend on your current authority and selected scope; completion and local-file cleanup on the matching native release are still being tested. Do not create a new request to recover an already accepted interrupted request; resume the original request and wait for its actual completion status.</p>
 <p>Signing out, leaving a team or uninstalling is not account deletion. Contact support when the available controls do not cover your request or the completion status is unclear. Deleting your own guardian account and requesting removal of a child’s information are different requests. No deletion is performed merely by opening this help page or sending an email.</p>
+<p>Account deletion does not cancel an Apple subscription. Manage or cancel it in your Apple subscription settings; you do not need to wait for its expiry to request account deletion.</p>
 <h2>Privacy and data requests</h2>
 <p>Email support with questions about your information, corrections or a request concerning your child's information. Tell us the type of request first; we will work with you to verify the appropriate account or guardian relationship.</p>
 <p>Keep passwords, sign-in codes, medical documents and children's private information out of your initial support message.</p>
@@ -12166,7 +12167,7 @@ document.getElementById('organizationHomeBtn').onclick=()=>WMOperations.open(sel
 </template><template id="wmPrivacyTemplate"><p class="wm-doc-kicker">THE TEAM MANAGER · WRESTLING</p>
 <h1>Privacy information</h1>
 <p class="wm-doc-lead">How Wrestling Manager handles information in the current beta.</p>
-<aside class="wm-doc-note"><strong>Beta privacy information · Updated October 1, 2026</strong><p>This page describes current beta handling. Final release disclosures, retention schedules and younger-athlete enrollment safeguards remain under review. Native account deletion is in a limited, build-dependent test pilot; it is not generally enabled.</p></aside>
+<aside class="wm-doc-note"><strong>Beta privacy information · Updated October 5, 2026</strong><p>This page describes current beta handling. Final release disclosures, retention schedules and younger-athlete enrollment safeguards remain under review. The account-deletion service is deployed; completion on the matching native release is still being tested. Production subscriptions remain disabled.</p></aside>
 <p><strong>Product company:</strong> Mele Sports Technologies LLC · The Team Manager / Wrestling Manager. For privacy questions, contact <a href="mailto:support@theteammanager.app">support@theteammanager.app</a>.</p>
 <h2>Information used by the app</h2>
 <p>Depending on the features you use, information may include account and contact details, profile photos, birthdays, guardian relationships, school or grade, clothing sizes, team memberships and roles; weights and weigh-ins; attendance, events, challenges and scored matches; messages and attachments; medical or clearance documents; sports membership numbers, expiration dates, membership cards and athlete or staff credentials; officials' assignments, budgets, signed forms and feedback.</p>
@@ -12199,15 +12200,18 @@ document.getElementById('organizationHomeBtn').onclick=()=>WMOperations.open(sel
 <li><strong>GitHub Pages</strong> delivers the web app, including its bundled client library. Requests to hosting services include technical information such as an IP address. This disclosure does not establish the retention period of hosting logs.</li>
 <li><strong>Resend</strong> delivers enabled app emails and receives the recipient address and email content.</li>
 <li><strong>Apple</strong> delivers enabled iPhone/iPad push notifications using device tokens and alert content. Depending on notification choices, weigh-in alerts can include an athlete's name and weight on the device's lock screen.</li>
-<li><strong>Google Workspace</strong> handles messages you choose to send to our support email address.</li></ul>
+<li><strong>Google Workspace</strong> handles messages you choose to send to our support email address.</li>
+<li><strong>Apple and Render</strong> support subscription verification. Apple processes in-app purchases. Our verifier on Render checks Apple-signed transaction and notification evidence, including product and transaction identifiers, subscription status, dates and an app account token used to associate a purchase with the correct account. Supabase stores purchase delivery and access records and the selected team binding. The verifier does not receive athlete photos, messages or medical records.</li></ul>
 <p>SMS delivery is not an advertised release-ready feature in this beta. The provider inventory must be reviewed before additional communication services are enabled.</p>
+<p>Customer purchases are currently disabled. Short-lived, designated Apple Sandbox testing does not create a production subscription. Purchasing a plan never grants a new team role, guardian authority or private health access.</p>
 <h2>Device permissions and local data</h2>
 <p>Camera, photo, Bluetooth and notification permissions support the features you choose to use. You can change device permissions in device Settings. The app also keeps sign-in preferences, settings and unfinished match recovery information locally on your device. Some supported features keep account-scoped drafts, queued work or pilot recordings on the device. Not every feature works offline; clinical records and adult-reviewer history are not available as an offline cache. A saved or exported device copy is separate from any server record.</p>
 <h2>Retention and account deletion</h2>
 <p>A season ending does not automatically erase its records. Membership and season dates are separate from data-retention rules. Signing out, uninstalling the app or leaving a team does not by itself delete stored account or athlete information.</p>
-<p>Account deletion is available for limited native testing in compatible builds and specifically enrolled disposable accounts. General native activation remains restricted while interruption recovery, local media and preservation of other accounts are checked. Available account-deletion controls are in <strong>My Account → Account deletion</strong>. An accepted interrupted request must resume its original request; a failed sign-in alone is not proof of completed cleanup.</p>
+<p>Open <strong>My Account → Account deletion</strong> to check the actions available to your signed-in account. The server checks your authority, the selected scope and any records requiring additional review before deletion starts. The account-deletion service is deployed; interruption recovery, local-media cleanup and preservation of other accounts still need acceptance on the matching native release. An accepted interrupted request must resume its original request. A failed sign-in alone is not proof of completed cleanup.</p>
 <p>For an access, correction or deletion request that is not available through your current controls, contact support so the requesting person, authority and scope can be verified. Sending an email does not complete deletion. The final release must provide a tested in-app initiation path for account holders, clear completion timing, and accurate retention details; this beta contact route is not a substitute for that work.</p>
 <p>A season or membership period is not a retention schedule. Purpose-specific retention periods for records, files, logs and backups, and any legally required exceptions, remain to be finalized. We do not claim that all records are erased immediately or that shared team records are automatically exempt. Copies already exported to Photos or Files, other devices, and information previously viewed by recipients require separate handling.</p>
+<p>Account deletion does not cancel an Apple subscription. Manage or cancel it in your Apple subscription settings. Deletion availability does not depend on waiting for the subscription to end.</p>
 <p>A request to remove a guardian's account is different from a request about a child's records. A child's profile may be shared with another guardian or multiple teams; the appropriate authority and scope must be verified.</p>
 <h2>Younger athletes and guardian authority</h2>
 <p>Family links, profile approvals, messaging choices and health-photo choices are separate permissions. An adult reviewer is not automatically a legal guardian, and an App Store age rating does not establish consent to collect a child’s information. Existing parent or trainer submission tools do not by themselves establish the required younger-child consent process. Parent-led notice, verification, review, withdrawal and child-data handling must be completed before collecting personal information from younger children through the pilot. Use fictional records for younger-athlete tests until the required process is complete.</p>
@@ -17594,7 +17598,7 @@ window.WMRolePreviewDocument="\u003c!doctype html>\u003chtml lang=\"en\">\u003ch
 /* Public web-version status only. Never activates a worker or reloads user work. */
 window.WMWebUpdates=(()=>{
  'use strict';
- const CURRENT='0.20.122',LIMIT=65536;
+ const CURRENT='0.20.123',LIMIT=65536;
  const sheet=document.getElementById('accountSheet');
  if(!sheet)return Object.freeze({check:async()=>{}});
  const card=document.createElement('section');card.id='webUpdatesCard';card.className='feature-card';
