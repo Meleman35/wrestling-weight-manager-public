@@ -151,6 +151,18 @@ test('real PostgreSQL transactions, concurrency, permissions and revoked session
     assert.deepEqual(results,[{selectedCount:1},{selectedCount:1}]);
     assert.equal((await admin.query('select count(*)::int as n from wm_billing.family_coverage where user_id=$1',[parent])).rows[0].n,1);
    });
+   await t.test('family selection waits for an active athlete merge before resolving canonical profiles',async()=>{
+    const merge=await admin.connect(),selection=await pool.connect();
+    try{
+     await merge.query('BEGIN');await merge.query("select pg_advisory_xact_lock(hashtext('athlete_merge'))");
+     await selection.query('BEGIN');await selection.query("set local lock_timeout='100ms'");
+     await selection.query("select set_config('request.jwt.claims',$1,true)",[JSON.stringify({sub:parent})]);
+     await assert.rejects(selection.query('select wm_billing.set_family_coverage($1,$2)',[parent,[athlete]]),e=>e.code==='55P03');
+    }finally{
+     await selection.query('ROLLBACK');selection.release();await merge.query('ROLLBACK');merge.release();
+    }
+    assert.deepEqual(await coverage.select(parentContext,{athleteIDs:[athlete]}),{selectedCount:1});
+   });
    await t.test('one selected profile covers both roster records without granting another team Team Pro',async()=>{
     for(const [teamID,athleteID,eventID] of [[team,athlete,event],[other,copy,event2]]){
      const result=await access.read(ctx,{teamID,athleteID,eventID});

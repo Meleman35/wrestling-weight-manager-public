@@ -75,6 +75,9 @@ begin
  end if;
  if p_athletes is null or cardinality(p_athletes)>2 or array_position(p_athletes,null) is not null
   or cardinality(p_athletes)<>(select count(distinct x) from unnest(p_athletes) x) then raise exception 'invalid_coverage';end if;
+ -- The merge router takes the exclusive form before resolving profile IDs.
+ -- Hold this through commit so a selection cannot recreate a retired profile.
+ perform pg_advisory_xact_lock_shared(hashtext('athlete_merge'));
  select array_agg(a.profile_id order by array_position(p_athletes,a.id)),count(*) into profiles,matched
  from public.athletes a where a.id=any(p_athletes) and a.profile_id is not null and exists(
   select 1 from public.athlete_guardians g join public.team_memberships m

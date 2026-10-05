@@ -83,3 +83,4 @@ jobs:
       - run: node billing-candidate/team-paid-remainder-postgres-check.mjs
       - run: node billing-candidate/billing-identity-postgres-check.mjs
       - run: node billing-candidate/billing-deletion-worker-check.mjs
+      - run: node billing-candidate/billing-merge-postgres-check.mjs
