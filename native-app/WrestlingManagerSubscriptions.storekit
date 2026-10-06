@@ -1,0 +1,182 @@
+{
+  "appPolicies": {
+    "eula": "",
+    "policies": [
+      {
+        "locale": "en_US",
+        "policyText": "",
+        "policyURL": ""
+      }
+    ]
+  },
+  "identifier": "685C30D9",
+  "nonRenewingSubscriptions": [],
+  "products": [],
+  "settings": {
+    "_applicationInternalID": "6815511370",
+    "_askToBuyEnabled": false,
+    "_billingGracePeriodEnabled": false,
+    "_billingIssuesEnabled": false,
+    "_developerTeamID": "RGB5BL98V8",
+    "_disableDialogs": false,
+    "_failTransactionsEnabled": false,
+    "_lastSynchronizedDate": 812684894.278734,
+    "_locale": "en_US",
+    "_renewalBillingIssuesEnabled": false,
+    "_storefront": "USA",
+    "_storeKitErrors": [],
+    "_timeRate": 0
+  },
+  "subscriptionBundleGroups": [],
+  "subscriptionGroups": [
+    {
+      "id": "22435601",
+      "localizations": [],
+      "name": "Wrestling Manager Family Video",
+      "subscriptions": [
+        {
+          "adHocOffers": [],
+          "billingPlans": [
+            {
+              "billingPlanType": "BILLED_UPFRONT",
+              "commitmentDisplayPrice": "99.0",
+              "displayPrice": "99.0",
+              "internalID": "6818683425_BILLED_UPFRONT",
+              "isEnabled": true
+            }
+          ],
+          "codeOffers": [],
+          "displayPrice": "75.0",
+          "familyShareable": false,
+          "groupNumber": 1,
+          "internalID": "6818683425",
+          "introductoryOffers": [],
+          "localizations": [
+            {
+              "description": "Annual video coverage for up to two athletes",
+              "displayName": "Family Video Annual",
+              "locale": "en_US"
+            }
+          ],
+          "productID": "com.damonmele.wrestlingmanager.familyvideo.annual",
+          "recurringSubscriptionPeriod": "P1Y",
+          "referenceName": "Wrestling Manager Family Video Annual",
+          "subscriptionGroupID": "22435601",
+          "type": "RecurringSubscription",
+          "winbackOffers": []
+        },
+        {
+          "adHocOffers": [],
+          "billingPlans": [
+            {
+              "billingPlanType": "BILLED_UPFRONT",
+              "commitmentDisplayPrice": "14.99",
+              "displayPrice": "14.99",
+              "internalID": "6818683130_BILLED_UPFRONT",
+              "isEnabled": true
+            }
+          ],
+          "codeOffers": [],
+          "displayPrice": "10.0",
+          "familyShareable": false,
+          "groupNumber": 1,
+          "internalID": "6818683130",
+          "introductoryOffers": [],
+          "localizations": [
+            {
+              "description": "Monthly video coverage for up to two athletes",
+              "displayName": "Family Video Monthly",
+              "locale": "en_US"
+            }
+          ],
+          "productID": "com.damonmele.wrestlingmanager.familyvideo.monthly",
+          "recurringSubscriptionPeriod": "P1M",
+          "referenceName": "Wrestling Manager Family Video Monthly",
+          "subscriptionGroupID": "22435601",
+          "type": "RecurringSubscription",
+          "winbackOffers": []
+        }
+      ]
+    },
+    {
+      "id": "22435672",
+      "localizations": [
+        {
+          "description": "",
+          "displayName": "Wrestling Manager Team Pro",
+          "locale": "en_US"
+        }
+      ],
+      "name": "Wrestling Manager Team Pro",
+      "subscriptions": [
+        {
+          "adHocOffers": [],
+          "billingPlans": [
+            {
+              "billingPlanType": "BILLED_UPFRONT",
+              "commitmentDisplayPrice": "269.99",
+              "displayPrice": "269.99",
+              "internalID": "6818669953_BILLED_UPFRONT",
+              "isEnabled": true
+            }
+          ],
+          "codeOffers": [],
+          "displayPrice": "269.99",
+          "familyShareable": false,
+          "groupNumber": 1,
+          "internalID": "6818669953",
+          "introductoryOffers": [],
+          "localizations": [
+            {
+              "description": "Annual Team Pro access for one wrestling team",
+              "displayName": "Team Pro Annual",
+              "locale": "en_US"
+            }
+          ],
+          "productID": "com.damonmele.wrestlingmanager.teampro.annual",
+          "recurringSubscriptionPeriod": "P1Y",
+          "referenceName": "Wrestling Manager Team Pro Annual",
+          "subscriptionGroupID": "22435672",
+          "type": "RecurringSubscription",
+          "winbackOffers": []
+        },
+        {
+          "adHocOffers": [],
+          "billingPlans": [
+            {
+              "billingPlanType": "BILLED_UPFRONT",
+              "commitmentDisplayPrice": "75.0",
+              "displayPrice": "75.0",
+              "internalID": "6818671348_BILLED_UPFRONT",
+              "isEnabled": true
+            }
+          ],
+          "codeOffers": [],
+          "displayPrice": "75.0",
+          "familyShareable": false,
+          "groupNumber": 1,
+          "internalID": "6818671348",
+          "introductoryOffers": [],
+          "localizations": [
+            {
+              "description": "Monthly Team Pro access for one wrestling team",
+              "displayName": "Team Pro Monthly",
+              "locale": "en_US"
+            }
+          ],
+          "productID": "com.damonmele.wrestlingmanager.teampro.monthly",
+          "recurringSubscriptionPeriod": "P1M",
+          "referenceName": "Wrestling Manager Team Pro Monthly",
+          "subscriptionGroupID": "22435672",
+          "type": "RecurringSubscription",
+          "winbackOffers": []
+        }
+      ]
+    }
+  ],
+  "subscriptionSuiteGroups": [],
+  "version": {
+    "major": 6,
+    "minor": 3
+  }
+}

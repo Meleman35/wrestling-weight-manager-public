@@ -6,12 +6,14 @@ on:
       - scripts/prepare-launch-information.py
       - scripts/launch_privacy_disclosures.py
       - tests/launch-information-browser.cjs
+      - src/launch-bootstrap.mjs
       - .github/workflows/launch-information.yml
   pull_request:
     paths:
       - index.html
       - support.html
       - privacy.html
+      - src/launch-bootstrap.mjs
       - scripts/prepare-launch-information.py
       - scripts/launch_privacy_disclosures.py
       - tests/launch-information-browser.cjs

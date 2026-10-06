@@ -1,0 +1,5 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readAppleServerConfiguration} from './apple-server-config.mjs';
+test('confirmed app identity is fixed; secret reader supplies only private signing key',()=>{const names=[];const c=readAppleServerConfiguration({environment:'Production',rootCertificates:[new Uint8Array([1])],readSecret:name=>{names.push(name);return '-----BEGIN PRIVATE KEY-----\nSYNTHETIC\n-----END PRIVATE KEY-----';}});assert.deepEqual(names,['APPLE_IAP_PRIVATE_KEY']);assert.equal(c.appAppleID,6815511370);assert.equal(c.bundleID,'com.damonmele.wrestlingmanager');});
+test('missing key, roots or environment fail without exposing secret values',()=>{for(const options of [{readSecret:()=>undefined,rootCertificates:[1],environment:'Production'},{readSecret:()=> 'PRIVATE SECRET',rootCertificates:[1],environment:'Production'},{readSecret:()=>'',rootCertificates:[],environment:'Sandbox'}])assert.throws(()=>readAppleServerConfiguration(options),e=>e.message==='Apple server configuration unavailable');});

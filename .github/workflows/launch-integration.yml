@@ -1,0 +1,31 @@
+name: Combined launch candidate
+on:
+  pull_request:
+    paths:
+      - 'native-app/**'
+      - 'native-candidate/**'
+      - 'billing-candidate/**'
+      - 'src/launch-*.mjs'
+      - 'tests/launch-*'
+      - 'scripts/check-launch-*'
+      - 'scripts/prepare-launch-*'
+      - 'scripts/test-launch-*'
+      - '.github/workflows/launch-integration.yml'
+permissions:
+  contents: read
+jobs:
+  full-native-app:
+    runs-on: macos-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Check assembled source and project identity
+        run: python3 scripts/check-launch-native.py
+      - name: Build complete main app in Debug
+        run: xcodebuild -project 'native-app/Wrestling Manager Xcode App.xcodeproj' -scheme 'Wrestling Manager' -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath /tmp/wm-launch-debug CODE_SIGNING_ALLOWED=NO build -quiet
+      - name: Build complete main app in Release
+        run: xcodebuild -project 'native-app/Wrestling Manager Xcode App.xcodeproj' -scheme 'Wrestling Manager' -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath /tmp/wm-launch-release CODE_SIGNING_ALLOWED=NO build -quiet
+      - name: Exercise production capture host in iPad simulator
+        run: bash scripts/test-launch-capture-host.sh

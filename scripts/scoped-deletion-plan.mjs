@@ -29,7 +29,7 @@ export function validateScope(input){
 export function catalogIndex(catalog){
   const tables=new Map();
   for(const t of catalog.tables){
-    if(!['public','private'].includes(t.schema)||!identifier.test(t.name)||!Array.isArray(t.columns))throw new ScopeError('invalid_catalog');
+    if(!['public','private','wm_billing'].includes(t.schema)||!identifier.test(t.name)||!Array.isArray(t.columns))throw new ScopeError('invalid_catalog');
     const name=qualified(t.schema,t.name);
     if(tables.has(name)||t.columns.some(x=>!identifier.test(x.name)))throw new ScopeError('invalid_catalog');
     const pk=catalog.constraints.find(k=>k.type==='p'&&k.schema===t.schema&&k.table===t.name)?.columns||[];
@@ -105,7 +105,9 @@ export async function planDeletion({scope:input,catalog,reader,maxRows=25000}){
     ['public.audit_log','actor_user_id','personal'],['public.communication_message_audit','actor_user_id','personal'],
     ['private.wrestling_role_review_log','reviewer_id','personal'],['private.event_series_edits','actor','personal'],
     ['public.practice_series','created_by','personal-null'],['public.practice_series_exceptions','created_by','personal-null'],
-    ['private.conversation_review_events','actor_id','personal'],['private.conversation_review_events','subject_id','personal']
+    ['private.conversation_review_events','actor_id','personal'],['private.conversation_review_events','subject_id','personal'],
+    ['wm_billing.team_bindings','user_id','personal'],['wm_billing.intents','user_id','personal'],
+    ['wm_billing.subscriptions','user_id','personal'],['wm_billing.family_coverage','user_id','personal']
   ];
   for(const [table,col,kind] of extras){
     if(!scope.personal||!tables.get(table)?.columns.has(col))continue;
@@ -147,6 +149,12 @@ export async function planDeletion({scope:input,catalog,reader,maxRows=25000}){
     if(parent.table==='public.communication_messages')loose.push(['public.communication_message_audit','message_id',parent.row.id]);
     if(parent.table==='public.communication_threads')loose.push(['public.communication_message_audit','thread_id',parent.row.id]);
     if(parent.table==='public.teams')loose.push(['public.communication_message_audit','team_id',parent.row.id]);
+    if(parent.table==='public.teams')for(const table of ['wm_billing.team_bindings','wm_billing.intents','wm_billing.subscriptions']){
+      if(tables.has(table))loose.push([table,'team_id',parent.row.id]);
+    }
+    if(parent.table==='wm_billing.intents')loose.push(['wm_billing.notification_inbox','token',parent.row.token]);
+    if(parent.table==='wm_billing.subscriptions')for(const row of await select('wm_billing.notification_inbox',[
+      {environment:parent.row.environment,original_id:parent.row.original_id}]))add('wm_billing.notification_inbox',row,'delete',parent.origin);
     if(['public.team_memberships','public.organization_memberships'].includes(parent.table)){
       for(const table of ['private.wrestling_role_approvals','private.wrestling_role_review_log']){
         for(const row of await select(table,[{membership_id:parent.row.id,source:parent.table==='public.team_memberships'?'team':'organization'}]))add(table,row,'delete',parent.origin);

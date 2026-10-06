@@ -1,0 +1,28 @@
+# Owner approved this single $7/month service on October 4, 2026.
+# Open the setup link in docs/apple-verifier-deployment.md in the owner's browser.
+# Supply the Apple key and review the service before deploying.
+previews:
+  generation: "off"
+services:
+  - type: web
+    name: wm-apple-verifier
+    runtime: node
+    region: oregon
+    plan: 0.5c-512mb
+    numInstances: 1
+    repo: https://github.com/Meleman35/wrestling-weight-manager-public
+    branch: codex/launch-integration-20261004
+    autoDeployTrigger: "off"
+    buildCommand: npm ci --prefix billing-candidate --omit=dev --ignore-scripts --no-audit --no-fund
+    startCommand: node billing-candidate/apple-verifier-server.mjs
+    healthCheckPath: /health
+    maxShutdownDelaySeconds: 35
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: APPLE_IAP_PRIVATE_KEY
+        sync: false
+      - key: APPLE_VERIFIER_SHARED_SECRET
+        generateValue: true

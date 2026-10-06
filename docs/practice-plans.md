@@ -4,9 +4,9 @@ Practice & Competition → Practice Plans opens the monthly coaching workspace. 
 
 ## Paid feature
 
-The user explicitly requires paid access. Every real list, read, event, save and delete checks `private.practice_plans_covered(team_id)` on the server. This delegates to the existing closed Team Pro statistics coverage adapter. Billing is not connected: production coverage remains false, with a clearly labeled fictional sample instead of a functioning free editor. There is no client override, automatic trial start, creator override or video-pilot inheritance.
+Every real list, read, event, save and delete checks `private.practice_plans_covered(team_id)` on the server. As of October 5, the deployed adapter delegates to `wm_billing.team_feature_covered` through the shared statistics coverage helper. Verified Team Pro billing is connected; a client flag, role, Creator access or video pilot does not grant coverage. An uncovered team sees a clearly labeled fictional sample instead of a free editor.
 
-Connect the common adapter to verified Team Pro/College Pro entitlements and eligible active seven-day full-feature trials when billing is implemented. Family Video alone does not unlock team coaching tools. Validate purchases, restores, refunds, expiry, revoked coverage and trial eligibility before activating customer access. Synthetic paid/trial coverage exists only in isolated tests, never in this migration or production data.
+Customer purchases remain disabled. The hosted route accepts only genuine Apple Sandbox evidence for an explicitly enrolled account and exact team during its short enrollment window. Enrollment alone grants nothing. Actual purchase, restore, refund/expiry and real-device editor acceptance remain pending. College Pro and the seven-day trial preference are not activated entitlements; Family Video does not unlock team coaching tools. Synthetic coverage belongs only in isolated tests.
 
 ## Authorization and storage
 
