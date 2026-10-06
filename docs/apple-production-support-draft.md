@@ -1,7 +1,8 @@
 # Apple support case draft — not sent
 
-Complete the current agreement and subscription status evidence before sending.
-This draft contains no private key, JWT, credentials or customer data.
+Agreement and subscription statuses were confirmed in owner screenshots on
+October 5. This draft is ready for owner review and contains no private key, JWT,
+credentials or customer data. Sending requires explicit owner authorization.
 
 **Subject:** App Store Server API TEST notification returns Production 401 while Sandbox succeeds
 
@@ -9,6 +10,12 @@ We are preparing The Wrestling Manager, app Apple ID `6815511370`, bundle ID
 `com.damonmele.wrestlingmanager`. Version 1.0 is Prepare for Submission. We need
 to validate Production App Store Server Notifications V2 before enabling paid
 customer access.
+
+App Store Connect shows the Paid Apps Agreement Active, effective October 3,
+2026–September 18, 2027. The payout bank account and U.S. tax form are also Active.
+Digital Services Act trader verification is In Review. The Team Pro subscription
+group and both its annual (1 year) and monthly (1 month) products show Prepare for
+Submission; neither product has been submitted for review. Both are level 1.
 
 The same deployed service uses Apple's official Node App Store Server Library
 3.1.0, the same In-App Purchase key, issuer and bundle configuration for both
@@ -40,6 +47,6 @@ app's Production TEST request, and the supported correction. If further
 diagnostics are required, please specify safe request metadata to collect. We
 have not established that the unreleased app status causes the 401.
 
-**Evidence still to add before sending:** current Paid Applications Agreement
-status, both Team Pro subscription product statuses, and any relevant account
-notice. Full public key metadata can be provided privately to Apple if requested.
+Full public key metadata can be provided privately to Apple if requested. Exact
+product IDs and product metadata are being checked separately because the owner's
+group-list screenshot truncates IDs and does not show prices or review fields.

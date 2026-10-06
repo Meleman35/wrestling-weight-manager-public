@@ -71,6 +71,12 @@ For a failure, record expected/actual result, role, build and connection state. 
 
 ## Owner-dependent items
 
+October 5 18:35–18:44 America/Denver screenshots confirm the Paid Apps Agreement,
+bank account and W-9 Active; DSA verification In Review; both annual/monthly Team
+Pro products and their group Prepare for Submission. Exact product IDs, configured
+prices and remaining product fields still need inspection in the individual
+product pages. Preserve the completed agreement/bank/tax setup.
+
 The owner's signed-in Mac screenshots confirmed app identity, saved receiver URLs and matching active IAP key metadata. A bounded Production recheck at 23:41 UTC still returned 401; a fresh signed Sandbox TEST delivered successfully. The diagnostic is closed at v4. Inspect current products/agreements/trader state using the owner's session without recreating completed banking or key setup. Resolve the selected test app account and fictional team, which were not present at the earlier October 5 read. Then establish exact short-lived Sandbox enrollment and run one prepared device round. No owner password or private key is needed in chat.
 
 ## Verification of this preparation

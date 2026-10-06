@@ -17,9 +17,8 @@ configuration. No private key was viewed or changed.
 Version 1.0 is **Prepare for Submission**, with no build selected on that version
 page. This does not establish whether TestFlight has uploaded builds. The Apple
 Standard License Agreement is selected. Category, content rights, age rating and
-review fields remain incomplete in the supplied screenshots. Product statuses,
-current Paid Applications Agreement status and trader verification approval have
-not yet been inspected. Notification version was not visible in these screenshots;
+review fields remain incomplete in the supplied screenshots. Later agreement and
+product screenshots are recorded below. Notification version was not visible in these screenshots;
 the earlier owner confirmation of Version 2 remains the evidence for that setting.
 
 | Check | Fresh result |
@@ -36,6 +35,27 @@ credential configuration. Its root cause is still unknown. Sandbox control succe
 does not prove a customer purchase, benefit delivery or Production readiness.
 There is no evidence here that changing notification URLs or rotating the working
 key would fix it. The unreleased app state alone is not an established cause.
+
+## Agreement and product screenshots, 18:35–18:44 America/Denver
+
+| Item | Observed status |
+| --- | --- |
+| Paid Apps Agreement | Active, effective October 3, 2026–September 18, 2027. |
+| Free Apps Agreement | Active. |
+| Payout bank account | Active; no bank identifiers copied into this record. |
+| U.S. Form W-9 | Active, submitted October 3. |
+| Digital Services Act verification | In Review, last updated October 3. Approval remains unconfirmed. |
+| Wrestling Manager Team Pro subscription group | Prepare for Submission. |
+| Annual product | 1 year, level 1, Prepare for Submission. |
+| Monthly product | 1 month, level 1, Prepare for Submission. |
+
+The October 5 18:44:56 screenshot truncates both product IDs and reference names.
+It does not establish exact IDs, configured prices, availability, localizations or
+review-material completeness. Apple defines Prepare for Submission as created but
+not yet submitted for review. The visible banner says the first subscription group
+must be submitted with a new app version. Neither fact establishes why the
+Production notification API returns 401. No App Store settings were changed and no
+additional API request was made after reviewing these screenshots.
 
 ## Earlier read-only checkpoint
 
@@ -72,15 +92,16 @@ establish this app's cause or justify releasing unaccepted billing.
 
 ## Remaining owner-visible checks
 
-1. Use the owner's signed-in Mac session to read **Business → Agreements** and
-   both Team Pro products under **Apps → The Wrestling Manager → Monetization →
-   Subscriptions**. Screenshots of statuses are sufficient; banking/tax details
-   are unnecessary. The cloud browser security-key sign-in was not completed.
+1. Open the existing annual and monthly Team Pro products in the owner's signed-in
+   Mac session. Compare full product IDs, configured prices and availability with
+   the candidate, and inspect localization/review fields. The group list truncates
+   IDs and does not show prices. Agreement, bank and tax status checks are complete;
+   trader verification remains In Review. Cloud security-key sign-in did not complete.
 2. Correct only an observed mismatch or incomplete requirement. Preserve completed
    banking/tax setup, app identity and the working IAP key. Do not repeat the API
    request without a configuration change or a specific Apple diagnostic request.
-3. An unsent support-case draft is in `apple-production-support-draft.md`. Add the
-   remaining status evidence before sending. Sending requires explicit owner
+3. An unsent support-case draft is in `apple-production-support-draft.md`, now with
+   agreement/product status evidence. Sending requires explicit owner
    authorization; no live JWT, private key or customer records belong in the case.
 4. Require a verified signed Production TEST and successful delivery before
    marking production authorization complete. Real purchase/restore and benefit
@@ -92,3 +113,5 @@ establish this app's cause or justify releasing unaccepted billing.
 - [Generating JSON Web Tokens for API requests](https://developer.apple.com/documentation/appstoreserverapi/generating-json-web-tokens-for-api-requests)
 - [Creating API keys to authorize API requests](https://developer.apple.com/documentation/appstoreserverapi/creating-api-keys-to-authorize-api-requests)
 - [Apple commerce engineer response on Production/Sandbox 401](https://developer.apple.com/forums/thread/711801)
+- [In-App Purchase statuses](https://developer.apple.com/help/app-store-connect/reference/in-app-purchases-and-subscriptions/in-app-purchase-statuses)
+- [Submit an In-App Purchase](https://developer.apple.com/help/app-store-connect/manage-submissions-to-app-review/submit-an-in-app-purchase)

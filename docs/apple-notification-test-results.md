@@ -16,8 +16,9 @@ verified; the gateway now rejects unauthenticated calls with 401. Readiness rema
 true; subscriptions, purchase intents, notification inbox and enrolled accounts
 remain zero. All 10 focused diagnostic/connection tests passed.
 
-Production authorization remains blocked. Product/agreement statuses still need
-owner-visible review. See `apple-production-authorization-2026-10-05.md` and the
+Production authorization remains blocked. Later owner screenshots confirm the
+Paid Apps Agreement Active and both Team Pro products Prepare for Submission;
+neither status explains the 401. See `apple-production-authorization-2026-10-05.md` and the
 unsent `apple-production-support-draft.md`; no working key was changed.
 
 ## Initial checkpoint, 03:50 UTC
