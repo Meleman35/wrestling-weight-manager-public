@@ -43,7 +43,7 @@ pass('Creator migration preserves the exact live schema gates and freezes every 
 await file('supabase/migrations/20260930151016_wrestler_statistics_020102.sql');
 const practiceMigration=(await readFile('supabase/migrations/20261001010602_practice_plans_020109.sql','utf8')).replaceAll('77511a6731a00bdd44ab3767a9581c873cb8e69f97f54cbbb51547f8276568d0',next.current);
 await db.exec(practiceMigration);
-const final=(await db.query('select catalog,catalog_hash,private.scoped_deletion_schema_hash() current from private.scoped_deletion_config')).rows[0];
+let final=(await db.query('select catalog,catalog_hash,private.scoped_deletion_schema_hash() current from private.scoped_deletion_config')).rows[0];
 assert.equal(final.catalog_hash,final.current);assert.notEqual(final.current,next.current);
 assert(final.catalog.tables.some(t=>t.schema==='private'&&t.name==='practice_plans'));
 assert.equal(final.catalog.constraints.filter(k=>k.table==='practice_plans'&&k.type==='f').length,4);
@@ -51,6 +51,17 @@ assert((await db.query("select pg_get_functiondef('private.athlete_merge_request
 assert.equal((await db.query("select count(*)::int n from pg_trigger where tgname='scoped_deletion_freeze' and tgrelid='private.practice_plans'::regclass")).rows[0].n,1);
 assert.equal((await db.query('select private.practice_plans_covered(gen_random_uuid()) covered')).rows[0].covered,false);
 pass('Practice migration registers the complete catalog and exact deletion/merge fingerprints; paid coverage remains closed');
+
+const reviewBefore=final.current;
+await db.exec(await readFile('supabase/practice-plan-review.sql','utf8'));
+final=(await db.query('select catalog,catalog_hash,private.scoped_deletion_schema_hash() current from private.scoped_deletion_config')).rows[0];
+assert.equal(final.catalog_hash,final.current);assert.notEqual(final.current,reviewBefore);
+assert(final.catalog.tables.find(t=>t.name==='practice_plans').columns.some(c=>c.name==='athlete_visible'));
+assert((await db.query("select pg_get_functiondef('private.athlete_merge_request(text,jsonb)'::regprocedure) d")).rows[0].d.includes(final.current));
+assert.equal((await db.query("select count(*)::int n from pg_trigger where tgname='scoped_deletion_freeze' and tgrelid='private.practice_plans'::regclass")).rows[0].n,1);
+assert.equal((await db.query("select has_table_privilege('authenticated','private.practice_plans','select') allowed")).rows[0].allowed,false);
+pass('Review/athlete-sharing migration preserves private storage, refreshes the complete deletion catalog and exact merge guard, and retains the deletion freeze');
+
 const owner=uuid(),other=uuid(),team=uuid(),org=uuid(),pid=uuid(),sid=uuid();
 await db.query("insert into auth.users(id,email,email_confirmed_at) values($1,'owner@example.test',now()),($2,'other@example.test',now())",[owner,other]);
 await db.query("insert into public.profiles(id) values($1),($2)",[owner,other]);
