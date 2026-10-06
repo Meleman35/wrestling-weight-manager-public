@@ -12,3 +12,5 @@ window.WMSubscriptionPlans=installSubscriptionApp({
  personal:()=>!!session?.user?.id&&!managedLogin&&!teamProfileChoice&&!teamProfileSelecting&&!teamLoginSigningOut,
  publishableKey:SUPABASE_KEY
 });
+// Module loading can finish after Clipboard has rendered its category proxies.
+window.WMClipboard?.sync();

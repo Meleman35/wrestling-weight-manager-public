@@ -43,7 +43,7 @@ profile fields, JWT claims or request parameters. Enrollment grants no paid
 benefit on its own. It is checked again after Apple waits and inside billing
 transactions, including against the stored team on restore.
 
-## Build and device round
+## Build and device round — original prepublication checkpoint
 
 All 26 GitHub workflows passed at PR #62 head
 `ac79e309b5cdb68d32e4f7d286c5831d2db29e85`, including the full native Debug/Release
@@ -79,3 +79,30 @@ release step, blocked while the production API returns 401.
 Apple references:
 - [App transaction environment](https://developer.apple.com/documentation/storekit/apptransaction/environment)
 - [Sandbox and TestFlight testing](https://developer.apple.com/documentation/storekit/testing-at-all-stages-of-development-with-xcode-and-the-sandbox)
+
+## October 5 device preparation and Clipboard correction
+
+PR #62 was merged as `e7fcf90ec4ce3da245996df9951bb81406fe2164` after
+all 26 workflows passed at `fc6728bf6e486991f48a7ff8a16169983d9e322a`.
+Web 0.20.123 was published and its static purchase import graph matched the
+reviewed tree. The owner subsequently reported the installed app open, a separate
+Apple Sandbox tester created, and device Sandbox sign-in complete at 20:27
+America/Denver. These reports do not establish a completed device purchase.
+
+At 20:32 the owner could not find Plans & purchases. Coach/manager mode labels
+the navigation tab Clipboard and hides the legacy Toolbox menu. The purchase
+button existed only in that hidden menu and was missing from every Clipboard
+category. Web 0.20.124 adds it to **Clipboard → Settings → Plans & purchases**.
+Non-coach accounts keep the existing Toolbox entry. Clipboard excludes controls
+with the HTML hidden attribute and refreshes when the purchase module finishes
+loading, so a late module cannot leave a missing or inert proxy. Native build 9,
+billing authority and the bounded Sandbox enrollment are unchanged.
+
+Validation: the actual bundled HTML and module graph passed a synthetic browser
+check for coach navigation, delayed module initialization, 320/390/768 layouts,
+shared-login denial and the non-coach Toolbox entry. Native activation was
+simulated unavailable; the navigation reached the existing guarded handler.
+Existing fundraising/Clipboard and web-update browser checks passed, as did the
+release embedding and syntax checks. No purchase or hosted data write occurred.
+Actual device product loading, cancellation and the remaining purchase acceptance
+steps still need owner confirmation.

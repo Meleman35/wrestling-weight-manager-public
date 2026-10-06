@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Wrestling Manager v0.20.123: Zeffy fundraising referrals in Clipboard, Board Room and the public website. -->
+<!-- Wrestling Manager v0.20.124: Restore coach access to Plans & purchases in Clipboard Settings. -->
 <html lang="en">
 <head>
 <script>try{if(localStorage.getItem("wm-mat-session"))location.replace("./mat-mode.html");}catch{}</script>
@@ -2386,7 +2386,7 @@ body.vp-camera-mode #sheetBackdrop{display:none!important}
     <button id="weightTestsSettingsBtn" type="button" class="wide secondary hidden">Test Athlete / Weight Tests</button>
     <nav class="wm-info-links" aria-label="Help and privacy"><a href="./support.html" data-wm-info="support">Help &amp; Support</a><a href="./privacy.html" data-wm-info="privacy">Privacy information</a></nav>
 <button id="signOutBtn" class="wide secondary">Sign Out</button>
-    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.123</p>
+    <p class="fine" style="text-align:center;margin-top:14px">Build v0.20.124</p>
   </section>
 
   <section id="teamLoginsSheet" class="sheet hidden" aria-modal="true">
@@ -14136,13 +14136,13 @@ window.WMFundraising=(()=>{
   {id:'health',icon:'✍️',name:'Forms & Health',detail:'Agreements & medical clearance',ids:['athleteHealthBtn','agreementsBtn','medicalClearanceBtn']},
   {id:'gear',icon:'🎒',name:'Gear & Files',detail:'Equipment & team resources',ids:['clipboardEquipmentBtn','clipboardFilesBtn']},
   {id:'fundraising',icon:'💚',name:'Fundraising',detail:'Zeffy for eligible nonprofits',ids:['fundraisingBtn'],direct:'fundraisingBtn'},
-  {id:'settings',icon:'⚙️',name:'Settings',detail:'Account, team settings & feedback',ids:['accountBtn','feedbackBtn']},
+  {id:'settings',icon:'⚙️',name:'Settings',detail:'Account, plans & feedback',ids:['accountBtn','subscriptionPlansBtn','feedbackBtn']},
   {id:'organization',icon:'🏛️',name:'Organization',detail:'Teams, leadership & organization tools',ids:['organizationHubBtn'],direct:'organizationHubBtn'}
  ];
  let selected=null,context='';const e=id=>document.getElementById(id),key=g=>'clip_'+g.id;
  const mode=()=>isStaff||isManager;
  // Hidden originals live in the legacy Toolbox; category preferences govern the proxies.
- function accessible(node){return node&&!node.disabled&&!node.classList.contains('hidden')&&!node.classList.contains('hidden-role')&&(!node.classList.contains('member-only')||node.classList.contains('show'));}
+ function accessible(node){return node&&!node.hidden&&!node.disabled&&!node.classList.contains('hidden')&&!node.classList.contains('hidden-role')&&(!node.classList.contains('member-only')||node.classList.contains('show'));}
  function tools(g){return g.ids.map(e).filter(accessible);}
  UI_LAYOUT_META.clipboard=Object.fromEntries(groups.map(g=>[g.id,[g.icon,g.name]]));DEFAULT_UI_LAYOUT.clipboard=groups.map(g=>g.id);
  for(const g of groups){UI_LAYOUT_META[key(g)]=Object.fromEntries(g.ids.map(id=>{const n=e(id);return [id,[n?.querySelector('span')?.textContent||'›',n?.querySelector('b')?.textContent||id]];}));DEFAULT_UI_LAYOUT[key(g)]=g.ids;}
@@ -17598,7 +17598,7 @@ window.WMRolePreviewDocument="\u003c!doctype html>\u003chtml lang=\"en\">\u003ch
 /* Public web-version status only. Never activates a worker or reloads user work. */
 window.WMWebUpdates=(()=>{
  'use strict';
- const CURRENT='0.20.123',LIMIT=65536;
+ const CURRENT='0.20.124',LIMIT=65536;
  const sheet=document.getElementById('accountSheet');
  if(!sheet)return Object.freeze({check:async()=>{}});
  const card=document.createElement('section');card.id='webUpdatesCard';card.className='feature-card';

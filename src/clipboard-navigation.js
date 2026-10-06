@@ -6,13 +6,13 @@
   {id:'health',icon:'✍️',name:'Forms & Health',detail:'Agreements & medical clearance',ids:['athleteHealthBtn','agreementsBtn','medicalClearanceBtn']},
   {id:'gear',icon:'🎒',name:'Gear & Files',detail:'Equipment & team resources',ids:['clipboardEquipmentBtn','clipboardFilesBtn']},
   {id:'fundraising',icon:'💚',name:'Fundraising',detail:'Zeffy for eligible nonprofits',ids:['fundraisingBtn'],direct:'fundraisingBtn'},
-  {id:'settings',icon:'⚙️',name:'Settings',detail:'Account, team settings & feedback',ids:['accountBtn','feedbackBtn']},
+  {id:'settings',icon:'⚙️',name:'Settings',detail:'Account, plans & feedback',ids:['accountBtn','subscriptionPlansBtn','feedbackBtn']},
   {id:'organization',icon:'🏛️',name:'Organization',detail:'Teams, leadership & organization tools',ids:['organizationHubBtn'],direct:'organizationHubBtn'}
  ];
  let selected=null,context='';const e=id=>document.getElementById(id),key=g=>'clip_'+g.id;
  const mode=()=>isStaff||isManager;
  // Hidden originals live in the legacy Toolbox; category preferences govern the proxies.
- function accessible(node){return node&&!node.disabled&&!node.classList.contains('hidden')&&!node.classList.contains('hidden-role')&&(!node.classList.contains('member-only')||node.classList.contains('show'));}
+ function accessible(node){return node&&!node.hidden&&!node.disabled&&!node.classList.contains('hidden')&&!node.classList.contains('hidden-role')&&(!node.classList.contains('member-only')||node.classList.contains('show'));}
  function tools(g){return g.ids.map(e).filter(accessible);}
  UI_LAYOUT_META.clipboard=Object.fromEntries(groups.map(g=>[g.id,[g.icon,g.name]]));DEFAULT_UI_LAYOUT.clipboard=groups.map(g=>g.id);
  for(const g of groups){UI_LAYOUT_META[key(g)]=Object.fromEntries(g.ids.map(id=>{const n=e(id);return [id,[n?.querySelector('span')?.textContent||'›',n?.querySelector('b')?.textContent||id]];}));DEFAULT_UI_LAYOUT[key(g)]=g.ids;}
