@@ -57,6 +57,36 @@ must be submitted with a new app version. Neither fact establishes why the
 Production notification API returns 401. No App Store settings were changed and no
 additional API request was made after reviewing these screenshots.
 
+## Annual product details, 18:55–18:56 America/Denver
+
+| Field | Observed value and check |
+| --- | --- |
+| Reference name / product Apple ID | Wrestling Manager Team Pro Annual / `6818669953`. |
+| Product ID | `com.damonmele.wrestlingmanager.teampro.annual`; exact match to the native StoreKit product list and server policy. |
+| Duration / U.S. price | 1 year upfront / $269.99; matches the agreed annual plan. |
+| Availability | All countries or regions selected. Other currencies/regions use different displayed prices; only the U.S. price was compared to the agreed base price. |
+| Family Sharing | Off; the page offers Turn On. |
+| English (U.S.) display name | Team Pro Annual. |
+| English (U.S.) description | Annual Team Pro access for one wrestling team. |
+| Optional promotional image | Empty. |
+| Purchase options | App Store, Apple Business and Apple School Manager; Multiseat Purchases Allowed. |
+| Tax category | Match to parent app; this does not independently confirm the parent's category. |
+| Review Information screenshot | Empty. Capture the actual purchase screen from the accepted app with fictional data before submission. |
+| Review notes | Blank; prepare useful reviewer navigation after the final device flow is accepted. |
+
+Apple's multiseat option supports purchasing multiple seats and assigning access
+to other people. The inspected candidate purchases with an appAccountToken and
+binds the subscription to one team; it has no accepted multiseat assignment flow.
+Recommendation for the first release: disable multiseat purchases in Purchase
+Options and retain App Store availability. Apple Business/School Manager require
+multiseat and will be unavailable for this product when it is disabled. This does
+not reduce authorized membership within the covered team. No setting was changed
+by this screenshot review; obtain confirmation of the saved configuration. Keep
+the annual upfront plan and existing Family Sharing setting intact.
+
+The review screenshot and purchase-option work are launch preparation, not an
+established explanation for the Production 401. Monthly details are still pending.
+
 ## Earlier read-only checkpoint
 
 | Check | Result and limit |
@@ -92,11 +122,12 @@ establish this app's cause or justify releasing unaccepted billing.
 
 ## Remaining owner-visible checks
 
-1. Open the existing annual and monthly Team Pro products in the owner's signed-in
-   Mac session. Compare full product IDs, configured prices and availability with
-   the candidate, and inspect localization/review fields. The group list truncates
-   IDs and does not show prices. Agreement, bank and tax status checks are complete;
-   trader verification remains In Review. Cloud security-key sign-in did not complete.
+1. Annual identity, duration, U.S. price and localization are now checked. Review
+   and save the recommended purchase-option correction, then inspect the monthly
+   product's full ID, U.S. price, purchase options and review fields. Capture the
+   actual app review screenshot during final device acceptance. Agreement, bank
+   and tax status checks are complete; trader verification remains In Review.
+   Cloud security-key sign-in did not complete.
 2. Correct only an observed mismatch or incomplete requirement. Preserve completed
    banking/tax setup, app identity and the working IAP key. Do not repeat the API
    request without a configuration change or a specific Apple diagnostic request.
@@ -115,3 +146,5 @@ establish this app's cause or justify releasing unaccepted billing.
 - [Apple commerce engineer response on Production/Sandbox 401](https://developer.apple.com/forums/thread/711801)
 - [In-App Purchase statuses](https://developer.apple.com/help/app-store-connect/reference/in-app-purchases-and-subscriptions/in-app-purchase-statuses)
 - [Submit an In-App Purchase](https://developer.apple.com/help/app-store-connect/manage-submissions-to-app-review/submit-an-in-app-purchase)
+- [In-App Purchase information and review screenshot](https://developer.apple.com/help/app-store-connect/reference/in-app-purchases-and-subscriptions/in-app-purchase-information/)
+- [Manage subscription purchase options](https://developer.apple.com/help/app-store-connect/manage-subscriptions/manage-purchase-options-for-auto-renewable-subscriptions)

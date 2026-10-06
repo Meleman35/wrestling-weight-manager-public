@@ -47,6 +47,9 @@ app's Production TEST request, and the supported correction. If further
 diagnostics are required, please specify safe request metadata to collect. We
 have not established that the unreleased app status causes the 401.
 
-Full public key metadata can be provided privately to Apple if requested. Exact
-product IDs and product metadata are being checked separately because the owner's
-group-list screenshot truncates IDs and does not show prices or review fields.
+Full public key metadata can be provided privately to Apple if requested. A later
+owner screenshot confirms annual product ID
+`com.damonmele.wrestlingmanager.teampro.annual`, duration 1 year and U.S. price
+$269.99, matching our configuration. The annual review screenshot is still empty;
+monthly product details are being checked separately. We do not assume incomplete
+review materials explain the Production API authorization failure.

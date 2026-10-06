@@ -61,6 +61,15 @@ The subscription paragraph and terms link are conditional on accepted benefits, 
 
 ## Review information to complete after acceptance
 
+The owner's October 5 18:55–18:56 screenshots confirm the annual product's exact
+ID, one-year duration and $269.99 U.S. price. English (U.S.) name/description are
+present. Its Review Information screenshot and review notes are empty; the
+separate optional promotional image is also empty. Purchase Options currently
+allow multiseat and Apple Business/School Manager. The first-release recommendation
+is to disable multiseat and retain App Store availability because the existing
+one-team purchase flow has no accepted seat-assignment implementation. This change
+has not been saved or confirmed. See `apple-production-authorization-2026-10-05.md`.
+
 Use dedicated fictional review accounts and test athletes. Enter reviewer credentials directly in App Store Connect's review fields; do not save passwords in this repository.
 
 - Explain how the reviewer signs in, selects the prepared team and reaches its roster, schedule, family permissions and scorebook.
