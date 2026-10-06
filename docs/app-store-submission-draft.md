@@ -61,14 +61,15 @@ The subscription paragraph and terms link are conditional on accepted benefits, 
 
 ## Review information to complete after acceptance
 
-The owner's October 5 18:55–18:56 screenshots confirm the annual product's exact
-ID, one-year duration and $269.99 U.S. price. English (U.S.) name/description are
-present. Its Review Information screenshot and review notes are empty; the
-separate optional promotional image is also empty. Purchase Options currently
-allow multiseat and Apple Business/School Manager. The first-release recommendation
-is to disable multiseat and retain App Store availability because the existing
-one-team purchase flow has no accepted seat-assignment implementation. This change
-has not been saved or confirmed. See `apple-production-authorization-2026-10-05.md`.
+The owner's October 5 18:55–19:04 screenshots confirm both exact product IDs,
+annual's one-year duration and $269.99 U.S. price, and monthly's one-month duration
+and $75.00 U.S. price. Both English (U.S.) names/descriptions are present. Both
+Review Information screenshots and optional review notes are empty; their separate
+optional promotional images are also empty. Monthly now shows App Store only and
+Multiseat Purchases Not Allowed. Annual's saved correction remains unconfirmed.
+The first-release recommendation is to disable multiseat on both products because
+the existing one-team purchase flow has no accepted seat-assignment implementation.
+See `apple-production-authorization-2026-10-05.md`.
 
 Use dedicated fictional review accounts and test athletes. Enter reviewer credentials directly in App Store Connect's review fields; do not save passwords in this repository.
 
@@ -86,7 +87,7 @@ Use dedicated fictional review accounts and test athletes. Enter reviewer creden
 - App Privacy answers: reconcile the deployed data inventory and providers, including account/contact identifiers, athlete records, photos/videos, messages, health/fitness information and purchases. The native required-reason manifest is not a replacement for these answers.
 - Digital Services Act trader verification and all remaining agreement status: verify current App Store Connect state. Earlier screenshots established active paid agreement/tax/banking setup; do not repeat those tasks without a new issue.
 - Screenshot sizes, supported devices and final native build: create screenshots from the accepted build with fictional data. Missing earlier uploads are not submission screenshots.
-- Production and sandbox notification URLs: the owner already saved both Version 2 URLs on October 4, and actual signed Sandbox TEST delivery passed on October 5. Confirm the current saved values without recreating setup. Production TEST requests returned HTTP 401 twice; production authorization/delivery remains unverified. See `apple-production-authorization-2026-10-05.md`.
+- Production and sandbox notification URLs: the owner already saved both Version 2 URLs on October 4; October 5 screenshots confirmed the saved routes, and actual signed Sandbox TEST delivery passed. The bounded Production recheck also returned HTTP 401; production authorization/delivery remains unverified. See `apple-production-authorization-2026-10-05.md`.
 
 ## References checked
 

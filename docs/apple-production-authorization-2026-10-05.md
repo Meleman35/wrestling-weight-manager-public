@@ -85,7 +85,36 @@ by this screenshot review; obtain confirmation of the saved configuration. Keep
 the annual upfront plan and existing Family Sharing setting intact.
 
 The review screenshot and purchase-option work are launch preparation, not an
-established explanation for the Production 401. Monthly details are still pending.
+established explanation for the Production 401. Annual's saved multiseat correction
+remains unconfirmed; the later monthly evidence follows.
+
+## Monthly product details, 19:01–19:04 America/Denver
+
+| Field | Observed value and check |
+| --- | --- |
+| Product Apple ID | `6818671348`. |
+| Product ID | `com.damonmele.wrestlingmanager.teampro.monthly`; exact match to the native StoreKit product list and server policy. |
+| Duration / U.S. price | 1 month / $75.00; the United States (USD) row is visible in the 19:04:28 screenshot and matches the agreed monthly plan. |
+| Availability | All countries or regions selected. Only the U.S. price was compared to the agreed base price. |
+| Family Sharing | Off; the page offers Turn On. |
+| English (U.S.) display name | Team Pro Monthly. |
+| English (U.S.) description | Monthly Team Pro access for one wrestling team. |
+| Optional promotional image | Empty. |
+| Purchase options | Initially Multiseat Purchases Allowed at 19:01. The 19:04:36 screenshot shows The App Store only and Multiseat Purchases Not Allowed. |
+| Tax category | Match to parent app; this does not independently confirm the parent's category. |
+| Review Information screenshot | Empty. Capture the actual purchase screen from the accepted app with fictional data before submission. |
+| Review notes | Blank and explicitly Optional. Add useful navigation after device acceptance. |
+
+The two 19:04 crops do not include the product title; they follow the owner's
+monthly product inspection. They do not establish that annual's purchase options
+were also saved. No additional Apple API request, purchase, entitlement change,
+release or submission followed this review.
+
+A fresh read-only lookup for `damonmele+wmtest@gmail.com` after this review found
+zero Auth accounts and zero confirmed accounts. The selected Coach / Team Leader
+login and fictional **WM Launch Test** team still need ordinary creation and email
+confirmation. Resolve exact IDs and authority before short-lived Sandbox
+enrollment; purchases also require the matching web/native candidate.
 
 ## Earlier read-only checkpoint
 
@@ -122,12 +151,13 @@ establish this app's cause or justify releasing unaccepted billing.
 
 ## Remaining owner-visible checks
 
-1. Annual identity, duration, U.S. price and localization are now checked. Review
-   and save the recommended purchase-option correction, then inspect the monthly
-   product's full ID, U.S. price, purchase options and review fields. Capture the
-   actual app review screenshot during final device acceptance. Agreement, bank
-   and tax status checks are complete; trader verification remains In Review.
-   Cloud security-key sign-in did not complete.
+1. Both product IDs, durations, U.S. prices and localizations are checked. Monthly
+   now shows App Store only and multiseat Not Allowed; confirm that annual has
+   the same saved purchase options. Capture both actual app review screenshots
+   during final device acceptance. Agreement, bank and tax status checks are
+   complete; trader verification remains In Review. Cloud security-key sign-in
+   did not complete. Create and confirm the selected test app account as described
+   in `sandbox-purchase-acceptance.md` before enrollment and device purchases.
 2. Correct only an observed mismatch or incomplete requirement. Preserve completed
    banking/tax setup, app identity and the working IAP key. Do not repeat the API
    request without a configuration change or a specific Apple diagnostic request.

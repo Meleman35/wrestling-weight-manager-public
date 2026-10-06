@@ -73,11 +73,14 @@ For a failure, record expected/actual result, role, build and connection state. 
 
 October 5 18:35–18:44 America/Denver screenshots confirm the Paid Apps Agreement,
 bank account and W-9 Active; DSA verification In Review; both annual/monthly Team
-Pro products and their group Prepare for Submission. Exact product IDs, configured
-prices and remaining product fields still need inspection in the individual
-product pages. Preserve the completed agreement/bank/tax setup.
+Pro products and their group Prepare for Submission. Later 18:55–19:04 screenshots
+confirm both exact product IDs, durations, U.S. prices ($269.99 annual / $75 monthly)
+and English (U.S.) localizations. Monthly shows App Store only and multiseat Not
+Allowed; annual's saved correction remains unconfirmed. Both review screenshots
+remain empty. See `apple-production-authorization-2026-10-05.md` for the detailed
+evidence. Preserve the completed agreement/bank/tax setup.
 
-The owner's signed-in Mac screenshots confirmed app identity, saved receiver URLs and matching active IAP key metadata. A bounded Production recheck at 23:41 UTC still returned 401; a fresh signed Sandbox TEST delivered successfully. The diagnostic is closed at v4. Inspect current products/agreements/trader state using the owner's session without recreating completed banking or key setup. Resolve the selected test app account and fictional team, which were not present at the earlier October 5 read. Then establish exact short-lived Sandbox enrollment and run one prepared device round. No owner password or private key is needed in chat.
+The owner's signed-in Mac screenshots confirmed app identity, saved receiver URLs and matching active IAP key metadata. A bounded Production recheck at 23:41 UTC still returned 401; a fresh signed Sandbox TEST delivered successfully. The diagnostic is closed at v4. Complete the remaining annual purchase-option and trader-status checks without recreating completed banking or key setup. Resolve the selected test app account and fictional team; a fresh lookup after the 19:04 screenshots still found no account. Then establish exact short-lived Sandbox enrollment and, once the matching web/native candidate is ready, run one prepared device round. No owner password or private key is needed in chat.
 
 ## Verification of this preparation
 

@@ -8,8 +8,9 @@ production mode and accepts only verified Apple Sandbox subscription evidence.
 
 The October 5 master handoff already selects the dedicated personal app login
 `damonmele+wmtest@gmail.com`, Coach / Team Leader role, and fictional team
-**WM Launch Test**. A read-only Auth lookup on October 5 found no account at that
-exact email; account creation and team authority are not yet established. Do not
+**WM Launch Test**. A fresh read-only Auth lookup after the October 5 19:04
+America/Denver screenshot review returned zero accounts and zero confirmed
+accounts at that exact email; account creation and team authority are not yet established. Do not
 ask the owner to choose the identity again. The owner must complete ordinary
 account creation and email confirmation without sending passwords or codes to
 chat. Then the operator must resolve the actual account/team IDs and verify
