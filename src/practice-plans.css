@@ -28,3 +28,24 @@
 #practicePlansSheet summary{font-size:15px;font-weight:650;cursor:pointer}
 #practicePlansSheet .pp-list h3{margin:6px 0}
 @media(max-width:359px){#practicePlansSheet .pp-fields{grid-template-columns:minmax(0,1fr)}#practicePlansSheet .pp-card,#practicePlansSheet .pp-block{padding:12px}}
+
+#practicePlansSheet .pp-review-checks{display:grid;gap:8px;margin-top:14px}
+#practicePlansSheet .pp-review-checks label,#practicePlansSheet .pp-choice{display:flex;align-items:center;gap:10px;font-weight:500;margin:8px 0;padding:8px 0}
+#practicePlansSheet input[type="checkbox"]{width:22px;height:22px;flex:0 0 22px;padding:0}
+#practicePlansSheet .pp-choice small{display:block;color:#667487;font-size:13px}
+#practicePlansSheet .pp-text{white-space:pre-wrap;overflow-wrap:anywhere}
+#practicePlansSheet #ppPrior{margin-top:12px}
+#practicePlansSheet .pp-prior-instructions details{margin:10px 0}
+#lockerPracticePlans{overflow-wrap:anywhere}
+#lockerPracticePlans .section-head{flex-wrap:wrap;gap:10px}
+#lockerPracticePlans .pp-home-list{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}
+#lockerPracticePlans article{border:1px solid #dde4ec;border-radius:14px;padding:14px;background:#f8fafc}
+#lockerPracticePlans h4{margin:8px 0;font-size:17px}
+#lockerPracticePlans p,#lockerPracticePlans small{font-size:13px;color:#667487}
+#lockerPracticePlans button{min-height:44px;white-space:normal}
+
+#practicePlanAthleteSheet{max-width:720px;padding-bottom:calc(28px + env(safe-area-inset-bottom))}
+#practicePlanAthleteSheet .pp-text{white-space:pre-wrap;overflow-wrap:anywhere}
+#practicePlanAthleteSheet article{border:1px solid #dde4ec;border-radius:14px;padding:14px;margin:12px 0}
+#practicePlanAthleteSheet button{min-height:44px;white-space:normal}
+#practicePlanAthleteSheet input{font-size:16px;width:100%;box-sizing:border-box}
