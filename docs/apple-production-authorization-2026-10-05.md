@@ -111,10 +111,12 @@ were also saved. No additional Apple API request, purchase, entitlement change,
 release or submission followed this review.
 
 A fresh read-only lookup for `damonmele+wmtest@gmail.com` after this review found
-zero Auth accounts and zero confirmed accounts. The selected Coach / Team Leader
-login and fictional **WM Launch Test** team still need ordinary creation and email
-confirmation. Resolve exact IDs and authority before short-lived Sandbox
-enrollment; purchases also require the matching web/native candidate.
+zero Auth accounts and zero confirmed accounts at that checkpoint. The owner
+subsequently confirmed the ordinary app account at 19:14 and created **WM Launch
+Test** at 19:30. Exact account/team authority was checked and bounded Sandbox
+enrollment now expires at 22:00 America/Denver. No purchase or entitlement was
+created. See `sandbox-purchase-acceptance.md`; matching web/native preparation
+still precedes device purchases.
 
 ## Earlier read-only checkpoint
 
@@ -156,8 +158,9 @@ establish this app's cause or justify releasing unaccepted billing.
    the same saved purchase options. Capture both actual app review screenshots
    during final device acceptance. Agreement, bank and tax status checks are
    complete; trader verification remains In Review. Cloud security-key sign-in
-   did not complete. Create and confirm the selected test app account as described
-   in `sandbox-purchase-acceptance.md` before enrollment and device purchases.
+   did not complete. The test account/team and bounded enrollment are now ready;
+   complete matching web/native preparation before device purchases as described
+   in `sandbox-purchase-acceptance.md`.
 2. Correct only an observed mismatch or incomplete requirement. Preserve completed
    banking/tax setup, app identity and the working IAP key. Do not repeat the API
    request without a configuration change or a specific Apple diagnostic request.

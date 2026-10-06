@@ -80,7 +80,7 @@ Allowed; annual's saved correction remains unconfirmed. Both review screenshots
 remain empty. See `apple-production-authorization-2026-10-05.md` for the detailed
 evidence. Preserve the completed agreement/bank/tax setup.
 
-The owner's signed-in Mac screenshots confirmed app identity, saved receiver URLs and matching active IAP key metadata. A bounded Production recheck at 23:41 UTC still returned 401; a fresh signed Sandbox TEST delivered successfully. The diagnostic is closed at v4. Complete the remaining annual purchase-option and trader-status checks without recreating completed banking or key setup. Resolve the selected test app account and fictional team; a fresh lookup after the 19:04 screenshots still found no account. Then establish exact short-lived Sandbox enrollment and, once the matching web/native candidate is ready, run one prepared device round. No owner password or private key is needed in chat.
+The owner's signed-in Mac screenshots confirmed app identity, saved receiver URLs and matching active IAP key metadata. A bounded Production recheck at 23:41 UTC still returned 401; a fresh signed Sandbox TEST delivered successfully. The diagnostic is closed at v4. Complete the remaining annual purchase-option and trader-status checks without recreating completed banking or key setup. The dedicated account was confirmed at 19:14 and WM Launch Test created at 19:30 America/Denver. Verified exact-team Sandbox enrollment expires at 22:00; no purchase or paid benefit was created. Once the matching web/native candidate is ready, run one prepared device round. See `sandbox-purchase-acceptance.md`. No owner password or private key is needed in chat.
 
 ## Verification of this preparation
 
