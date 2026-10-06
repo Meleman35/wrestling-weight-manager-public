@@ -18,6 +18,42 @@ Drafts are held only in memory, with an unsaved indicator and explicit save. Clo
 
 Plan deletion leaves the scheduled practice. Event deletion unlinks its plan. Team deletion deletes team plans. Personal coach deletion nulls authorship and preserves shared team work; other people's personal profiles are untouched. The migration refreshes the entire reviewed deletion catalog and exact athlete-merge fingerprint, and registers the deletion freeze trigger. The deletion worker policy explicitly enrolls team plan deletion and nullable authorship edges.
 
+## Practice review and athlete sharing candidate
+
+The Locker Room shows up to three current/upcoming plans and the most recent
+prior practice for authorized coaches. Each block can be marked completed or
+for review next practice, with a private follow-up note. These are explicit
+saved edits using the same retry and revision protections as the plan.
+
+Coaches can open historical months, start a new plan with selected unfinished
+or review activities, or review a previous practice while editing another plan.
+Completed moves can be selected for retention practice. Copied activities get
+new IDs, unchecked completion/review flags and editable durations. Their original
+practice stays saved; new plans start with athlete sharing off.
+
+“Allow athletes to view this plan” is an optional per-plan coach setting,
+off by default. Active personal athlete accounts on the same covered team can
+list/read only shared plans through a separate read-only RPC. They receive title,
+date, start/target time, focus and ordered activity instructions, never coach
+notes, completion/follow-up fields, authorship or unpublished plan metadata.
+Parents, trainers and managed team logins receive no new access. Every request
+rechecks current membership, session, paid coverage and the sharing setting.
+
+The Locker Room refreshes while visible, clears on identity/role/lock/offline
+changes, and shared-plan readers recheck every 30 seconds. Changing a sharing
+setting cannot retract screenshots or exported copies.
+
+Apply the new CLI-created migration only after review; it adds one default-false
+boolean column and review fields inside the existing block JSON. It preserves
+private RLS storage and the deletion freeze, and refreshes the complete deletion
+catalog and exact existing athlete-merge fingerprint atomically. Historical
+migrations are unchanged.
+
+    python3 scripts/assemble-practice-review.py --check
+    python3 scripts/patch-practice-plans.py --check
+
+This is a proposed change, not evidence of deployment or real-device acceptance.
+
 ## Verification
 
 `tests/practice-plans-db.mjs` exercises actual RPC code in isolated PostgreSQL, including paid/trial loss, authorization, session validity, retries, revisions, date/time rules and foreign-key deletion behavior. `tests/practice-plans-compatibility.mjs` applies the complete migration atop the reconstructed schema and invokes the actual deletion planner. Browser tests exercise free preview, paid editing, timings, copying, failed connections, stale edits, permission changes and 320/390/768px layouts. No real customer account or team is created, edited or deleted by validation.

@@ -5,6 +5,9 @@ on:
       - index.html
       - src/practice-plans.*
       - supabase/practice-plans*.sql
+      - supabase/practice-plan-review.sql
+      - scripts/assemble-practice-review.py
+      - supabase/migrations/*practice_plan_review*.sql
       - supabase/migrations/*practice_plans*.sql
       - scripts/*practice-plans.py
       - scripts/scoped-deletion-policy.json
@@ -26,7 +29,7 @@ jobs:
         with:
           node-version: '24'
       - run: npm ci --prefix .ci --ignore-scripts --no-audit --no-fund
-      - run: python3 scripts/assemble-practice-plans.py --check && python3 scripts/patch-practice-plans.py --check
+      - run: python3 scripts/assemble-practice-plans.py --check && python3 scripts/assemble-practice-review.py --check && python3 scripts/patch-practice-plans.py --check
       - run: node tests/practice-plans-db.mjs && node tests/practice-plans-compatibility.mjs
       - run: .ci/node_modules/.bin/playwright install --with-deps chromium
       - run: node tests/practice-plans-browser.cjs
